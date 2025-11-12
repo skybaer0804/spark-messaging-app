@@ -9,8 +9,8 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "preact": "^10.19.3",
-        "@skybaer0804/spark-messaging-client": "latest"
+        "@skybaer0804/spark-messaging-client": "^1.0.1",
+        "preact": "^10.19.3"
     },
     "devDependencies": {
         "@preact/preset-vite": "^2.8.2",

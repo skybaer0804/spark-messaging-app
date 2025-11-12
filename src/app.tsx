@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import sparkMessagingClient from './config/sparkMessaging';
+import { SparkMessagingError } from '@skybaer0804/spark-messaging-client';
+import type { MessageData, ConnectedData } from '@skybaer0804/spark-messaging-client';
 import './app.css';
 
 interface Message {
@@ -21,127 +23,80 @@ export function App() {
         console.log('Server URL:', import.meta.env.VITE_SERVER_URL || 'http://localhost:3000');
         console.log('Project Key:', import.meta.env.VITE_PROJECT_KEY ? '***' : 'default-project-key-12345');
 
-        // 연결 상태 핸들러
-        const handleConnected = (data: { socketId: string }) => {
+        // 연결 상태 핸들러 (이미 연결되어 있으면 즉시 호출됨)
+        const handleConnected = (data: ConnectedData) => {
             console.log('✅ Connected event received:', data);
             setIsConnected(true);
             setSocketId(data.socketId);
         };
 
+        // 연결 상태 변경 핸들러
+        const handleConnectionStateChange = (connected: boolean) => {
+            console.log('🔄 Connection state changed:', connected);
+            setIsConnected(connected);
+            if (connected) {
+                const status = sparkMessagingClient.getConnectionStatus();
+                setSocketId(status.socketId);
+            } else {
+                setSocketId(null);
+            }
+        };
+
         // 메시지 수신 핸들러
-        const handleMessage = (msg: { content: string; roomId?: string }) => {
+        const handleMessage = (msg: MessageData) => {
             console.log('📨 Message received:', msg);
             setMessages((prev) => [
                 ...prev,
                 {
                     id: Date.now().toString(),
                     content: msg.content,
-                    timestamp: new Date(),
+                    timestamp: new Date(msg.timestamp || Date.now()),
                     type: 'received',
                 },
             ]);
         };
 
         // 에러 핸들러
-        const handleError = (error: { message: string }) => {
+        const handleError = (error: Error | SparkMessagingError) => {
             console.error('❌ Error:', error);
+            if (error instanceof SparkMessagingError) {
+                console.error('Error code:', error.code);
+            }
             setIsConnected(false);
         };
 
         // 이벤트 리스너 등록
-        // SDK가 생성자에서 자동으로 연결을 시작하므로 이벤트 리스너만 등록
-        sparkMessagingClient.onConnected(handleConnected);
-        sparkMessagingClient.onMessage(handleMessage);
-        sparkMessagingClient.onError(handleError);
+        const unsubscribeConnected = sparkMessagingClient.onConnected(handleConnected);
+        const unsubscribeStateChange = sparkMessagingClient.onConnectionStateChange(handleConnectionStateChange);
+        const unsubscribeMessage = sparkMessagingClient.onMessage(handleMessage);
+        const unsubscribeError = sparkMessagingClient.onError(handleError);
 
-        console.log('Event listeners registered. Checking connection status...');
+        console.log('Event listeners registered.');
 
-        // SDK가 이미 연결되어 있을 수 있으므로 연결 상태 확인
-        const checkConnectionStatus = () => {
-            const client = sparkMessagingClient as any;
-
-            // 연결 상태 확인 메서드가 있는지 확인
-            if (typeof client.isConnected === 'function') {
-                const connected = client.isConnected();
-                console.log('isConnected() result:', connected);
-
-                if (connected) {
-                    // connection 객체 확인
-                    if (client.connection) {
-                        console.log('Connection object:', client.connection);
-                        console.log('Connection properties:', Object.keys(client.connection));
-
-                        // connection 객체에서 socketId 찾기
-                        if (client.connection.id) {
-                            console.log('✅ Found socketId in connection.id:', client.connection.id);
-                            setIsConnected(true);
-                            setSocketId(client.connection.id);
-                            return;
-                        }
-                        if (client.connection.socketId) {
-                            console.log('✅ Found socketId in connection.socketId:', client.connection.socketId);
-                            setIsConnected(true);
-                            setSocketId(client.connection.socketId);
-                            return;
-                        }
-                    }
-
-                    // 최상위 레벨에서 socketId 확인
-                    if (client.socketId) {
-                        console.log('✅ Found socketId:', client.socketId);
-                        setIsConnected(true);
-                        setSocketId(client.socketId);
-                        return;
-                    }
-
-                    // 연결은 되어 있지만 socketId를 찾지 못한 경우
-                    console.log('✅ Connected but socketId not found. Setting connected state anyway.');
-                    setIsConnected(true);
-                    setSocketId('connected');
-                    return;
-                }
-            }
-
-            // socketId 속성이 직접 있는지 확인
-            if (client.socketId) {
-                console.log('✅ Found socketId:', client.socketId);
-                setIsConnected(true);
-                setSocketId(client.socketId);
-                return;
-            }
-
-            // connection 객체에서 직접 확인
-            if (client.connection) {
-                const socketId = client.connection.id || client.connection.socketId;
-                if (socketId) {
-                    console.log('✅ Found socketId in connection:', socketId);
-                    setIsConnected(true);
-                    setSocketId(socketId);
-                    return;
-                }
-            }
-
-            console.log('⚠️ Connection status not found. Waiting for onConnected event...');
-            console.log('SDK client properties:', Object.keys(client));
-        };
-
-        // 짧은 지연 후 연결 상태 확인 (SDK 초기화 시간 고려)
-        setTimeout(checkConnectionStatus, 500);
+        // 연결 상태 확인 (이미 연결되어 있을 수 있음)
+        const status = sparkMessagingClient.getConnectionStatus();
+        if (status.isConnected) {
+            console.log('✅ Already connected:', status);
+            setIsConnected(true);
+            setSocketId(status.socketId);
+        }
 
         // 클린업
         return () => {
             console.log('Cleaning up Spark Messaging client...');
-            if (typeof sparkMessagingClient.disconnect === 'function') {
-                sparkMessagingClient.disconnect();
-            }
+            unsubscribeConnected();
+            unsubscribeStateChange();
+            unsubscribeMessage();
+            unsubscribeError();
+            sparkMessagingClient.disconnect();
         };
     }, []);
 
-    const sendMessage = () => {
+    const sendMessage = async () => {
         if (input.trim() && isConnected) {
-            // SDK의 sendMessage API에 맞게 호출
             try {
-                sparkMessagingClient.sendMessage(roomId as any, input as any);
+                // Promise 기반 메시지 전송
+                await sparkMessagingClient.sendMessage('chat', input);
                 setMessages((prev) => [
                     ...prev,
                     {
@@ -154,6 +109,11 @@ export function App() {
                 setInput('');
             } catch (error) {
                 console.error('Failed to send message:', error);
+                if (error instanceof SparkMessagingError) {
+                    alert(`메시지 전송 실패: ${error.message} (코드: ${error.code})`);
+                } else {
+                    alert('메시지 전송 실패');
+                }
             }
         }
     };
