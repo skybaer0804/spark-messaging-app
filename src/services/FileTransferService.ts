@@ -4,8 +4,6 @@ import { ChatService } from './ChatService';
 import type { FileData } from './ChatService';
 
 export class FileTransferService {
-    private client: SparkMessaging;
-    private connectionService: ConnectionService;
     private chatService: ChatService;
 
     // 파일 타입 정의
@@ -27,9 +25,7 @@ export class FileTransferService {
     // 파일 크기 제한 (MB)
     static readonly MAX_FILE_SIZE = 10; // 10MB
 
-    constructor(client: SparkMessaging, connectionService: ConnectionService, chatService: ChatService) {
-        this.client = client;
-        this.connectionService = connectionService;
+    constructor(_client: SparkMessaging, _connectionService: ConnectionService, chatService: ChatService) {
         this.chatService = chatService;
     }
 

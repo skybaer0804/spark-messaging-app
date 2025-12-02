@@ -22,6 +22,10 @@ export class WebRTCService {
     }
 
     public setCurrentRoomRef(roomId: string | null) {
+        console.log('[DEBUG] WebRTCService setCurrentRoomRef:', {
+            roomId,
+            previousRoomRef: this.currentRoomRef,
+        });
         this.currentRoomRef = roomId;
     }
 
@@ -31,19 +35,35 @@ export class WebRTCService {
 
     public setVideoRef(socketId: string, element: HTMLVideoElement | null) {
         if (element) {
+            console.log('[DEBUG] 비디오 엘리먼트 설정:', { socketId, elementId: element.id, hasSrcObject: !!element.srcObject });
             this.videoRefs.set(socketId, element);
         } else {
+            console.log('[DEBUG] 비디오 엘리먼트 제거:', socketId);
             this.videoRefs.delete(socketId);
         }
     }
 
     public async startLocalStream(): Promise<MediaStream> {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-        });
-        this.localStream = stream;
-        return stream;
+        console.log('[DEBUG] 로컬 스트림 시작 요청');
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: true,
+            });
+            console.log('[DEBUG] 로컬 스트림 획득 성공:', {
+                id: stream.id,
+                active: stream.active,
+                videoTracks: stream.getVideoTracks().length,
+                audioTracks: stream.getAudioTracks().length,
+                videoTrackEnabled: stream.getVideoTracks()[0]?.enabled,
+                videoTrackReadyState: stream.getVideoTracks()[0]?.readyState,
+            });
+            this.localStream = stream;
+            return stream;
+        } catch (error) {
+            console.error('[ERROR] 로컬 스트림 획득 실패:', error);
+            throw error;
+        }
     }
 
     public stopLocalStream() {
@@ -75,6 +95,13 @@ export class WebRTCService {
     }
 
     public async createPeerConnection(targetSocketId: string, isInitiator: boolean): Promise<void> {
+        console.log('[DEBUG] PeerConnection 생성 시작:', {
+            targetSocketId,
+            isInitiator,
+            currentRoomRef: this.currentRoomRef,
+            hasLocalStream: !!this.localStream,
+        });
+
         if (!this.currentRoomRef) {
             console.warn('[WARN] PeerConnection 생성 불가: roomId 없음');
             return;
@@ -96,31 +123,110 @@ export class WebRTCService {
             iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
         });
 
+        // PeerConnection 상태 변경 로깅
+        pc.onconnectionstatechange = () => {
+            console.log('[DEBUG] PeerConnection 상태 변경:', {
+                targetSocketId,
+                state: pc.connectionState,
+            });
+        };
+
+        pc.oniceconnectionstatechange = () => {
+            console.log('[DEBUG] ICE 연결 상태 변경:', {
+                targetSocketId,
+                iceConnectionState: pc.iceConnectionState,
+            });
+        };
+
         // 로컬 스트림 추가
         if (this.localStream) {
-            this.localStream.getTracks().forEach((track) => {
-                pc.addTrack(track, this.localStream!);
+            const tracks = this.localStream.getTracks();
+            console.log('[DEBUG] 로컬 스트림 트랙 추가:', {
+                targetSocketId,
+                trackCount: tracks.length,
+                videoTracks: tracks.filter(t => t.kind === 'video').length,
+                audioTracks: tracks.filter(t => t.kind === 'audio').length,
             });
+            tracks.forEach((track) => {
+                pc.addTrack(track, this.localStream!);
+                console.log('[DEBUG] 트랙 추가됨:', { targetSocketId, kind: track.kind, enabled: track.enabled });
+            });
+        } else {
+            console.warn('[WARN] 로컬 스트림이 없어서 트랙을 추가할 수 없음:', targetSocketId);
         }
 
         // 원격 스트림 수신
         pc.ontrack = (event) => {
+            console.log('[DEBUG] ontrack 이벤트 발생:', {
+                targetSocketId,
+                streams: event.streams.length,
+                track: event.track?.kind,
+                trackId: event.track?.id,
+            });
             const remoteStream = event.streams[0];
             if (remoteStream) {
+                console.log('[DEBUG] 원격 스트림 수신:', {
+                    targetSocketId,
+                    streamId: remoteStream.id,
+                    active: remoteStream.active,
+                    videoTracks: remoteStream.getVideoTracks().length,
+                    audioTracks: remoteStream.getAudioTracks().length,
+                });
+                
                 // ParticipantService에 스트림 업데이트 알림
                 if (this.streamReceivedCallback) {
+                    console.log('[DEBUG] streamReceivedCallback 호출:', targetSocketId);
                     this.streamReceivedCallback(targetSocketId, remoteStream);
                 }
 
-                setTimeout(() => {
+                // 비디오 엘리먼트에 스트림 설정 (재시도 로직 포함)
+                const setStreamToVideoElement = (retryCount = 0) => {
                     const videoElement = this.videoRefs.get(targetSocketId);
+                    console.log('[DEBUG] 비디오 엘리먼트 찾기 시도:', {
+                        targetSocketId,
+                        retryCount,
+                        found: !!videoElement,
+                        allVideoRefs: Array.from(this.videoRefs.keys()),
+                    });
+                    
                     if (videoElement) {
-                        videoElement.srcObject = remoteStream;
-                        videoElement.play().catch((error) => {
-                            console.error('[ERROR] 비디오 재생 실패:', error);
+                        try {
+                            console.log('[DEBUG] 비디오 엘리먼트에 스트림 설정:', {
+                                targetSocketId,
+                                streamId: remoteStream.id,
+                                currentSrcObject: videoElement.srcObject ? '있음' : '없음',
+                            });
+                            videoElement.srcObject = remoteStream;
+                            videoElement.autoplay = true;
+                            videoElement.playsInline = true;
+                            videoElement.muted = false;
+                            videoElement.play().then(() => {
+                                console.log('[DEBUG] 비디오 재생 성공:', targetSocketId);
+                            }).catch((error) => {
+                                console.error('[ERROR] 비디오 재생 실패:', { targetSocketId, error });
+                            });
+                        } catch (error) {
+                            console.error('[ERROR] 비디오 엘리먼트에 스트림 설정 실패:', { targetSocketId, error });
+                        }
+                    } else if (retryCount < 10) {
+                        // 비디오 엘리먼트가 아직 없으면 재시도 (최대 10회, 총 1초)
+                        setTimeout(() => {
+                            setStreamToVideoElement(retryCount + 1);
+                        }, 100);
+                    } else {
+                        console.warn('[WARN] 비디오 엘리먼트를 찾을 수 없음:', {
+                            targetSocketId,
+                            availableRefs: Array.from(this.videoRefs.keys()),
                         });
                     }
+                };
+                
+                // 즉시 시도
+                setTimeout(() => {
+                    setStreamToVideoElement();
                 }, 100);
+            } else {
+                console.warn('[WARN] 원격 스트림이 없음:', targetSocketId);
             }
         };
 
@@ -145,14 +251,22 @@ export class WebRTCService {
         // Offer 생성 및 전송 (초기화자인 경우)
         if (isInitiator) {
             try {
+                console.log('[DEBUG] Offer 생성 시작:', targetSocketId);
                 const offer = await pc.createOffer();
+                console.log('[DEBUG] Offer 생성 완료:', {
+                    targetSocketId,
+                    type: offer.type,
+                    sdp: offer.sdp?.substring(0, 100) + '...',
+                });
                 await pc.setLocalDescription(offer);
+                console.log('[DEBUG] LocalDescription 설정 완료:', targetSocketId);
 
                 if (!this.currentRoomRef) {
                     console.error('[ERROR] 룸 ID 없음 - Offer 전송 불가');
                     return;
                 }
 
+                console.log('[DEBUG] Offer 전송:', { targetSocketId, roomId: this.currentRoomRef });
                 await this.client.sendRoomMessage(
                     this.currentRoomRef,
                     'webrtc-offer' as any,
@@ -161,8 +275,9 @@ export class WebRTCService {
                         to: targetSocketId,
                     })
                 );
+                console.log('[DEBUG] Offer 전송 완료:', targetSocketId);
             } catch (error) {
-                console.error('[ERROR] Offer 생성 실패:', error);
+                console.error('[ERROR] Offer 생성 실패:', { targetSocketId, error });
             }
         }
     }

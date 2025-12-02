@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 import sparkMessagingClient from '../../../config/sparkMessaging';
 import { ConnectionService } from '../../../services/ConnectionService';
 import { ChatService } from '../../../services/ChatService';
+import { FileTransferService } from '../../../services/FileTransferService';
 import { RoomService } from '../services/RoomService';
 import { ParticipantService } from '../services/ParticipantService';
 import { WebRTCService } from '../services/WebRTCService';
@@ -24,9 +25,12 @@ export function useReverseAuction() {
     const [requestedRoomId, setRequestedRoomId] = useState<string | null>(null);
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
     const [isVideoEnabled, setIsVideoEnabled] = useState(false);
+    const [uploadingFile, setUploadingFile] = useState<File | null>(null);
+    const [uploadProgress, setUploadProgress] = useState<number>(0);
 
     const connectionServiceRef = useRef<ConnectionService | null>(null);
     const chatServiceRef = useRef<ChatService | null>(null);
+    const fileTransferServiceRef = useRef<FileTransferService | null>(null);
     const roomServiceRef = useRef<RoomService | null>(null);
     const participantServiceRef = useRef<ParticipantService | null>(null);
     const webRTCServiceRef = useRef<WebRTCService | null>(null);
@@ -34,12 +38,14 @@ export function useReverseAuction() {
     useEffect(() => {
         const connectionService = new ConnectionService(sparkMessagingClient);
         const chatService = new ChatService(sparkMessagingClient, connectionService);
+        const fileTransferService = new FileTransferService(sparkMessagingClient, connectionService, chatService);
         const roomService = new RoomService(sparkMessagingClient, connectionService);
         const participantService = new ParticipantService(sparkMessagingClient, connectionService);
         const webRTCService = new WebRTCService(sparkMessagingClient, connectionService);
 
         connectionServiceRef.current = connectionService;
         chatServiceRef.current = chatService;
+        fileTransferServiceRef.current = fileTransferService;
         roomServiceRef.current = roomService;
         participantServiceRef.current = participantService;
         webRTCServiceRef.current = webRTCService;
@@ -210,7 +216,7 @@ export function useReverseAuction() {
             },
         });
 
-        // Chat 메시지 - Room 메시지에서 chat 타입만 필터링
+        // Chat 메시지 - Room 메시지에서 chat 및 file-transfer 타입 처리
         // 실제로는 client.onRoomMessage를 직접 사용하여 타입 필터링
         const chatUnsubscribe = sparkMessagingClient.onRoomMessage((msg: RoomMessageData) => {
             // 현재 Room의 메시지만 처리
@@ -218,22 +224,44 @@ export function useReverseAuction() {
                 return;
             }
 
-            // chat 타입만 처리
-            const msgType = msg.type || (msg as any).type;
-            if (msgType !== 'chat') {
+            // chat 및 file-transfer 타입 처리
+            const msgType = (msg as any).type || msg.type;
+            if (msgType !== 'chat' && msgType !== 'file-transfer') {
                 return;
             }
 
             const status = connectionService.getConnectionStatus();
             const isOwnMessage = msg.senderId === status.socketId || (msg as any).from === status.socketId;
-            const chatMessage: ChatMessage = {
-                id: `${msg.timestamp || Date.now()}-${Math.random()}`,
-                content: msg.content,
-                timestamp: new Date(msg.timestamp || Date.now()),
-                type: isOwnMessage ? 'sent' : 'received',
-                senderId: (msg as any).from || msg.senderId,
-            };
-            setChatMessages((prev) => [...prev, chatMessage]);
+
+            // 파일 전송 메시지 처리
+            if ((msg as any).type === 'file-transfer') {
+                try {
+                    const fileData = typeof msg.content === 'string' ? JSON.parse(msg.content) : msg.content;
+                    if (fileData.fileData) {
+                        const chatMessage: ChatMessage = {
+                            id: `${msg.timestamp || Date.now()}-${Math.random()}`,
+                            content: fileData.fileData.fileName,
+                            timestamp: new Date(msg.timestamp || Date.now()),
+                            type: isOwnMessage ? 'sent' : 'received',
+                            senderId: (msg as any).from || msg.senderId,
+                            fileData: fileData.fileData,
+                        };
+                        setChatMessages((prev) => [...prev, chatMessage]);
+                    }
+                } catch (error) {
+                    console.error('Failed to parse file message:', error);
+                }
+            } else {
+                // 일반 채팅 메시지
+                const chatMessage: ChatMessage = {
+                    id: `${msg.timestamp || Date.now()}-${Math.random()}`,
+                    content: msg.content,
+                    timestamp: new Date(msg.timestamp || Date.now()),
+                    type: isOwnMessage ? 'sent' : 'received',
+                    senderId: (msg as any).from || msg.senderId,
+                };
+                setChatMessages((prev) => [...prev, chatMessage]);
+            }
         });
 
         // WebRTC 메시지
@@ -265,7 +293,7 @@ export function useReverseAuction() {
             participantService.cleanup();
             webRTCService.cleanup();
         };
-    }, []);
+    }, []); // isVideoEnabled를 의존성에서 제거 - 서비스 재생성 방지
 
     // 룸 생성
     const handleCreateRoom = async () => {
@@ -421,30 +449,110 @@ export function useReverseAuction() {
         }
     };
 
-    // WebRTC: 로컬 스트림 시작
-    const startLocalStream = async () => {
-        if (!webRTCServiceRef.current) return;
+    // 파일 전송
+    const sendFile = async (file: File) => {
+        if (!isConnected || !fileTransferServiceRef.current || !currentRoom) {
+            return;
+        }
+
+        setUploadingFile(file);
+        setUploadProgress(0);
 
         try {
+            await fileTransferServiceRef.current.sendFile(currentRoom.roomId, file, (progress) => {
+                setUploadProgress(progress);
+            });
+            setUploadingFile(null);
+            setUploadProgress(0);
+        } catch (error) {
+            console.error('Failed to send file:', error);
+            setUploadingFile(null);
+            setUploadProgress(0);
+            if (error instanceof Error) {
+                alert(`파일 전송 실패: ${error.message}`);
+            } else {
+                alert('파일 전송 실패');
+            }
+        }
+    };
+
+    // WebRTC: 로컬 스트림 시작
+    const startLocalStream = async () => {
+        console.log('[DEBUG] startLocalStream 호출');
+        if (!webRTCServiceRef.current) {
+            console.error('[ERROR] webRTCServiceRef가 없음');
+            return;
+        }
+
+        try {
+            console.log('[DEBUG] 로컬 스트림 획득 시작');
             const stream = await webRTCServiceRef.current.startLocalStream();
+            console.log('[DEBUG] 로컬 스트림 획득 완료, 상태 업데이트:', {
+                streamId: stream.id,
+                streamActive: stream.active,
+            });
             setLocalStream(stream);
             setIsVideoEnabled(true);
 
             const roomId = currentRoom?.roomId || roomServiceRef.current?.getCurrentRoomRef();
+            console.log('[DEBUG] PeerConnection 생성 준비:', {
+                roomId,
+                currentRoomId: currentRoom?.roomId,
+                roomServiceRoomId: roomServiceRef.current?.getCurrentRoomRef(),
+            });
+
             if (roomId) {
+                // WebRTCService에 현재 룸 ID 설정
+                webRTCServiceRef.current?.setCurrentRoomRef(roomId);
+                console.log('[DEBUG] WebRTCService currentRoomRef 설정:', roomId);
+
                 // 현재 참가자 목록 가져오기 (최신 상태)
                 const currentParticipants = participantServiceRef.current?.getParticipants() || participants;
+                console.log('[DEBUG] 현재 참가자 목록:', {
+                    count: currentParticipants.length,
+                    participants: currentParticipants.map((p) => ({ socketId: p.socketId, name: p.name })),
+                });
+
                 if (currentParticipants.length > 0) {
                     currentParticipants.forEach((participant) => {
                         const status = connectionServiceRef.current?.getConnectionStatus();
                         if (participant.socketId !== status?.socketId) {
+                            console.log('[DEBUG] PeerConnection 생성 예정:', {
+                                targetSocketId: participant.socketId,
+                                mySocketId: status?.socketId,
+                            });
                             // 각 참가자와 WebRTC 연결 시작
                             setTimeout(() => {
-                                webRTCServiceRef.current?.createPeerConnection(participant.socketId, true).catch(console.error);
+                                const service = webRTCServiceRef.current;
+                                const currentRoomId = currentRoom?.roomId || roomServiceRef.current?.getCurrentRoomRef();
+
+                                console.log('[DEBUG] setTimeout 내부 상태 확인:', {
+                                    hasService: !!service,
+                                    currentRoomId,
+                                    serviceCurrentRoomRef: service?.getLocalStream() ? '있음' : '없음',
+                                    hasLocalStream: !!service?.getLocalStream(),
+                                });
+
+                                // roomId가 있으면 다시 설정 (안전장치)
+                                if (currentRoomId && service) {
+                                    service.setCurrentRoomRef(currentRoomId);
+                                }
+
+                                if (service && currentRoomId) {
+                                    service.createPeerConnection(participant.socketId, true).catch((error) => {
+                                        console.error('[ERROR] PeerConnection 생성 실패:', error);
+                                    });
+                                } else {
+                                    console.error('[ERROR] PeerConnection 생성 불가: service 또는 roomId 없음');
+                                }
                             }, 100);
                         }
                     });
+                } else {
+                    console.log('[DEBUG] 참가자가 없어서 PeerConnection 생성하지 않음');
                 }
+            } else {
+                console.warn('[WARN] roomId가 없어서 PeerConnection 생성하지 않음');
             }
         } catch (error) {
             console.error('[ERROR] 로컬 스트림 획득 실패:', error);
@@ -482,6 +590,8 @@ export function useReverseAuction() {
         joinRequestStatus,
         localStream,
         isVideoEnabled,
+        uploadingFile,
+        uploadProgress,
         myRooms: roomServiceRef.current?.getMyRooms() || new Set(),
         handleCreateRoom,
         handleJoinRoom,
@@ -489,6 +599,7 @@ export function useReverseAuction() {
         handleRejectRequest,
         handleLeaveRoom,
         handleSendChat,
+        sendFile,
         startLocalStream,
         stopLocalStream,
         setVideoRef: (socketId: string, element: HTMLVideoElement | null) => {

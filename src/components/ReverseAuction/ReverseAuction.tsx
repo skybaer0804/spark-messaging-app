@@ -1,7 +1,10 @@
 import { useReverseAuction } from './hooks/useReverseAuction';
 import { formatTimestamp } from '../../utils/messageUtils';
+import { formatFileSize, getFileIcon, downloadFile } from '../../utils/fileUtils';
 import type { Category } from './types';
-import { useRef, useEffect, useMemo } from 'preact/hooks';
+import { useRef, useEffect, useState } from 'preact/hooks';
+import { VideoConference } from './VideoConference/VideoConference';
+import { ReverseAuctionVideoConferenceAdapter } from './VideoConference/adapters/VideoConferenceAdapter';
 import './ReverseAuction.scss';
 
 export function ReverseAuction() {
@@ -24,6 +27,8 @@ export function ReverseAuction() {
         joinRequestStatus,
         localStream,
         isVideoEnabled,
+        uploadingFile,
+        uploadProgress,
         myRooms,
         handleCreateRoom,
         handleJoinRoom,
@@ -31,14 +36,17 @@ export function ReverseAuction() {
         handleRejectRequest,
         handleLeaveRoom,
         handleSendChat,
+        sendFile,
         startLocalStream,
         stopLocalStream,
         setVideoRef,
         getSocketId,
     } = useReverseAuction();
 
-    const socketId = getSocketId();
     const chatMessagesRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [imageModal, setImageModal] = useState<{ url: string; fileName: string } | null>(null);
 
     // 채팅 메시지가 추가될 때 스크롤 하단으로 이동
     useEffect(() => {
@@ -47,90 +55,91 @@ export function ReverseAuction() {
         }
     }, [chatMessages.length]);
 
-    // 영상 영역 메모이제이션 (채팅 메시지 업데이트 시 리렌더링 방지)
-    const videoSection = useMemo(
-        () => (
-            <div className="reverse-auction__video-section">
-                <div className="reverse-auction__video-controls">
-                    {!isVideoEnabled ? (
-                        <button className="reverse-auction__video-toggle-button" onClick={startLocalStream}>
-                            📹 영상 시작
-                        </button>
-                    ) : (
-                        <button className="reverse-auction__video-toggle-button reverse-auction__video-toggle-button--stop" onClick={stopLocalStream}>
-                            🛑 영상 중지
-                        </button>
-                    )}
-                </div>
-                <div className="reverse-auction__video-grid">
-                    {/* 로컬 비디오 (자신) */}
-                    {isVideoEnabled && localStream && (
-                        <div className="reverse-auction__video-item reverse-auction__video-item--local">
-                            <video
-                                ref={(el) => {
-                                    if (el && socketId) {
-                                        setVideoRef('local', el);
-                                        el.srcObject = localStream;
-                                        el.autoplay = true;
-                                        el.playsInline = true;
-                                        el.muted = true;
-                                    }
-                                }}
-                                className="reverse-auction__video-element"
-                            />
-                            <div className="reverse-auction__video-label">나 ({socketId?.substring(0, 6)})</div>
-                        </div>
-                    )}
+    // VideoConference Adapter를 useRef로 관리하여 안정적인 참조 유지
+    const videoConferenceAdapterRef = useRef<ReverseAuctionVideoConferenceAdapter | null>(null);
 
-                    {/* 원격 비디오 (다른 참가자들) */}
-                    {participants
-                        .filter((p) => p.socketId !== socketId)
-                        .slice(0, 4 - (isVideoEnabled ? 1 : 0))
-                        .map((participant) => (
-                            <div key={participant.socketId} className="reverse-auction__video-item">
-                                <video
-                                    ref={(el) => {
-                                        setVideoRef(participant.socketId, el);
-                                        if (el && participant.stream) {
-                                            el.srcObject = participant.stream;
-                                            el.autoplay = true;
-                                            el.playsInline = true;
-                                            el.muted = false;
-                                            el.play().catch((error) => {
-                                                console.error('[ERROR] 비디오 재생 실패:', error);
-                                            });
-                                        }
-                                    }}
-                                    className="reverse-auction__video-element"
-                                    style={{ display: participant.stream ? 'block' : 'none' }}
-                                />
-                                {participant.isVideoEnabled !== false && participant.stream ? (
-                                    <div className="reverse-auction__video-label">
-                                        {participant.name} ({participant.role === 'demander' ? '수요자' : '공급자'}) - 영상 중
-                                    </div>
-                                ) : (
-                                    <div className="reverse-auction__video-placeholder">
-                                        {participant.name}
-                                        <br />
-                                        <small>{participant.role === 'demander' ? '수요자' : '공급자'}</small>
-                                        <br />
-                                        <small className="reverse-auction__video-loading">
-                                            {participant.isVideoEnabled === false ? '영상 중지' : '연결 중...'}
-                                        </small>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+    // Adapter는 한 번만 생성
+    if (!videoConferenceAdapterRef.current) {
+        videoConferenceAdapterRef.current = new ReverseAuctionVideoConferenceAdapter({
+            getLocalStream: () => localStream,
+            isVideoEnabled: () => isVideoEnabled,
+            getParticipants: () => participants,
+            getSocketId: () => getSocketId(),
+            startLocalStream: async () => {
+                await startLocalStream();
+            },
+            stopLocalStream: async () => {
+                await stopLocalStream();
+            },
+            setVideoRef: (socketId: string, element: HTMLVideoElement | null) => {
+                setVideoRef(socketId, element);
+            },
+        });
+    }
 
-                    {/* 빈 슬롯 */}
-                    {participants.length === 0 && !isVideoEnabled && (
-                        <div className="reverse-auction__video-placeholder">영상 영역 (영상 시작 버튼을 눌러주세요)</div>
-                    )}
-                </div>
-            </div>
-        ),
-        [isVideoEnabled, localStream, participants, socketId, setVideoRef, startLocalStream, stopLocalStream]
-    );
+    // 최신 값으로 업데이트 (adapter 재생성 없이)
+    videoConferenceAdapterRef.current.updateConfig({
+        getLocalStream: () => localStream,
+        isVideoEnabled: () => isVideoEnabled,
+        getParticipants: () => participants,
+        getSocketId: () => getSocketId(),
+        startLocalStream: async () => {
+            await startLocalStream();
+        },
+        stopLocalStream: async () => {
+            await stopLocalStream();
+        },
+        setVideoRef: (socketId: string, element: HTMLVideoElement | null) => {
+            setVideoRef(socketId, element);
+        },
+    });
+
+    const videoConferenceAdapter = videoConferenceAdapterRef.current;
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (selectedFiles.length > 0) {
+                handleFileSend();
+            } else {
+                handleSendChat();
+            }
+        }
+    };
+
+    const handleFileSelect = (e: Event) => {
+        const target = e.target as HTMLInputElement;
+        const files = Array.from(target.files || []);
+        if (files.length > 0) {
+            setSelectedFiles((prev) => [...prev, ...files]);
+        }
+        // 같은 파일을 다시 선택할 수 있도록 input 초기화
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleFileSend = async () => {
+        if (selectedFiles.length > 0) {
+            // 모든 파일을 순차적으로 전송
+            for (const file of selectedFiles) {
+                await sendFile(file);
+            }
+            setSelectedFiles([]);
+        }
+    };
+
+    const handleFileRemove = (index: number) => {
+        setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleImageClick = (imageUrl: string, fileName: string) => {
+        setImageModal({ url: imageUrl, fileName });
+    };
+
+    const handleCloseImageModal = () => {
+        setImageModal(null);
+    };
 
     // 초기 화면 (랜딩)
     if (!currentRoom) {
@@ -274,7 +283,7 @@ export function ReverseAuction() {
             {/* 영상과 채팅 영역 (Grid 레이아웃) */}
             <div className="reverse-auction__main-content">
                 {/* 영상 영역 */}
-                {videoSection}
+                <VideoConference adapter={videoConferenceAdapter} />
 
                 {/* 채팅 영역 */}
                 <div className="reverse-auction__chat-section">
@@ -290,32 +299,163 @@ export function ReverseAuction() {
                                         </span>
                                         <span className="reverse-auction__chat-message-time">{formatTimestamp(msg.timestamp)}</span>
                                     </div>
-                                    <div className="reverse-auction__chat-message-content">{msg.content}</div>
+                                    {msg.fileData ? (
+                                        <div className="reverse-auction__chat-message-file">
+                                            {msg.fileData.fileType === 'image' ? (
+                                                <div className="reverse-auction__chat-message-image-wrapper">
+                                                    <img
+                                                        src={msg.fileData.data}
+                                                        alt={msg.fileData.fileName}
+                                                        className="reverse-auction__chat-message-image"
+                                                        onClick={() => handleImageClick(msg.fileData!.data, msg.fileData!.fileName)}
+                                                    />
+                                                    <button
+                                                        className="reverse-auction__chat-message-image-download"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            downloadFile(msg.fileData!.fileName, msg.fileData!.data, msg.fileData!.mimeType);
+                                                        }}
+                                                        title="다운로드"
+                                                    >
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            width="16"
+                                                            height="16"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        >
+                                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="reverse-auction__chat-message-document">
+                                                    <div className="reverse-auction__chat-message-document-icon">{getFileIcon(msg.fileData.mimeType)}</div>
+                                                    <div className="reverse-auction__chat-message-document-info">
+                                                        <div className="reverse-auction__chat-message-document-name">{msg.fileData.fileName}</div>
+                                                        <div className="reverse-auction__chat-message-document-size">{formatFileSize(msg.fileData.size)}</div>
+                                                    </div>
+                                                    <button
+                                                        className="reverse-auction__chat-message-document-download"
+                                                        onClick={() => downloadFile(msg.fileData!.fileName, msg.fileData!.data, msg.fileData!.mimeType)}
+                                                        title="다운로드"
+                                                    >
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            width="18"
+                                                            height="18"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        >
+                                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="reverse-auction__chat-message-content">{msg.content}</div>
+                                    )}
                                 </div>
                             ))
                         )}
                     </div>
                     <div className="reverse-auction__chat-input-container">
-                        <input
-                            type="text"
-                            className="reverse-auction__chat-input"
-                            value={chatInput}
-                            onInput={(e) => setChatInput(e.currentTarget.value)}
-                            onKeyPress={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSendChat();
-                                }
-                            }}
-                            placeholder="메시지를 입력하세요..."
-                            disabled={!isConnected}
-                        />
-                        <button className="reverse-auction__chat-send-button" onClick={handleSendChat} disabled={!isConnected || !chatInput.trim()}>
-                            전송
-                        </button>
+                        {selectedFiles.length > 0 && (
+                            <div className="reverse-auction__file-preview">
+                                {selectedFiles.map((file: File, index: number) => (
+                                    <div key={index} className="reverse-auction__file-preview-item">
+                                        <span className="reverse-auction__file-preview-icon">{getFileIcon(file.type)}</span>
+                                        <span className="reverse-auction__file-preview-name">{file.name}</span>
+                                        <span className="reverse-auction__file-preview-size">{formatFileSize(file.size)}</span>
+                                        <button className="reverse-auction__file-remove" onClick={() => handleFileRemove(index)}>
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))}
+                                {uploadingFile && (
+                                    <div className="reverse-auction__progress-container">
+                                        <div className="reverse-auction__progress-bar">
+                                            <div className="reverse-auction__progress-bar-fill" style={{ width: `${uploadProgress}%` }}></div>
+                                        </div>
+                                        <span className="reverse-auction__progress-text">{Math.round(uploadProgress)}% 전송 중...</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        <div className="reverse-auction__chat-input-wrapper">
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                className="reverse-auction__file-input"
+                                onChange={handleFileSelect}
+                                accept="image/*,.xlsx,.xls,.csv,.md,.docx,.doc,.pdf"
+                                multiple
+                                style={{ display: 'none' }}
+                            />
+                            <button
+                                className="reverse-auction__file-button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={!isConnected}
+                                title="파일 첨부"
+                            >
+                                📎
+                            </button>
+                            <input
+                                type="text"
+                                className="reverse-auction__chat-input"
+                                value={chatInput}
+                                onInput={(e) => setChatInput(e.currentTarget.value)}
+                                onKeyPress={handleKeyPress}
+                                placeholder="메시지를 입력하세요..."
+                                disabled={!isConnected}
+                            />
+                            <button
+                                className="reverse-auction__chat-send-button"
+                                onClick={selectedFiles.length > 0 ? handleFileSend : handleSendChat}
+                                disabled={!isConnected || (!chatInput.trim() && selectedFiles.length === 0)}
+                            >
+                                전송
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
+            {imageModal && (
+                <div className="reverse-auction__image-modal" onClick={handleCloseImageModal}>
+                    <div className="reverse-auction__image-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="reverse-auction__image-modal-close" onClick={handleCloseImageModal}>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                        <img src={imageModal.url} alt={imageModal.fileName} className="reverse-auction__image-modal-image" />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
