@@ -1,4 +1,5 @@
-import { useRef } from 'preact/hooks';
+import { useRef, useEffect } from 'preact/hooks';
+import { memo } from 'preact/compat';
 import { FilePreview } from './FilePreview';
 import './Chat.scss';
 
@@ -19,7 +20,7 @@ interface ChatInputProps {
     classNamePrefix?: string;
 }
 
-export function ChatInput({
+function ChatInputComponent({
     input,
     setInput,
     selectedFiles,
@@ -36,7 +37,28 @@ export function ChatInput({
     classNamePrefix = 'chat',
 }: ChatInputProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const baseClass = classNamePrefix;
+
+    // textarea 높이 자동 조절
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            // 높이 초기화
+            textarea.style.height = 'auto';
+            // 스크롤 높이에 맞춰 조절 (최대 5줄)
+            const scrollHeight = textarea.scrollHeight;
+            const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 24;
+            const minHeight = lineHeight * 2 + 24; // 기본 2줄
+            const maxHeight = lineHeight * 5 + 24; // 최대 5줄
+            
+            if (scrollHeight <= maxHeight) {
+                textarea.style.height = `${scrollHeight}px`;
+            } else {
+                textarea.style.height = `${maxHeight}px`;
+            }
+        }
+    }, [input]);
 
     return (
         <div className={`${baseClass}__input-container`}>
@@ -48,6 +70,18 @@ export function ChatInput({
                 classNamePrefix={classNamePrefix}
             />
             <div className={`${baseClass}__input-wrapper`}>
+                <textarea
+                    ref={textareaRef}
+                    className={`${baseClass}__input`}
+                    value={input}
+                    onInput={(e) => setInput(e.currentTarget.value)}
+                    onKeyPress={onKeyPress}
+                    placeholder={placeholder || (isConnected ? '메시지를 입력하세요...' : '연결 중...')}
+                    disabled={!isConnected}
+                    rows={2}
+                />
+            </div>
+            <div className={`${baseClass}__input-actions`}>
                 {showFileUpload && (
                     <>
                         <input
@@ -57,22 +91,14 @@ export function ChatInput({
                             onChange={onFileSelect}
                             accept="image/*,.xlsx,.xls,.csv,.md,.docx,.doc,.pdf"
                             multiple
+                            id={`${baseClass}-file-input`}
                             style={{ display: 'none' }}
                         />
-                        <button className={`${baseClass}__file-button`} onClick={() => fileInputRef.current?.click()} disabled={!isConnected} title="파일 첨부">
+                        <label htmlFor={`${baseClass}-file-input`} className={`${baseClass}__file-label`} title="파일 첨부">
                             📎
-                        </button>
+                        </label>
                     </>
                 )}
-                <input
-                    type="text"
-                    className={`${baseClass}__input`}
-                    value={input}
-                    onInput={(e) => setInput(e.currentTarget.value)}
-                    onKeyPress={onKeyPress}
-                    placeholder={placeholder || (isConnected ? '메시지를 입력하세요...' : '연결 중...')}
-                    disabled={!isConnected}
-                />
                 <button
                     onClick={selectedFiles.length > 0 ? onSendFile : onSendMessage}
                     disabled={!isConnected || (!input.trim() && selectedFiles.length === 0)}
@@ -84,3 +110,16 @@ export function ChatInput({
         </div>
     );
 }
+
+// memo로 메모이제이션하여 props가 변경되지 않으면 리렌더링 방지
+export const ChatInput = memo(ChatInputComponent, (prevProps, nextProps) => {
+    return (
+        prevProps.input === nextProps.input &&
+        prevProps.isConnected === nextProps.isConnected &&
+        prevProps.uploadProgress === nextProps.uploadProgress &&
+        prevProps.selectedFiles.length === nextProps.selectedFiles.length &&
+        prevProps.classNamePrefix === nextProps.classNamePrefix &&
+        prevProps.showFileUpload === nextProps.showFileUpload &&
+        prevProps.placeholder === nextProps.placeholder
+    );
+});

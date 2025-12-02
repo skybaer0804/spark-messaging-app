@@ -1,3 +1,4 @@
+import { memo } from 'preact/compat';
 import './Chat.scss';
 
 interface ImageModalProps {
@@ -7,7 +8,7 @@ interface ImageModalProps {
     classNamePrefix?: string;
 }
 
-export function ImageModal({ url, fileName, onClose, classNamePrefix = 'chat' }: ImageModalProps) {
+function ImageModalComponent({ url, fileName, onClose, classNamePrefix = 'chat' }: ImageModalProps) {
     const baseClass = classNamePrefix;
 
     return (
@@ -34,4 +35,9 @@ export function ImageModal({ url, fileName, onClose, classNamePrefix = 'chat' }:
         </div>
     );
 }
+
+// memo로 메모이제이션하여 url과 fileName이 변경되지 않으면 리렌더링 방지
+export const ImageModal = memo(ImageModalComponent, (prevProps, nextProps) => {
+    return prevProps.url === nextProps.url && prevProps.fileName === nextProps.fileName && prevProps.classNamePrefix === nextProps.classNamePrefix;
+});
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import { memo } from 'preact/compat';
 import type { ChatAdapter, ChatConfig, ChatMessage } from './types';
 import { ChatMessages } from './ChatMessages';
 import { ChatInput } from './ChatInput';
@@ -12,7 +13,7 @@ interface ChatProps {
     classNamePrefix?: string;
 }
 
-export function Chat({ adapter, config = {}, classNamePrefix = 'chat' }: ChatProps) {
+function ChatComponent({ adapter, config = {}, classNamePrefix = 'chat' }: ChatProps) {
     const baseClass = config.classNamePrefix || classNamePrefix;
     const [messages, setMessages] = useState<ChatMessage[]>([]);
 
@@ -56,7 +57,7 @@ export function Chat({ adapter, config = {}, classNamePrefix = 'chat' }: ChatPro
     const showImageModal = config.showImageModal !== false;
 
     return (
-        <>
+        <div className={baseClass} style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
             <ChatMessages
                 messages={messages}
                 onImageClick={handleImageClick}
@@ -82,6 +83,13 @@ export function Chat({ adapter, config = {}, classNamePrefix = 'chat' }: ChatPro
             {showImageModal && imageModal && (
                 <ImageModal url={imageModal.url} fileName={imageModal.fileName} onClose={handleCloseImageModal} classNamePrefix={baseClass} />
             )}
-        </>
+        </div>
     );
 }
+
+// memo로 메모이제이션하여 adapter 참조가 변경되지 않으면 리렌더링 방지
+export const Chat = memo(ChatComponent, (prevProps, nextProps) => {
+    // adapter 참조가 같으면 리렌더링하지 않음
+    // 실제 상태 변경은 adapter 내부에서 관리되므로 여기서는 참조만 비교
+    return prevProps.adapter === nextProps.adapter && prevProps.classNamePrefix === nextProps.classNamePrefix;
+});

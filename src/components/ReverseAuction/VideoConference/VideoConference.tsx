@@ -17,12 +17,23 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
         handleStartLocalStream,
         handleStopLocalStream,
         handleSetVideoRef,
+        localStreamSignal,
+        isVideoEnabledSignal,
+        participantsSignal,
+        socketIdSignal,
     } = useVideoConference(adapter);
+
+    // Signal을 직접 사용하여 반응형 업데이트
+    // Signal.value를 읽으면 자동으로 구독되므로 컴포넌트가 리렌더링됨
+    const effectiveLocalStream = localStreamSignal?.value ?? localStream;
+    const effectiveIsVideoEnabled = isVideoEnabledSignal?.value ?? isVideoEnabled;
+    const effectiveParticipants = participantsSignal?.value ?? participants;
+    const effectiveSocketId = socketIdSignal?.value ?? socketId;
 
     return (
         <div className="video-conference__section">
             <div className="video-conference__controls">
-                {!isVideoEnabled ? (
+                {!effectiveIsVideoEnabled ? (
                     <button className="video-conference__toggle-button" onClick={handleStartLocalStream}>
                         📹 영상 시작
                     </button>
@@ -34,15 +45,15 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
             </div>
             <div className="video-conference__grid">
                 {/* 로컬 비디오 (자신) */}
-                {isVideoEnabled && localStream && (
+                {effectiveIsVideoEnabled && effectiveLocalStream && (
                     <div className="video-conference__item video-conference__item--local">
                         <video
                             ref={(el) => {
                                 localVideoRef.current = el;
-                                if (el && socketId) {
+                                if (el && effectiveSocketId) {
                                     handleSetVideoRef('local', el);
-                                    if (localStream) {
-                                        el.srcObject = localStream;
+                                    if (effectiveLocalStream) {
+                                        el.srcObject = effectiveLocalStream;
                                         el.autoplay = true;
                                         el.playsInline = true;
                                         el.muted = true;
@@ -54,14 +65,14 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                             }}
                             className="video-conference__element"
                         />
-                        <div className="video-conference__label">나 ({socketId?.substring(0, 6)})</div>
+                        <div className="video-conference__label">나 ({effectiveSocketId?.substring(0, 6)})</div>
                     </div>
                 )}
 
                 {/* 원격 비디오 (다른 참가자들) */}
-                {participants
-                    .filter((p) => p.socketId !== socketId)
-                    .slice(0, 4 - (isVideoEnabled ? 1 : 0))
+                {effectiveParticipants
+                    .filter((p) => p.socketId !== effectiveSocketId)
+                    .slice(0, 4 - (effectiveIsVideoEnabled ? 1 : 0))
                     .map((participant) => (
                         <div key={participant.socketId} className="video-conference__item">
                             <video
@@ -99,7 +110,7 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                     ))}
 
                 {/* 빈 슬롯 */}
-                {participants.length === 0 && !isVideoEnabled && (
+                {effectiveParticipants.length === 0 && !effectiveIsVideoEnabled && (
                     <div className="video-conference__placeholder">영상 영역 (영상 시작 버튼을 눌러주세요)</div>
                 )}
             </div>

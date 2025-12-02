@@ -1,3 +1,4 @@
+import { memo } from 'preact/compat';
 import type { ChatMessage } from './types';
 import { formatTimestamp } from '../../utils/messageUtils';
 import { formatFileSize, getFileIcon, downloadFile } from '../../utils/fileUtils';
@@ -9,7 +10,7 @@ interface ChatMessageItemProps {
     classNamePrefix?: string;
 }
 
-export function ChatMessageItem({ message, onImageClick, classNamePrefix = 'chat' }: ChatMessageItemProps) {
+function ChatMessageItemComponent({ message, onImageClick, classNamePrefix = 'chat' }: ChatMessageItemProps) {
     const baseClass = classNamePrefix;
 
     return (
@@ -90,3 +91,8 @@ export function ChatMessageItem({ message, onImageClick, classNamePrefix = 'chat
         </div>
     );
 }
+
+// memo로 메모이제이션하여 message가 변경되지 않으면 리렌더링 방지
+export const ChatMessageItem = memo(ChatMessageItemComponent, (prevProps, nextProps) => {
+    return prevProps.message.id === nextProps.message.id && prevProps.classNamePrefix === nextProps.classNamePrefix;
+});

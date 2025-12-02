@@ -1,0 +1,113 @@
+import type { ChatAdapter, ChatMessage } from '../../Chat/types';
+import type { ChatStore } from '../stores/ChatStore';
+import type { ReverseAuctionStore } from '../stores/ReverseAuctionStore';
+import { ChatService } from '../../../services/ChatService';
+import { FileTransferService } from '../../../services/FileTransferService';
+
+export class ReverseAuctionChatAdapter implements ChatAdapter {
+    private chatStore: ChatStore;
+    private reverseAuctionStore: ReverseAuctionStore;
+    private chatService: ChatService;
+    private fileTransferService: FileTransferService | null;
+
+    constructor(
+        chatStore: ChatStore,
+        reverseAuctionStore: ReverseAuctionStore,
+        chatService: ChatService,
+        fileTransferService: FileTransferService | null = null
+    ) {
+        this.chatStore = chatStore;
+        this.reverseAuctionStore = reverseAuctionStore;
+        this.chatService = chatService;
+        this.fileTransferService = fileTransferService;
+    }
+
+    // 메시지 관련
+    getMessages(): ChatMessage[] {
+        // ChatStore의 메시지를 Chat 컴포넌트의 ChatMessage 타입으로 변환
+        return this.chatStore.messages.value.map((msg) => ({
+            id: msg.id,
+            content: msg.content,
+            timestamp: msg.timestamp,
+            type: msg.type,
+            senderId: msg.senderId,
+            fileData: msg.fileData,
+        }));
+    }
+
+    async sendMessage(content: string): Promise<void> {
+        const currentRoom = this.reverseAuctionStore.currentRoom.value;
+        if (!content.trim() || !currentRoom || !this.reverseAuctionStore.isConnected.value) {
+            return;
+        }
+
+        try {
+            await this.chatService.sendRoomMessage(currentRoom.roomId, 'chat', content.trim());
+            this.chatStore.setInput('');
+        } catch (error) {
+            console.error('Failed to send chat:', error);
+            throw error;
+        }
+    }
+
+    async sendFile(file: File, onProgress?: (progress: number) => void): Promise<void> {
+        const currentRoom = this.reverseAuctionStore.currentRoom.value;
+        if (!this.reverseAuctionStore.isConnected.value || !this.fileTransferService || !currentRoom) {
+            throw new Error('파일 전송을 할 수 없습니다.');
+        }
+
+        this.chatStore.setUploadingFile(file);
+        this.chatStore.setUploadProgress(0);
+
+        try {
+            await this.fileTransferService.sendFile(currentRoom.roomId, file, (progress) => {
+                this.chatStore.setUploadProgress(progress);
+                if (onProgress) {
+                    onProgress(progress);
+                }
+            });
+            this.chatStore.setUploadingFile(null);
+            this.chatStore.setUploadProgress(0);
+        } catch (error) {
+            console.error('Failed to send file:', error);
+            this.chatStore.setUploadingFile(null);
+            this.chatStore.setUploadProgress(0);
+            if (error instanceof Error) {
+                throw new Error(`파일 전송 실패: ${error.message}`);
+            } else {
+                throw new Error('파일 전송 실패');
+            }
+        }
+    }
+
+    // 상태 관리
+    isConnected(): boolean {
+        return this.reverseAuctionStore.isConnected.value;
+    }
+
+    getCurrentRoom(): string | null {
+        return this.reverseAuctionStore.currentRoom.value?.roomId || null;
+    }
+
+    // 파일 전송 상태
+    getUploadingFile(): File | null {
+        return this.chatStore.uploadingFile.value;
+    }
+
+    getUploadProgress(): number {
+        return this.chatStore.uploadProgress.value;
+    }
+
+    // UI 커스터마이징
+    showFileUpload(): boolean {
+        return true; // ReverseAuction에서는 항상 파일 업로드 가능
+    }
+
+    getPlaceholder(): string {
+        return '메시지를 입력하세요...';
+    }
+
+    getEmptyMessage(): string {
+        return '메시지가 없습니다.';
+    }
+}

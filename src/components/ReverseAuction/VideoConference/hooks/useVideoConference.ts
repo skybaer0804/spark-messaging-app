@@ -1,63 +1,40 @@
-import { useState, useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef } from 'preact/hooks';
 import type { VideoConferenceAdapter } from '../types';
 
 export function useVideoConference(adapter: VideoConferenceAdapter) {
-    const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-    const [isVideoEnabled, setIsVideoEnabled] = useState(false);
-    const [participants, setParticipants] = useState(adapter.getParticipants());
-    const [socketId, setSocketId] = useState<string | null>(null);
     const videoElementRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
     const localVideoRef = useRef<HTMLVideoElement | null>(null);
 
-    // adapter의 상태를 동기화
-    useEffect(() => {
-        const updateState = () => {
-            const currentLocalStream = adapter.getLocalStream();
-            const currentIsVideoEnabled = adapter.isVideoEnabled();
-            const currentParticipants = adapter.getParticipants();
-            const currentSocketId = adapter.getSocketId();
+    // Signal 기반 접근 (폴링 제거)
+    const localStreamSignal = adapter.getLocalStreamSignal?.();
+    const isVideoEnabledSignal = adapter.getIsVideoEnabledSignal?.();
+    const participantsSignal = adapter.getParticipantsSignal?.();
+    const socketIdSignal = adapter.getSocketIdSignal?.();
 
-            setLocalStream((prev) => {
-                if (prev !== currentLocalStream) {
-                    return currentLocalStream;
-                }
-                return prev;
-            });
-            
-            setIsVideoEnabled((prev) => {
-                if (prev !== currentIsVideoEnabled) {
-                    return currentIsVideoEnabled;
-                }
-                return prev;
-            });
-            
-            setParticipants((prev) => {
-                const prevStr = JSON.stringify(prev);
-                const currentStr = JSON.stringify(currentParticipants);
-                if (prevStr !== currentStr) {
-                    return [...currentParticipants];
-                }
-                return prev;
-            });
-            
-            setSocketId((prev) => {
-                if (prev !== currentSocketId) {
-                    return currentSocketId;
-                }
-                return prev;
-            });
-        };
+    // Signal이 있으면 직접 사용 (자동 반응형 업데이트)
+    // Signal.value를 읽으면 자동으로 구독되므로 컴포넌트가 리렌더링됨
+    // Signal이 없으면 fallback으로 getter 사용 (하위 호환성)
+    const localStream = localStreamSignal?.value ?? adapter.getLocalStream();
+    const isVideoEnabled = isVideoEnabledSignal?.value ?? adapter.isVideoEnabled();
+    const participants = participantsSignal?.value ?? adapter.getParticipants();
+    const socketId = socketIdSignal?.value ?? adapter.getSocketId();
 
-        // 초기 상태 설정
-        updateState();
-
-        // 주기적으로 상태 동기화 (간단한 폴링 방식)
-        const interval = setInterval(updateState, 100);
-
-        return () => {
-            clearInterval(interval);
-        };
-    }, [adapter]);
+    // Signal이 변경될 때 컴포넌트가 리렌더링되도록 함
+    // Signal.value를 읽으면 자동으로 구독되므로 추가 작업 불필요
+    // 하지만 명시적으로 Signal을 사용하여 반응성을 보장
+    if (localStreamSignal) {
+        // Signal을 읽어서 구독 (의존성 배열에 포함)
+        void localStreamSignal.value;
+    }
+    if (isVideoEnabledSignal) {
+        void isVideoEnabledSignal.value;
+    }
+    if (participantsSignal) {
+        void participantsSignal.value;
+    }
+    if (socketIdSignal) {
+        void socketIdSignal.value;
+    }
 
     // localStream이 변경될 때 로컬 비디오 엘리먼트 업데이트
     useEffect(() => {
@@ -127,6 +104,11 @@ export function useVideoConference(adapter: VideoConferenceAdapter) {
         handleStartLocalStream,
         handleStopLocalStream,
         handleSetVideoRef,
+        // Signal도 반환하여 컴포넌트에서 직접 사용 가능하도록
+        localStreamSignal,
+        isVideoEnabledSignal,
+        participantsSignal,
+        socketIdSignal,
     };
 }
 

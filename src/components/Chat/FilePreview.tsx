@@ -1,3 +1,4 @@
+import { memo } from 'preact/compat';
 import { formatFileSize, getFileIcon } from '../../utils/fileUtils';
 import './Chat.scss';
 
@@ -9,7 +10,7 @@ interface FilePreviewProps {
     classNamePrefix?: string;
 }
 
-export function FilePreview({ files, uploadingFile, uploadProgress = 0, onRemove, classNamePrefix = 'chat' }: FilePreviewProps) {
+function FilePreviewComponent({ files, uploadingFile, uploadProgress = 0, onRemove, classNamePrefix = 'chat' }: FilePreviewProps) {
     const baseClass = classNamePrefix;
 
     if (files.length === 0) {
@@ -39,3 +40,12 @@ export function FilePreview({ files, uploadingFile, uploadProgress = 0, onRemove
         </div>
     );
 }
+
+// memo로 메모이제이션하여 files 배열과 uploadProgress가 변경되지 않으면 리렌더링 방지
+export const FilePreview = memo(FilePreviewComponent, (prevProps, nextProps) => {
+    return (
+        prevProps.files.length === nextProps.files.length &&
+        prevProps.uploadProgress === nextProps.uploadProgress &&
+        prevProps.classNamePrefix === nextProps.classNamePrefix
+    );
+});
