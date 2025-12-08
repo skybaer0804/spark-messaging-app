@@ -1,14 +1,23 @@
 import { useState } from 'preact/hooks';
 import { useTokens } from '../../context/TokenProvider';
-import { Button } from '../common/Button/Button';
-import { Input } from '../common/Input/Input';
-import { Select } from '../common/Select/Select';
-import { StatusChip } from '../common/StatusChip/StatusChip';
-import { Card, CardHeader, CardBody, CardFooter } from '../common/Card/Card';
-import { Box } from '../common/Layout/Box';
-import { Flex } from '../common/Layout/Flex';
-import { Grid } from '../common/Layout/Grid';
-import { IconHome, IconUser, IconSettings, IconBell, IconSearch } from '@tabler/icons-react';
+import { Button } from '../../ui-component/Button/Button';
+import { IconButton } from '../../ui-component/Button/IconButton';
+import { Input } from '../../ui-component/Input/Input';
+import { Select } from '../../ui-component/Select/Select';
+import { StatusChip } from '../../ui-component/StatusChip/StatusChip';
+import { Card, CardHeader, CardBody, CardFooter } from '../../ui-component/Card/Card';
+import { Box } from '../../ui-component/Layout/Box';
+import { Flex } from '../../ui-component/Layout/Flex';
+import { Grid } from '../../ui-component/Layout/Grid';
+import { Stack } from '../../ui-component/Layout/Stack';
+import { Container } from '../../ui-component/Layout/Container';
+import { Typography } from '../../ui-component/Typography/Typography';
+import { Paper } from '../../ui-component/Paper/Paper';
+import { Avatar } from '../../ui-component/Avatar/Avatar';
+import { Badge } from '../../ui-component/Badge/Badge';
+import { List, ListItem, ListItemText, ListItemAvatar } from '../../ui-component/List/List';
+import { Divider } from '../../ui-component/Divider/Divider';
+import { IconHome, IconUser, IconSettings, IconBell, IconSearch, IconTrash, IconMail } from '@tabler/icons-react';
 import './DesignSystemDemo.scss';
 
 export function DesignSystemDemo() {
@@ -17,201 +26,245 @@ export function DesignSystemDemo() {
     const [selectValue, setSelectValue] = useState('option1');
 
     return (
-        <div className="design-system-demo">
-            <header className="design-system-demo__header">
-                <div className="design-system-demo__header-content">
-                    <h1 className="design-system-demo__title">KRDS Design System Demo</h1>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                        <Button onClick={toggleTheme} variant="secondary">
-                            {theme === 'light' ? '🌙 다크 모드' : '☀️ 라이트 모드'}
-                        </Button>
-                        <Button onClick={toggleContrast} variant="secondary">
-                            {contrast === 'standard' ? '👁️ 선명 모드' : '👁️ 기본 모드'}
-                        </Button>
-                    </div>
-                </div>
-                <p className="design-system-demo__description">범정부 UI/UX 가이드라인(KRDS)을 기반으로 한 디자인 시스템입니다.</p>
-            </header>
-
-            <div className="design-system-demo__content">
-                <Box padding="lg" display="flex" style={{ flexDirection: 'column', gap: '32px' }}>
-                    {/* Colors Section */}
-                    <section className="design-system-demo__section">
-                        <h2 className="design-system-demo__section-title">Colors</h2>
-                        <div className="design-system-demo__color-grid">
-                            <div className="design-system-demo__color-item" style={{ background: 'var(--primitive-primary-50)' }}>
-                                <span>Primary</span>
-                            </div>
-                            <div className="design-system-demo__color-item" style={{ background: 'var(--primitive-secondary-50)' }}>
-                                <span>Secondary</span>
-                            </div>
-                            <div className="design-system-demo__color-item" style={{ background: 'var(--primitive-success-50)' }}>
-                                <span>Success</span>
-                            </div>
-                            <div className="design-system-demo__color-item" style={{ background: 'var(--primitive-warning-50)' }}>
-                                <span>Warning</span>
-                            </div>
-                            <div className="design-system-demo__color-item" style={{ background: 'var(--primitive-error-50)' }}>
-                                <span>Error</span>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Layout Components Section */}
-                    <section className="design-system-demo__section">
-                        <h2 className="design-system-demo__section-title">Layout Components</h2>
-                        
-                        <h3 className="design-system-demo__subsection-title">Flex Container</h3>
-                        <Flex gap="md" padding="md" background="surface-level-1" borderRadius="md" style={{ border: '1px dashed var(--color-border-default)' }}>
-                            <Box padding="md" background="interactive-primary" color="text-inverse" borderRadius="sm">Item 1</Box>
-                            <Box padding="md" background="interactive-primary" color="text-inverse" borderRadius="sm">Item 2</Box>
-                            <Box padding="md" background="interactive-primary" color="text-inverse" borderRadius="sm">Item 3</Box>
-                        </Flex>
-                        
-                        <h3 className="design-system-demo__subsection-title" style={{ marginTop: '16px' }}>Grid Container</h3>
-                        <Grid columns={3} gap="md" padding="md" background="surface-level-1" borderRadius="md" style={{ border: '1px dashed var(--color-border-default)' }}>
-                             <Box padding="lg" background="background-secondary" borderRadius="sm" style={{ textAlign: 'center' }}>1</Box>
-                             <Box padding="lg" background="background-secondary" borderRadius="sm" style={{ textAlign: 'center' }}>2</Box>
-                             <Box padding="lg" background="background-secondary" borderRadius="sm" style={{ textAlign: 'center' }}>3</Box>
-                             <Box padding="lg" background="background-secondary" borderRadius="sm" style={{ textAlign: 'center' }}>4</Box>
-                             <Box padding="lg" background="background-secondary" borderRadius="sm" style={{ textAlign: 'center' }}>5</Box>
-                             <Box padding="lg" background="background-secondary" borderRadius="sm" style={{ textAlign: 'center' }}>6</Box>
-                        </Grid>
-                    </section>
-                    
-                    {/* Icons Section */}
-                    <section className="design-system-demo__section">
-                        <h2 className="design-system-demo__section-title">Icons (Tabler)</h2>
-                        <Flex gap="lg" wrap="wrap">
-                            <Flex direction="column" align="center" gap="sm">
-                                <IconHome size={32} color="var(--color-text-primary)" />
-                                <span style={{ fontSize: '12px' }}>Home</span>
-                            </Flex>
-                            <Flex direction="column" align="center" gap="sm">
-                                <IconUser size={32} color="var(--color-interactive-primary)" />
-                                <span style={{ fontSize: '12px' }}>User</span>
-                            </Flex>
-                            <Flex direction="column" align="center" gap="sm">
-                                <IconSettings size={32} color="var(--color-text-secondary)" />
-                                <span style={{ fontSize: '12px' }}>Settings</span>
-                            </Flex>
-                            <Flex direction="column" align="center" gap="sm">
-                                <IconBell size={32} color="var(--color-status-warning)" />
-                                <span style={{ fontSize: '12px' }}>Bell</span>
-                            </Flex>
-                             <Flex direction="column" align="center" gap="sm">
-                                <IconSearch size={32} stroke={1.5} />
-                                <span style={{ fontSize: '12px' }}>Search</span>
-                            </Flex>
-                        </Flex>
-                    </section>
-
-                    {/* Typography Section */}
-                    <section className="design-system-demo__section">
-                        <h2 className="design-system-demo__section-title">Typography</h2>
-                        <div className="design-system-demo__typography-list">
-                            <h1 style={{ fontSize: 'var(--typo-display-large-size-pc)' }}>Display Large</h1>
-                            <h2 style={{ fontSize: 'var(--typo-heading-1-size-pc)' }}>Heading 1</h2>
-                            <h3 style={{ fontSize: 'var(--typo-heading-2-size-pc)' }}>Heading 2</h3>
-                            <p style={{ fontSize: 'var(--typo-body-large-size)' }}>Body Large - 본문 텍스트입니다.</p>
-                            <p style={{ fontSize: 'var(--typo-body-medium-size)' }}>Body Medium - 본문 텍스트입니다.</p>
-                            <p style={{ fontSize: 'var(--typo-body-small-size)' }}>Body Small - 본문 텍스트입니다.</p>
-                        </div>
-                    </section>
-
-                    {/* Components Section */}
-                    <section className="design-system-demo__section">
-                        <h2 className="design-system-demo__section-title">Buttons</h2>
-                        <div className="design-system-demo__component-row">
-                            <Button variant="primary">Primary Button</Button>
-                            <Button variant="secondary">Secondary Button</Button>
-                            <Button variant="primary" disabled>
-                                Disabled
+        <div className="design-system-demo" style={{ backgroundColor: 'var(--color-background-default)', minHeight: '100vh', paddingBottom: '40px' }}>
+            <Paper square elevation={1} padding="md" style={{ position: 'sticky', top: 0, zIndex: 1000, marginBottom: '24px' }}>
+                <Container maxWidth="xl">
+                    <Flex justify="space-between" align="center">
+                        <Typography variant="h2">KRDS Design System</Typography>
+                        <Stack direction="row" spacing="sm">
+                            <Button onClick={toggleTheme} variant="secondary" size="sm">
+                                {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
                             </Button>
-                        </div>
-                        <div className="design-system-demo__component-row">
-                            <Button size="lg">Large</Button>
-                            <Button size="md">Medium</Button>
-                            <Button size="sm">Small</Button>
-                        </div>
-                    </section>
+                            <Button onClick={toggleContrast} variant="secondary" size="sm">
+                                {contrast === 'standard' ? '👁️ High Contrast' : '👁️ Standard'}
+                            </Button>
+                        </Stack>
+                    </Flex>
+                </Container>
+            </Paper>
 
-                    <section className="design-system-demo__section">
-                        <h2 className="design-system-demo__section-title">Inputs</h2>
-                        <div className="design-system-demo__component-col">
-                            <Input label="기본 입력" placeholder="텍스트를 입력하세요" value={inputValue} onInput={(e) => setInputValue(e.currentTarget.value)} />
-                            <Input label="도움말 텍스트" placeholder="입력해주세요" helperText="이것은 도움말 텍스트입니다." />
-                            <Input label="에러 상태" placeholder="Error" error helperText="필수 입력 항목입니다." />
-                            <Input label="비활성화" placeholder="Disabled input" disabled />
-                        </div>
-                    </section>
+            <Container maxWidth="lg">
+                <Stack spacing="lg">
+                    
+                    {/* Typography */}
+                    <Paper padding="lg">
+                        <Typography variant="h2" style={{ marginBottom: '16px' }}>Typography</Typography>
+                        <Stack spacing="sm">
+                            <Typography variant="display-large">Display Large</Typography>
+                            <Typography variant="h1">Heading 1</Typography>
+                            <Typography variant="h2">Heading 2</Typography>
+                            <Typography variant="h3">Heading 3</Typography>
+                            <Divider />
+                            <Typography variant="body-large">Body Large - 본문 텍스트입니다 using the design system tokens.</Typography>
+                            <Typography variant="body-medium">Body Medium - 본문 텍스트입니다. Default body text size.</Typography>
+                            <Typography variant="body-small">Body Small - 작은 본문 텍스트입니다.</Typography>
+                            <Typography variant="caption" color="text-secondary">Caption - 캡션 텍스트입니다.</Typography>
+                        </Stack>
+                    </Paper>
 
-                    <section className="design-system-demo__section">
-                        <h2 className="design-system-demo__section-title">Selects</h2>
-                        <div className="design-system-demo__component-col">
-                            <Select
-                                label="기본 선택"
-                                value={selectValue}
-                                onChange={(e) => setSelectValue(e.currentTarget.value)}
-                                options={[
-                                    { value: 'option1', label: '옵션 1' },
-                                    { value: 'option2', label: '옵션 2' },
-                                    { value: 'option3', label: '옵션 3' },
-                                ]}
-                            />
-                            <Select
-                                label="에러 상태"
-                                error
-                                helperText="선택해주세요."
-                                options={[{ value: '', label: '선택' }]}
-                            />
-                            <Select
-                                label="비활성화"
-                                disabled
-                                options={[{ value: '', label: '비활성화됨' }]}
-                            />
-                        </div>
-                    </section>
+                    {/* Data Display */}
+                    <Paper padding="lg">
+                        <Typography variant="h2" style={{ marginBottom: '16px' }}>Data Display</Typography>
+                        <Grid columns="repeat(auto-fit, minmax(300px, 1fr))" gap="lg">
+                            {/* Avatars */}
+                            <Box>
+                                <Typography variant="h3" style={{ marginBottom: '12px' }}>Avatars</Typography>
+                                <Stack direction="row" spacing="md" align="center">
+                                    <Avatar size="xl" src="https://i.pravatar.cc/150?img=1" alt="User 1" />
+                                    <Avatar size="lg" src="https://i.pravatar.cc/150?img=2" alt="User 2" />
+                                    <Avatar size="md">H</Avatar>
+                                    <Avatar size="sm" variant="rounded" style={{ backgroundColor: 'var(--primitive-primary-500)' }}>OP</Avatar>
+                                </Stack>
+                            </Box>
 
-                    <section className="design-system-demo__section">
-                        <h2 className="design-system-demo__section-title">Status Chips</h2>
-                        <div className="design-system-demo__component-row">
-                            <StatusChip variant="active" label="진행 중" />
-                            <StatusChip variant="pending" label="대기 중" />
-                            <StatusChip variant="badge" label="뱃지" />
-                            <StatusChip variant="default" label="기본" />
-                        </div>
-                    </section>
+                            {/* Badges */}
+                            <Box>
+                                <Typography variant="h3" style={{ marginBottom: '12px' }}>Badges</Typography>
+                                <Stack direction="row" spacing="lg" align="center">
+                                    <Badge badgeContent={4} color="error">
+                                        <IconMail size={24} />
+                                    </Badge>
+                                    <Badge badgeContent={100} color="primary">
+                                        <IconMail size={24} />
+                                    </Badge>
+                                    <Badge variant="dot" color="success">
+                                        <IconBell size={24} />
+                                    </Badge>
+                                </Stack>
+                            </Box>
+                            
+                            {/* Lists */}
+                            <Box>
+                                <Typography variant="h3" style={{ marginBottom: '12px' }}>Lists</Typography>
+                                <Paper variant="outlined" padding="none">
+                                    <List>
+                                        <ListItem>
+                                            <ListItemAvatar>
+                                                <Avatar><IconUser /></Avatar>
+                                            </ListItemAvatar>
+                                            <ListItemText primary="User Name" secondary="Software Engineer" />
+                                        </ListItem>
+                                        <Divider variant="inset" />
+                                        <ListItem>
+                                            <ListItemAvatar>
+                                                <Avatar style={{ backgroundColor: 'var(--primitive-secondary-500)' }}><IconSettings /></Avatar>
+                                            </ListItemAvatar>
+                                            <ListItemText primary="Settings" secondary="Account configuration" />
+                                        </ListItem>
+                                    </List>
+                                </Paper>
+                            </Box>
+                        </Grid>
+                    </Paper>
 
-                    <section className="design-system-demo__section">
-                        <h2 className="design-system-demo__section-title">Cards</h2>
-                        <div className="design-system-demo__card-grid">
+                    {/* Inputs & Buttons */}
+                    <Paper padding="lg">
+                        <Typography variant="h2" style={{ marginBottom: '16px' }}>Inputs & Buttons</Typography>
+                        <Grid columns={2} gap="xl">
+                            <Stack spacing="md">
+                                <Typography variant="h3">Buttons</Typography>
+                                <Flex gap="sm" wrap="wrap">
+                                    <Button variant="primary">Primary</Button>
+                                    <Button variant="secondary">Secondary</Button>
+                                    <Button disabled>Disabled</Button>
+                                    <IconButton color="primary"><IconSearch /></IconButton>
+                                    <IconButton color="error"><IconTrash /></IconButton>
+                                </Flex>
+                            </Stack>
+                            
+                            <Stack spacing="md">
+                                <Typography variant="h3">Inputs</Typography>
+                                <Input 
+                                    label="Email" 
+                                    placeholder="user@example.com" 
+                                    fullWidth 
+                                    value={inputValue}
+                                    onInput={(e) => setInputValue(e.currentTarget.value)}
+                                />
+                                <Select 
+                                    label="Role" 
+                                    options={[
+                                        { label: 'Admin', value: 'admin' },
+                                        { label: 'User', value: 'user' }
+                                    ]}
+                                    fullWidth
+                                    value={selectValue}
+                                    onChange={(e) => setSelectValue(e.currentTarget.value)}
+                                />
+                            </Stack>
+                        </Grid>
+                    </Paper>
+
+                    {/* Surfaces */}
+                    <Paper padding="lg">
+                        <Typography variant="h2" style={{ marginBottom: '16px' }}>Surfaces</Typography>
+                        <Grid columns="repeat(auto-fit, minmax(300px, 1fr))" gap="lg">
                             <Card>
                                 <CardHeader>
-                                    <h3>기본 카드</h3>
+                                    <Typography variant="h3">Card Title</Typography>
                                 </CardHeader>
                                 <CardBody>
-                                    <p>카드의 본문 내용입니다. 다양한 콘텐츠를 담을 수 있습니다.</p>
+                                    <Typography variant="body-medium">
+                                        This is a card component used to display content. It can contain text, images, and actions.
+                                    </Typography>
                                 </CardBody>
                                 <CardFooter>
                                     <Button size="sm">Action</Button>
                                 </CardFooter>
                             </Card>
+                            
+                            <Paper variant="outlined" padding="lg">
+                                <Typography variant="h3" style={{ marginBottom: '8px' }}>Outlined Paper</Typography>
+                                <Typography variant="body-medium">
+                                    Paper component can be used as a generic container with different elevation levels or outlined style.
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                    </Paper>
 
-                            <Card interactive>
+                    {/* Data Display Extra (Status Chips) */}
+                    <Paper padding="lg">
+                        <Typography variant="h2" style={{ marginBottom: '16px' }}>Status & Feedback</Typography>
+                        <Stack spacing="md">
+                            <Typography variant="h3">Status Chips</Typography>
+                            <Flex gap="md">
+                                <StatusChip variant="active" label="Active" />
+                                <StatusChip variant="pending" label="Pending" />
+                                <StatusChip variant="badge" label="Badge" />
+                                <StatusChip variant="default" label="Default" />
+                            </Flex>
+                        </Stack>
+                    </Paper>
+
+                    {/* Layout */}
+                    <Paper padding="lg">
+                        <Typography variant="h2" style={{ marginBottom: '16px' }}>Layout</Typography>
+                        <Stack spacing="md">
+                            <Typography variant="body-medium">Grid Layout (12 cols)</Typography>
+                            <Grid columns={12} gap="sm">
+                                <Box background="primary-100" padding="md" style={{ gridColumn: 'span 8', textAlign: 'center' }}>xs=8</Box>
+                                <Box background="primary-100" padding="md" style={{ gridColumn: 'span 4', textAlign: 'center' }}>xs=4</Box>
+                                <Box background="primary-100" padding="md" style={{ gridColumn: 'span 4', textAlign: 'center' }}>xs=4</Box>
+                                <Box background="primary-100" padding="md" style={{ gridColumn: 'span 8', textAlign: 'center' }}>xs=8</Box>
+                            </Grid>
+                        </Stack>
+                    </Paper>
+
+                    {/* Surfaces */}
+                    <Paper padding="lg">
+                        <Typography variant="h2" style={{ marginBottom: '16px' }}>Surfaces</Typography>
+                        <Grid columns="repeat(auto-fit, minmax(300px, 1fr))" gap="lg">
+                            <Card>
                                 <CardHeader>
-                                    <h3>인터랙티브 카드</h3>
+                                    <Typography variant="h3">Card Title</Typography>
                                 </CardHeader>
                                 <CardBody>
-                                    <p>이 카드는 호버 효과가 적용되어 클릭 가능한 느낌을 줍니다.</p>
+                                    <Typography variant="body-medium">
+                                        This is a card component used to display content. It can contain text, images, and actions.
+                                    </Typography>
                                 </CardBody>
+                                <CardFooter>
+                                    <Button size="sm">Action</Button>
+                                </CardFooter>
                             </Card>
-                        </div>
-                    </section>
-                </Box>
-            </div>
+                            
+                            <Paper variant="outlined" padding="lg">
+                                <Typography variant="h3" style={{ marginBottom: '8px' }}>Outlined Paper</Typography>
+                                <Typography variant="body-medium">
+                                    Paper component can be used as a generic container with different elevation levels or outlined style.
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                    </Paper>
+
+                    {/* Icons */}
+                     <Paper padding="lg">
+                        <Typography variant="h2" style={{ marginBottom: '16px' }}>Icons</Typography>
+                        <Flex gap="lg" wrap="wrap">
+                            <Stack align="center" spacing="xs">
+                                <IconHome />
+                                <Typography variant="caption">Home</Typography>
+                            </Stack>
+                            <Stack align="center" spacing="xs">
+                                <IconUser />
+                                <Typography variant="caption">User</Typography>
+                            </Stack>
+                            <Stack align="center" spacing="xs">
+                                <IconSettings />
+                                <Typography variant="caption">Settings</Typography>
+                            </Stack>
+                             <Stack align="center" spacing="xs">
+                                <IconBell />
+                                <Typography variant="caption">Bell</Typography>
+                            </Stack>
+                        </Flex>
+                    </Paper>
+
+                </Stack>
+            </Container>
         </div>
     );
 }
+
 
 

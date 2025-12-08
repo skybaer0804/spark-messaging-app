@@ -2,9 +2,9 @@ import { useChatApp } from './hooks/useChatApp';
 import { formatTimestamp } from '../../utils/messageUtils';
 import { formatFileSize, getFileIcon, downloadFile } from '../../utils/fileUtils';
 import { useRef, useEffect, useState } from 'preact/hooks';
-import { Button } from '../common/Button/Button';
-import { Input } from '../common/Input/Input';
-import { Card } from '../common/Card/Card';
+import { Button } from '../../ui-component/Button/Button';
+import { Input } from '../../ui-component/Input/Input';
+import { Card } from '../../ui-component/Card/Card';
 import './ChatApp.scss';
 
 export function ChatApp() {
