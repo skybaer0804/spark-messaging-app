@@ -24,6 +24,16 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
                 >
                     <span className="sidebar__item-label">Reverse Auction</span>
                 </button>
+
+                {/* 구분선 */}
+                <div style={{ height: '1px', backgroundColor: 'var(--color-border-default)', margin: '8px 0' }}></div>
+
+                <button
+                    className={`sidebar__item ${currentView === 'design-system' ? 'sidebar__item--active' : ''}`}
+                    onClick={() => onViewChange('design-system')}
+                >
+                    <span className="sidebar__item-label">Design System</span>
+                </button>
             </nav>
         </aside>
     );

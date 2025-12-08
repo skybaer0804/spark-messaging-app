@@ -2,6 +2,9 @@ import { useChatApp } from './hooks/useChatApp';
 import { formatTimestamp } from '../../utils/messageUtils';
 import { formatFileSize, getFileIcon, downloadFile } from '../../utils/fileUtils';
 import { useRef, useEffect, useState } from 'preact/hooks';
+import { Button } from '../common/Button/Button';
+import { Input } from '../common/Input/Input';
+import { Card } from '../common/Card/Card';
 import './ChatApp.scss';
 
 export function ChatApp() {
@@ -84,7 +87,7 @@ export function ChatApp() {
                     <div className="chat-app__room-list-header">
                         <h2 className="chat-app__room-list-title">채팅방 목록</h2>
                         <div className="chat-app__room-create">
-                            <input
+                            <Input
                                 type="text"
                                 className="chat-app__room-create-input"
                                 value={roomIdInput}
@@ -97,9 +100,9 @@ export function ChatApp() {
                                     }
                                 }}
                             />
-                            <button onClick={handleCreateRoom} disabled={!isConnected || !roomIdInput.trim()} className="chat-app__room-create-button">
+                            <Button onClick={handleCreateRoom} disabled={!isConnected || !roomIdInput.trim()} className="chat-app__room-create-button">
                                 만들기
-                            </button>
+                            </Button>
                         </div>
                     </div>
                     <div className="chat-app__room-list-content">
@@ -265,7 +268,7 @@ export function ChatApp() {
                             <button className="chat-app__file-button" onClick={() => fileInputRef.current?.click()} disabled={!isConnected} title="파일 첨부">
                                 📎
                             </button>
-                            <input
+                            <Input
                                 type="text"
                                 className="chat-app__input"
                                 value={input}
@@ -274,13 +277,13 @@ export function ChatApp() {
                                 placeholder={!isConnected ? '연결 중...' : `${currentRoom} Room에 메시지를 입력하세요...`}
                                 disabled={!isConnected}
                             />
-                            <button
+                            <Button
                                 onClick={selectedFiles.length > 0 ? handleFileSend : sendMessage}
                                 disabled={!isConnected || (!input.trim() && selectedFiles.length === 0)}
                                 className="chat-app__send-button"
                             >
                                 전송
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -290,7 +293,7 @@ export function ChatApp() {
                     <div className="chat-app__sidebar-header">
                         <h3 className="chat-app__sidebar-title">채팅방 목록</h3>
                         <div className="chat-app__sidebar-create">
-                            <input
+                            <Input
                                 type="text"
                                 className="chat-app__sidebar-create-input"
                                 value={roomIdInput}
@@ -303,9 +306,9 @@ export function ChatApp() {
                                     }
                                 }}
                             />
-                            <button onClick={handleCreateRoom} disabled={!isConnected || !roomIdInput.trim()} className="chat-app__sidebar-create-button">
+                            <Button onClick={handleCreateRoom} disabled={!isConnected || !roomIdInput.trim()} className="chat-app__sidebar-create-button" size="sm">
                                 만들기
-                            </button>
+                            </Button>
                         </div>
                     </div>
                     <div className="chat-app__sidebar-content">

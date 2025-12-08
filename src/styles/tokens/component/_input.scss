@@ -1,0 +1,46 @@
+// ============================================
+// Input Component Tokens
+// ============================================
+
+:root {
+    // Text Input (Default)
+    --input-background: var(--color-background-primary);
+    --input-border: var(--color-border-default);
+    --input-border-width: 1px;
+    --input-text-color: var(--color-text-primary);
+    --input-placeholder-color: var(--color-text-secondary);
+    --input-padding: var(--space-padding-input);
+    --input-radius: var(--primitive-radius-medium);
+    --input-font-size: var(--typo-body-medium-size);
+    --input-font-weight: var(--primitive-font-weight-regular);
+    --input-line-height: var(--typo-body-medium-line-height);
+    --input-height: 48px;
+    --input-shadow: none;
+
+    // Input States
+    --input-focus-border: var(--color-border-focus);
+    --input-focus-shadow: 0 0 0 3px rgba(var(--color-border-focus), 0.1);
+    --input-disabled-background: var(--color-background-secondary);
+    --input-disabled-text: var(--color-text-disabled);
+    --input-error-border: var(--color-status-error);
+
+    // Textarea
+    --textarea-padding: var(--space-padding-input);
+    --textarea-min-height: 96px;
+    --textarea-line-height: var(--typo-body-medium-line-height);
+
+    // Label
+    --input-label-font-size: var(--typo-label-medium-size);
+    --input-label-font-weight: var(--primitive-font-weight-regular);
+    --input-label-margin-bottom: var(--space-gap-sm);
+
+    // Helper Text
+    --input-helper-text-font-size: var(--typo-label-small-size);
+    --input-helper-text-color: var(--color-text-secondary);
+    --input-helper-text-margin-top: var(--space-gap-xs);
+    --input-error-text-color: var(--color-status-error);
+
+    // Gap between label and input
+    --input-gap-label-input: var(--space-gap-sm); // 8px
+    --input-gap-input-helper: var(--space-gap-xs); // 4px
+}

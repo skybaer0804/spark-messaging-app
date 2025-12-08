@@ -1,0 +1,143 @@
+// ============================================
+// KRDS Semantic Typography Tokens
+// ============================================
+
+:root {
+    // Display (Banner/Marketing)
+    // .display-large
+    --typo-display-large-size-pc: var(--primitive-font-size-display-lg);
+    --typo-display-large-size-mobile: var(--primitive-font-size-display-lg-mobile);
+    --typo-display-large-weight: var(--primitive-font-weight-bold);
+    --typo-display-large-line-height: 1.5;
+    --typo-display-large-letter-spacing: 1px;
+
+    // .display-medium
+    --typo-display-medium-size-pc: var(--primitive-font-size-display-md);
+    --typo-display-medium-size-mobile: var(--primitive-font-size-display-md-mobile);
+    --typo-display-medium-weight: var(--primitive-font-weight-bold);
+    --typo-display-medium-line-height: 1.5;
+    --typo-display-medium-letter-spacing: 1px;
+
+    // .display-small
+    --typo-display-small-size-pc: var(--primitive-font-size-display-sm);
+    --typo-display-small-size-mobile: var(--primitive-font-size-display-sm-mobile);
+    --typo-display-small-weight: var(--primitive-font-weight-bold);
+    --typo-display-small-line-height: 1.5;
+    --typo-display-small-letter-spacing: 1px;
+
+    // Heading
+    // .heading-1 (h1-xlarge)
+    --typo-heading-1-size-pc: var(--primitive-font-size-h1-xlarge);
+    --typo-heading-1-size-mobile: var(--primitive-font-size-h1-xlarge-mobile);
+    --typo-heading-1-weight: var(--primitive-font-weight-bold);
+    --typo-heading-1-line-height: 1.5;
+    --typo-heading-1-letter-spacing: 1px;
+
+    // .heading-2 (h2-large)
+    --typo-heading-2-size-pc: var(--primitive-font-size-h2-large);
+    --typo-heading-2-size-mobile: var(--primitive-font-size-h2-large-mobile);
+    --typo-heading-2-weight: var(--primitive-font-weight-bold);
+    --typo-heading-2-line-height: 1.5;
+    --typo-heading-2-letter-spacing: 1px;
+
+    // .heading-3 (h3-medium)
+    --typo-heading-3-size-pc: var(--primitive-font-size-h3-medium);
+    --typo-heading-3-size-mobile: var(--primitive-font-size-h3-medium-mobile);
+    --typo-heading-3-weight: var(--primitive-font-weight-bold);
+    --typo-heading-3-line-height: 1.5;
+    --typo-heading-3-letter-spacing: 0px;
+
+    // .heading-4 (h4-small)
+    --typo-heading-4-size-pc: var(--primitive-font-size-h4-small);
+    --typo-heading-4-size-mobile: var(--primitive-font-size-h4-small-mobile);
+    --typo-heading-4-weight: var(--primitive-font-weight-bold);
+    --typo-heading-4-line-height: 1.5;
+    --typo-heading-4-letter-spacing: 0px;
+
+    // .heading-5 (h5-xsmall)
+    --typo-heading-5-size-pc: var(--primitive-font-size-h5-xsmall);
+    --typo-heading-5-size-mobile: var(--primitive-font-size-h5-xsmall-mobile);
+    --typo-heading-5-weight: var(--primitive-font-weight-bold);
+    --typo-heading-5-line-height: 1.5;
+    --typo-heading-5-letter-spacing: 0px;
+
+    // .heading-6 (h6-xxsmall)
+    --typo-heading-6-size-pc: var(--primitive-font-size-h6-xxsmall);
+    --typo-heading-6-size-mobile: var(--primitive-font-size-h6-xxsmall-mobile);
+    --typo-heading-6-weight: var(--primitive-font-weight-bold);
+    --typo-heading-6-line-height: 1.5;
+    --typo-heading-6-letter-spacing: 0px;
+
+    // Body
+    // .body-large
+    --typo-body-large-size: var(--primitive-font-size-body-lg);
+    --typo-body-large-size-mobile: var(--primitive-font-size-body-lg);
+    --typo-body-large-weight: var(--primitive-font-weight-regular);
+    --typo-body-large-weight-bold: var(--primitive-font-weight-bold);
+    --typo-body-large-line-height: 1.5;
+    --typo-body-large-letter-spacing: 0px;
+
+    // .body-medium (Default)
+    --typo-body-medium-size: var(--primitive-font-size-body-md);
+    --typo-body-medium-size-mobile: var(--primitive-font-size-body-md);
+    --typo-body-medium-weight: var(--primitive-font-weight-regular);
+    --typo-body-medium-weight-bold: var(--primitive-font-weight-bold);
+    --typo-body-medium-line-height: 1.5;
+    --typo-body-medium-letter-spacing: 0px;
+
+    // .body-small
+    --typo-body-small-size: var(--primitive-font-size-body-sm);
+    --typo-body-small-size-mobile: var(--primitive-font-size-body-sm);
+    --typo-body-small-weight: var(--primitive-font-weight-regular);
+    --typo-body-small-weight-bold: var(--primitive-font-weight-bold);
+    --typo-body-small-line-height: 1.5;
+    --typo-body-small-letter-spacing: 0px;
+
+    // .body-xsmall
+    --typo-body-xsmall-size: var(--primitive-font-size-body-xs);
+    --typo-body-xsmall-size-mobile: var(--primitive-font-size-body-xs);
+    --typo-body-xsmall-weight: var(--primitive-font-weight-regular);
+    --typo-body-xsmall-weight-bold: var(--primitive-font-weight-bold);
+    --typo-body-xsmall-line-height: 1.5;
+    --typo-body-xsmall-letter-spacing: 0px;
+
+    // Navigation
+    // .nav-title-large
+    --typo-nav-title-large-size: var(--primitive-font-size-h3-medium);
+    --typo-nav-title-large-size-mobile: var(--primitive-font-size-h3-medium-mobile);
+    --typo-nav-title-large-weight: var(--primitive-font-weight-bold);
+    --typo-nav-title-large-line-height: 1.5;
+    --typo-nav-title-large-letter-spacing: 0px;
+
+    // .nav-title-small
+    --typo-nav-title-small-size: var(--primitive-font-size-h4-small);
+    --typo-nav-title-small-size-mobile: var(--primitive-font-size-h4-small-mobile);
+    --typo-nav-title-small-weight: var(--primitive-font-weight-bold);
+    --typo-nav-title-small-line-height: 1.5;
+    --typo-nav-title-small-letter-spacing: 0px;
+
+    // Label (Input Field)
+    // .label-large
+    --typo-label-large-size: var(--primitive-font-size-body-lg);
+    --typo-label-large-weight: var(--primitive-font-weight-regular);
+    --typo-label-large-line-height: 1.5;
+    --typo-label-large-letter-spacing: 0px;
+
+    // .label-medium
+    --typo-label-medium-size: var(--primitive-font-size-body-md);
+    --typo-label-medium-weight: var(--primitive-font-weight-regular);
+    --typo-label-medium-line-height: 1.5;
+    --typo-label-medium-letter-spacing: 0px;
+
+    // .label-small
+    --typo-label-small-size: var(--primitive-font-size-body-sm);
+    --typo-label-small-weight: var(--primitive-font-weight-regular);
+    --typo-label-small-line-height: 1.5;
+    --typo-label-small-letter-spacing: 0px;
+
+    // .label-xsmall
+    --typo-label-xsmall-size: var(--primitive-font-size-body-xs);
+    --typo-label-xsmall-weight: var(--primitive-font-weight-regular);
+    --typo-label-xsmall-line-height: 1.5;
+    --typo-label-xsmall-letter-spacing: 0px;
+}

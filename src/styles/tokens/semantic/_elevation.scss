@@ -1,0 +1,45 @@
+// ============================================
+// KRDS Semantic Elevation & Shadow Tokens
+// ============================================
+
+:root {
+    // *** Surface (Background Color) by Elevation ***
+    // Elevation -1 (Lower than background)
+    --elevation-surface-minus-1: var(--primitive-gray-0);
+    --elevation-shadow-minus-1: var(--primitive-shadow-2);
+
+    // Elevation 0 (Default)
+    --elevation-surface-0: var(--primitive-gray-0);
+    --elevation-shadow-0: none;
+
+    // Elevation +1 (Basic interactive)
+    --elevation-surface-1: var(--primitive-gray-0);
+    --elevation-shadow-1: var(--primitive-shadow-2);
+
+    // Elevation +2 (Select open, Menu expand)
+    --elevation-surface-2: var(--primitive-gray-0);
+    --elevation-shadow-2: var(--primitive-shadow-3);
+
+    // Elevation +3 (Tooltip, Panel)
+    --elevation-surface-3: var(--primitive-gray-0);
+    --elevation-shadow-3: var(--primitive-shadow-4);
+
+    // Elevation +4 (Critical alerts)
+    --elevation-surface-4: var(--primitive-gray-0);
+    --elevation-shadow-4: var(--primitive-shadow-4);
+    --elevation-dimd: rgba(0, 0, 0, 0.5); // Overlay
+
+    // *** Shadow Aliases ***
+    --shadow-sm: var(--primitive-shadow-1);
+    --shadow-md: var(--primitive-shadow-2);
+    --shadow-lg: var(--primitive-shadow-3);
+    --shadow-xl: var(--primitive-shadow-4);
+
+    // *** Border (by Elevation) ***
+    --border-color-elevation-minus-1: var(--primitive-gray-20);
+    --border-color-elevation-0: transparent;
+    --border-color-elevation-1: var(--primitive-gray-20);
+    --border-color-elevation-2: var(--color-border-focus);
+    --border-color-elevation-3: var(--color-border-focus);
+    --border-color-elevation-4: var(--color-border-focus);
+}

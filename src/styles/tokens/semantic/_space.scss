@@ -1,0 +1,51 @@
+// ============================================
+// KRDS Semantic Space Tokens
+// ============================================
+
+:root {
+    // *** Layout Gap ***
+    --space-layout-header-breadcrumb: var(--primitive-space-10); // 24px (number-10)
+    --space-layout-left-contents: var(--primitive-space-16); // 64px (number-18)
+    --space-layout-contents-right: var(--primitive-space-10); // 40px (number-14)
+    --space-layout-contents-footer: var(--primitive-space-16); // 64px (number-18)
+    --space-layout-breadcrumb-contents: var(--primitive-space-10); // 40px (number-14)
+
+    // *** Content Gap ***
+    --space-content-gap-lg: var(--primitive-space-6); // 24px (gap-7)
+    --space-content-gap-md: var(--primitive-space-4); // 16px (gap-5)
+    --space-content-gap-sm: var(--primitive-space-2); // 8px (gap-3)
+
+    // *** Component Gap ***
+    --space-gap-xl: var(--primitive-space-6); // 24px
+    --space-gap-lg: var(--primitive-space-4); // 16px
+    --space-gap-md: var(--primitive-space-3); // 12px
+    --space-gap-sm: var(--primitive-space-2); // 8px
+    --space-gap-xs: var(--primitive-space-1); // 4px
+
+    // *** Padding ***
+    // Card/Modal/InfoBox/Alert Container
+    --space-padding-card-lg: var(--primitive-space-6); // PC: 24px
+    --space-padding-card-md: var(--primitive-space-4); // Mobile: 16px
+
+    // Input Field
+    --space-padding-input: var(--primitive-space-4); // 16px
+    --space-padding-input-sm: var(--primitive-space-3); // 12px
+
+    // Button
+    --space-padding-button-lg: var(--primitive-space-4); // 16px
+    --space-padding-button-md: var(--primitive-space-3); // 12px
+    --space-padding-button-sm: var(--primitive-space-2); // 8px
+
+    // *** Margin ***
+    --space-margin-lg: var(--primitive-space-6);
+    --space-margin-md: var(--primitive-space-4);
+    --space-margin-sm: var(--primitive-space-2);
+    --space-margin-xs: var(--primitive-space-1);
+}
+
+// Mobile Overrides
+@media (max-width: 768px) {
+    :root {
+        --space-layout-contents-footer: var(--primitive-space-10); // 40px
+    }
+}

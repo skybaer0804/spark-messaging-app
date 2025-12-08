@@ -7,6 +7,7 @@ import { Content } from './layouts/Content/Content';
 import { ChatApp } from './components/ChatApp/ChatApp';
 import { NotificationApp } from './components/NotificationApp/NotificationApp';
 import { ReverseAuction } from './components/ReverseAuction/ReverseAuction';
+import { DesignSystemDemo } from './components/DesignSystemDemo/DesignSystemDemo';
 import { BottomTab } from './components/BottomTab/BottomTab';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import './app.scss';
@@ -127,6 +128,9 @@ export function App() {
         if (currentView === 'reverse-auction') {
             return 'Reverse Auction';
         }
+        if (currentView === 'design-system') {
+            return 'Design System Demo';
+        }
         return 'Spark Messaging Demo';
     };
 
@@ -147,6 +151,7 @@ export function App() {
                     {currentView === 'chat' && <ChatApp />}
                     {currentView === 'notification' && <NotificationApp />}
                     {currentView === 'reverse-auction' && <ReverseAuction />}
+                    {currentView === 'design-system' && <DesignSystemDemo />}
                 </Content>
             </div>
             <BottomTab currentView={currentView} onTabClick={handleTabClick} />
