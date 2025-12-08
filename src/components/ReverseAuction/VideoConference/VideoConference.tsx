@@ -1,7 +1,11 @@
 import { memo } from 'preact/compat';
 import { useVideoConference } from './hooks/useVideoConference';
 import type { VideoConferenceAdapter } from './types';
-import './VideoConference.scss';
+import { Button } from '@/ui-component/Button/Button';
+import { Box } from '@/ui-component/Layout/Box';
+import { Grid } from '@/ui-component/Layout/Grid';
+import { Typography } from '@/ui-component/Typography/Typography';
+import { Paper } from '@/ui-component/Paper/Paper';
 
 interface VideoConferenceProps {
     adapter: VideoConferenceAdapter;
@@ -23,30 +27,36 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
         socketIdSignal,
     } = useVideoConference(adapter);
 
-    // Signal을 직접 사용하여 반응형 업데이트
-    // Signal.value를 읽으면 자동으로 구독되므로 컴포넌트가 리렌더링됨
     const effectiveLocalStream = localStreamSignal?.value ?? localStream;
     const effectiveIsVideoEnabled = isVideoEnabledSignal?.value ?? isVideoEnabled;
     const effectiveParticipants = participantsSignal?.value ?? participants;
     const effectiveSocketId = socketIdSignal?.value ?? socketId;
 
     return (
-        <div className="video-conference__section">
-            <div className="video-conference__controls">
+        <Box style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <Box style={{ display: 'flex', justifyContent: 'center' }}>
                 {!effectiveIsVideoEnabled ? (
-                    <button className="video-conference__toggle-button" onClick={handleStartLocalStream}>
-                        📹 영상 시작
-                    </button>
+                    <Button onClick={handleStartLocalStream} variant="primary">
+                        📹 Start Video
+                    </Button>
                 ) : (
-                    <button className="video-conference__toggle-button video-conference__toggle-button--stop" onClick={handleStopLocalStream}>
-                        🛑 영상 중지
-                    </button>
+                    <Button onClick={handleStopLocalStream} variant="secondary">
+                        🛑 Stop Video
+                    </Button>
                 )}
-            </div>
-            <div className="video-conference__grid">
-                {/* 로컬 비디오 (자신) */}
+            </Box>
+            
+            <Grid columns={2} gap="sm" style={{ minHeight: '300px' }}>
+                {/* Local Video */}
                 {effectiveIsVideoEnabled && effectiveLocalStream && (
-                    <div className="video-conference__item video-conference__item--local">
+                    <Paper 
+                        elevation={0}
+                        style={{ 
+                            position: 'relative', overflow: 'hidden', aspectRatio: '16/9', 
+                            border: '2px solid var(--primitive-primary-500)', padding: 0,
+                            backgroundColor: 'black'
+                        }}
+                    >
                         <video
                             ref={(el) => {
                                 localVideoRef.current = el;
@@ -58,23 +68,38 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                                         el.playsInline = true;
                                         el.muted = true;
                                         el.play().catch((error) => {
-                                            console.error('[ERROR] 로컬 비디오 재생 실패:', error);
+                                            console.error('[ERROR] Local video play failed:', error);
                                         });
                                     }
                                 }
                             }}
-                            className="video-conference__element"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
-                        <div className="video-conference__label">나 ({effectiveSocketId?.substring(0, 6)})</div>
-                    </div>
+                        <Box style={{ 
+                            position: 'absolute', bottom: 0, left: 0, right: 0, 
+                            backgroundColor: 'rgba(0, 0, 0, 0.7)', padding: '4px', textAlign: 'center' 
+                        }}>
+                            <Typography variant="caption" style={{ color: 'white' }}>
+                                Me ({effectiveSocketId?.substring(0, 6)})
+                            </Typography>
+                        </Box>
+                    </Paper>
                 )}
 
-                {/* 원격 비디오 (다른 참가자들) */}
+                {/* Remote Videos */}
                 {effectiveParticipants
                     .filter((p) => p.socketId !== effectiveSocketId)
                     .slice(0, 4 - (effectiveIsVideoEnabled ? 1 : 0))
                     .map((participant) => (
-                        <div key={participant.socketId} className="video-conference__item">
+                        <Paper 
+                            key={participant.socketId}
+                            elevation={0}
+                            style={{ 
+                                position: 'relative', overflow: 'hidden', aspectRatio: '16/9', 
+                                border: '1px solid var(--color-border-default)', padding: 0,
+                                backgroundColor: 'black'
+                            }}
+                        >
                             <video
                                 ref={(el) => {
                                     handleSetVideoRef(participant.socketId, el);
@@ -84,37 +109,60 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                                         el.playsInline = true;
                                         el.muted = false;
                                         el.play().catch((error) => {
-                                            console.error('[ERROR] 비디오 재생 실패:', error);
+                                            console.error('[ERROR] Remote video play failed:', error);
                                         });
                                     }
                                 }}
-                                className="video-conference__element"
-                                style={{ display: participant.stream ? 'block' : 'none' }}
+                                style={{ 
+                                    width: '100%', height: '100%', objectFit: 'cover',
+                                    display: participant.stream ? 'block' : 'none' 
+                                }}
                             />
                             {participant.isVideoEnabled !== false && participant.stream ? (
-                                <div className="video-conference__label">
-                                    {participant.name} ({participant.role === 'demander' ? '수요자' : '공급자'}) - 영상 중
-                                </div>
+                                <Box style={{ 
+                                    position: 'absolute', bottom: 0, left: 0, right: 0, 
+                                    backgroundColor: 'rgba(0, 0, 0, 0.7)', padding: '4px', textAlign: 'center' 
+                                }}>
+                                    <Typography variant="caption" style={{ color: 'white' }}>
+                                        {participant.name} ({participant.role === 'demander' ? 'Host' : 'Participant'})
+                                    </Typography>
+                                </Box>
                             ) : (
-                                <div className="video-conference__placeholder">
-                                    {participant.name}
-                                    <br />
-                                    <small>{participant.role === 'demander' ? '수요자' : '공급자'}</small>
-                                    <br />
-                                    <small className="video-conference__loading">
-                                        {participant.isVideoEnabled === false ? '영상 중지' : '연결 중...'}
-                                    </small>
-                                </div>
+                                <Box style={{ 
+                                    width: '100%', height: '100%', display: 'flex', flexDirection: 'column', 
+                                    alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0',
+                                    color: 'var(--color-text-secondary)'
+                                }}>
+                                    <Typography variant="body-small" align="center">
+                                        {participant.name}
+                                        <br />
+                                        <Typography variant="caption" component="span">{participant.role === 'demander' ? 'Host' : 'Participant'}</Typography>
+                                        <br />
+                                        <Typography variant="caption" component="span" style={{ color: 'var(--color-primary-main)' }}>
+                                            {participant.isVideoEnabled === false ? 'Video Stopped' : 'Connecting...'}
+                                        </Typography>
+                                    </Typography>
+                                </Box>
                             )}
-                        </div>
+                        </Paper>
                     ))}
 
-                {/* 빈 슬롯 */}
+                {/* Empty Slot */}
                 {effectiveParticipants.length === 0 && !effectiveIsVideoEnabled && (
-                    <div className="video-conference__placeholder">영상 영역 (영상 시작 버튼을 눌러주세요)</div>
+                    <Paper 
+                        variant="outlined"
+                        style={{ 
+                            gridColumn: 'span 2', aspectRatio: '16/9', display: 'flex', 
+                            alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed' 
+                        }}
+                    >
+                        <Typography variant="body-medium" color="text-secondary">
+                            Video Area (Start video to begin)
+                        </Typography>
+                    </Paper>
                 )}
-            </div>
-        </div>
+            </Grid>
+        </Box>
     );
 }
 

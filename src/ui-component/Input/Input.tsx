@@ -1,5 +1,5 @@
 import { JSX } from 'preact';
-import { useTokens } from '../../../context/TokenProvider';
+import { useTokens } from '../../context/TokenProvider';
 import './Input.scss';
 
 export interface InputProps extends Omit<JSX.HTMLAttributes<HTMLInputElement | HTMLTextAreaElement>, 'size'> {
@@ -11,6 +11,7 @@ export interface InputProps extends Omit<JSX.HTMLAttributes<HTMLInputElement | H
     placeholder?: string;
     disabled?: boolean;
     value?: string | number;
+    rows?: number;
     type?: string;
 }
 

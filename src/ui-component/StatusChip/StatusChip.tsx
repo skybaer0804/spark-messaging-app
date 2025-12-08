@@ -1,5 +1,5 @@
 import { JSX } from 'preact';
-import { useTokens } from '../../../context/TokenProvider';
+import { useTokens } from '../../context/TokenProvider';
 import './StatusChip.scss';
 
 export type StatusChipVariant = 'active' | 'pending' | 'badge' | 'default';

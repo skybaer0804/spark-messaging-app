@@ -1,5 +1,5 @@
 import { JSX } from 'preact';
-import { useTokens } from '../../../context/TokenProvider';
+import { useTokens } from '../../context/TokenProvider';
 import './Button.scss';
 
 export interface ButtonProps extends JSX.HTMLAttributes<HTMLButtonElement> {

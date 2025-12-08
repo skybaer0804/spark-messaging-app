@@ -1,22 +1,23 @@
 import { useState } from 'preact/hooks';
 import { useTokens } from '../../context/TokenProvider';
-import { Button } from '../../ui-component/Button/Button';
-import { IconButton } from '../../ui-component/Button/IconButton';
-import { Input } from '../../ui-component/Input/Input';
-import { Select } from '../../ui-component/Select/Select';
-import { StatusChip } from '../../ui-component/StatusChip/StatusChip';
-import { Card, CardHeader, CardBody, CardFooter } from '../../ui-component/Card/Card';
-import { Box } from '../../ui-component/Layout/Box';
-import { Flex } from '../../ui-component/Layout/Flex';
-import { Grid } from '../../ui-component/Layout/Grid';
-import { Stack } from '../../ui-component/Layout/Stack';
-import { Container } from '../../ui-component/Layout/Container';
-import { Typography } from '../../ui-component/Typography/Typography';
-import { Paper } from '../../ui-component/Paper/Paper';
-import { Avatar } from '../../ui-component/Avatar/Avatar';
-import { Badge } from '../../ui-component/Badge/Badge';
-import { List, ListItem, ListItemText, ListItemAvatar } from '../../ui-component/List/List';
-import { Divider } from '../../ui-component/Divider/Divider';
+import { Button } from '@/ui-component/Button/Button';
+import { IconButton } from '@/ui-component/Button/IconButton';
+import { Input } from '@/ui-component/Input/Input';
+import { TextField } from '@/ui-component/TextField/TextField';
+import { Select } from '@/ui-component/Select/Select';
+import { StatusChip } from '@/ui-component/StatusChip/StatusChip';
+import { Card, CardHeader, CardBody, CardFooter } from '@/ui-component/Card/Card';
+import { Box } from '@/ui-component/Layout/Box';
+import { Flex } from '@/ui-component/Layout/Flex';
+import { Grid } from '@/ui-component/Layout/Grid';
+import { Stack } from '@/ui-component/Layout/Stack';
+import { Container } from '@/ui-component/Layout/Container';
+import { Typography } from '@/ui-component/Typography/Typography';
+import { Paper } from '@/ui-component/Paper/Paper';
+import { Avatar } from '@/ui-component/Avatar/Avatar';
+import { Badge } from '@/ui-component/Badge/Badge';
+import { List, ListItem, ListItemText, ListItemAvatar } from '@/ui-component/List/List';
+import { Divider } from '@/ui-component/Divider/Divider';
 import { IconHome, IconUser, IconSettings, IconBell, IconSearch, IconTrash, IconMail } from '@tabler/icons-react';
 import './DesignSystemDemo.scss';
 
@@ -135,11 +136,23 @@ export function DesignSystemDemo() {
                             <Stack spacing="md">
                                 <Typography variant="h3">Inputs</Typography>
                                 <Input 
-                                    label="Email" 
+                                    label="Email (Input)" 
                                     placeholder="user@example.com" 
                                     fullWidth 
                                     value={inputValue}
                                     onInput={(e) => setInputValue(e.currentTarget.value)}
+                                />
+                                <TextField 
+                                    label="Standard TextField" 
+                                    variant="standard"
+                                    placeholder="Standard variant" 
+                                    fullWidth 
+                                />
+                                <TextField 
+                                    label="Filled TextField" 
+                                    variant="filled"
+                                    placeholder="Filled variant" 
+                                    fullWidth 
                                 />
                                 <Select 
                                     label="Role" 

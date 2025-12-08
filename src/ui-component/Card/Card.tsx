@@ -1,5 +1,5 @@
 import { JSX } from 'preact';
-import { useTokens } from '../../../context/TokenProvider';
+import { useTokens } from '../../context/TokenProvider';
 import './Card.scss';
 
 export interface CardProps extends JSX.HTMLAttributes<HTMLDivElement> {
