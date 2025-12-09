@@ -1,3 +1,5 @@
+import type { Signal } from '@preact/signals';
+
 // 공통 파일 데이터 타입
 export interface FileData {
   fileName: string;

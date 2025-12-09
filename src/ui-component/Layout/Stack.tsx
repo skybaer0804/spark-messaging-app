@@ -1,4 +1,3 @@
-import { JSX } from 'preact';
 import { Flex, FlexProps } from './Flex';
 
 export interface StackProps extends FlexProps {

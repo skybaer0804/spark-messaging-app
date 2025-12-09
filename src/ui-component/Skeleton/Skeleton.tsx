@@ -17,10 +17,16 @@ export function Skeleton({
   style,
   ...props
 }: SkeletonProps) {
+  const mergedStyle = {
+    width,
+    height,
+    ...(style && typeof style === 'object' && !('value' in style) ? style : {}),
+  } as JSX.CSSProperties;
+
   return (
     <span
       className={`skeleton skeleton--${variant} ${animation ? `skeleton--${animation}` : ''} ${className}`}
-      style={{ width, height, ...style }}
+      style={mergedStyle}
       {...props}
     />
   );

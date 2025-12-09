@@ -30,10 +30,17 @@ export function CircularProgress({
     rootStyle.transform = 'rotate(-90deg)';
   }
 
+  const mergedStyle = {
+    width: size,
+    height: size,
+    ...rootStyle,
+    ...(style && typeof style === 'object' && !('value' in style) ? style : {}),
+  } as JSX.CSSProperties;
+
   return (
     <span
       className={`circular-progress circular-progress--${color} circular-progress--${variant} ${className}`}
-      style={{ width: size, height: size, ...rootStyle, ...style }}
+      style={mergedStyle}
       role="progressbar"
       aria-valuenow={variant === 'determinate' ? Math.round(value) : undefined}
       {...props}

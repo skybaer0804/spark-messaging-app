@@ -7,7 +7,6 @@ import { RoomService } from '../services/RoomService';
 import { ParticipantService } from '../services/ParticipantService';
 import { WebRTCService } from '../services/WebRTCService';
 import type { Room, Participant, UserRole, Category, ChatMessage } from '../types';
-import type { RoomMessageData } from '@skybaer0804/spark-messaging-client';
 
 export class ReverseAuctionStore {
   // 연결 상태

@@ -1,4 +1,3 @@
-import { JSX } from 'preact';
 import { Box, BoxProps } from './Box';
 
 export interface ContainerProps extends BoxProps {
