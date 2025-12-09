@@ -3,43 +3,43 @@
 // ============================================
 
 :root {
-    // *** Background Colors ***
-    --color-background-primary: var(--primitive-gray-0); // White
-    --color-background-secondary: var(--primitive-gray-5); // Very Light Cool Grey
-    --color-background-tertiary: var(--primitive-gray-10); // Light Grey
-    --color-background-overlay: rgba(30, 40, 50, 0.6); // Dark Blue-ish Overlay
+  // *** Background Colors ***
+  --color-background-primary: var(--primitive-gray-0); // White
+  --color-background-secondary: var(--primitive-gray-5); // Very Light Cool Grey
+  --color-background-tertiary: var(--primitive-gray-10); // Light Grey
+  --color-background-overlay: rgba(30, 40, 50, 0.6); // Dark Blue-ish Overlay
 
-    // *** Text Colors ***
-    --color-text-primary: var(--primitive-gray-80); // Dark Grey (Soft Black)
-    --color-text-secondary: var(--primitive-gray-50); // Medium Grey
-    --color-text-tertiary: var(--primitive-gray-40); // Light Grey
-    --color-text-disabled: var(--primitive-gray-30);
+  // *** Text Colors ***
+  --color-text-primary: var(--primitive-gray-80); // Dark Grey (Soft Black)
+  --color-text-secondary: var(--primitive-gray-50); // Medium Grey
+  --color-text-tertiary: var(--primitive-gray-40); // Light Grey
+  --color-text-disabled: var(--primitive-gray-30);
 
-    // *** Icon Colors ***
-    --color-icon-primary: var(--primitive-gray-70);
-    --color-icon-secondary: var(--primitive-gray-50);
-    --color-icon-disabled: var(--primitive-gray-30);
+  // *** Icon Colors ***
+  --color-icon-primary: var(--primitive-gray-70);
+  --color-icon-secondary: var(--primitive-gray-50);
+  --color-icon-disabled: var(--primitive-gray-30);
 
-    // *** Border Colors (Soft & Subtle) ***
-    --color-border-default: var(--primitive-gray-15); // Very Subtle Border
-    --color-border-light: var(--primitive-gray-10);
-    --color-border-dark: var(--primitive-gray-30);
-    --color-border-focus: var(--primitive-primary-50);
+  // *** Border Colors (Soft & Subtle) ***
+  --color-border-default: var(--primitive-gray-15); // Very Subtle Border
+  --color-border-light: var(--primitive-gray-10);
+  --color-border-dark: var(--primitive-gray-30);
+  --color-border-focus: var(--primitive-primary-50);
 
-    // *** Status Colors ***
-    --color-status-success: var(--primitive-success-50);
-    --color-status-warning: var(--primitive-warning-50);
-    --color-status-error: var(--primitive-error-50);
-    --color-status-info: var(--primitive-info-50);
+  // *** Status Colors ***
+  --color-status-success: var(--primitive-success-50);
+  --color-status-warning: var(--primitive-warning-50);
+  --color-status-error: var(--primitive-error-50);
+  --color-status-info: var(--primitive-info-50);
 
-    // *** Interactive Colors ***
-    --color-interactive-primary: var(--primitive-primary-50);
-    --color-interactive-secondary: var(--primitive-secondary-50);
-    --color-interactive-disabled: var(--primitive-gray-20);
+  // *** Interactive Colors ***
+  --color-interactive-primary: var(--primitive-primary-50);
+  --color-interactive-secondary: var(--primitive-secondary-50);
+  --color-interactive-disabled: var(--primitive-gray-20);
 
-    // *** Surface (by Elevation) ***
-    --color-surface-base: var(--primitive-gray-0);
-    --color-surface-level-1: var(--primitive-gray-0);
-    --color-surface-level-2: var(--primitive-gray-0);
-    // ... others
+  // *** Surface (by Elevation) ***
+  --color-surface-base: var(--primitive-gray-0);
+  --color-surface-level-1: var(--primitive-gray-0);
+  --color-surface-level-2: var(--primitive-gray-0);
+  // ... others
 }

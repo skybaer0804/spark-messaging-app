@@ -4,8 +4,8 @@ import { TokenProvider } from './context/TokenProvider';
 import './index.css';
 
 render(
-    <TokenProvider>
-        <App />
-    </TokenProvider>,
-    document.getElementById('app')!
+  <TokenProvider>
+    <App />
+  </TokenProvider>,
+  document.getElementById('app')!,
 );

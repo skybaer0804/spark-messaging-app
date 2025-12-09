@@ -1,76 +1,78 @@
 @use '/src/styles/tokens/index';
 
 .input-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--input-gap-label-input);
-    width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--input-gap-label-input);
+  width: 100%;
 }
 
 .input-label {
-    font-family: var(--primitive-font-family);
-    font-size: var(--input-label-font-size);
-    font-weight: var(--input-label-font-weight);
-    color: var(--color-text-primary);
+  font-family: var(--primitive-font-family);
+  font-size: var(--input-label-font-size);
+  font-weight: var(--input-label-font-weight);
+  color: var(--color-text-primary);
 }
 
 .input-wrapper {
-    position: relative;
-    width: 100%;
+  position: relative;
+  width: 100%;
 }
 
 .input {
-    width: 100%;
-    height: var(--input-height);
-    padding: var(--input-padding);
+  width: 100%;
+  height: var(--input-height);
+  padding: var(--input-padding);
 
-    border: var(--input-border-width) solid var(--input-border);
-    border-radius: var(--input-radius);
+  border: var(--input-border-width) solid var(--input-border);
+  border-radius: var(--input-radius);
 
-    font-family: var(--primitive-font-family);
-    font-size: var(--input-font-size);
-    font-weight: var(--input-font-weight);
-    line-height: var(--input-line-height);
-    color: var(--input-text-color);
+  font-family: var(--primitive-font-family);
+  font-size: var(--input-font-size);
+  font-weight: var(--input-font-weight);
+  line-height: var(--input-line-height);
+  color: var(--input-text-color);
 
-    background-color: var(--input-background);
-    box-shadow: var(--input-shadow);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background-color: var(--input-background);
+  box-shadow: var(--input-shadow);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 
-    &::placeholder {
-        color: var(--input-placeholder-color);
-    }
+  &::placeholder {
+    color: var(--input-placeholder-color);
+  }
 
-    &:focus {
-        outline: none;
-        border-color: var(--input-focus-border);
-        box-shadow: var(--input-focus-shadow);
-    }
+  &:focus {
+    outline: none;
+    border-color: var(--input-focus-border);
+    box-shadow: var(--input-focus-shadow);
+  }
 
-    &:disabled {
-        background-color: var(--input-disabled-background);
-        color: var(--input-disabled-text);
-        cursor: not-allowed;
-    }
+  &:disabled {
+    background-color: var(--input-disabled-background);
+    color: var(--input-disabled-text);
+    cursor: not-allowed;
+  }
 
-    &.error {
-        border-color: var(--input-error-border);
-    }
+  &.error {
+    border-color: var(--input-error-border);
+  }
 }
 
 .input-helper-text {
-    margin-top: var(--input-helper-text-margin-top);
-    font-size: var(--input-helper-text-font-size);
-    color: var(--input-helper-text-color);
+  margin-top: var(--input-helper-text-margin-top);
+  font-size: var(--input-helper-text-font-size);
+  color: var(--input-helper-text-color);
 
-    &.error {
-        color: var(--input-error-text-color);
-    }
+  &.error {
+    color: var(--input-error-text-color);
+  }
 }
 
 .input-textarea {
-    min-height: var(--textarea-min-height);
-    resize: vertical;
-    padding: var(--textarea-padding);
-    font-family: inherit;
+  min-height: var(--textarea-min-height);
+  resize: vertical;
+  padding: var(--textarea-padding);
+  font-family: inherit;
 }

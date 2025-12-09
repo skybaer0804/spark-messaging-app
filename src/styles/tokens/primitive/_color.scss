@@ -4,56 +4,56 @@
 // ============================================
 
 :root {
-    // HSL Variables
-    --hue-primary: 210; // Metabase Blue
-    --saturation-primary: 80%;
+  // HSL Variables
+  --hue-primary: 210; // Metabase Blue
+  --saturation-primary: 80%;
 
-    --hue-secondary: 260; // Purple accent
-    --saturation-secondary: 60%;
+  --hue-secondary: 260; // Purple accent
+  --saturation-secondary: 60%;
 
-    // Primary Color Palette (Blue)
-    --primitive-primary-0: hsl(var(--hue-primary), 100%, 98%); // Very Light Blue
-    --primitive-primary-5: hsl(var(--hue-primary), 100%, 95%);
-    --primitive-primary-10: hsl(var(--hue-primary), 100%, 90%);
-    --primitive-primary-15: hsl(var(--hue-primary), 90%, 85%);
-    --primitive-primary-20: hsl(var(--hue-primary), 90%, 80%);
-    --primitive-primary-25: hsl(var(--hue-primary), 85%, 75%);
-    --primitive-primary-30: hsl(var(--hue-primary), 85%, 70%);
-    --primitive-primary-40: hsl(var(--hue-primary), 80%, 60%);
-    --primitive-primary-50: hsl(var(--hue-primary), 75%, 50%); // Base Blue (#509EE3 approx)
-    --primitive-primary-60: hsl(var(--hue-primary), 80%, 45%);
-    --primitive-primary-70: hsl(var(--hue-primary), 85%, 35%);
-    --primitive-primary-80: hsl(var(--hue-primary), 90%, 25%);
-    --primitive-primary-90: hsl(var(--hue-primary), 95%, 15%);
-    --primitive-primary-100: hsl(var(--hue-primary), 100%, 5%); // Very Dark Blue
+  // Primary Color Palette (Blue)
+  --primitive-primary-0: hsl(var(--hue-primary), 100%, 98%); // Very Light Blue
+  --primitive-primary-5: hsl(var(--hue-primary), 100%, 95%);
+  --primitive-primary-10: hsl(var(--hue-primary), 100%, 90%);
+  --primitive-primary-15: hsl(var(--hue-primary), 90%, 85%);
+  --primitive-primary-20: hsl(var(--hue-primary), 90%, 80%);
+  --primitive-primary-25: hsl(var(--hue-primary), 85%, 75%);
+  --primitive-primary-30: hsl(var(--hue-primary), 85%, 70%);
+  --primitive-primary-40: hsl(var(--hue-primary), 80%, 60%);
+  --primitive-primary-50: hsl(var(--hue-primary), 75%, 50%); // Base Blue (#509EE3 approx)
+  --primitive-primary-60: hsl(var(--hue-primary), 80%, 45%);
+  --primitive-primary-70: hsl(var(--hue-primary), 85%, 35%);
+  --primitive-primary-80: hsl(var(--hue-primary), 90%, 25%);
+  --primitive-primary-90: hsl(var(--hue-primary), 95%, 15%);
+  --primitive-primary-100: hsl(var(--hue-primary), 100%, 5%); // Very Dark Blue
 
-    // Secondary Color Palette (Purple)
-    --primitive-secondary-0: hsl(var(--hue-secondary), 100%, 98%);
-    --primitive-secondary-50: hsl(var(--hue-secondary), 60%, 55%);
-    --primitive-secondary-100: hsl(var(--hue-secondary), 80%, 15%);
+  // Secondary Color Palette (Purple)
+  --primitive-secondary-0: hsl(var(--hue-secondary), 100%, 98%);
+  --primitive-secondary-50: hsl(var(--hue-secondary), 60%, 55%);
+  --primitive-secondary-100: hsl(var(--hue-secondary), 80%, 15%);
 
-    // Gray Color Palette (Cool Grey for cleaner look)
-    --hue-gray: 210;
-    --saturation-gray: 15%;
+  // Gray Color Palette (Cool Grey for cleaner look)
+  --hue-gray: 210;
+  --saturation-gray: 15%;
 
-    --primitive-gray-0: hsl(0, 0%, 100%); // White
-    --primitive-gray-5: hsl(var(--hue-gray), var(--saturation-gray), 97%); // Very Light BG
-    --primitive-gray-10: hsl(var(--hue-gray), var(--saturation-gray), 94%); // Light Border
-    --primitive-gray-15: hsl(var(--hue-gray), var(--saturation-gray), 90%);
-    --primitive-gray-20: hsl(var(--hue-gray), var(--saturation-gray), 85%); // Border
-    --primitive-gray-25: hsl(var(--hue-gray), var(--saturation-gray), 80%);
-    --primitive-gray-30: hsl(var(--hue-gray), var(--saturation-gray), 70%);
-    --primitive-gray-40: hsl(var(--hue-gray), var(--saturation-gray), 60%); // Tertiary Text
-    --primitive-gray-50: hsl(var(--hue-gray), var(--saturation-gray), 50%);
-    --primitive-gray-60: hsl(var(--hue-gray), var(--saturation-gray), 40%); // Secondary Text
-    --primitive-gray-70: hsl(var(--hue-gray), var(--saturation-gray), 30%);
-    --primitive-gray-80: hsl(var(--hue-gray), var(--saturation-gray), 20%); // Primary Text
-    --primitive-gray-90: hsl(var(--hue-gray), var(--saturation-gray), 10%);
-    --primitive-gray-100: hsl(var(--hue-gray), var(--saturation-gray), 5%); // Black
+  --primitive-gray-0: hsl(0, 0%, 100%); // White
+  --primitive-gray-5: hsl(var(--hue-gray), var(--saturation-gray), 97%); // Very Light BG
+  --primitive-gray-10: hsl(var(--hue-gray), var(--saturation-gray), 94%); // Light Border
+  --primitive-gray-15: hsl(var(--hue-gray), var(--saturation-gray), 90%);
+  --primitive-gray-20: hsl(var(--hue-gray), var(--saturation-gray), 85%); // Border
+  --primitive-gray-25: hsl(var(--hue-gray), var(--saturation-gray), 80%);
+  --primitive-gray-30: hsl(var(--hue-gray), var(--saturation-gray), 70%);
+  --primitive-gray-40: hsl(var(--hue-gray), var(--saturation-gray), 60%); // Tertiary Text
+  --primitive-gray-50: hsl(var(--hue-gray), var(--saturation-gray), 50%);
+  --primitive-gray-60: hsl(var(--hue-gray), var(--saturation-gray), 40%); // Secondary Text
+  --primitive-gray-70: hsl(var(--hue-gray), var(--saturation-gray), 30%);
+  --primitive-gray-80: hsl(var(--hue-gray), var(--saturation-gray), 20%); // Primary Text
+  --primitive-gray-90: hsl(var(--hue-gray), var(--saturation-gray), 10%);
+  --primitive-gray-100: hsl(var(--hue-gray), var(--saturation-gray), 5%); // Black
 
-    // System Colors
-    --primitive-success-50: hsl(100, 60%, 50%); // Green
-    --primitive-warning-50: hsl(40, 90%, 60%); // Yellow/Orange
-    --primitive-error-50: hsl(0, 70%, 60%); // Red
-    --primitive-info-50: hsl(200, 90%, 60%); // Sky Blue
+  // System Colors
+  --primitive-success-50: hsl(100, 60%, 50%); // Green
+  --primitive-warning-50: hsl(40, 90%, 60%); // Yellow/Orange
+  --primitive-error-50: hsl(0, 70%, 60%); // Red
+  --primitive-info-50: hsl(200, 90%, 60%); // Sky Blue
 }

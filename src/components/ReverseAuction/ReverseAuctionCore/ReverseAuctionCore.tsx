@@ -150,8 +150,8 @@ function ReverseAuctionCoreComponent({ store }: ReverseAuctionCoreProps) {
                           {myRooms.has(room.roomId)
                             ? 'Enter'
                             : joinRequestStatus === 'pending'
-                            ? 'Request Sent...'
-                            : 'Join Request'}
+                              ? 'Request Sent...'
+                              : 'Join Request'}
                         </Button>
                       </CardFooter>
                     </Card>
