@@ -1,27 +1,10 @@
-// 1. Primitive Tokens
-@forward './primitive/color';
-@forward './primitive/typography';
-@forward './primitive/space';
-@forward './primitive/shape';
-@forward './primitive/shadow';
+// ============================================
+// 통합 CSS 변수 파일 사용 (성능 최적화)
+// 모든 :root 블록을 하나로 통합하여 브라우저 파싱 성능 향상
+// ============================================
+@forward './_variables-unified';
 
-// 2. Semantic Tokens
-@forward './semantic/color';
-@forward './semantic/typography';
-@forward './semantic/space';
-@forward './semantic/elevation';
-
-// 3. Provider (Mode & Theme)
-@forward './provider';
-
-// 4. Component Tokens
-@forward './component/button';
-@forward './component/input';
-@forward './component/card';
-@forward './component/grid';
-@forward './component/header';
-@forward './component/text';
-@forward './component/select';
-@forward './component/chat';
-@forward './component/status';
-@forward './component/layout';
+// ============================================
+// 테마 및 모드 오버라이드 (별도 유지)
+// ============================================
+@forward './_provider';
