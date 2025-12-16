@@ -1,0 +1,123 @@
+@use '/src/styles/tokens/index';
+
+.tabs {
+  width: 100%;
+
+  &__list {
+    display: flex;
+    align-items: stretch;
+    gap: var(--tabs-gap);
+    border-bottom: var(--tabs-border-bottom);
+  }
+
+  &__tab {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    padding: var(--tabs-tab-padding);
+    border-radius: var(--tabs-tab-radius);
+
+    font-size: var(--tabs-tab-font-size);
+    font-weight: var(--tabs-tab-font-weight);
+    color: var(--tabs-tab-text);
+    cursor: pointer;
+    position: relative;
+    white-space: nowrap;
+    transition: background-color 0.2s ease, color 0.2s ease;
+
+    &:hover {
+      background-color: var(--tabs-tab-hover-bg);
+    }
+
+    &:focus-visible {
+      outline: var(--tabs-focus-ring);
+      outline-offset: 2px;
+    }
+
+    &--disabled {
+      cursor: not-allowed;
+      opacity: var(--tabs-disabled-opacity);
+    }
+
+    &--active {
+      color: var(--tabs-tab-text-active);
+    }
+  }
+
+  &__tab-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--tabs-gap);
+  }
+
+  &__indicator {
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: 100%;
+    height: var(--tabs-indicator-height);
+    background-color: var(--tabs-indicator-color);
+    border-radius: var(--tabs-indicator-height);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s ease;
+  }
+
+  &__tab--active &__indicator {
+    transform: scaleX(1);
+  }
+
+  &__panels {
+    padding-top: var(--space-gap-md);
+  }
+
+  &__panel {
+    padding: var(--tabs-panel-padding);
+  }
+
+  &--scrollable {
+    .tabs__list {
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+  }
+
+  &--fullWidth {
+    .tabs__tab {
+      flex: 1 1 0;
+      justify-content: center;
+    }
+  }
+
+  &--vertical {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: var(--space-gap-lg);
+
+    .tabs__list {
+      flex-direction: column;
+      border-bottom: 0;
+      border-right: var(--tabs-border-bottom);
+      padding-right: var(--space-padding-md);
+    }
+
+    .tabs__indicator {
+      bottom: auto;
+      left: auto;
+      right: -1px;
+      top: 0;
+      width: var(--tabs-indicator-height);
+      height: 100%;
+      transform: scaleY(0);
+      transform-origin: top;
+    }
+
+    .tabs__tab--active .tabs__indicator {
+      transform: scaleY(1);
+    }
+
+    .tabs__panels {
+      padding-top: 0;
+    }
+  }
+}

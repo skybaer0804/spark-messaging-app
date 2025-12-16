@@ -651,6 +651,33 @@
   --grid-columns-default: repeat(12, 1fr);
   --grid-columns-sidebar-content: 280px 1fr;
   --grid-columns-room-list: repeat(auto-fill, minmax(280px, 1fr));
+  --grid-spacing-unit: var(--primitive-space-base);
+  --grid-spacing-none: 0px;
+  --grid-spacing-xs: var(--space-gap-xs);
+  --grid-spacing-sm: var(--space-gap-sm);
+  --grid-spacing-md: var(--space-gap-md);
+  --grid-spacing-lg: var(--space-gap-lg);
+  --grid-spacing-xl: var(--space-gap-xl);
+
+  // --- Tabs Component Tokens ---
+  --tabs-border-bottom: 1px solid var(--color-border-default);
+  --tabs-gap: var(--space-gap-sm);
+  --tabs-indicator-color: var(--color-interactive-primary);
+  --tabs-indicator-height: 2px;
+
+  // Tab Button
+  --tabs-tab-padding: var(--space-padding-sm) var(--space-padding-md);
+  --tabs-tab-radius: var(--primitive-radius-medium);
+  --tabs-tab-font-size: var(--typo-body-medium-size);
+  --tabs-tab-font-weight: var(--primitive-font-weight-bold);
+  --tabs-tab-text: var(--color-text-secondary);
+  --tabs-tab-text-active: var(--color-text-primary);
+  --tabs-tab-hover-bg: var(--color-surface-level-1);
+  --tabs-disabled-opacity: 0.5;
+  --tabs-focus-ring: 2px solid var(--color-border-focus);
+
+  // Panel
+  --tabs-panel-padding: var(--space-padding-md);
 
   // --- Chat Component Tokens ---
   // Chat Window

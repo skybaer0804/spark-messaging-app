@@ -24,6 +24,7 @@ import { Radio } from '@/ui-component/Radio/Radio';
 import { Alert } from '@/ui-component/Alert/Alert';
 import { CircularProgress } from '@/ui-component/CircularProgress/CircularProgress';
 import { Skeleton } from '@/ui-component/Skeleton/Skeleton';
+import { Tabs } from '@/ui-component/Tabs/Tabs';
 import { IconHome, IconUser, IconSettings, IconBell, IconSearch, IconTrash, IconMail } from '@tabler/icons-react';
 import './DesignSystemDemo.scss';
 
@@ -31,6 +32,7 @@ export function DesignSystemDemo() {
   const { theme, toggleTheme, contrast, toggleContrast } = useTheme();
   const [inputValue, setInputValue] = useState('');
   const [selectValue, setSelectValue] = useState('option1');
+  const [tabValue, setTabValue] = useState<string | number>('overview');
 
   return (
     <div
@@ -266,6 +268,47 @@ export function DesignSystemDemo() {
                 </Box>
               </Grid>
             </Stack>
+          </Paper>
+
+          {/* Navigation */}
+          <Paper padding="lg">
+            <Typography variant="h2" style={{ marginBottom: '16px' }}>
+              Navigation
+            </Typography>
+            <Tabs
+              ariaLabel="design system tabs demo"
+              value={tabValue}
+              onChange={(next) => setTabValue(next)}
+              items={[
+                {
+                  value: 'overview',
+                  label: 'Overview',
+                  content: (
+                    <Typography variant="body-medium">
+                      Overview content. Tabs는 키보드(←/→, Home/End) 이동과 ARIA 연결을 지원합니다.
+                    </Typography>
+                  ),
+                },
+                {
+                  value: 'details',
+                  label: 'Details',
+                  content: (
+                    <Stack spacing="sm">
+                      <Typography variant="body-medium">Details content</Typography>
+                      <Typography variant="caption" color="text-secondary">
+                        토큰 기반 스타일로 어디서든 재사용 가능합니다.
+                      </Typography>
+                    </Stack>
+                  ),
+                },
+                {
+                  value: 'disabled',
+                  label: 'Disabled',
+                  disabled: true,
+                  content: <Typography variant="body-medium">Disabled tab content</Typography>,
+                },
+              ]}
+            />
           </Paper>
 
           {/* Surfaces */}
