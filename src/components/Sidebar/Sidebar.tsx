@@ -1,10 +1,6 @@
-import { JSX } from 'preact';
-import { useState } from 'preact/hooks';
+import type { ComponentChildren, JSX } from 'preact';
+import { useMemo, useState } from 'preact/hooks';
 import {
-  IconMessageCircle,
-  IconBell,
-  IconGavel,
-  IconPalette,
   IconSparkles,
   IconPin,
   IconPinFilled,
@@ -14,63 +10,80 @@ import { Typography } from '@/ui-component/Typography/Typography';
 import { List, ListItem, ListItemText } from '@/ui-component/List/List';
 import { IconButton } from '@/ui-component/Button/IconButton';
 import { useTheme } from '@/context/ThemeProvider';
+import { appRoutes, type AppRouteNode } from '@/routes/appRoutes';
+import { useRouterState } from '@/routes/RouterState';
 import './Sidebar.scss';
 
-interface SidebarProps {
-  currentView: string;
-  onViewChange: (view: string) => void;
+function NavLink(props: {
+  to: string;
+  className?: string;
+  onMouseEnter?: JSX.MouseEventHandler<HTMLAnchorElement>;
+  children: ComponentChildren;
+}) {
+  const { navigate } = useRouterState();
+  return (
+    <a
+      href={props.to}
+      className={props.className}
+      onMouseEnter={props.onMouseEnter}
+      onClick={(e) => {
+        e.preventDefault();
+        navigate(props.to);
+      }}
+    >
+      {props.children}
+    </a>
+  );
 }
 
-interface MenuItem {
-  id: string;
-  label: string;
-  icon: JSX.Element;
-  view: string;
-}
-
-export function Sidebar({ currentView, onViewChange }: SidebarProps) {
+export function Sidebar() {
   const { sidebarConfig, setSidebarConfig } = useTheme();
-  const [isHovered, setIsHovered] = useState(false);
+  const { pathname } = useRouterState();
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+  const [flyoutMainId, setFlyoutMainId] = useState<string | null>(null);
 
-  const { miniDrawer, pinned } = sidebarConfig;
-  const isExpanded = pinned || (!miniDrawer && !pinned) || (miniDrawer && isHovered);
+  const { miniDrawer, pinned, submenuPinned } = sidebarConfig;
+  const isExpanded = pinned || (!miniDrawer && !pinned) || (miniDrawer && isSidebarHovered);
 
-  const menuItems: MenuItem[] = [
-    {
-      id: 'chat',
-      label: '채팅',
-      icon: <IconMessageCircle size={20} />,
-      view: 'chat',
-    },
-    {
-      id: 'notification',
-      label: '알림',
-      icon: <IconBell size={20} />,
-      view: 'notification',
-    },
-    {
-      id: 'reverse-auction',
-      label: '역경매',
-      icon: <IconGavel size={20} />,
-      view: 'reverse-auction',
-    },
-    {
-      id: 'design-system',
-      label: '디자인',
-      icon: <IconPalette size={20} />,
-      view: 'design-system',
-    },
-  ];
+  const mainRoutes = useMemo(() => appRoutes, []);
+
+  const activeMainRoute: AppRouteNode | undefined = useMemo(() => {
+    if (pathname.startsWith('/design-system')) return mainRoutes.find((r) => r.id === 'design-system');
+    return mainRoutes.find((r) => pathname === r.path);
+  }, [mainRoutes, pathname]);
+
+  const flyoutRoute: AppRouteNode | undefined = useMemo(() => {
+    if (flyoutMainId) return mainRoutes.find((r) => r.id === flyoutMainId);
+    if (submenuPinned) return activeMainRoute?.children ? activeMainRoute : mainRoutes.find((r) => r.id === 'design-system');
+    return undefined;
+  }, [activeMainRoute, flyoutMainId, mainRoutes, submenuPinned]);
 
   const handleTogglePin = () => {
     setSidebarConfig({ pinned: !pinned });
   };
 
+  const handleToggleSubmenuPin = () => {
+    setSidebarConfig({ submenuPinned: !submenuPinned });
+  };
+
+  const handleSidebarMouseLeave = () => {
+    setIsSidebarHovered(false);
+    if (!submenuPinned) setFlyoutMainId(null);
+  };
+
+  const handleMainItemHover = (routeId: string, hasChildren: boolean) => {
+    if (!hasChildren) {
+      if (!submenuPinned) setFlyoutMainId(null);
+      return;
+    }
+    setFlyoutMainId(routeId);
+  };
+
   return (
     <aside
       className={`sidebar ${miniDrawer ? 'sidebar--mini' : ''} ${isExpanded ? 'sidebar--expanded' : ''}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => setIsSidebarHovered(true)}
+      onMouseLeave={handleSidebarMouseLeave}
     >
       <div className="sidebar__container">
         {/* 상단 헤더 */}
@@ -108,34 +121,78 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
         {/* 메인 네비게이션 */}
         <nav className="sidebar__nav">
           <List disablePadding>
-            {menuItems.map((item) => {
-              const isActive = currentView === item.view;
+            {mainRoutes.map((r) => {
+              const isActive = activeMainRoute?.id === r.id;
+              const hasChildren = !!r.children?.length;
               return (
-                <ListItem
-                  key={item.id}
-                  className={`sidebar__nav-item ${isActive ? 'sidebar__nav-item--active' : ''}`}
-                  onClick={() => onViewChange(item.view)}
-                  disableGutters
+                <NavLink
+                  key={r.id}
+                  to={r.path}
+                  className={`sidebar__nav-link ${isActive ? 'sidebar__nav-link--active' : ''}`}
+                  onMouseEnter={() => handleMainItemHover(r.id, hasChildren)}
                 >
-                  {miniDrawer && !isExpanded ? (
-                    <div className="sidebar__nav-item-mini">
-                      <div className="sidebar__nav-item-icon">{item.icon}</div>
-                      <Typography variant="body-small" className="sidebar__nav-item-label">
-                        {item.label}
-                      </Typography>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="sidebar__nav-item-icon">{item.icon}</div>
-                      <ListItemText primary={item.label} />
-                    </>
-                  )}
-                </ListItem>
+                  <ListItem
+                    className={`sidebar__nav-item ${isActive ? 'sidebar__nav-item--active' : ''}`}
+                    disableGutters
+                  >
+                    {miniDrawer && !isExpanded ? (
+                      <div className="sidebar__nav-item-mini">
+                        <div className="sidebar__nav-item-icon">{r.icon}</div>
+                        <Typography variant="body-small" className="sidebar__nav-item-label">
+                          {r.label}
+                        </Typography>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="sidebar__nav-item-icon">{r.icon}</div>
+                        <ListItemText primary={r.label} />
+                      </>
+                    )}
+                  </ListItem>
+                </NavLink>
               );
             })}
           </List>
         </nav>
       </div>
+
+      {/* 2차 메뉴 플라이아웃 */}
+      {!!flyoutRoute?.children?.length && (submenuPinned || isSidebarHovered) && (
+        <aside className="sidebar__flyout" onMouseEnter={() => setIsSidebarHovered(true)}>
+          <div className="sidebar__flyout-header">
+            <Typography variant="body-large" className="sidebar__flyout-title">
+              {flyoutRoute.label}
+            </Typography>
+            <IconButton
+              size="small"
+              color="default"
+              onClick={handleToggleSubmenuPin}
+              title={submenuPinned ? '2차 메뉴 고정 해제' : '2차 메뉴 고정'}
+              className="sidebar__flyout-pin-button"
+            >
+              {submenuPinned ? <IconPinFilled size={18} /> : <IconPin size={18} />}
+            </IconButton>
+          </div>
+          <div className="sidebar__flyout-body">
+            <List disablePadding>
+              {flyoutRoute.children.map((c) => {
+                const isActive = pathname === c.path;
+                return (
+                  <NavLink
+                    key={c.id}
+                    to={c.path}
+                    className={`sidebar__flyout-link ${isActive ? 'sidebar__flyout-link--active' : ''}`}
+                  >
+                    <ListItem className="sidebar__flyout-item" disableGutters>
+                      <ListItemText primary={c.label} />
+                    </ListItem>
+                  </NavLink>
+                );
+              })}
+            </List>
+          </div>
+        </aside>
+      )}
     </aside>
   );
 }

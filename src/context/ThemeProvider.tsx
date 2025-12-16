@@ -17,6 +17,7 @@ export type PresetColor =
 interface SidebarConfig {
   miniDrawer: boolean;
   pinned: boolean;
+  submenuPinned: boolean;
 }
 
 interface CustomColors {
@@ -75,6 +76,7 @@ const DEFAULT_CONFIG: ThemeConfig = {
   sidebar: {
     miniDrawer: true,
     pinned: false,
+    submenuPinned: false,
   },
 };
 
@@ -84,7 +86,14 @@ function loadConfigFromStorage(): ThemeConfig {
     if (stored) {
       const parsed = JSON.parse(stored);
       // 기본값과 병합하여 누락된 키 보완
-      return { ...DEFAULT_CONFIG, ...parsed };
+      return {
+        ...DEFAULT_CONFIG,
+        ...parsed,
+        sidebar: {
+          ...DEFAULT_CONFIG.sidebar,
+          ...(parsed.sidebar || {}),
+        },
+      };
     }
   } catch (error) {
     console.error('Failed to load theme config from localStorage:', error);
@@ -266,6 +275,3 @@ export const useTheme = () => {
   }
   return context;
 };
-
-
-

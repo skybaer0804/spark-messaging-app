@@ -482,6 +482,22 @@
   // 3. COMPONENT TOKENS
   // ============================================
 
+  // --- Sidebar Component Tokens ---
+  --sidebar-width: 240px;
+  --sidebar-width-mini: 72px;
+  --sidebar-flyout-width: 260px;
+  --sidebar-radius: var(--primitive-radius-md);
+  --sidebar-padding: var(--space-padding-card-md);
+  --sidebar-item-padding: var(--space-padding-button-sm);
+  --sidebar-item-gap: var(--space-gap-sm);
+  --sidebar-item-hover-bg: var(--color-background-secondary);
+  --sidebar-item-active-bg: var(--color-interactive-primary);
+  --sidebar-item-active-text: var(--color-background-primary);
+  --sidebar-flyout-bg: var(--color-surface-level-1);
+  --sidebar-flyout-shadow: var(--elevation-shadow-2);
+  --sidebar-flyout-border: 1px solid var(--color-border-default);
+  --sidebar-flyout-header-height: 48px;
+
   // --- Button Component Tokens ---
   // Primary Button
   --button-primary-background: var(--color-interactive-primary);

@@ -7,31 +7,30 @@ import { Typography } from '@/ui-component/Typography/Typography';
 import { ThemeCustomization } from '@/components/ThemeCustomization/ThemeCustomization';
 import { Select, SelectOption } from '@/ui-component/Select/Select';
 import { IconMoon, IconSun, IconEye, IconEyeOff, IconWifi, IconWifiOff, IconSettings } from '@tabler/icons-react';
+import { useRouterState } from '@/routes/RouterState';
+import { appRoutes } from '@/routes/appRoutes';
 
 interface HeaderProps {
   title: string;
   isConnected: boolean;
   socketId: string | null;
-  currentView?: string;
-  onViewChange?: (view: string) => void;
 }
 
-export function Header({ title, isConnected, socketId, currentView, onViewChange }: HeaderProps) {
+export function Header({ title, isConnected, socketId }: HeaderProps) {
   const { theme, toggleTheme, contrast, toggleContrast } = useTheme();
+  const { pathname, navigate } = useRouterState();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const viewOptions: SelectOption[] = [
-    { value: 'chat', label: 'Chat' },
-    { value: 'notification', label: 'Notification' },
-    { value: 'reverse-auction', label: 'Reverse Auction' },
-  ];
+  const viewOptions: SelectOption[] = appRoutes
+    .filter((r) => r.id !== 'design-system')
+    .map((r) => ({ value: r.path, label: r.title }));
 
   const handleViewSelectChange = (e: Event) => {
-    if (onViewChange) {
-      const target = e.currentTarget as HTMLSelectElement;
-      onViewChange(target.value);
-    }
+    const target = e.currentTarget as HTMLSelectElement;
+    navigate(target.value);
   };
+
+  const mobileSelectValue = viewOptions.some((o) => o.value === pathname) ? pathname : '/chatapp';
 
   return (
     <header className="header">
@@ -40,7 +39,7 @@ export function Header({ title, isConnected, socketId, currentView, onViewChange
         <div className="header__mobile-select">
           <Select
             options={viewOptions}
-            value={currentView || 'chat'}
+            value={mobileSelectValue}
             onChange={handleViewSelectChange}
             className="header__view-select"
           />

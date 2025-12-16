@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { useTheme } from '../../context/ThemeProvider';
 import { Button } from '@/ui-component/Button/Button';
 import { IconButton } from '@/ui-component/Button/IconButton';
@@ -51,7 +51,11 @@ import {
 } from '@tabler/icons-react';
 import './DesignSystemDemo.scss';
 
-export function DesignSystemDemo() {
+interface DesignSystemDemoProps {
+  focusSection?: string;
+}
+
+export function DesignSystemDemo({ focusSection }: DesignSystemDemoProps) {
   const { theme, toggleTheme, contrast, toggleContrast } = useTheme();
   const [inputValue, setInputValue] = useState('');
   const [selectValue, setSelectValue] = useState('option1');
@@ -61,6 +65,64 @@ export function DesignSystemDemo() {
   const [bottomNavValue, setBottomNavValue] = useState<string | number>('home');
   const [radioGroupValue, setRadioGroupValue] = useState<string | number>('a');
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!focusSection) return;
+
+    const sectionAlias: Record<string, string> = {
+      // Data Display group
+      avatar: 'data-display',
+      badge: 'data-display',
+      list: 'data-display',
+      divider: 'data-display',
+
+      // Inputs group
+      button: 'inputs',
+      'button-group': 'inputs',
+      'floating-action-button': 'inputs',
+      input: 'inputs',
+      'text-field': 'inputs',
+      select: 'inputs',
+
+      // Surfaces group
+      card: 'surfaces',
+      paper: 'surfaces',
+
+      // Status & Feedback group
+      'status-chip': 'status-feedback',
+      table: 'status-feedback',
+
+      // Navigation group
+      accordion: 'navigation',
+      breadcrumbs: 'navigation',
+      tabs: 'navigation',
+      stepper: 'navigation',
+      pagination: 'navigation',
+
+      // Selection Controls group
+      switch: 'selection-controls',
+      checkbox: 'selection-controls',
+      radio: 'selection-controls',
+      'radio-group': 'selection-controls',
+
+      // Feedback group
+      alert: 'feedback',
+      'circular-progress': 'feedback',
+      skeleton: 'feedback',
+      tooltip: 'feedback',
+      dialog: 'feedback',
+
+      // Dedicated anchors
+      'bottom-navigation': 'bottom-navigation',
+      'speed-dial': 'speed-dial',
+    };
+
+    const target = sectionAlias[focusSection] || focusSection;
+    const el = document.querySelector(`[data-ds-section="${target}"]`);
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [focusSection]);
 
   return (
     <div
@@ -91,7 +153,7 @@ export function DesignSystemDemo() {
       <Container maxWidth="lg">
         <Stack spacing="lg">
           {/* Typography */}
-          <Paper padding="lg">
+          <Paper padding="lg" data-ds-section="typography">
             <Typography variant="h2" style={{ marginBottom: '16px' }}>
               Typography
             </Typography>
@@ -113,7 +175,7 @@ export function DesignSystemDemo() {
           </Paper>
 
           {/* Data Display */}
-          <Paper padding="lg">
+          <Paper padding="lg" data-ds-section="data-display">
             <Typography variant="h2" style={{ marginBottom: '16px' }}>
               Data Display
             </Typography>
@@ -182,7 +244,7 @@ export function DesignSystemDemo() {
           </Paper>
 
           {/* Inputs & Buttons */}
-          <Paper padding="lg">
+          <Paper padding="lg" data-ds-section="inputs">
             <Typography variant="h2" style={{ marginBottom: '16px' }}>
               Inputs & Buttons
             </Typography>
@@ -264,7 +326,7 @@ export function DesignSystemDemo() {
           </Paper>
 
           {/* Surfaces */}
-          <Paper padding="lg">
+          <Paper padding="lg" data-ds-section="surfaces">
             <Typography variant="h2" style={{ marginBottom: '16px' }}>
               Surfaces
             </Typography>
@@ -295,7 +357,7 @@ export function DesignSystemDemo() {
           </Paper>
 
           {/* Data Display Extra (Status Chips) */}
-          <Paper padding="lg">
+          <Paper padding="lg" data-ds-section="status-feedback">
             <Typography variant="h2" style={{ marginBottom: '16px' }}>
               Status & Feedback
             </Typography>
@@ -333,7 +395,7 @@ export function DesignSystemDemo() {
           </Paper>
 
           {/* Layout */}
-          <Paper padding="lg">
+          <Paper padding="lg" data-ds-section="layout">
             <Typography variant="h2" style={{ marginBottom: '16px' }}>
               Layout
             </Typography>
@@ -357,7 +419,7 @@ export function DesignSystemDemo() {
           </Paper>
 
           {/* Navigation */}
-          <Paper padding="lg">
+          <Paper padding="lg" data-ds-section="navigation">
             <Typography variant="h2" style={{ marginBottom: '16px' }}>
               Navigation
             </Typography>
@@ -472,7 +534,7 @@ export function DesignSystemDemo() {
           </Paper>
 
           {/* Surfaces */}
-          <Paper padding="lg">
+          <Paper padding="lg" data-ds-section="surfaces-2">
             <Typography variant="h2" style={{ marginBottom: '16px' }}>
               Surfaces
             </Typography>
@@ -503,7 +565,7 @@ export function DesignSystemDemo() {
           </Paper>
 
           {/* Icons */}
-          <Paper padding="lg">
+          <Paper padding="lg" data-ds-section="icons">
             <Typography variant="h2" style={{ marginBottom: '16px' }}>
               Icons
             </Typography>
@@ -528,7 +590,7 @@ export function DesignSystemDemo() {
           </Paper>
 
           {/* Selection Controls */}
-          <Paper padding="lg">
+          <Paper padding="lg" data-ds-section="selection-controls">
             <Typography variant="h2" style={{ marginBottom: '16px' }}>
               Selection Controls
             </Typography>
@@ -576,7 +638,7 @@ export function DesignSystemDemo() {
           </Paper>
 
           {/* Feedback */}
-          <Paper padding="lg">
+          <Paper padding="lg" data-ds-section="feedback">
             <Typography variant="h2" style={{ marginBottom: '16px' }}>
               Feedback
             </Typography>
@@ -673,31 +735,35 @@ export function DesignSystemDemo() {
         </Stack>
       </Container>
 
-      <BottomNavigation
-        ariaLabel="design system bottom navigation demo"
-        position="fixed"
-        value={bottomNavValue}
-        onChange={(next) => setBottomNavValue(next)}
-        items={[
-          { value: 'home', label: 'Home', icon: <IconHome size={20} /> },
-          { value: 'search', label: 'Search', icon: <IconSearch size={20} /> },
-          { value: 'profile', label: 'Profile', icon: <IconUser size={20} /> },
-        ]}
-      />
+      <div data-ds-section="bottom-navigation">
+        <BottomNavigation
+          ariaLabel="design system bottom navigation demo"
+          position="fixed"
+          value={bottomNavValue}
+          onChange={(next) => setBottomNavValue(next)}
+          items={[
+            { value: 'home', label: 'Home', icon: <IconHome size={20} /> },
+            { value: 'search', label: 'Search', icon: <IconSearch size={20} /> },
+            { value: 'profile', label: 'Profile', icon: <IconUser size={20} /> },
+          ]}
+        />
+      </div>
 
-      <SpeedDial
-        ariaLabel="speed dial demo"
-        anchor="bottom-right"
-        direction="up"
-        icon={<IconPlus size={22} />}
-        openIcon={<IconX size={22} />}
-        showBackdrop
-        actions={[
-          { name: 'Search', icon: <IconSearch size={18} />, onClick: () => {} },
-          { name: 'Notifications', icon: <IconBell size={18} />, onClick: () => {} },
-          { name: 'Settings', icon: <IconSettings size={18} />, onClick: () => {} },
-        ]}
-      />
+      <div data-ds-section="speed-dial">
+        <SpeedDial
+          ariaLabel="speed dial demo"
+          anchor="bottom-right"
+          direction="up"
+          icon={<IconPlus size={22} />}
+          openIcon={<IconX size={22} />}
+          showBackdrop
+          actions={[
+            { name: 'Search', icon: <IconSearch size={18} />, onClick: () => {} },
+            { name: 'Notifications', icon: <IconBell size={18} />, onClick: () => {} },
+            { name: 'Settings', icon: <IconSettings size={18} />, onClick: () => {} },
+          ]}
+        />
+      </div>
     </div>
   );
 }
