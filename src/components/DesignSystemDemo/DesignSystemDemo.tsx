@@ -253,7 +253,7 @@ export function DesignSystemDemo() {
             </Typography>
             <Stack spacing="md">
               <Typography variant="body-medium">Grid Layout (12 cols)</Typography>
-              <Grid columns={12} gap="sm">
+              <Grid columns={12} spacing="sm" rowSpacing="sm" columnSpacing="sm">
                 <Box background="primary-100" padding="md" style={{ gridColumn: 'span 8', textAlign: 'center' }}>
                   xs=8
                 </Box>
