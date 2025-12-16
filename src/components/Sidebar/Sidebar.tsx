@@ -1,5 +1,5 @@
 import type { ComponentChildren, JSX } from 'preact';
-import { useMemo, useState } from 'preact/hooks';
+import { useMemo, useState, useRef, useEffect } from 'preact/hooks';
 import {
   IconSparkles,
   IconPlus,
@@ -77,16 +77,36 @@ export function Sidebar() {
   }, [activeMainRoute, hoveredSecondMenuId, mainRoutes, secondMenuPinned]);
 
   const [isSecondMenuHovered, setIsSecondMenuHovered] = useState(false);
+  const hideTimeoutRef = useRef<number | null>(null);
+
+  // 2차 사이드메뉴 닫기 지연 처리
+  useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current !== null) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSidebarMouseLeave = () => {
     setIsSidebarHovered(false);
     // 2차 사이드메뉴에 마우스가 있으면 언마운트하지 않음
     if (!secondMenuPinned && !isSecondMenuHovered) {
-      setHoveredSecondMenuId(null);
+      // 지연 후 닫기 (300ms)
+      hideTimeoutRef.current = window.setTimeout(() => {
+        if (!isSecondMenuHovered) {
+          setHoveredSecondMenuId(null);
+        }
+      }, 300);
     }
   };
 
   const handleSecondMenuMouseEnter = () => {
+    // 타이머 취소
+    if (hideTimeoutRef.current !== null) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
     setIsSecondMenuHovered(true);
     setIsSidebarHovered(true); // 사이드바도 호버 상태 유지
   };
@@ -94,16 +114,31 @@ export function Sidebar() {
   const handleSecondMenuMouseLeave = () => {
     setIsSecondMenuHovered(false);
     if (!secondMenuPinned) {
-      setHoveredSecondMenuId(null);
+      // 지연 후 닫기 (300ms)
+      hideTimeoutRef.current = window.setTimeout(() => {
+        setHoveredSecondMenuId(null);
+        setIsSidebarHovered(false);
+      }, 300);
+    } else {
+      setIsSidebarHovered(false);
     }
-    setIsSidebarHovered(false);
   };
 
   const handleMainItemHover = (route: AppRouteNode) => {
+    // 타이머 취소
+    if (hideTimeoutRef.current !== null) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
     if (route.secondMenu && route.children?.length) {
       setHoveredSecondMenuId(route.id);
     } else {
-      if (!secondMenuPinned) setHoveredSecondMenuId(null);
+      if (!secondMenuPinned) {
+        // 지연 후 닫기
+        hideTimeoutRef.current = window.setTimeout(() => {
+          setHoveredSecondMenuId(null);
+        }, 300);
+      }
     }
   };
 

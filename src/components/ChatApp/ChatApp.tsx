@@ -201,7 +201,7 @@ export function ChatApp() {
 
   if (!currentRoom) {
     return (
-      <Box style={{ display: 'flex', minHeight: '100%' }} className="chat-app__container">
+      <Box style={{ display: 'flex', height: '100%', minHeight: 0 }} className="chat-app__container">
         <Box
           style={{
             width: isMobile ? '100%' : '300px',
@@ -212,7 +212,7 @@ export function ChatApp() {
           <Sidebar />
         </Box>
         {!isMobile && (
-          <Box style={{ flex: 1, backgroundColor: 'var(--color-background-default)' }}>
+          <Box style={{ flex: 1, backgroundColor: 'var(--color-background-default)', height: '100%', minHeight: 0 }}>
             <EmptyState />
           </Box>
         )}
@@ -222,7 +222,7 @@ export function ChatApp() {
 
   // Active Chat Room - 모바일에서는 채팅창만 표시
   return (
-    <Box style={{ display: 'flex', minHeight: '100%' }} className="chat-app__container">
+    <Box style={{ display: 'flex', height: '100%', minHeight: 0 }} className="chat-app__container">
       {!isMobile && (
         <Box style={{ width: '300px', flexShrink: 0 }} className="chat-app__sidebar-wrapper">
           <Sidebar />
@@ -230,7 +230,7 @@ export function ChatApp() {
       )}
       <Flex
         direction="column"
-        style={{ flex: 1, backgroundColor: 'var(--color-background-default)', minHeight: '100%' }}
+        style={{ flex: 1, backgroundColor: 'var(--color-background-default)', height: '100%', minHeight: 0, overflow: 'hidden' }}
       >
         {/* Chat Header */}
         <Paper square elevation={1} padding="md" style={{ zIndex: 10, flexShrink: 0 }}>
@@ -247,22 +247,23 @@ export function ChatApp() {
         <Box
           style={{
             flex: 1,
-            overflow: 'hidden',
+            minHeight: 0,
+            overflowY: 'auto',
+            overflowX: 'hidden',
             padding: 'var(--space-gap-lg)',
             display: 'flex',
             flexDirection: 'column',
-            minHeight: 0,
           }}
           ref={messagesRef}
         >
           {messages.length === 0 ? (
-            <Box style={{ textAlign: 'center', marginTop: '40px' }}>
+            <Box style={{ textAlign: 'center', marginTop: '40px', flexShrink: 0 }}>
               <Typography variant="body-medium" color="text-secondary">
                 No messages yet. Say hello!
               </Typography>
             </Box>
           ) : (
-            <Stack spacing="md" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+            <Stack spacing="md" style={{ flex: 1, minHeight: 0 }}>
               {messages.map((msg) => {
                 const isOwnMessage = msg.senderId === socketId || msg.type === 'sent';
                 return (
