@@ -35,7 +35,19 @@ import { Accordion } from '@/ui-component/Accordion/Accordion';
 import { ButtonGroup } from '@/ui-component/ButtonGroup/ButtonGroup';
 import { FloatingActionButton } from '@/ui-component/FloatingActionButton/FloatingActionButton';
 import { Tooltip } from '@/ui-component/Tooltip/Tooltip';
-import { IconHome, IconUser, IconSettings, IconBell, IconSearch, IconTrash, IconMail, IconPlus, IconX, IconInfoCircle } from '@tabler/icons-react';
+import { Dialog } from '@/ui-component/Dialog/Dialog';
+import {
+  IconHome,
+  IconUser,
+  IconSettings,
+  IconBell,
+  IconSearch,
+  IconTrash,
+  IconMail,
+  IconPlus,
+  IconX,
+  IconInfoCircle,
+} from '@tabler/icons-react';
 import './DesignSystemDemo.scss';
 
 export function DesignSystemDemo() {
@@ -47,6 +59,7 @@ export function DesignSystemDemo() {
   const [page, setPage] = useState(3);
   const [bottomNavValue, setBottomNavValue] = useState<string | number>('home');
   const [radioGroupValue, setRadioGroupValue] = useState<string | number>('a');
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
     <div
@@ -209,8 +222,18 @@ export function DesignSystemDemo() {
                 <Flex gap="md" align="center" wrap="wrap">
                   <FloatingActionButton icon={<IconPlus size={20} />} aria-label="add" />
                   <FloatingActionButton variant="extended" icon={<IconPlus size={20} />} label="Create" />
-                  <FloatingActionButton size="sm" color="secondary" icon={<IconPlus size={18} />} aria-label="add small" />
-                  <FloatingActionButton size="lg" color="default" icon={<IconPlus size={22} />} aria-label="add large" />
+                  <FloatingActionButton
+                    size="sm"
+                    color="secondary"
+                    icon={<IconPlus size={18} />}
+                    aria-label="add small"
+                  />
+                  <FloatingActionButton
+                    size="lg"
+                    color="default"
+                    icon={<IconPlus size={22} />}
+                    aria-label="add large"
+                  />
                 </Flex>
               </Stack>
 
@@ -595,6 +618,32 @@ export function DesignSystemDemo() {
                     </span>
                   </Tooltip>
                 </Flex>
+              </Box>
+
+              <Box>
+                <Typography variant="h3" style={{ marginBottom: '12px' }}>
+                  Dialog
+                </Typography>
+                <Button variant="secondary" onClick={() => setDialogOpen(true)}>
+                  Open Dialog
+                </Button>
+                <Dialog
+                  open={dialogOpen}
+                  onClose={() => setDialogOpen(false)}
+                  title="Confirm action"
+                  actions={
+                    <>
+                      <Button variant="secondary" onClick={() => setDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={() => setDialogOpen(false)}>OK</Button>
+                    </>
+                  }
+                >
+                  <Typography variant="body-medium">
+                    다이얼로그는 ESC/백드롭 클릭으로 닫을 수 있고, Tab 키 포커스가 내부에서 순환됩니다.
+                  </Typography>
+                </Dialog>
               </Box>
             </Stack>
           </Paper>

@@ -569,6 +569,24 @@
   --tooltip-max-width: 240px;
   --tooltip-z-index: 1200;
 
+  // --- Dialog Component Tokens ---
+  --dialog-z-index: var(--layout-z-modal, 1300);
+  --dialog-backdrop: var(--color-background-overlay);
+  --dialog-surface: var(--color-background-primary);
+  --dialog-text: var(--color-text-primary);
+  --dialog-shadow: var(--elevation-shadow-3);
+  --dialog-radius: var(--primitive-radius-large);
+  --dialog-padding: var(--space-padding-card-lg);
+  --dialog-header-gap: var(--space-gap-md);
+  --dialog-title-size: var(--typo-heading-4-size);
+  --dialog-title-weight: var(--primitive-font-weight-bold);
+  --dialog-body-gap: var(--space-gap-md);
+  --dialog-actions-gap: var(--space-gap-sm);
+  --dialog-max-width-sm: 600px;
+  --dialog-max-width-md: 840px;
+  --dialog-max-width-lg: 1024px;
+  --dialog-focus-ring: 2px solid var(--color-border-focus);
+
   // --- Input Component Tokens ---
   // Text Input (Default)
   --input-background: var(--color-background-primary);
