@@ -21,6 +21,7 @@ import { Divider } from '@/ui-component/Divider/Divider';
 import { Switch } from '@/ui-component/Switch/Switch';
 import { Checkbox } from '@/ui-component/Checkbox/Checkbox';
 import { Radio } from '@/ui-component/Radio/Radio';
+import { RadioGroup } from '@/ui-component/RadioGroup/RadioGroup';
 import { Alert } from '@/ui-component/Alert/Alert';
 import { CircularProgress } from '@/ui-component/CircularProgress/CircularProgress';
 import { Skeleton } from '@/ui-component/Skeleton/Skeleton';
@@ -44,6 +45,7 @@ export function DesignSystemDemo() {
   const [activeStep, setActiveStep] = useState(1);
   const [page, setPage] = useState(3);
   const [bottomNavValue, setBottomNavValue] = useState<string | number>('home');
+  const [radioGroupValue, setRadioGroupValue] = useState<string | number>('a');
 
   return (
     <div
@@ -510,6 +512,18 @@ export function DesignSystemDemo() {
                   <Radio name="radio-demo" value="3" disabled />
                   <Radio name="radio-demo-2" value="4" color="warning" defaultChecked />
                 </Flex>
+                <RadioGroup
+                  label="Radio Group"
+                  helperText={`선택: ${radioGroupValue}`}
+                  direction="row"
+                  value={radioGroupValue}
+                  onChange={(v) => setRadioGroupValue(v)}
+                  options={[
+                    { value: 'a', label: 'Option A' },
+                    { value: 'b', label: 'Option B' },
+                    { value: 'c', label: 'Option C', disabled: true },
+                  ]}
+                />
               </Stack>
             </Grid>
           </Paper>

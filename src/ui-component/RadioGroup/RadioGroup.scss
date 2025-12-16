@@ -1,0 +1,43 @@
+@use '/src/styles/tokens/index';
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--radio-group-gap);
+
+  &__label {
+    font-size: var(--radio-group-label-size);
+    font-weight: var(--radio-group-label-weight);
+    color: var(--radio-group-label-color);
+  }
+
+  &__options {
+    display: flex;
+    gap: var(--radio-group-options-gap);
+  }
+
+  &--column {
+    .radio-group__options {
+      flex-direction: column;
+    }
+  }
+
+  &--row {
+    .radio-group__options {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+  }
+
+  &__helper {
+    font-size: var(--radio-group-helper-size);
+    color: var(--radio-group-helper-color);
+  }
+
+  &--disabled {
+    opacity: 0.7;
+  }
+}
+
+

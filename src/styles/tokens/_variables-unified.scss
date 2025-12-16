@@ -549,6 +549,15 @@
   --fab-bg-default: var(--color-surface-level-2);
   --fab-text-default: var(--color-text-primary);
 
+  // --- Radio Group Component Tokens ---
+  --radio-group-gap: var(--space-gap-sm);
+  --radio-group-options-gap: var(--space-gap-md);
+  --radio-group-label-size: var(--typo-label-medium-size);
+  --radio-group-label-weight: var(--primitive-font-weight-bold);
+  --radio-group-label-color: var(--color-text-primary);
+  --radio-group-helper-size: var(--typo-label-small-size);
+  --radio-group-helper-color: var(--color-text-secondary);
+
   // --- Input Component Tokens ---
   // Text Input (Default)
   --input-background: var(--color-background-primary);
