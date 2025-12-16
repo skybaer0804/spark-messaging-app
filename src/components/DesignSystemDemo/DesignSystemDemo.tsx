@@ -34,7 +34,8 @@ import { BottomNavigation } from '@/ui-component/BottomNavigation/BottomNavigati
 import { Accordion } from '@/ui-component/Accordion/Accordion';
 import { ButtonGroup } from '@/ui-component/ButtonGroup/ButtonGroup';
 import { FloatingActionButton } from '@/ui-component/FloatingActionButton/FloatingActionButton';
-import { IconHome, IconUser, IconSettings, IconBell, IconSearch, IconTrash, IconMail, IconPlus, IconX } from '@tabler/icons-react';
+import { Tooltip } from '@/ui-component/Tooltip/Tooltip';
+import { IconHome, IconUser, IconSettings, IconBell, IconSearch, IconTrash, IconMail, IconPlus, IconX, IconInfoCircle } from '@tabler/icons-react';
 import './DesignSystemDemo.scss';
 
 export function DesignSystemDemo() {
@@ -575,6 +576,26 @@ export function DesignSystemDemo() {
                   </Stack>
                 </Box>
               </Grid>
+
+              <Box>
+                <Typography variant="h3" style={{ marginBottom: '12px' }}>
+                  Tooltip
+                </Typography>
+                <Flex gap="lg" align="center" wrap="wrap">
+                  <Tooltip title="기본 툴팁(Top)" placement="top">
+                    <span>
+                      <Button variant="secondary">Hover me</Button>
+                    </span>
+                  </Tooltip>
+                  <Tooltip title="Right tooltip" placement="right">
+                    <span>
+                      <IconButton>
+                        <IconInfoCircle size={20} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </Flex>
+              </Box>
             </Stack>
           </Paper>
         </Stack>

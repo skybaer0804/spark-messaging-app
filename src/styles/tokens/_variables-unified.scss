@@ -558,6 +558,17 @@
   --radio-group-helper-size: var(--typo-label-small-size);
   --radio-group-helper-color: var(--color-text-secondary);
 
+  // --- Tooltip Component Tokens ---
+  --tooltip-bg: var(--color-text-primary);
+  --tooltip-text: var(--color-background-primary);
+  --tooltip-radius: var(--primitive-radius-medium);
+  --tooltip-padding: var(--space-padding-sm);
+  --tooltip-font-size: var(--typo-label-small-size);
+  --tooltip-shadow: var(--elevation-shadow-2);
+  --tooltip-offset: var(--space-gap-sm);
+  --tooltip-max-width: 240px;
+  --tooltip-z-index: 1200;
+
   // --- Input Component Tokens ---
   // Text Input (Default)
   --input-background: var(--color-background-primary);
