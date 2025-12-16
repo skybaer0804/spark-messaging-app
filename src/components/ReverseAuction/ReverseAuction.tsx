@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'preact/hooks';
 import { VideoConference } from './VideoConference/VideoConference';
 import { ReverseAuctionVideoConferenceAdapter } from './VideoConference/adapters/VideoConferenceAdapter';
 import { Chat } from '../Chat/Chat';
@@ -71,8 +70,6 @@ export function ReverseAuction() {
   const videoConferenceAdapter = videoConferenceAdapterInstance;
 
   const currentRoom = reverseAuctionStore.currentRoom.value;
-
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   return (
     <div className="reverse-auction">

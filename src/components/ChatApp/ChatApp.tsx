@@ -2,7 +2,6 @@ import { useChatApp } from './hooks/useChatApp';
 import { formatTimestamp } from '@/utils/messageUtils';
 import { formatFileSize, downloadFile } from '@/utils/fileUtils';
 import { useRef, useEffect, useState } from 'preact/hooks';
-import { Button } from '@/ui-component/Button/Button';
 import { IconButton } from '@/ui-component/Button/IconButton';
 import { Input } from '@/ui-component/Input/Input';
 import { Box } from '@/ui-component/Layout/Box';
@@ -12,7 +11,15 @@ import { Typography } from '@/ui-component/Typography/Typography';
 import { Paper } from '@/ui-component/Paper/Paper';
 import { List, ListItem, ListItemText, ListItemAvatar } from '@/ui-component/List/List';
 import { Avatar } from '@/ui-component/Avatar/Avatar';
-import { IconArrowLeft, IconSend, IconPaperclip, IconX, IconFile, IconDownload, IconCirclePlus } from '@tabler/icons-react';
+import {
+  IconArrowLeft,
+  IconSend,
+  IconPaperclip,
+  IconX,
+  IconFile,
+  IconDownload,
+  IconCirclePlus,
+} from '@tabler/icons-react';
 import './ChatApp.scss';
 
 export function ChatApp() {
@@ -111,10 +118,10 @@ export function ChatApp() {
             onKeyPress={(e) => e.key === 'Enter' && handleCreateRoom()}
             fullWidth
           />
-          <IconButton 
-            onClick={handleCreateRoom} 
-            disabled={!isConnected || !roomIdInput.trim()} 
-            size="sm"
+          <IconButton
+            onClick={handleCreateRoom}
+            disabled={!isConnected || !roomIdInput.trim()}
+            size="small"
             color="primary"
             title="새 채팅방 생성"
           >
@@ -184,10 +191,10 @@ export function ChatApp() {
   if (!currentRoom) {
     return (
       <Box style={{ display: 'flex', minHeight: '100%' }} className="chat-app__container">
-        <Box 
-          style={{ 
-            width: isMobile ? '100%' : '300px', 
-            flexShrink: 0 
+        <Box
+          style={{
+            width: isMobile ? '100%' : '300px',
+            flexShrink: 0,
           }}
           className="chat-app__sidebar-wrapper"
         >

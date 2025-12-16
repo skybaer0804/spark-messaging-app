@@ -26,9 +26,10 @@ export function Header({ title, isConnected, socketId, currentView, onViewChange
     { value: 'reverse-auction', label: 'Reverse Auction' },
   ];
 
-  const handleViewSelectChange = (e: JSX.TargetedEvent<HTMLSelectElement>) => {
+  const handleViewSelectChange = (e: Event) => {
     if (onViewChange) {
-      onViewChange(e.currentTarget.value);
+      const target = e.currentTarget as HTMLSelectElement;
+      onViewChange(target.value);
     }
   };
 

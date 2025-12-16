@@ -7,7 +7,7 @@ import { Stack } from '@/ui-component/Layout/Stack';
 import { Paper } from '@/ui-component/Paper/Paper';
 import { Typography } from '@/ui-component/Typography/Typography';
 import { Divider } from '@/ui-component/Divider/Divider';
-import { IconBell, IconSend } from '@tabler/icons-react';
+import { IconSend } from '@tabler/icons-react';
 import './NotificationApp.scss';
 
 export function NotificationApp() {
