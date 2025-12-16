@@ -30,6 +30,7 @@ import { SpeedDial } from '@/ui-component/SpeedDial/SpeedDial';
 import { Pagination } from '@/ui-component/Pagination/Pagination';
 import { Breadcrumbs } from '@/ui-component/Breadcrumbs/Breadcrumbs';
 import { BottomNavigation } from '@/ui-component/BottomNavigation/BottomNavigation';
+import { Accordion } from '@/ui-component/Accordion/Accordion';
 import { IconHome, IconUser, IconSettings, IconBell, IconSearch, IconTrash, IconMail, IconPlus, IconX } from '@tabler/icons-react';
 import './DesignSystemDemo.scss';
 
@@ -283,6 +284,31 @@ export function DesignSystemDemo() {
             <Typography variant="h2" style={{ marginBottom: '16px' }}>
               Navigation
             </Typography>
+            <Box style={{ marginBottom: '16px' }}>
+              <Accordion
+                ariaLabel="design system accordion demo"
+                allowMultiple
+                defaultExpanded={['panel-1']}
+                items={[
+                  {
+                    value: 'panel-1',
+                    summary: 'Accordion 1',
+                    details: <Typography variant="body-medium">첫 번째 패널 내용입니다.</Typography>,
+                  },
+                  {
+                    value: 'panel-2',
+                    summary: 'Accordion 2',
+                    details: <Typography variant="body-medium">두 번째 패널 내용입니다.</Typography>,
+                  },
+                  {
+                    value: 'panel-3',
+                    summary: 'Disabled',
+                    disabled: true,
+                    details: <Typography variant="body-medium">비활성화된 패널입니다.</Typography>,
+                  },
+                ]}
+              />
+            </Box>
             <Breadcrumbs
               ariaLabel="design system breadcrumbs demo"
               maxItems={3}

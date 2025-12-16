@@ -787,6 +787,22 @@
   --bottom-navigation-disabled-opacity: 0.5;
   --bottom-navigation-focus-ring: 2px solid var(--color-border-focus);
 
+  // --- Accordion Component Tokens ---
+  --accordion-border: 1px solid var(--color-border-default);
+  --accordion-radius: var(--primitive-radius-large);
+  --accordion-bg: var(--color-background-primary);
+  --accordion-hover-bg: var(--color-surface-level-1);
+  --accordion-disabled-opacity: 0.5;
+  --accordion-gap: var(--space-gap-sm);
+  --accordion-summary-padding: var(--space-padding-md);
+  --accordion-details-padding: var(--space-padding-md);
+  --accordion-summary-font-size: var(--typo-body-medium-size);
+  --accordion-summary-font-weight: var(--primitive-font-weight-bold);
+  --accordion-summary-text: var(--color-text-primary);
+  --accordion-icon-size: 18px;
+  --accordion-icon-color: var(--color-text-secondary);
+  --accordion-focus-ring: 2px solid var(--color-border-focus);
+
   // --- Chat Component Tokens ---
   // Chat Window
   --chat-window-background: var(--color-background-secondary); // Main background area
