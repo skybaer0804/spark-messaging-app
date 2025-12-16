@@ -482,6 +482,23 @@
   // 3. COMPONENT TOKENS
   // ============================================
 
+  // --- Sidebar Component Tokens ---
+  --sidebar-width: 240px;
+  --sidebar-width-mini: 72px;
+  --sidebar-flyout-width: 260px;
+  --sidebar-second-menu-width: 280px;
+  --sidebar-radius: var(--primitive-radius-md);
+  --sidebar-padding: var(--space-padding-card-md);
+  --sidebar-item-padding: var(--space-padding-button-sm);
+  --sidebar-item-gap: var(--space-gap-sm);
+  --sidebar-item-hover-bg: var(--color-background-secondary);
+  --sidebar-item-active-bg: var(--color-interactive-primary);
+  --sidebar-item-active-text: var(--color-background-primary);
+  --sidebar-flyout-bg: var(--color-surface-level-1);
+  --sidebar-flyout-shadow: var(--elevation-shadow-2);
+  --sidebar-flyout-border: 1px solid var(--color-border-default);
+  --sidebar-flyout-header-height: 48px;
+
   // --- Button Component Tokens ---
   // Primary Button
   --button-primary-background: var(--color-interactive-primary);
@@ -519,6 +536,89 @@
   --button-sm-padding: var(--space-padding-button-sm);
   --button-sm-font-size: var(--typo-body-small-size);
   --button-sm-height: 40px;
+
+  // --- Button Group Component Tokens ---
+  --button-group-gap: var(--space-gap-xs);
+  --button-group-radius: var(--button-primary-radius);
+  --button-group-divider: 1px solid var(--color-border-default);
+  --button-group-focus-ring: 2px solid var(--color-border-focus);
+
+  // --- Floating Action Button (FAB) Component Tokens ---
+  --fab-size-md: calc(var(--primitive-space-base) * 14); // 56px
+  --fab-size-sm: calc(var(--primitive-space-base) * 10); // 40px
+  --fab-size-lg: calc(var(--primitive-space-base) * 16); // 64px
+  --fab-radius: 9999px;
+  --fab-padding-extended: 0 var(--space-padding-lg);
+  --fab-gap: var(--space-gap-sm);
+  --fab-font-size: var(--typo-body-small-size);
+  --fab-font-weight: var(--primitive-font-weight-bold);
+  --fab-shadow: var(--elevation-shadow-2);
+  --fab-hover-opacity: 0.95;
+  --fab-active-opacity: 0.9;
+  --fab-focus-ring: 2px solid var(--color-border-focus);
+  --fab-disabled-opacity: 0.5;
+
+  // Colors
+  --fab-bg-primary: var(--color-interactive-primary);
+  --fab-text-primary: var(--primitive-gray-0);
+  --fab-bg-secondary: var(--color-surface-level-3);
+  --fab-text-secondary: var(--color-text-primary);
+  --fab-bg-default: var(--color-surface-level-2);
+  --fab-text-default: var(--color-text-primary);
+
+  // --- Radio Group Component Tokens ---
+  --radio-group-gap: var(--space-gap-sm);
+  --radio-group-options-gap: var(--space-gap-md);
+  --radio-group-label-size: var(--typo-label-medium-size);
+  --radio-group-label-weight: var(--primitive-font-weight-bold);
+  --radio-group-label-color: var(--color-text-primary);
+  --radio-group-helper-size: var(--typo-label-small-size);
+  --radio-group-helper-color: var(--color-text-secondary);
+
+  // --- Tooltip Component Tokens ---
+  --tooltip-bg: var(--color-text-primary);
+  --tooltip-text: var(--color-background-primary);
+  --tooltip-radius: var(--primitive-radius-medium);
+  --tooltip-padding: var(--space-padding-sm);
+  --tooltip-font-size: var(--typo-label-small-size);
+  --tooltip-shadow: var(--elevation-shadow-2);
+  --tooltip-offset: var(--space-gap-sm);
+  --tooltip-max-width: 240px;
+  --tooltip-z-index: 1200;
+
+  // --- Dialog Component Tokens ---
+  --dialog-z-index: var(--layout-z-modal, 1300);
+  --dialog-backdrop: var(--color-background-overlay);
+  --dialog-surface: var(--color-background-primary);
+  --dialog-text: var(--color-text-primary);
+  --dialog-shadow: var(--elevation-shadow-3);
+  --dialog-radius: var(--primitive-radius-large);
+  --dialog-padding: var(--space-padding-card-lg);
+  --dialog-header-gap: var(--space-gap-md);
+  --dialog-title-size: var(--typo-heading-4-size);
+  --dialog-title-weight: var(--primitive-font-weight-bold);
+  --dialog-body-gap: var(--space-gap-md);
+  --dialog-actions-gap: var(--space-gap-sm);
+  --dialog-max-width-sm: 600px;
+  --dialog-max-width-md: 840px;
+  --dialog-max-width-lg: 1024px;
+  --dialog-focus-ring: 2px solid var(--color-border-focus);
+
+  // --- Table Component Tokens ---
+  --table-border: 1px solid var(--color-border-default);
+  --table-radius: var(--primitive-radius-large);
+  --table-bg: var(--color-background-primary);
+  --table-header-bg: var(--color-surface-level-1);
+  --table-header-text: var(--color-text-primary);
+  --table-body-text: var(--color-text-primary);
+  --table-cell-padding-y: var(--space-padding-sm);
+  --table-cell-padding-x: var(--space-padding-md);
+  --table-cell-font-size: var(--typo-body-small-size);
+  --table-header-font-weight: var(--primitive-font-weight-bold);
+  --table-row-hover-bg: var(--color-surface-level-1);
+  --table-row-striped-bg: var(--color-surface-level-2);
+  --table-caption-text: var(--color-text-secondary);
+  --table-empty-text: var(--color-text-secondary);
 
   // --- Input Component Tokens ---
   // Text Input (Default)
@@ -651,6 +751,157 @@
   --grid-columns-default: repeat(12, 1fr);
   --grid-columns-sidebar-content: 280px 1fr;
   --grid-columns-room-list: repeat(auto-fill, minmax(280px, 1fr));
+  --grid-spacing-unit: var(--primitive-space-base);
+  --grid-spacing-none: 0px;
+  --grid-spacing-xs: var(--space-gap-xs);
+  --grid-spacing-sm: var(--space-gap-sm);
+  --grid-spacing-md: var(--space-gap-md);
+  --grid-spacing-lg: var(--space-gap-lg);
+  --grid-spacing-xl: var(--space-gap-xl);
+
+  // --- Tabs Component Tokens ---
+  --tabs-border-bottom: 1px solid var(--color-border-default);
+  --tabs-gap: var(--space-gap-sm);
+  --tabs-indicator-color: var(--color-interactive-primary);
+  --tabs-indicator-height: 2px;
+
+  // Tab Button
+  --tabs-tab-padding: var(--space-padding-sm) var(--space-padding-md);
+  --tabs-tab-radius: var(--primitive-radius-medium);
+  --tabs-tab-font-size: var(--typo-body-medium-size);
+  --tabs-tab-font-weight: var(--primitive-font-weight-bold);
+  --tabs-tab-text: var(--color-text-secondary);
+  --tabs-tab-text-active: var(--color-text-primary);
+  --tabs-tab-hover-bg: var(--color-surface-level-1);
+  --tabs-disabled-opacity: 0.5;
+  --tabs-focus-ring: 2px solid var(--color-border-focus);
+
+  // Panel
+  --tabs-panel-padding: var(--space-padding-md);
+
+  // --- Stepper Component Tokens ---
+  --stepper-gap: var(--space-gap-md);
+  --stepper-step-gap: var(--space-gap-sm);
+  --stepper-icon-size: 28px;
+  --stepper-icon-radius: 9999px;
+  --stepper-icon-font-size: var(--typo-label-medium-size);
+  --stepper-icon-font-weight: var(--primitive-font-weight-bold);
+  --stepper-icon-bg: var(--color-surface-level-2);
+  --stepper-icon-text: var(--color-text-secondary);
+  --stepper-icon-bg-active: var(--color-interactive-primary);
+  --stepper-icon-text-active: var(--primitive-gray-0);
+  --stepper-icon-bg-completed: var(--color-status-success);
+  --stepper-icon-text-completed: var(--primitive-gray-0);
+  --stepper-icon-bg-error: var(--color-status-error);
+  --stepper-icon-text-error: var(--primitive-gray-0);
+  --stepper-label-color: var(--color-text-primary);
+  --stepper-label-color-inactive: var(--color-text-secondary);
+  --stepper-label-font-size: var(--typo-body-small-size);
+  --stepper-label-font-weight: var(--primitive-font-weight-bold);
+  --stepper-disabled-opacity: 0.5;
+  --stepper-connector-color: var(--color-border-default);
+  --stepper-connector-thickness: 2px;
+  --stepper-focus-ring: 2px solid var(--color-border-focus);
+  --stepper-content-padding: var(--space-padding-md);
+
+  // --- Speed Dial Component Tokens ---
+  --speed-dial-offset: var(--space-gap-lg);
+  --speed-dial-gap: var(--space-gap-sm);
+  --speed-dial-backdrop: var(--color-background-overlay);
+
+  // FAB
+  --speed-dial-fab-size: calc(var(--primitive-space-base) * 14); // 56px
+  --speed-dial-fab-radius: 9999px;
+  --speed-dial-fab-bg: var(--color-interactive-primary);
+  --speed-dial-fab-text: var(--primitive-gray-0);
+  --speed-dial-fab-shadow: var(--elevation-shadow-2);
+  --speed-dial-fab-hover-opacity: 0.95;
+  --speed-dial-fab-active-opacity: 0.9;
+  --speed-dial-focus-ring: 2px solid var(--color-border-focus);
+
+  // Action
+  --speed-dial-action-size: calc(var(--primitive-space-base) * 10); // 40px
+  --speed-dial-action-radius: 9999px;
+  --speed-dial-action-bg: var(--color-surface-level-3);
+  --speed-dial-action-text: var(--color-text-primary);
+  --speed-dial-action-shadow: var(--elevation-shadow-1);
+  --speed-dial-action-hover-bg: var(--color-surface-level-4);
+  --speed-dial-disabled-opacity: 0.5;
+
+  // Tooltip
+  --speed-dial-tooltip-bg: var(--color-text-primary);
+  --speed-dial-tooltip-text: var(--color-background-primary);
+  --speed-dial-tooltip-radius: var(--primitive-radius-medium);
+  --speed-dial-tooltip-padding: var(--space-padding-sm);
+  --speed-dial-tooltip-font-size: var(--typo-label-small-size);
+
+  // --- Pagination Component Tokens ---
+  --pagination-gap: var(--space-gap-xs);
+  --pagination-item-size: calc(var(--primitive-space-base) * 10); // 40px
+  --pagination-item-radius: var(--primitive-radius-medium);
+  --pagination-item-font-size: var(--typo-body-small-size);
+  --pagination-item-font-weight: var(--primitive-font-weight-bold);
+  --pagination-item-bg: transparent;
+  --pagination-item-text: var(--color-text-primary);
+  --pagination-item-border: 1px solid transparent;
+  --pagination-item-hover-bg: var(--color-surface-level-1);
+  --pagination-item-active-bg: var(--color-interactive-primary);
+  --pagination-item-active-text: var(--primitive-gray-0);
+  --pagination-item-active-border: 1px solid transparent;
+  --pagination-item-outlined-border: 1px solid var(--color-border-default);
+  --pagination-ellipsis-text: var(--color-text-secondary);
+  --pagination-disabled-opacity: 0.5;
+  --pagination-focus-ring: 2px solid var(--color-border-focus);
+
+  // --- Breadcrumbs Component Tokens ---
+  --breadcrumbs-gap: var(--space-gap-xs);
+  --breadcrumbs-padding-y: 0px;
+  --breadcrumbs-padding-x: 0px;
+  --breadcrumbs-font-size: var(--typo-body-small-size);
+  --breadcrumbs-font-weight: var(--primitive-font-weight-regular);
+  --breadcrumbs-text: var(--color-text-secondary);
+  --breadcrumbs-link-text: var(--color-text-primary);
+  --breadcrumbs-link-hover-text: var(--color-interactive-primary);
+  --breadcrumbs-separator-text: var(--color-text-tertiary);
+  --breadcrumbs-focus-ring: 2px solid var(--color-border-focus);
+  --breadcrumbs-collapse-bg: var(--color-surface-level-1);
+  --breadcrumbs-collapse-radius: var(--primitive-radius-medium);
+  --breadcrumbs-collapse-padding: 0 var(--space-padding-sm);
+
+  // --- Bottom Navigation Component Tokens ---
+  --bottom-navigation-height: calc(var(--primitive-space-base) * 14); // 56px
+  --bottom-navigation-bg: var(--color-background-primary);
+  --bottom-navigation-border-top: 1px solid var(--color-border-default);
+  --bottom-navigation-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  --bottom-navigation-z-index: 1000;
+  --bottom-navigation-padding-x: var(--space-padding-md);
+  --bottom-navigation-item-gap: var(--space-gap-xs);
+  --bottom-navigation-item-padding: var(--space-padding-sm) var(--space-padding-md);
+  --bottom-navigation-item-radius: var(--primitive-radius-medium);
+  --bottom-navigation-item-text: var(--color-text-secondary);
+  --bottom-navigation-item-text-active: var(--color-interactive-primary);
+  --bottom-navigation-item-bg-hover: var(--color-surface-level-1);
+  --bottom-navigation-item-bg-active: var(--color-surface-level-2);
+  --bottom-navigation-item-font-size: var(--typo-label-small-size);
+  --bottom-navigation-item-font-weight: var(--primitive-font-weight-bold);
+  --bottom-navigation-disabled-opacity: 0.5;
+  --bottom-navigation-focus-ring: 2px solid var(--color-border-focus);
+
+  // --- Accordion Component Tokens ---
+  --accordion-border: 1px solid var(--color-border-default);
+  --accordion-radius: var(--primitive-radius-large);
+  --accordion-bg: var(--color-background-primary);
+  --accordion-hover-bg: var(--color-surface-level-1);
+  --accordion-disabled-opacity: 0.5;
+  --accordion-gap: var(--space-gap-sm);
+  --accordion-summary-padding: var(--space-padding-md);
+  --accordion-details-padding: var(--space-padding-md);
+  --accordion-summary-font-size: var(--typo-body-medium-size);
+  --accordion-summary-font-weight: var(--primitive-font-weight-bold);
+  --accordion-summary-text: var(--color-text-primary);
+  --accordion-icon-size: 18px;
+  --accordion-icon-color: var(--color-text-secondary);
+  --accordion-focus-ring: 2px solid var(--color-border-focus);
 
   // --- Chat Component Tokens ---
   // Chat Window

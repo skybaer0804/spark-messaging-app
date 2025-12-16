@@ -2,19 +2,16 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import sparkMessagingClient from './config/sparkMessaging';
-import { Content } from './layouts/Content/Content';
-import { ChatApp } from './components/ChatApp/ChatApp';
-import { NotificationApp } from './components/NotificationApp/NotificationApp';
-import { ReverseAuction } from './components/ReverseAuction/ReverseAuction';
-import { DesignSystemDemo } from './components/DesignSystemDemo/DesignSystemDemo';
-import { Sidebar } from './components/Sidebar/Sidebar';
+import { AppRouter } from './routes/AppRouter';
+import { RouterStateProvider, useRouterState } from './routes/RouterState';
+import { findRouteTitleByPath } from './routes/appRoutes';
+import { SidebarLayout } from './layouts/SidebarLayout/SidebarLayout';
 import './app.scss';
 import './index.css';
 
 export function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [socketId, setSocketId] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<string>('chat');
   const socketIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -116,43 +113,11 @@ export function App() {
     };
   }, []);
 
-  const getHeaderTitle = () => {
-    if (currentView === 'chat') {
-      return 'Chat';
-    }
-    if (currentView === 'notification') {
-      return 'Notification';
-    }
-    if (currentView === 'reverse-auction') {
-      return 'Reverse Auction';
-    }
-    if (currentView === 'design-system') {
-      return 'Design System Demo';
-    }
-    return 'Spark Messaging Demo';
-  };
-
-  const handleViewChange = (view: string) => {
-    setCurrentView(view);
-  };
-
   return (
     <div className="app">
-      <div className="app__main">
-        <Sidebar currentView={currentView} onViewChange={handleViewChange} />
-        <Content 
-          headerTitle={getHeaderTitle()} 
-          isConnected={isConnected} 
-          socketId={socketId}
-          currentView={currentView}
-          onViewChange={handleViewChange}
-        >
-          {currentView === 'chat' && <ChatApp />}
-          {currentView === 'notification' && <NotificationApp />}
-          {currentView === 'reverse-auction' && <ReverseAuction />}
-          {currentView === 'design-system' && <DesignSystemDemo />}
-        </Content>
-      </div>
+      <RouterStateProvider>
+        <AppShell isConnected={isConnected} socketId={socketId} />
+      </RouterStateProvider>
       <ToastContainer
         position="top-center"
         autoClose={5000}
@@ -165,6 +130,19 @@ export function App() {
         pauseOnHover
         aria-label="알림"
       />
+    </div>
+  );
+}
+
+function AppShell(props: { isConnected: boolean; socketId: string | null }) {
+  const { pathname } = useRouterState();
+  const headerTitle = findRouteTitleByPath(pathname);
+
+  return (
+    <div className="app__main">
+      <SidebarLayout headerTitle={headerTitle} isConnected={props.isConnected} socketId={props.socketId}>
+        <AppRouter />
+      </SidebarLayout>
     </div>
   );
 }
