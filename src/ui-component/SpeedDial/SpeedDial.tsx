@@ -57,7 +57,8 @@ export function SpeedDial({
     else onClose?.(event);
   };
 
-  const computedTooltipPlacement = tooltipPlacement ?? (direction === 'left' ? 'right' : direction === 'right' ? 'left' : 'left');
+  const computedTooltipPlacement =
+    tooltipPlacement ?? (direction === 'left' ? 'right' : direction === 'right' ? 'left' : 'left');
 
   const classes = [
     'speed-dial',
@@ -117,7 +118,9 @@ export function SpeedDial({
                 if (closeOnSelect) setOpen(false, e);
               }}
             >
-              <span className={`speed-dial__tooltip speed-dial__tooltip--${computedTooltipPlacement}`}>{action.name}</span>
+              <span className={`speed-dial__tooltip speed-dial__tooltip--${computedTooltipPlacement}`}>
+                {action.name}
+              </span>
               <span className="speed-dial__action-icon" aria-hidden="true">
                 {action.icon}
               </span>
@@ -141,5 +144,3 @@ export function SpeedDial({
     </div>
   );
 }
-
-

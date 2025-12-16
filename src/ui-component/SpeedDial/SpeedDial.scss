@@ -34,9 +34,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition:
-      opacity 0.2s ease,
-      transform 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease;
     z-index: 1001;
 
     &:hover {
@@ -62,9 +60,7 @@
     opacity: 0;
     --speed-dial-actions-translate: translate(0, 0);
     transform: var(--speed-dial-actions-translate) scale(0.98);
-    transition:
-      opacity 0.2s ease,
-      transform 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease;
     z-index: 1000;
   }
 
@@ -119,9 +115,7 @@
     --speed-dial-tooltip-hidden: translate(0, 2px);
     --speed-dial-tooltip-shown: translate(0, 0);
     transform: var(--speed-dial-tooltip-hidden);
-    transition:
-      opacity 0.15s ease,
-      transform 0.15s ease;
+    transition: opacity 0.15s ease, transform 0.15s ease;
   }
 
   &__action:hover &__tooltip {
@@ -225,5 +219,3 @@
     z-index: 1000;
   }
 }
-
-

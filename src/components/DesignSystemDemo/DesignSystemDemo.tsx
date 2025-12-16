@@ -27,6 +27,7 @@ import { Skeleton } from '@/ui-component/Skeleton/Skeleton';
 import { Tabs } from '@/ui-component/Tabs/Tabs';
 import { Stepper } from '@/ui-component/Stepper/Stepper';
 import { SpeedDial } from '@/ui-component/SpeedDial/SpeedDial';
+import { Pagination } from '@/ui-component/Pagination/Pagination';
 import { IconHome, IconUser, IconSettings, IconBell, IconSearch, IconTrash, IconMail, IconPlus, IconX } from '@tabler/icons-react';
 import './DesignSystemDemo.scss';
 
@@ -36,6 +37,7 @@ export function DesignSystemDemo() {
   const [selectValue, setSelectValue] = useState('option1');
   const [tabValue, setTabValue] = useState<string | number>('overview');
   const [activeStep, setActiveStep] = useState(1);
+  const [page, setPage] = useState(3);
 
   return (
     <div
@@ -336,6 +338,19 @@ export function DesignSystemDemo() {
                   },
                 ]}
                 showContent
+              />
+            </Box>
+            <Box style={{ marginTop: '16px' }}>
+              <Pagination
+                ariaLabel="design system pagination demo"
+                count={24}
+                page={page}
+                onChange={(next) => setPage(next)}
+                showFirstButton
+                showLastButton
+                siblingCount={1}
+                boundaryCount={1}
+                variant="outlined"
               />
             </Box>
           </Paper>

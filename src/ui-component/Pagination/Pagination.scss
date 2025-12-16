@@ -1,0 +1,101 @@
+@use '/src/styles/tokens/index';
+
+.pagination {
+  width: 100%;
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pagination-gap);
+  }
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  &__item--ellipsis {
+    width: var(--pagination-item-size);
+    height: var(--pagination-item-size);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pagination-ellipsis-text);
+    font-size: var(--pagination-item-font-size);
+    user-select: none;
+  }
+
+  &__button {
+    width: var(--pagination-item-size);
+    height: var(--pagination-item-size);
+    border-radius: var(--pagination-item-radius);
+    border: var(--pagination-item-border);
+    background: var(--pagination-item-bg);
+    color: var(--pagination-item-text);
+    font-size: var(--pagination-item-font-size);
+    font-weight: var(--pagination-item-font-weight);
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease,
+      opacity 0.2s ease;
+
+    &:hover {
+      background-color: var(--pagination-item-hover-bg);
+    }
+
+    &:focus-visible {
+      outline: var(--pagination-focus-ring);
+      outline-offset: 2px;
+    }
+
+    &--selected {
+      background-color: var(--pagination-item-active-bg);
+      color: var(--pagination-item-active-text);
+      border: var(--pagination-item-active-border);
+    }
+
+    &--disabled {
+      opacity: var(--pagination-disabled-opacity);
+      cursor: not-allowed;
+    }
+  }
+
+  &__button-inner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  &--outlined {
+    .pagination__button {
+      border: var(--pagination-item-outlined-border);
+    }
+  }
+
+  &--circular {
+    .pagination__button {
+      border-radius: 9999px;
+    }
+  }
+
+  &--sm {
+    --pagination-item-size: calc(var(--primitive-space-base) * 8); // 32px
+  }
+
+  &--disabled {
+    opacity: var(--pagination-disabled-opacity);
+    pointer-events: none;
+  }
+}
+
+
