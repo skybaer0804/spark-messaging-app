@@ -32,6 +32,7 @@ import { Breadcrumbs } from '@/ui-component/Breadcrumbs/Breadcrumbs';
 import { BottomNavigation } from '@/ui-component/BottomNavigation/BottomNavigation';
 import { Accordion } from '@/ui-component/Accordion/Accordion';
 import { ButtonGroup } from '@/ui-component/ButtonGroup/ButtonGroup';
+import { FloatingActionButton } from '@/ui-component/FloatingActionButton/FloatingActionButton';
 import { IconHome, IconUser, IconSettings, IconBell, IconSearch, IconTrash, IconMail, IconPlus, IconX } from '@tabler/icons-react';
 import './DesignSystemDemo.scss';
 
@@ -201,6 +202,13 @@ export function DesignSystemDemo() {
                     </Button>
                   </ButtonGroup>
                 </Stack>
+                <Typography variant="h3">FAB</Typography>
+                <Flex gap="md" align="center" wrap="wrap">
+                  <FloatingActionButton icon={<IconPlus size={20} />} aria-label="add" />
+                  <FloatingActionButton variant="extended" icon={<IconPlus size={20} />} label="Create" />
+                  <FloatingActionButton size="sm" color="secondary" icon={<IconPlus size={18} />} aria-label="add small" />
+                  <FloatingActionButton size="lg" color="default" icon={<IconPlus size={22} />} aria-label="add large" />
+                </Flex>
               </Stack>
 
               <Stack spacing="md">

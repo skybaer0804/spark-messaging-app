@@ -526,6 +526,29 @@
   --button-group-divider: 1px solid var(--color-border-default);
   --button-group-focus-ring: 2px solid var(--color-border-focus);
 
+  // --- Floating Action Button (FAB) Component Tokens ---
+  --fab-size-md: calc(var(--primitive-space-base) * 14); // 56px
+  --fab-size-sm: calc(var(--primitive-space-base) * 10); // 40px
+  --fab-size-lg: calc(var(--primitive-space-base) * 16); // 64px
+  --fab-radius: 9999px;
+  --fab-padding-extended: 0 var(--space-padding-lg);
+  --fab-gap: var(--space-gap-sm);
+  --fab-font-size: var(--typo-body-small-size);
+  --fab-font-weight: var(--primitive-font-weight-bold);
+  --fab-shadow: var(--elevation-shadow-2);
+  --fab-hover-opacity: 0.95;
+  --fab-active-opacity: 0.9;
+  --fab-focus-ring: 2px solid var(--color-border-focus);
+  --fab-disabled-opacity: 0.5;
+
+  // Colors
+  --fab-bg-primary: var(--color-interactive-primary);
+  --fab-text-primary: var(--primitive-gray-0);
+  --fab-bg-secondary: var(--color-surface-level-3);
+  --fab-text-secondary: var(--color-text-primary);
+  --fab-bg-default: var(--color-surface-level-2);
+  --fab-text-default: var(--color-text-primary);
+
   // --- Input Component Tokens ---
   // Text Input (Default)
   --input-background: var(--color-background-primary);
