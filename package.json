@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "start": "vite preview --host",
+    "start": "rm -rf node_modules/.vite dist && vite preview --host",
+    "clean": "rm -rf node_modules/.vite dist",
     "generate-icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
