@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.koyeb.spark.twa",
+      "sha256_cert_fingerprints": [
+        "E0:BF:75:29:98:A8:B6:F5:5C:17:5D:73:F8:13:7F:CD:49:A5:73:C4:65:01:3A:5F:FD:3D:88:B8:70:2E:67:46"
+      ]
+    }
+  }
+]
