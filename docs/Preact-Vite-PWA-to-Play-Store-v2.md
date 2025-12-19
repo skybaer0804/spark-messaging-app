@@ -1,6 +1,6 @@
 # Preact + Vite PWA를 Google Play Store에 배포하기
 
-**최종 업데이트**: 2025년 12월 19일  
+**최종 업데이트**: 2025년 1월 27일  
 **작성자**: AI Assistant  
 **IDE**: Cursor / VS Code  
 **참고**: [Chrome TWA Quick Start Guide](https://developer.chrome.com/docs/android/trusted-web-activity/quick-start?hl=ko)
@@ -891,6 +891,147 @@ bubblewrap update
 bubblewrap build
 ```
 
+### 5.5.5 Keystore 관리 및 팀 개발 가이드
+
+**⚠️ 중요**: Keystore 파일은 **절대 Git 저장소에 커밋하면 안 됩니다!** 이 파일은 앱 서명에 사용되는 민감한 보안 파일입니다.
+
+#### Git에서 Keystore 제외하기
+
+프로젝트 루트의 `.gitignore` 파일에 다음을 추가하세요:
+
+```gitignore
+# Android Keystore files
+*.keystore
+*.jks
+android.keystore
+```
+
+#### 팀 개발 시 Keystore 관리 방법
+
+여러 개발자와 함께 프로젝트를 개발할 때는 다음 방법 중 하나를 선택하세요:
+
+##### 옵션 A: 각자 개발용 Keystore 사용 (권장)
+
+**장점**:
+
+- 각 개발자가 독립적으로 개발 및 테스트 가능
+- 보안 위험 최소화
+- 프로덕션 keystore와 분리되어 안전
+
+**방법**:
+
+1. 각 개발자가 `bubblewrap init` 실행 시 자신의 keystore 생성
+2. `twa-manifest.json`의 `signingKey.path`를 상대 경로로 설정:
+   ```json
+   {
+     "signingKey": {
+       "path": "./android.keystore", // 절대 경로 대신 상대 경로 사용
+       "alias": "android"
+     }
+   }
+   ```
+3. 프로덕션 빌드는 CI/CD 또는 배포 담당자만 수행
+
+##### 옵션 B: 공유 Keystore 사용 (프로덕션용)
+
+**사용 시기**: Play Store에 실제 배포할 앱을 빌드할 때
+
+**⚠️ 주의사항**:
+
+- Keystore 파일과 비밀번호는 **절대 Git에 커밋하지 마세요**
+- Keystore를 잃어버리면 같은 패키지명으로 업데이트할 수 없습니다
+- 비밀번호를 잊으면 복구할 수 없습니다
+
+**안전한 공유 방법**:
+
+1. **암호화된 저장소 사용**
+
+   - 1Password, Bitwarden 등 비밀번호 관리자
+   - 회사 내부 보안 저장소
+   - 암호화된 ZIP 파일 (비밀번호는 별도 채널로 전달)
+
+2. **CI/CD에서만 사용**
+
+   - GitHub Secrets, GitLab CI Variables 등에 keystore 저장
+   - 로컬 개발자는 각자 keystore 사용
+   - 프로덕션 빌드는 CI/CD 파이프라인에서만 수행
+
+3. **물리적 전달**
+   - 암호화된 USB 드라이브
+   - 신뢰할 수 있는 채널을 통한 직접 전달
+
+**공유 시 포함할 정보**:
+
+- Keystore 파일 (`android.keystore`)
+- Keystore 비밀번호
+- Key 별칭 (alias, 기본값: `android`)
+- Key 비밀번호 (keystore 비밀번호와 다를 수 있음)
+
+##### 옵션 C: CI/CD 전용 Keystore
+
+**구조**:
+
+- 로컬 개발: 각 개발자가 자신의 keystore 사용
+- 프로덕션 빌드: CI/CD에서만 공유 keystore 사용
+
+**장점**:
+
+- 프로덕션 keystore가 로컬에 노출되지 않음
+- 자동화된 배포 프로세스 구축 가능
+
+#### Keystore 백업 및 보관
+
+**프로덕션 Keystore는 반드시 안전한 곳에 백업하세요:**
+
+1. **백업 위치**
+
+   - 암호화된 클라우드 저장소 (예: Google Drive 암호화 폴더)
+   - 회사 보안 저장소
+   - 오프라인 백업 (암호화된 USB)
+
+2. **백업 시 포함할 정보**
+
+   - Keystore 파일
+   - Keystore 비밀번호
+   - Key 별칭 및 비밀번호
+   - 생성 날짜 및 용도
+
+3. **문서화**
+   - 팀 내부 문서에 keystore 위치 및 접근 방법 기록
+   - 비밀번호는 별도 보안 저장소에만 보관
+
+#### 프로젝트 설정 권장사항
+
+**`twa-manifest.json` 설정**:
+
+```json
+{
+  "signingKey": {
+    "path": "./android.keystore", // 상대 경로 사용 (팀 개발에 유리)
+    "alias": "android"
+  }
+}
+```
+
+**이유**:
+
+- 절대 경로는 각 개발자의 환경에 따라 다를 수 있음
+- 상대 경로는 프로젝트 루트 기준으로 동작하여 일관성 유지
+
+#### 문제 해결
+
+**Keystore를 잃어버린 경우**:
+
+- 같은 패키지명으로 업데이트 불가능
+- Play Store에 새 앱으로 등록해야 함
+- **해결책**: 항상 백업을 유지하세요!
+
+**비밀번호를 잊은 경우**:
+
+- 복구 불가능
+- 새 keystore 생성 필요
+- **해결책**: 비밀번호를 안전한 곳에 기록하세요!
+
 ### 5.6 Android 프로젝트 빌드
 
 ```bash
@@ -1031,18 +1172,48 @@ curl https://your-domain.com/.well-known/assetlinks.json
 
 ### 6.5 검증
 
-```bash
-# Google의 검증 도구 사용
-# https://digitalassetlinks.googleapis.com/v1/assetlinks:check?namespace=android_app&package_name=com.yourcompany.appname&relation=delegate_permission/common.handle_all_urls
+**1단계: 배포된 서버에서 assetlinks.json 접근 확인**
 
-# 또는 터미널에서:
-curl -s "https://digitalassetlinks.googleapis.com/v1/assetlinks:check?namespace=android_app&package_name=com.yourcompany.appname&relation=delegate_permission/common.handle_all_urls"
+배포된 서버의 실제 도메인으로 확인 (예: `https://your-domain.com`):
 
-# 응답:
-# {
-#   "linked": true
-# }
+**브라우저에서:**
+
 ```
+https://your-domain.com/.well-known/assetlinks.json
+```
+
+**터미널에서 확인 (Linux/Mac/Git Bash):**
+
+```bash
+curl https://your-domain.com/.well-known/assetlinks.json
+# 정상: JSON 내용 출력
+```
+
+**PowerShell에서 확인:**
+
+```powershell
+# 방법 1: curl.exe 사용
+curl.exe https://your-domain.com/.well-known/assetlinks.json
+
+# 방법 2: Invoke-WebRequest 사용
+Invoke-WebRequest -Uri "https://your-domain.com/.well-known/assetlinks.json" | Select-Object -ExpandProperty Content
+```
+
+**2단계: Google Digital Asset Links 검증**
+
+브라우저에서 직접 확인 (가장 간단):
+
+```
+https://digitalassetlinks.googleapis.com/v1/statements/list?source.web.site=https://your-domain.com&relation=delegate_permission/common.handle_all_urls
+```
+
+또는 Google의 온라인 검증 도구 사용:
+
+```
+https://developers.google.com/digital-asset-links/tools/generator
+```
+
+**참고**: Google API는 POST 요청을 사용하므로, 브라우저나 온라인 도구를 사용하는 것이 더 편리합니다.
 
 ### 6.6 문제 해결
 
@@ -1139,6 +1310,7 @@ Play Console 메인 → "앱 만들기" 또는 "+ 새 앱"
 앱 또는 게임: 앱 선택
 무료 또는 유료: 무료 선택 (초기)
 사용 데이터: 확인 후 진행
+선언 체크
 ```
 
 #### Step 3: 프로젝트 생성
@@ -1214,96 +1386,204 @@ Play Console → 앱선택 → 설정 → 앱 정보 → 앱 정보
 - 웹사이트: https://your-domain.com (선택사항)
 ```
 
-### 8.3 앱 번들 업로드
+### 8.3 테스트 단계 (필수)
 
-#### Step 1: Release 버전 생성
+**⚠️ 중요**: Google Play Console의 최신 정책에 따라, 프로덕션 출시 전에 **반드시 테스트 단계를 거쳐야 합니다**. 내부 테스터를 등록하고 Internal Testing을 통해 앱을 배포한 후, 프로덕션 출시가 가능합니다.
+
+#### Step 1: Testing 트랙 접근
+
+```
+Play Console → 앱선택 → Testing → Internal Testing
+```
+
+#### Step 2: 내부 테스터 등록
+
+```
+Testing → Internal Testing → Testers 탭
+
+방법 1: 이메일 주소로 추가 (권장)
+- "Create email list" 클릭
+- 리스트 이름 입력 (예: "내부 테스터")
+- 테스터 이메일 주소 추가 (최소 1명 이상)
+  * 본인 Google 계정 이메일 추가 가능
+  * 여러 명 추가 가능 (쉼표로 구분)
+- "Save changes" 클릭
+
+방법 2: Google 그룹 사용
+- 기존 Google 그룹이 있는 경우 그룹 이메일 주소 입력
+```
+
+**테스터 추가 예시**:
+
+```
+테스터 이메일:
+- developer@your-domain.com
+- tester1@your-domain.com
+- tester2@your-domain.com
+```
+
+#### Step 3: 테스트 앱 번들 업로드
+
+```
+Testing → Internal Testing → Releases 탭
+
+1. "Create new release" 클릭
+2. AAB 파일 업로드
+   - 파일 선택: app/build/outputs/bundle/release/app-release.aab
+3. Release notes 입력 (선택사항):
+   "테스트 버전 1.0
+   - 초기 기능 테스트"
+4. "Save" 클릭
+5. "Review release" 클릭
+6. "Start rollout to Internal Testing" 클릭
+```
+
+**업로드 완료 후 확인**:
+
+```
+- App Signing: "Google Play에서 관리" (기본값 유지)
+- Version code: 1 (또는 지정한 버전)
+- Version name: 1.0.0
+- 상태: "Available to testers"
+```
+
+#### Step 4: 테스터에게 앱 설치 링크 공유
+
+```
+Testing → Internal Testing → Testers 탭
+
+"Copy link" 버튼 클릭하여 테스트 링크 복사
+
+예시 링크:
+https://play.google.com/apps/internaltest/1234567890abcdef
+
+테스터에게 이메일로 링크 전송
+```
+
+**테스터 설치 방법**:
+
+1. 테스터가 링크를 클릭하여 Google Play Store 열기
+2. "테스터가 되기" 또는 "Become a tester" 버튼 클릭
+3. Google Play Store에서 앱 설치
+4. 앱 실행 및 테스트
+
+#### Step 5: 테스트 완료 확인
+
+```
+Testing → Internal Testing → Dashboard
+
+확인 항목:
+- 테스터 수: 등록한 테스터 수 확인
+- 설치 수: 테스터들이 앱을 설치했는지 확인
+- 피드백: 테스터 피드백 확인 (있는 경우)
+```
+
+**테스트 기간**: 최소 1일 이상 권장 (실제 사용 테스트)
+
+### 8.4 프로덕션 출시 준비
+
+**⚠️ 중요**: Internal Testing을 완료한 후에만 Production 출시가 가능합니다.
+
+#### Step 1: Production 트랙 접근
 
 ```
 Play Console → 앱선택 → Release → Production
-
-또는
-
-Play Console → 앱선택 → Testing → Internal Testing (먼저 테스트)
 ```
 
-#### Step 2: AAB 파일 업로드
+#### Step 2: 프로덕션 앱 번들 업로드
 
 ```
-왼쪽 메뉴 → Release → Production → Create new release
+Release → Production → "Create new release" 클릭
 
-또는
+1. AAB 파일 업로드
+   - 파일 선택: app/build/outputs/bundle/release/app-release.aab
+   - (Internal Testing과 동일한 파일 또는 업데이트된 버전)
 
-Upload APK/AAB 버튼 클릭
+2. Release notes 입력 (필수):
+   "1.0 초기 출시
+   - 습관 추가, 추적 기능
+   - 진행 통계 표시
+   - 오프라인 지원"
+
+3. "Save" 클릭
 ```
 
-**파일 선택**:
+**업로드 완료 후 확인**:
 
 ```
-브라우저 파일 선택 → app/build/outputs/bundle/release/app-release.aab
-```
-
-#### Step 3: 출시 노트 입력
-
-```
-Release notes (한국어 선택):
-"1.0 초기 출시
-- 습관 추가, 추적 기능
-- 진행 통계 표시
-- 오프라인 지원"
-```
-
-#### Step 4: 검토 및 확인
-
-```
-Upload 완료 후:
 - App Signing: "Google Play에서 관리" (기본값 유지)
-- Version code: 자동 증가 (버그 수정 시 업데이트)
+- Version code: 1 (또는 Internal Testing보다 높은 버전)
 - Version name: 1.0.0
 ```
 
-### 8.4 심사 및 출시
+### 8.5 심사 및 출시
 
 #### Step 1: 배포 국가 선택
 
 ```
-Play Console → 앱선택 → Release → Production
+Release → Production → "Countries" 또는 "배포 국가" 섹션
 
-"배포 국가" 또는 "Countries":
+선택 옵션:
 - 전체 국가: 모든 곳에서 이용 가능
-- 특정 국가만: 선택적 공개
-```
+- 특정 국가만: 선택적 공개 (한국만 선택 가능)
 
-한국: ✓ 선택
+한국: ✓ 선택 (또는 원하는 국가 선택)
+```
 
 #### Step 2: 정가 설정 (무료 앱은 생략)
 
 ```
-가격: 무료 (기본값 유지)
+가격 및 배포 → 가격
+
+- 무료: 기본값 유지
+- 유료: 가격 설정 (USD 기준)
 ```
 
 #### Step 3: 심사 신청
 
 ```
-"Review and publish" 또는 "출시" 버튼 클릭
+Release → Production → "Review release" 버튼 클릭
 
-→ 최종 확인 다이얼로그
-→ "Publish" 또는 "출시" 클릭
+→ 최종 확인 다이얼로그 표시
+→ 모든 필수 항목 확인:
+  ✓ 앱 정보 입력 완료
+  ✓ 스크린샷 업로드 완료
+  ✓ 개인정보처리방침 URL 입력 완료
+  ✓ 콘텐츠 등급 설정 완료
+  ✓ Internal Testing 완료 (필수)
+
+→ "Start rollout to Production" 또는 "출시" 클릭
 
 심사 기간: 보통 24~48시간 (한국은 빠름)
 ```
 
+**⚠️ 주의**: Internal Testing을 완료하지 않으면 "Start rollout to Production" 버튼이 비활성화되거나 오류가 발생할 수 있습니다.
+
 #### Step 4: 심사 상태 확인
 
 ```
-Play Console 메인 → 앱 선택
+Play Console 메인 → 앱 선택 → Release → Production
 
 상태 표시:
-- "검토 중": 심사 진행 중
-- "거부됨": 심사 탈락 (이유 확인 후 수정)
-- "활성": 배포 완료
+- "Pending review" 또는 "검토 중": 심사 진행 중
+- "Changes requested" 또는 "변경 요청": 추가 정보 필요
+- "Rejected" 또는 "거부됨": 심사 탈락 (이유 확인 후 수정)
+- "Available on Google Play" 또는 "활성": 배포 완료
 ```
 
-### 8.5 심사 탈락 시 대응
+**심사 진행 상황 확인**:
+
+```
+Play Console → 앱선택 → Release → Production
+
+상세 정보:
+- 제출 시간
+- 검토 상태
+- 예상 완료 시간 (표시되는 경우)
+- 거부 사유 (거부된 경우)
+```
+
+### 8.6 심사 탈락 시 대응
 
 **자주하는 거부 사유**:
 
@@ -1319,13 +1599,14 @@ Play Console 메인 → 앱 선택
 
 ```
 1. 문제 확인 및 수정
-2. 버전 코드 증가 (1001 → 1002)
+2. 버전 코드 증가 (1 → 2)
 3. bubblewrap build로 새 AAB 생성
-4. Play Console에서 새 버전 업로드
-5. Review and publish 다시 클릭
+4. Internal Testing에 새 버전 업로드 (선택사항, 빠른 검증)
+5. Production에 새 버전 업로드
+6. "Review release" → "Start rollout to Production" 다시 클릭
 ```
 
-### 8.6 배포 후 관리
+### 8.7 배포 후 관리
 
 #### 앱 업데이트
 
@@ -1433,22 +1714,42 @@ Play Console → 앱선택 → Reviews
 - [ ] 문의 이메일 입력
 - [ ] 웹사이트 URL 입력 (선택사항)
 
-### ✅ 앱 번들 업로드
+### ✅ 테스트 단계 (필수)
 
-- [ ] app/build/outputs/bundle/release/app-release.aab 준비
-- [ ] Play Console Release → Production 진입
-- [ ] AAB 파일 업로드
+- [ ] Play Console → Testing → Internal Testing 진입
+- [ ] 내부 테스터 등록 (이메일 주소 또는 Google 그룹)
+  - 최소 1명 이상 등록 (본인 계정 포함 가능)
+- [ ] 테스트용 AAB 파일 업로드
+  - app/build/outputs/bundle/release/app-release.aab
+- [ ] 테스트 Release notes 입력 (선택사항)
+- [ ] "Start rollout to Internal Testing" 클릭
+- [ ] 테스터에게 테스트 링크 공유
+- [ ] 테스터가 앱 설치 및 테스트 완료 확인
+- [ ] 테스트 기간: 최소 1일 이상 권장
+
+### ✅ 프로덕션 출시
+
+- [ ] Play Console → Release → Production 진입
+- [ ] 프로덕션용 AAB 파일 업로드
+  - Internal Testing과 동일한 파일 또는 업데이트된 버전
 - [ ] Version code 확인 (1부터 시작)
-- [ ] Release notes 입력
+- [ ] Release notes 입력 (필수)
 - [ ] 배포 국가 선택 (한국 ✓)
+- [ ] 정가 설정 (무료/유료)
 
 ### ✅ 심사 및 배포
 
-- [ ] "Review and publish" 클릭
-- [ ] 최종 확인 후 "Publish" 실행
-- [ ] Play Console에서 상태 "검토 중" 확인
+- [ ] "Review release" 클릭
+- [ ] 모든 필수 항목 확인:
+  - [ ] 앱 정보 입력 완료
+  - [ ] 스크린샷 업로드 완료
+  - [ ] 개인정보처리방침 URL 입력 완료
+  - [ ] 콘텐츠 등급 설정 완료
+  - [ ] Internal Testing 완료 (필수)
+- [ ] "Start rollout to Production" 또는 "출시" 클릭
+- [ ] Play Console에서 상태 "Pending review" 또는 "검토 중" 확인
 - [ ] 심사 완료 대기 (24~48시간)
-- [ ] 상태 "활성"으로 변경 확인
+- [ ] 상태 "Available on Google Play" 또는 "활성"으로 변경 확인
 - [ ] Google Play Store에서 앱 검색 확인
 - [ ] 앱 설치 및 실행 테스트
 
@@ -1617,6 +1918,6 @@ adb logcat | grep E/
 
 ---
 
-**문서 버전**: 1.0  
-**마지막 업데이트**: 2025년 12월 19일  
+**문서 버전**: 1.1  
+**마지막 업데이트**: 2025년 1월 27일  
 **라이선스**: CC-BY-4.0
