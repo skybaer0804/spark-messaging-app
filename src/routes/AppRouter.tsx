@@ -14,9 +14,9 @@ function DesignSystemRoute(props: { ui?: string }) {
   return <DesignSystemDemo focusSection={props.ui} />;
 }
 
-function RedirectToChatApp() {
+function RedirectToHome() {
   useEffect(() => {
-    navigateTo('/chatapp', true);
+    navigateTo('/', true);
   }, []);
   return <div />;
 }
@@ -30,7 +30,7 @@ export function AppRouter() {
 
   return (
     <Router onChange={handleRouteChange}>
-      <Route path="/" component={RedirectToChatApp} />
+      <Route path="/" component={RedirectToHome} />
 
       {appRoutes
         .filter((r) => r.id !== 'design-system')
