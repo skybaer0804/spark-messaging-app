@@ -659,125 +659,236 @@ cd my-pwa-android
 # 배포된 PWA의 manifest.webmanifest URL을 사용해 Android 프로젝트 초기화
 # ⚠️ 주의: 도메인 루트(예: https://your-domain.com)는 HTML(index.html)이므로 실패합니다.
 # 반드시 manifest 파일 경로까지 포함하세요.
-bubblewrap init \
-  --manifest=https://your-domain.com/manifest.webmanifest
-  --manifest=https://your-domain.com/manifest.webmanifest
+bubblewrap init --manifest=https://spark.koyeb.app/manifest.webmanifest
 
 # 또는 로컬 manifest.json 사용 (개발 중)
-bubblewrap init \
-  --manifest=http://localhost:8080/manifest.webmanifest
+bubblewrap init --manifest=http://localhost:8080/manifest.webmanifest
 ```
 
 ### 5.3 Init 과정에서 입력해야 할 항목
 
-터미널에 나타나는 질문들:
+터미널에 나타나는 질문들은 5단계로 구성됩니다:
+
+#### Web app details (1/5)
+
+PWA가 호스팅되는 도메인과 시작 경로를 입력합니다.
 
 ```
-? Application name (What will be your app's name on Google Play?)
-> 습관 트래커
+? Domain: spark.koyeb.app
+? URL path: /
+```
 
-? Launcher name (Short name, up to 12 characters)
-> 습관
+**설명**:
 
-? Package name (Unique identifier, usually com.company.appname)
-> com.yourcompany.habittracker
+- **Domain**: PWA가 호스팅되는 도메인 (예: `example.com`, `spark.koyeb.app`)
+- **URL path**: 앱이 시작될 때 열리는 경로 (예: `/`, `/path-to-pwa/`)
 
-? Application short name (Up to 12 characters for launcher)
-> 습관
+#### Android app details (2/5)
 
-? Application display mode (standalone | fullscreen | browser | minimal-ui)
-> standalone
+Android 앱의 기본 정보를 입력합니다.
 
-? Theme color (Format: #RRGGBB)
-> #2196F3
+```
+? Application name: Spark Real-time Platform
+? Short name: Spark
+? Application ID: app.koyeb.spark.twa
+? Starting version code for the new app version: 1
+? Display mode: standalone
+? Orientation: portrait-primary
+? Status bar color: #1A1A2E
+```
 
-? Background color (Format: #RRGGBB)
-> #ffffff
+**설명**:
 
-? Start URL (/)
-> /
+- **Application name**: Google Play Store와 앱 정보 화면에 표시되는 전체 이름
+- **Short name**: 런처 화면에 표시되는 짧은 이름 (최대 12자)
+- **Application ID**: 패키지 이름, 고유 식별자 (예: `com.company.appname`, `app.koyeb.spark.twa`)
+- **Starting version code**: 앱 버전 코드 (1부터 시작, 업데이트 시 증가)
+- **Display mode**: 앱 표시 모드 (`standalone` | `fullscreen` | `browser` | `minimal-ui`)
+- **Orientation**: 화면 방향 (`portrait-primary` | `portrait-secondary` | `landscape-primary` | `landscape-secondary` | `any`)
+- **Status bar color**: 상태 표시줄 색상 (Hex 형식, 예: `#1A1A2E`)
 
-? Status bar color (light | dark)
-> dark
+#### Launcher icons and splash screen (3/5)
 
-? Orientation (portrait-primary | portrait-secondary | landscape-primary | landscape-secondary | any)
-> portrait-primary
+앱 아이콘과 스플래시 스크린 설정을 입력합니다.
 
-? Display mode (standalone | fullscreen | browser | minimal-ui)
-> standalone
+```
+? Splash screen color: #0F0F1E
+? Icon URL: https://spark.koyeb.app/asset/spark_icon_512.png
+? Maskable icon URL: https://spark.koyeb.app/asset/spark_icon_512_maskable.png
+```
 
-? Icon URL (192x192 recommended, must be on your domain)
-> https://your-domain.com/icon-192x192.png
+**설명**:
 
-? Signing key creation
-? Do you want to create a new signing key? (Y/n)
-> Y (처음 빌드 시 필수)
+- **Splash screen color**: 스플래시 스크린 배경색 (Hex 형식, 예: `#0F0F1E`)
+- **Icon URL**: 최소 512x512px 아이콘 이미지 URL (런처 아이콘 및 스플래시 스크린 생성에 사용)
+- **Maskable icon URL**: (선택사항) 최소 512x512px 마스커블 아이콘 URL (적응형 런처 아이콘용)
 
-? Signing key file path
-> ./android_release_key.jks
+#### Optional Features (4/5)
 
-? Signing key password
-> [안전한 비밀번호 입력]
+선택적 기능들을 설정합니다.
 
-? Key alias
-> release
+```
+? Monochrome icon URL:
+? Include support for Play Billing? No
+? Request geolocation permission? No
+```
 
-? Key alias password
-> [위와 동일하거나 다른 비밀번호]
+**설명**:
+
+- **Monochrome icon URL**: (선택사항) 최소 48x48px 단색 아이콘 URL (알림 아이콘용, PWA의 `theme_color`로 표시됨)
+- **Include support for Play Billing?**: Google Play 결제 지원 여부 (`Yes` | `No`)
+- **Request geolocation permission?**: 위치 정보 권한 요청 여부 (`Yes` | `No`)
+
+#### Signing key information (5/5)
+
+앱 서명에 사용할 키스토어 정보를 입력합니다.
+
+```
+? Key store location: C:\project\spark-messaging-bublewrap\android.keystore
+? Key name: android
+```
+
+**설명**:
+
+- **Key store location**: 키스토어 파일 경로 (기존 파일이 없으면 생성 프롬프트 표시)
+- **Key name**: 키스토어 내 키 별칭 (alias)
+
+**키스토어가 없을 경우 추가 질문**:
+
+```
+? Do you want to create one now? Yes
+? First and Last names (eg: John Doe): Wonjae No
+? Organizational Unit (eg: Engineering Dept): Enginerring Dept
+? Organization (eg: Company Name): Noden
+? Country (2 letter code): KR
+? Password for the Key Store: *********
+? Password for the Key: *********
+```
+
+**설명**:
+
+- **Do you want to create one now?**: 새 키스토어 생성 여부 (`Yes` | `No`)
+- **First and Last names**: 이름 (예: `John Doe`)
+- **Organizational Unit**: 조직 단위 (예: `Engineering Dept`)
+- **Organization**: 조직명 (예: `Company Name`)
+- **Country**: 국가 코드 (2자리, 예: `KR`, `US`)
+- **Password for the Key Store**: 키스토어 비밀번호 (안전하게 보관)
+- **Password for the Key**: 키 비밀번호 (키스토어 비밀번호와 동일하거나 다를 수 있음)
+
+**완료 메시지**:
+
+```
+keytool Signing Key created successfully
+Project generated successfully. Build it by running bubblewrap build
 ```
 
 ### 5.4 생성된 프로젝트 구조
 
+Bubblewrap init이 완료되면 다음과 같은 구조로 Android Gradle 프로젝트가 생성됩니다:
+
 ```bash
-my-pwa-android/
-├── android/ (Android Gradle 프로젝트)
-│   ├── app/
-│   ├── build.gradle
-│   ├── settings.gradle
-│   └── gradle/
-├── android_release_key.jks (서명키 - 보안 유지!)
-├── bubblewrap.json (설정 파일)
-├── twa-manifest.json (TWA 메타데이터)
-└── README.md
+spark-messaging-bublewrap/  (또는 지정한 프로젝트 이름)
+├── .gradle/                 (Gradle 캐시)
+├── app/                     (Android 앱 모듈)
+│   └── ...
+├── build/                   (빌드 출력)
+├── gradle/                  (Gradle 래퍼)
+├── android.keystore         (앱 서명키 - 보안 유지 필수!)
+├── build.gradle             (프로젝트 빌드 설정)
+├── gradle.properties        (Gradle 속성)
+├── gradlew                  (Gradle 래퍼 스크립트 - Unix/Mac)
+├── gradlew.bat              (Gradle 래퍼 스크립트 - Windows)
+├── manifest-checksum.txt    (매니페스트 체크섬)
+├── settings.gradle          (프로젝트 설정)
+├── store_icon.png           (스토어 아이콘)
+└── twa-manifest.json        (TWA 메타데이터 설정 파일)
 ```
+
+**주요 파일 설명**:
+
+- `android.keystore`: 앱 서명에 사용되는 키스토어 파일 (절대 공유하거나 잃어버리지 마세요!)
+- `twa-manifest.json`: TWA 앱의 모든 설정이 담긴 메인 설정 파일
+- `app/`: 실제 Android 앱 코드가 들어있는 모듈 디렉토리
+- `build.gradle`, `settings.gradle`: Gradle 빌드 시스템 설정 파일
 
 ### 5.5 프로젝트 설정 파일 검토 & 수정
 
-**파일**: `bubblewrap.json`
+**파일**: `twa-manifest.json`
+
+이 파일은 TWA 앱의 모든 설정을 담고 있는 메인 설정 파일입니다. init 과정에서 입력한 값들이 자동으로 반영됩니다.
 
 ```json
 {
-  "manifest": "https://your-domain.com/manifest.webmanifest",
-  "appName": "앱 이름",
-  "appShortName": "앱",
-  "packageId": "com.yourcompany.appname",
-  "launcherName": "앱",
-  "displayMode": "standalone",
-  "orientation": "portrait-primary",
-  "themeColor": "#2196F3",
-  "backgroundColor": "#ffffff",
-  "scaffoldingVersion": "12",
-  "signingKeyPath": "./android_release_key.jks",
-  "signingKeyAlias": "release",
-  "generatedAppVersion": 1,
-  "appVersionCode": 1,
-  "appVersion": "1.0.0",
-  "minSdkVersion": 19,
-  "targetSdkVersion": 34,
+  "packageId": "app.koyeb.spark.twa",
+  "host": "spark.koyeb.app",
+  "name": "Spark Real-time Platform",
+  "launcherName": "Spark",
+  "display": "standalone",
+  "themeColor": "#1A1A2E",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#0F0F1E",
   "enableNotifications": true,
-  "webManifestUrl": "https://your-domain.com/manifest.webmanifest",
-  "iconUrl": "https://your-domain.com/icon-192x192.png",
-  "maskableIconUrl": "https://your-domain.com/icon-maskable-192x192.png",
+  "startUrl": "/",
+  "iconUrl": "https://spark.koyeb.app/asset/spark_icon_512.png",
+  "maskableIconUrl": "https://spark.koyeb.app/asset/spark_icon_512_maskable.png",
   "splashScreenFadeOutDuration": 300,
-  "generatedAt": "2025-12-19T00:00:00Z"
+  "signingKey": {
+    "path": "C:\\project\\spark-messaging-bublewrap\\android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://spark.koyeb.app/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://spark.koyeb.app/",
+  "minSdkVersion": 21,
+  "orientation": "portrait-primary",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "1"
 }
 ```
 
-필요 시 수정 후 `bubblewrap update` 명령어로 반영:
+**주요 필드 설명**:
+
+- `packageId`: Android 앱의 고유 패키지 이름
+- `host`: PWA가 호스팅되는 도메인
+- `name`: 앱의 전체 이름
+- `launcherName`: 런처에 표시되는 짧은 이름
+- `display`: 앱 표시 모드 (`standalone`, `fullscreen`, `browser`, `minimal-ui`)
+- `themeColor`, `backgroundColor`: 테마 색상 및 배경색
+- `iconUrl`, `maskableIconUrl`: 앱 아이콘 URL
+- `signingKey`: 서명키 경로 및 별칭
+- `appVersionCode`: 앱 버전 코드 (업데이트 시 증가)
+- `minSdkVersion`: 최소 지원 Android SDK 버전
+- `orientation`: 화면 방향 설정
+
+**설정 수정 후 반영**:
 
 ```bash
-# bubblewrap.json 수정 후
+# twa-manifest.json 수정 후 Android 프로젝트에 반영
 bubblewrap update
+
+# 또는 빌드 시 자동 반영됨
+bubblewrap build
 ```
 
 ### 5.6 Android 프로젝트 빌드
@@ -803,16 +914,16 @@ bubblewrap build --includeAab=false
 ✓ Done!
 
 Output:
-├── android/app/build/outputs/apk/release/app-release.apk
-├── android/app/build/outputs/bundle/release/app-release.aab
-└── android/app/build/intermediates/signing_config/release/out
+├── app/build/outputs/apk/release/app-release.apk
+├── app/build/outputs/bundle/release/app-release.aab
+└── app/build/intermediates/signing_config/release/out
 ```
 
 ### 5.7 빌드 결과물 확인
 
 ```bash
 # 생성된 파일 확인
-ls -lh android/app/build/outputs/
+ls -lh app/build/outputs/
 
 # AAB 파일
 # -rw-r--r--  1 user  staff  12M 12-19 15:00 app-release.aab
@@ -835,7 +946,7 @@ adb devices
 bubblewrap install
 
 # 또는 수동 설치
-adb install android/app/build/outputs/apk/release/app-release.apk
+adb install app/build/outputs/apk/release/app-release.apk
 
 # 3. 기기에서 앱 실행 및 테스트
 # (이 단계에서 Digital Asset Links 미설정 시 맞춤탭으로 표시됨)
@@ -853,9 +964,11 @@ adb install android/app/build/outputs/apk/release/app-release.apk
 
 ```bash
 # Bubblewrap이 생성한 서명키에서 SHA256 추출
-keytool -list -v -keystore ./android_release_key.jks
+# 주의: 키스토어 파일명은 bubblewrap init 시 설정한 경로를 사용합니다
+# 기본값: android.keystore (twa-manifest.json의 signingKey.path 확인)
+keytool -list -v -keystore ./android.keystore -alias android
 
-# 프롬프트에서 비밀번호 입력 (init 때 설정한 비밀번호)
+# 프롬프트에서 비밀번호 입력 (init 때 설정한 키스토어 비밀번호)
 # 출력:
 # ...
 # SHA1: AB:CD:EF:12:34:56:...
@@ -866,7 +979,14 @@ keytool -list -v -keystore ./android_release_key.jks
 # 예: ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890
 ```
 
+**참고**:
+
+- 키스토어 파일 경로는 `twa-manifest.json`의 `signingKey.path`에서 확인할 수 있습니다.
+- 키 별칭(alias)은 `signingKey.alias`에서 확인할 수 있습니다 (기본값: `android`).
+
 ### 6.3 assetlinks.json 파일 생성
+
+**중요**: 이 파일은 **실제 PWA 프로젝트**의 `public` 디렉토리에 생성해야 합니다. (Bubble로 복사한 프로젝트가 아닌 원본 PWA 프로젝트)
 
 **파일 경로**: `public/.well-known/assetlinks.json`
 
@@ -890,6 +1010,10 @@ mkdir -p public/.well-known
   }
 ]
 ```
+
+- namespace: "android_app" - 잘못되면 Android가 링크를 인식하지 못합니다.
+- package_name: "app.koyeb.spark.twa" - 실제 앱 패키지와 일치해야 합니다.
+- sha256_cert_fingerprints: ["AB..."] - 실제 SHA256 지문. 즉, 키스토어의 실제 지문과 일치해야 합니다.
 
 ### 6.4 assetlinks.json 배포
 
@@ -1115,7 +1239,7 @@ Upload APK/AAB 버튼 클릭
 **파일 선택**:
 
 ```
-브라우저 파일 선택 → android/app/build/outputs/bundle/release/app-release.aab
+브라우저 파일 선택 → app/build/outputs/bundle/release/app-release.aab
 ```
 
 #### Step 3: 출시 노트 입력
@@ -1281,7 +1405,7 @@ Play Console → 앱선택 → Reviews
 - [ ] manifest 입력값 확인 (앱 이름, 패키지명, 색상)
 - [ ] 서명키 생성 및 비밀번호 안전 보관
 - [ ] `bubblewrap build` 실행 (AAB/APK 생성)
-- [ ] android/app/build/outputs에 파일 생성 확인
+- [ ] app/build/outputs에 파일 생성 확인
 
 ### ✅ Digital Asset Links
 
@@ -1311,7 +1435,7 @@ Play Console → 앱선택 → Reviews
 
 ### ✅ 앱 번들 업로드
 
-- [ ] android/app/build/outputs/bundle/release/app-release.aab 준비
+- [ ] app/build/outputs/bundle/release/app-release.aab 준비
 - [ ] Play Console Release → Production 진입
 - [ ] AAB 파일 업로드
 - [ ] Version code 확인 (1부터 시작)
