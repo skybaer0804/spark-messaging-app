@@ -64,7 +64,15 @@ export default defineConfig({
             src: '/asset/spark_icon_512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: 'any',
+          },
+          {
+            // DevTools 경고: 'any maskable' 단일 선언 지양 → 엔트리를 분리
+            // (현재는 동일 이미지 복사본을 사용. 실제 maskable 아이콘으로 교체 권장)
+            src: '/asset/spark_icon_512_maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
         screenshots: [
