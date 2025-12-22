@@ -21,9 +21,13 @@ export function Header({ title, isConnected, socketId }: HeaderProps) {
   const { pathname, navigate } = useRouterState();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const viewOptions: SelectOption[] = appRoutes
-    .filter((r) => r.id !== 'design-system' && r.id !== 'home')
-    .map((r) => ({ value: r.path, label: r.title }));
+  const homeRoute = appRoutes.find((r) => r.id === 'home');
+  const viewOptions: SelectOption[] = [
+    ...(homeRoute ? [{ value: homeRoute.path, label: homeRoute.title }] : []),
+    ...appRoutes
+      .filter((r) => r.id !== 'design-system' && r.id !== 'home')
+      .map((r) => ({ value: r.path, label: r.title })),
+  ];
 
   const handleViewSelectChange = (e: Event) => {
     const target = e.currentTarget as HTMLSelectElement;
@@ -32,6 +36,8 @@ export function Header({ title, isConnected, socketId }: HeaderProps) {
 
   const mobileSelectValue = viewOptions.some((o) => o.value === pathname)
     ? pathname
+    : pathname === '/'
+    ? '/'
     : viewOptions[0]?.value || '/chatapp';
 
   return (

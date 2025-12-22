@@ -172,7 +172,11 @@ export function Sidebar() {
           <div className="sidebar__header">
             {isExpanded && (
               <Flex align="center" gap="sm" style={{ flex: 1 }}>
-                <div className="sidebar__logo">
+                <div
+                  className="sidebar__logo"
+                  onClick={!isMobile ? () => navigate('/') : undefined}
+                  style={!isMobile ? { cursor: 'pointer' } : undefined}
+                >
                   <IconSparkles size={24} />
                 </div>
                 <Typography variant="body-large" className="sidebar__header-title">
@@ -181,7 +185,11 @@ export function Sidebar() {
               </Flex>
             )}
             {!isExpanded && (
-              <div className="sidebar__logo sidebar__logo--centered">
+              <div
+                className="sidebar__logo sidebar__logo--centered"
+                onClick={!isMobile ? () => navigate('/') : undefined}
+                style={!isMobile ? { cursor: 'pointer' } : undefined}
+              >
                 <IconSparkles size={24} />
               </div>
             )}
@@ -254,61 +262,65 @@ export function Sidebar() {
               )}
               <nav className="sidebar__nav">
                 <List disablePadding>
-                  {mainRoutes.map((r) => {
-                    const isActive = activeMainRoute?.id === r.id;
-                    return (
-                      <NavLink
-                        key={r.id}
-                        to={r.path}
-                        className={`sidebar__nav-link ${isActive ? 'sidebar__nav-link--active' : ''}`}
-                        onMouseEnter={() => handleMainItemHover(r)}
-                      >
-                        <ListItem
-                          className={`sidebar__nav-item ${isActive ? 'sidebar__nav-item--active' : ''}`}
-                          disableGutters
+                  {mainRoutes
+                    .filter((r) => r.id !== 'home')
+                    .map((r) => {
+                      const isActive = activeMainRoute?.id === r.id;
+                      return (
+                        <NavLink
+                          key={r.id}
+                          to={r.path}
+                          className={`sidebar__nav-link ${isActive ? 'sidebar__nav-link--active' : ''}`}
+                          onMouseEnter={() => handleMainItemHover(r)}
                         >
-                          {!isExpanded ? (
-                            <div className="sidebar__nav-item-mini">
-                              <div className="sidebar__nav-item-icon">{r.icon}</div>
-                              <Typography variant="body-small" className="sidebar__nav-item-label">
-                                {r.label}
-                              </Typography>
-                            </div>
-                          ) : (
-                            <>
-                              <div className="sidebar__nav-item-icon">{r.icon}</div>
-                              <ListItemText primary={r.label} />
-                            </>
-                          )}
-                        </ListItem>
-                      </NavLink>
-                    );
-                  })}
+                          <ListItem
+                            className={`sidebar__nav-item ${isActive ? 'sidebar__nav-item--active' : ''}`}
+                            disableGutters
+                          >
+                            {!isExpanded ? (
+                              <div className="sidebar__nav-item-mini">
+                                <div className="sidebar__nav-item-icon">{r.icon}</div>
+                                <Typography variant="body-small" className="sidebar__nav-item-label">
+                                  {r.label}
+                                </Typography>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="sidebar__nav-item-icon">{r.icon}</div>
+                                <ListItemText primary={r.label} />
+                              </>
+                            )}
+                          </ListItem>
+                        </NavLink>
+                      );
+                    })}
                 </List>
               </nav>
             </div>
           </div>
 
-          {/* 하단 고정 */}
-          <div className="sidebar__bottom">
-            <Divider className="sidebar__divider" />
-            <button
-              type="button"
-              className="sidebar__bottom-button"
-              onClick={() => {
-                setSettingsOpen(true);
-                // 모바일 Drawer에서는 클릭 즉시 닫고, 설정 Drawer는 우측에서 열리도록
-                sidebarLayout?.closeMobileSidebar?.();
-              }}
-            >
-              <div className="sidebar__bottom-button-icon">
-                <IconSettings size={18} />
-              </div>
-              <Typography variant="body-small" className="sidebar__bottom-button-label">
-                테마 설정
-              </Typography>
-            </button>
-          </div>
+          {/* 하단 고정 - 모바일에서만 표시 */}
+          {isMobile && (
+            <div className="sidebar__bottom">
+              <Divider className="sidebar__divider" />
+              <button
+                type="button"
+                className="sidebar__bottom-button"
+                onClick={() => {
+                  setSettingsOpen(true);
+                  // 모바일 Drawer에서는 클릭 즉시 닫고, 설정 Drawer는 우측에서 열리도록
+                  sidebarLayout?.closeMobileSidebar?.();
+                }}
+              >
+                <div className="sidebar__bottom-button-icon">
+                  <IconSettings size={18} />
+                </div>
+                <Typography variant="body-small" className="sidebar__bottom-button-label">
+                  테마 설정
+                </Typography>
+              </button>
+            </div>
+          )}
         </div>
 
         <ThemeCustomization open={settingsOpen} onClose={() => setSettingsOpen(false)} />
