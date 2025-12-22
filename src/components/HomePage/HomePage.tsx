@@ -17,33 +17,21 @@ export function HomePage() {
   const appDescriptions: Record<string, { title: string; description: string; features: string[] }> = {
     chatapp: {
       title: '실시간 채팅',
-      description: 'Socket.IO 기반의 실시간 채팅 애플리케이션입니다. 여러 채팅방을 생성하고 참여하여 실시간으로 메시지를 주고받을 수 있습니다.',
-      features: [
-        '실시간 메시지 전송 및 수신',
-        '다중 채팅방 지원',
-        '파일 및 이미지 공유',
-        '연결 상태 표시',
-      ],
+      description:
+        'Socket.IO 기반의 실시간 채팅 애플리케이션입니다. 여러 채팅방을 생성하고 참여하여 실시간으로 메시지를 주고받을 수 있습니다.',
+      features: ['실시간 메시지 전송 및 수신', '다중 채팅방 지원', '파일 및 이미지 공유', '연결 상태 표시'],
     },
     notification: {
       title: '알림 시스템',
-      description: '실시간 알림을 받고 관리할 수 있는 시스템입니다. 다양한 유형의 알림을 처리하고 우선순위를 설정할 수 있습니다.',
-      features: [
-        '실시간 알림 수신',
-        '알림 우선순위 설정',
-        '알림 히스토리 관리',
-        '알림 필터링',
-      ],
+      description:
+        '실시간 알림을 받고 관리할 수 있는 시스템입니다. 다양한 유형의 알림을 처리하고 우선순위를 설정할 수 있습니다.',
+      features: ['실시간 알림 수신', '알림 우선순위 설정', '알림 히스토리 관리', '알림 필터링'],
     },
     'reverse-auction': {
       title: '역경매 시스템',
-      description: '구매자가 가격을 제시하고 판매자가 응찰하는 역경매 시스템입니다. 실시간으로 경매 진행 상황을 확인할 수 있습니다.',
-      features: [
-        '실시간 경매 진행',
-        '가격 제시 및 응찰',
-        '경매 상태 관리',
-        '경매 히스토리 조회',
-      ],
+      description:
+        '구매자가 가격을 제시하고 판매자가 응찰하는 역경매 시스템입니다. 실시간으로 경매 진행 상황을 확인할 수 있습니다.',
+      features: ['실시간 경매 진행', '가격 제시 및 응찰', '경매 상태 관리', '경매 히스토리 조회'],
     },
   };
 
@@ -62,7 +50,11 @@ export function HomePage() {
               {appDescriptions.chatapp.description}
             </Typography>
             <Stack spacing="sm">
-              <Typography variant="body-small" color="text-secondary" style={{ fontWeight: 'var(--primitive-font-weight-semibold)' }}>
+              <Typography
+                variant="body-small"
+                color="text-secondary"
+                style={{ fontWeight: 'var(--primitive-font-weight-semibold)' }}
+              >
                 주요 기능:
               </Typography>
               <ul className="home-page__features-list">
@@ -98,7 +90,11 @@ export function HomePage() {
               {appDescriptions.notification.description}
             </Typography>
             <Stack spacing="sm">
-              <Typography variant="body-small" color="text-secondary" style={{ fontWeight: 'var(--primitive-font-weight-semibold)' }}>
+              <Typography
+                variant="body-small"
+                color="text-secondary"
+                style={{ fontWeight: 'var(--primitive-font-weight-semibold)' }}
+              >
                 주요 기능:
               </Typography>
               <ul className="home-page__features-list">
@@ -134,7 +130,11 @@ export function HomePage() {
               {appDescriptions['reverse-auction'].description}
             </Typography>
             <Stack spacing="sm">
-              <Typography variant="body-small" color="text-secondary" style={{ fontWeight: 'var(--primitive-font-weight-semibold)' }}>
+              <Typography
+                variant="body-small"
+                color="text-secondary"
+                style={{ fontWeight: 'var(--primitive-font-weight-semibold)' }}
+              >
                 주요 기능:
               </Typography>
               <ul className="home-page__features-list">
@@ -164,16 +164,16 @@ export function HomePage() {
 
   return (
     <Box className="home-page">
-      <Stack spacing="xl" style={{ maxWidth: '1200px', margin: '0 auto', padding: 'var(--space-padding-card-lg)' }}>
+      <Stack spacing="xl" style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* 앱 소개글 */}
-        <Paper padding="xl" elevation={2} className="home-page__intro">
+        <Paper padding="lg" elevation={1} className="home-page__intro">
           <Stack spacing="md">
             <Typography variant="h1" className="home-page__title">
               Spark Messaging Demo
             </Typography>
             <Typography variant="body-large" color="text-secondary" className="home-page__subtitle">
-              실시간 통신을 위한 다양한 애플리케이션을 경험해보세요. Socket.IO 기반의 강력한 메시징 시스템으로
-              채팅, 알림, 역경매 등 다양한 기능을 제공합니다.
+              실시간 통신을 위한 다양한 애플리케이션을 경험해보세요. Socket.IO 기반의 강력한 메시징 시스템으로 채팅,
+              알림, 역경매 등 다양한 기능을 제공합니다.
             </Typography>
           </Stack>
         </Paper>
@@ -187,29 +187,7 @@ export function HomePage() {
             <Tabs items={appTabs} value={activeTab} onChange={handleTabChange} variant="fullWidth" />
           </Stack>
         </Paper>
-
-        {/* 프리뷰 섹션 */}
-        <Paper padding="lg" elevation={1} className="home-page__preview">
-          <Stack spacing="md">
-            <Typography variant="h2" className="home-page__section-title">
-              미리보기
-            </Typography>
-            <Box className="home-page__preview-content">
-              <Paper padding="md" variant="outlined" style={{ backgroundColor: 'var(--color-background-secondary)' }}>
-                <Typography variant="body-medium" color="text-secondary" align="center">
-                  {activeTab === 'chatapp' && '💬 실시간 채팅 인터페이스 미리보기'}
-                  {activeTab === 'notification' && '🔔 알림 관리 인터페이스 미리보기'}
-                  {activeTab === 'reverse-auction' && '🔨 역경매 인터페이스 미리보기'}
-                </Typography>
-                <Typography variant="body-small" color="text-tertiary" align="center" style={{ marginTop: 'var(--space-gap-sm)' }}>
-                  위의 탭에서 "체험해보기" 버튼을 클릭하여 실제 애플리케이션을 사용해보세요.
-                </Typography>
-              </Paper>
-            </Box>
-          </Stack>
-        </Paper>
       </Stack>
     </Box>
   );
 }
-

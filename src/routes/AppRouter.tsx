@@ -1,5 +1,4 @@
-import { useEffect } from 'preact/hooks';
-import Router, { Route, route as navigateTo } from 'preact-router';
+import Router, { Route } from 'preact-router';
 import type { RouterOnChangeArgs } from 'preact-router';
 import { appRoutes } from './appRoutes';
 import { useRouterState } from './RouterState';
@@ -14,24 +13,15 @@ function DesignSystemRoute(props: { ui?: string }) {
   return <DesignSystemDemo focusSection={props.ui} />;
 }
 
-function RedirectToHome() {
-  useEffect(() => {
-    navigateTo('/', true);
-  }, []);
-  return <div />;
-}
-
 export function AppRouter() {
   const { setPathname } = useRouterState();
 
   const handleRouteChange = (e: RouterOnChangeArgs) => {
-    setPathname(e.url || '/chatapp');
+    setPathname(e.url || '/');
   };
 
   return (
     <Router onChange={handleRouteChange}>
-      <Route path="/" component={RedirectToHome} />
-
       {appRoutes
         .filter((r) => r.id !== 'design-system')
         .map((r) => (
