@@ -4,8 +4,65 @@ const User = require('../models/User');
 const socketService = require('../services/socketService');
 const notificationService = require('../services/notificationService');
 const userService = require('../services/userService');
+const imageService = require('../services/imageService');
 
 // ... (existing code for createRoom and getRooms)
+
+// 파일 업로드 처리
+exports.uploadFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const { roomId } = req.body;
+    const senderId = req.user.id;
+    const file = req.file;
+
+    let type = 'file';
+    let thumbnailUrl = null;
+
+    // 이미지일 경우 썸네일 생성
+    if (file.mimetype.startsWith('image/')) {
+      type = 'image';
+      thumbnailUrl = await imageService.createThumbnail(file.path, file.filename);
+    }
+
+    // 1. DB에 메시지 저장
+    const newMessage = new Message({
+      roomId,
+      senderId,
+      content: `File: ${file.originalname}`,
+      type,
+      fileUrl: file.path,
+      thumbnailUrl: thumbnailUrl,
+      fileName: file.originalname,
+      fileSize: file.size,
+      mimeType: file.mimetype
+    });
+    await newMessage.save();
+
+    // 2. 채팅방 정보 가져오기 및 업데이트
+    const room = await ChatRoom.findById(roomId).populate('members', 'username');
+    if (room) {
+      room.lastMessage = newMessage._id;
+      await room.save();
+    }
+
+    // 3. Socket 브로드캐스트 (파일 정보 포함)
+    await socketService.sendRoomMessage(roomId, type, {
+      content: newMessage.content,
+      fileUrl: newMessage.fileUrl,
+      thumbnailUrl: newMessage.thumbnailUrl,
+      fileName: newMessage.fileName,
+      fileSize: newMessage.fileSize
+    }, senderId);
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    res.status(500).json({ message: 'File upload failed', error: error.message });
+  }
+};
 
 // 메시지 전송 (DB 저장 후 소켓 브로드캐스트 및 푸시 알림)
 exports.sendMessage = async (req, res) => {
