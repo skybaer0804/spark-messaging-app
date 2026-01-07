@@ -1,6 +1,7 @@
 import type SparkMessaging from '@skybaer0804/spark-messaging-client';
 import type { MessageData, RoomMessageData } from '@skybaer0804/spark-messaging-client';
 import { ConnectionService } from './ConnectionService';
+import { chatApi } from './ApiService';
 
 export interface FileData {
   fileName: string;
@@ -29,10 +30,15 @@ export class ChatService {
   private connectionService: ConnectionService;
   private unsubscribeCallbacks: Array<() => void> = [];
   private currentRoomRef: string | null = null;
+  private userId: string | null = null;
 
   constructor(client: SparkMessaging, connectionService: ConnectionService) {
     this.client = client;
     this.connectionService = connectionService;
+  }
+
+  public setUserId(userId: string | null) {
+    this.userId = userId;
   }
 
   public setCurrentRoom(roomId: string | null) {
@@ -51,12 +57,19 @@ export class ChatService {
       }
 
       const isOwnMessage = this.isOwnMessage(msg);
+      const content = typeof msg.content === 'object' && (msg.content as any).content 
+        ? (msg.content as any).content 
+        : msg.content;
+      const senderId = typeof msg.content === 'object' && (msg.content as any).senderId
+        ? (msg.content as any).senderId
+        : (msg as any).from || msg.senderId;
+
       const message: ChatMessage = {
         id: `${msg.timestamp || Date.now()}-${Math.random()}`,
-        content: msg.content,
+        content,
         timestamp: new Date(msg.timestamp || Date.now()),
         type: isOwnMessage ? 'sent' : 'received',
-        senderId: (msg as any).from || msg.senderId,
+        senderId,
       };
 
       // 파일 전송 메시지 처리
@@ -91,13 +104,20 @@ export class ChatService {
       }
 
       const isOwnMessage = this.isOwnMessage(msg);
+      const content = typeof msg.content === 'object' && (msg.content as any).content 
+        ? (msg.content as any).content 
+        : msg.content;
+      const senderId = typeof msg.content === 'object' && (msg.content as any).senderId
+        ? (msg.content as any).senderId
+        : (msg as any).from || msg.senderId;
+
       const message: ChatMessage = {
         id: `${msg.timestamp || Date.now()}-${Math.random()}`,
-        content: msg.content,
+        content,
         timestamp: new Date(msg.timestamp || Date.now()),
         type: isOwnMessage ? 'sent' : 'received',
         room: msg.room,
-        senderId: (msg as any).from || msg.senderId,
+        senderId,
       };
 
       // 파일 전송 메시지 처리
@@ -119,14 +139,42 @@ export class ChatService {
   }
 
   public async sendMessage(type: string, content: string): Promise<void> {
-    await this.client.sendMessage(type as any, content);
+    // 백엔드 API를 통해 메시지 전송 (DB 저장 및 브로드캐스트 트리거)
+    await chatApi.sendMessage({
+      content,
+      type
+    });
   }
 
   public async sendRoomMessage(roomId: string, type: string, content: string): Promise<void> {
-    await this.client.sendRoomMessage(roomId, type as any, content);
+    // 백엔드 API를 통해 메시지 전송 (DB 저장 및 브로드캐스트 트리거)
+    await chatApi.sendMessage({
+      roomId,
+      content,
+      type
+    });
+  }
+
+  public async getRooms() {
+    const response = await chatApi.getRooms();
+    return response.data;
+  }
+
+  public async getMessages(roomId: string) {
+    const response = await chatApi.getMessages(roomId);
+    return response.data;
+  }
+
+  public async createRoom(name: string, members: string[] = []) {
+    const response = await chatApi.createRoom({ name, members });
+    return response.data;
   }
 
   private isOwnMessage(msg: MessageData | RoomMessageData): boolean {
+    if (this.userId) {
+      const senderId = (msg as any).from || msg.senderId;
+      return senderId === this.userId;
+    }
     const currentSocketId = this.connectionService.getConnectionStatus().socketId;
     return msg.senderId === currentSocketId || (msg as any).from === currentSocketId;
   }

@@ -5,8 +5,9 @@ import { NotificationApp } from '@/components/NotificationApp/NotificationApp';
 import { ReverseAuction } from '@/components/ReverseAuction/ReverseAuction';
 import { DesignSystemDemo } from '@/components/DesignSystemDemo/DesignSystemDemo';
 import { HomePage } from '@/components/HomePage/HomePage';
+import { AuthPage } from '@/components/Auth/AuthPage';
 
-export type AppRouteId = 'home' | 'chatapp' | 'notification' | 'reverse-auction' | 'design-system';
+export type AppRouteId = 'home' | 'chatapp' | 'notification' | 'reverse-auction' | 'design-system' | 'auth';
 
 export interface AppRouteNode {
   id: AppRouteId;
@@ -69,6 +70,14 @@ function toTitle(label: string) {
 }
 
 export const appRoutes: AppRouteNode[] = [
+  {
+    id: 'auth',
+    label: '로그인',
+    path: '/login',
+    icon: <IconHome size={20} />,
+    title: 'Login',
+    element: <AuthPage />,
+  },
   {
     id: 'home',
     label: '홈',

@@ -7,15 +7,28 @@ import { RouterStateProvider, useRouterState } from './routes/RouterState';
 import { findRouteTitleByPath } from './routes/appRoutes';
 import { SidebarLayout } from './layouts/SidebarLayout/SidebarLayout';
 import { ensureSparkMessagingConnected } from '@/utils/ensureSparkMessagingConnected';
+import { useAuth } from '@/hooks/useAuth';
+import { PushService } from '@/services/PushService';
 import './app.scss';
 import './index.css';
 
 export function App() {
+  const { checkMe, isAuthenticated } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
   const [socketId, setSocketId] = useState<string | null>(null);
   const socketIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // 인증 상태 확인 및 푸시 등록
+    const init = async () => {
+      await checkMe();
+      if (isAuthenticated.value) {
+        await PushService.registerServiceWorker();
+        await PushService.subscribeToPush();
+      }
+    };
+    init();
+
     // SDK 연결 초기화
     const initializeConnection = async () => {
       try {
