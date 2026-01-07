@@ -3,6 +3,7 @@ const Message = require('../models/Message');
 const User = require('../models/User');
 const socketService = require('../services/socketService');
 const notificationService = require('../services/notificationService');
+const userService = require('../services/userService');
 
 // ... (existing code for createRoom and getRooms)
 
@@ -34,19 +35,28 @@ exports.sendMessage = async (req, res) => {
     // 4. Socket SDK를 통해 실시간 브로드캐스트
     await socketService.sendRoomMessage(roomId, type || 'chat', content, senderId);
 
-    // 5. 푸시 알림 전송 (본인 제외)
+    // 5. 푸시 알림 전송 (오프라인인 유저에게만)
     const sender = room.members.find(m => m._id.toString() === senderId);
-    const recipientIds = room.members
+    const potentialRecipientIds = room.members
       .filter(m => m._id.toString() !== senderId)
-      .map(m => m._id);
+      .map(m => m._id.toString());
 
-    if (recipientIds.length > 0) {
-      notificationService.notifyNewMessage(
-        recipientIds, 
-        sender ? sender.username : 'Unknown', 
-        content, 
-        roomId
+    if (potentialRecipientIds.length > 0) {
+      // Redis에서 유저들의 상태를 확인
+      const userStatuses = await userService.getUsersStatus(potentialRecipientIds);
+      
+      const offlineRecipientIds = potentialRecipientIds.filter(
+        id => userStatuses[id] === 'offline'
       );
+
+      if (offlineRecipientIds.length > 0) {
+        notificationService.notifyNewMessage(
+          offlineRecipientIds, 
+          sender ? sender.username : 'Unknown', 
+          content, 
+          roomId
+        );
+      }
     }
 
     res.status(201).json(newMessage);

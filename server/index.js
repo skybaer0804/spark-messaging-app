@@ -4,14 +4,16 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const connectDB = require('./config/db');
+const { connectRedis } = require('./config/redis');
 const socketService = require('./services/socketService');
 const configureWebPush = require('./config/push');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to Database
+// Connect to Databases
 connectDB();
+connectRedis();
 
 // Initialize Services
 socketService.initialize();
