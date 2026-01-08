@@ -8,6 +8,7 @@ import { Flex } from '@/ui-component/Layout/Flex';
 import { Box } from '@/ui-component/Layout/Box';
 import { IconButton } from '@/ui-component/Button/IconButton';
 import { IconDownload } from '@tabler/icons-react';
+import { useAuth } from '@/hooks/useAuth';
 import './Chat.scss';
 
 interface ChatMessageItemProps {
@@ -17,14 +18,15 @@ interface ChatMessageItemProps {
 }
 
 function ChatMessageItemComponent({ message, onImageClick }: ChatMessageItemProps) {
-  const isOwnMessage = message.type === 'sent';
+  const { user } = useAuth();
+  const isOwnMessage = message.senderId === user.value?.id;
 
   return (
     <Flex direction="column" align={isOwnMessage ? 'flex-end' : 'flex-start'} style={{ width: '100%' }}>
       <Flex direction="column" align={isOwnMessage ? 'flex-end' : 'flex-start'} style={{ maxWidth: '70%' }}>
         <Flex align="center" gap="sm" style={{ marginBottom: '4px' }}>
           <Typography variant="caption" color="text-secondary">
-            {message.senderId ? message.senderId.substring(0, 6) : '알 수 없음'}
+            {message.senderName || (message.senderId ? message.senderId.substring(0, 6) : '알 수 없음')}
           </Typography>
           <Typography variant="caption" color="text-tertiary">
             {formatTimestamp(message.timestamp)}

@@ -216,7 +216,8 @@ export function useChatApp() {
         content: msg.content,
         timestamp: new Date(msg.timestamp),
         type: msg.senderId?._id === user.value?.id ? 'sent' : 'received',
-        senderId: msg.senderId?.username || 'Unknown',
+        senderId: msg.senderId?._id || 'Unknown',
+        senderName: msg.senderId?.username || 'Unknown',
         fileData: msg.fileUrl
           ? {
               fileName: msg.fileName,

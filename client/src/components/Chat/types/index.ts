@@ -17,6 +17,7 @@ export interface BaseMessage {
   timestamp: Date;
   type: 'sent' | 'received';
   senderId?: string;
+  senderName?: string;
   room?: string;
 }
 

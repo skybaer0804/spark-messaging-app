@@ -19,6 +19,7 @@ export interface ChatMessage {
   type: 'sent' | 'received';
   room?: string;
   senderId?: string;
+  senderName?: string;
   fileData?: FileData;
 }
 
@@ -62,12 +63,16 @@ export class ChatService {
       if (msgType && !validMessageTypes.includes(msgType)) {
         return;
       }
+      const isOwnMessage = this.isOwnMessage(msg);
       const content = typeof msg.content === 'object' && (msg.content as any).content 
         ? (msg.content as any).content 
         : msg.content;
       const senderId = typeof msg.content === 'object' && (msg.content as any).senderId
         ? (msg.content as any).senderId
         : (msg as any).from || msg.senderId;
+      const senderName = typeof msg.content === 'object' && (msg.content as any).senderName
+        ? (msg.content as any).senderName
+        : undefined;
 
       const message: ChatMessage = {
         id: `${msg.timestamp || Date.now()}-${Math.random()}`,
@@ -75,6 +80,7 @@ export class ChatService {
         timestamp: new Date(msg.timestamp || Date.now()),
         type: isOwnMessage ? 'sent' : 'received',
         senderId,
+        senderName,
       };
 
       // 파일 전송 메시지 처리
@@ -116,6 +122,9 @@ export class ChatService {
       const senderId = typeof msg.content === 'object' && (msg.content as any).senderId
         ? (msg.content as any).senderId
         : (msg as any).from || msg.senderId;
+      const senderName = typeof msg.content === 'object' && (msg.content as any).senderName
+        ? (msg.content as any).senderName
+        : undefined;
 
       const message: ChatMessage = {
         id: `${msg.timestamp || Date.now()}-${Math.random()}`,
@@ -124,6 +133,7 @@ export class ChatService {
         type: isOwnMessage ? 'sent' : 'received',
         room: msg.room,
         senderId,
+        senderName,
       };
 
       // 파일 전송 메시지 처리

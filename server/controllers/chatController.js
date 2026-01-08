@@ -93,6 +93,8 @@ exports.uploadFile = async (req, res) => {
     }
 
     // 3. Socket 브로드캐스트 (파일 정보 포함)
+    const sender = room.members.find((m) => m._id.toString() === senderId);
+
     await socketService.sendRoomMessage(
       roomId,
       type,
@@ -102,6 +104,7 @@ exports.uploadFile = async (req, res) => {
         thumbnailUrl: newMessage.thumbnailUrl,
         fileName: newMessage.fileName,
         fileSize: newMessage.fileSize,
+        senderName: sender ? sender.username : 'Unknown',
       },
       senderId,
     );
@@ -138,10 +141,18 @@ exports.sendMessage = async (req, res) => {
     await room.save();
 
     // 4. Socket SDK를 통해 실시간 브로드캐스트
-    await socketService.sendRoomMessage(roomId, newMessage.type, content, senderId);
+    const sender = room.members.find((m) => m._id.toString() === senderId);
+    await socketService.sendRoomMessage(
+      roomId,
+      newMessage.type,
+      {
+        content,
+        senderName: sender ? sender.username : 'Unknown',
+      },
+      senderId,
+    );
 
     // 5. 푸시 알림 전송 (오프라인인 유저에게만)
-    const sender = room.members.find((m) => m._id.toString() === senderId);
     const potentialRecipientIds = room.members
       .filter((m) => m._id.toString() !== senderId)
       .map((m) => m._id.toString());
