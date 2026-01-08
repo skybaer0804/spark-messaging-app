@@ -5,10 +5,11 @@ import { ConnectionService } from '../../../services/ConnectionService';
 import { ChatService } from '../../../services/ChatService';
 import { FileTransferService } from '../../../services/FileTransferService';
 import { RoomService } from '../services/RoomService';
-import type { Message, ChatRoom } from '../types';
+import type { Message, ChatRoom, ChatUser } from '../types';
 import { SparkMessagingError } from '@skybaer0804/spark-messaging-client';
 import { setChatCurrentRoom, setChatRoomList } from '@/stores/chatRoomsStore';
 import { useAuth } from '@/hooks/useAuth';
+import { authApi } from '@/services/ApiService';
 
 export function useChatApp() {
   const { user } = useAuth();
@@ -18,6 +19,8 @@ export function useChatApp() {
   const [roomIdInput, setRoomIdInput] = useState('chat');
   const [currentRoom, setCurrentRoom] = useState<ChatRoom | null>(null);
   const [roomList, setRoomList] = useState<ChatRoom[]>([]);
+  const [userList, setUserList] = useState<ChatUser[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [uploadingFile, setUploadingFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [socketId, setSocketId] = useState<string | null>(null);
@@ -36,6 +39,15 @@ export function useChatApp() {
       } catch (error) {
         console.error('Failed to load rooms:', error);
       }
+    }
+  };
+
+  const refreshUserList = async () => {
+    try {
+      const response = await authApi.getUsers();
+      setUserList(response.data);
+    } catch (error) {
+      console.error('Failed to load users:', error);
     }
   };
 
@@ -93,18 +105,18 @@ export function useChatApp() {
     });
 
     // Room 관리
-    roomService.onRoomJoined((roomId) => {
+    roomService.onRoomJoined(async (roomId) => {
       // roomId는 소켓의 roomId (여기서는 name일 수도 있고 ID일 수도 있음)
       // 하지만 우리는 DB 기반으로 동작하므로 refreshRoomList를 통해 상태 동기화
       refreshRoomList();
-      chatService.setCurrentRoom(roomId);
+      await chatService.setCurrentRoom(roomId);
     });
 
-    roomService.onRoomLeft((roomId) => {
+    roomService.onRoomLeft(async (roomId) => {
       if (currentRoom && (currentRoom._id === roomId || currentRoom.name === roomId)) {
         setCurrentRoom(null);
         setMessages([]);
-        chatService.setCurrentRoom(null);
+        await chatService.setCurrentRoom(null);
       }
       refreshRoomList();
     });
@@ -121,7 +133,7 @@ export function useChatApp() {
     // 초기 연결 상태 확인 및 데이터 로드
     const initData = async () => {
       if (chatServiceRef.current) {
-        await refreshRoomList();
+        await Promise.all([refreshRoomList(), refreshUserList()]);
       }
     };
 
@@ -240,7 +252,7 @@ export function useChatApp() {
 
       setMessages(formattedMessages);
       setCurrentRoom(targetRoom);
-      chatServiceRef.current.setCurrentRoom(targetRoom._id);
+      await chatServiceRef.current.setCurrentRoom(targetRoom._id);
     } catch (error) {
       console.error('Failed to join room or fetch history:', error);
       toast.error('Room 입장 실패');
@@ -252,8 +264,8 @@ export function useChatApp() {
 
     const roomName = roomIdInput.trim();
     try {
-      // 1. 백엔드에 방 생성 요청
-      const newRoom = await chatServiceRef.current.createRoom(roomName);
+      // 1. 백엔드에 방 생성 요청 (멤버 포함)
+      const newRoom = await chatServiceRef.current.createRoom(roomName, selectedUserIds);
 
       // 2. 목록 갱신
       await refreshRoomList();
@@ -262,11 +274,16 @@ export function useChatApp() {
       await handleRoomSelect(newRoom);
 
       setRoomIdInput('');
+      setSelectedUserIds([]);
       toast.success('채팅방이 생성되었습니다.');
     } catch (error) {
       console.error('Failed to create room:', error);
       toast.error('Room 생성 실패');
     }
+  };
+
+  const toggleUserSelection = (userId: string) => {
+    setSelectedUserIds((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
   };
 
   const leaveRoom = async () => {
@@ -278,7 +295,7 @@ export function useChatApp() {
       setCurrentRoom(null);
       setMessages([]);
       if (chatServiceRef.current) {
-        chatServiceRef.current.setCurrentRoom(null);
+        await chatServiceRef.current.setCurrentRoom(null);
       }
       toast.info('채팅방을 나갔습니다.');
     } catch (error) {
@@ -304,6 +321,9 @@ export function useChatApp() {
     setRoomIdInput,
     currentRoom,
     roomList,
+    userList,
+    selectedUserIds,
+    toggleUserSelection,
     sendMessage,
     handleRoomSelect,
     handleCreateRoom,

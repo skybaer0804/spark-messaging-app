@@ -6,13 +6,6 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   username: { type: String, required: true },
   avatar: { type: String, default: '' },
-  pushSubscription: {
-    endpoint: String,
-    keys: {
-      p256dh: String,
-      auth: String,
-    },
-  },
   status: { type: String, enum: ['online', 'offline'], default: 'offline' },
   createdAt: { type: Date, default: Date.now },
 });

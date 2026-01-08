@@ -50,6 +50,7 @@ export const authApi = {
   register: (data: any) => api.post('/auth/register', data),
   login: (data: any) => api.post('/auth/login', data),
   getMe: () => api.get('/auth/me'),
+  getUsers: () => api.get('/auth/users'),
 };
 
 export const chatApi = {
@@ -62,11 +63,12 @@ export const chatApi = {
       'Content-Type': 'multipart/form-data',
     },
   }),
+  setActiveRoom: (roomId: string | null) => api.post('/chat/active-room', { roomId }),
 };
 
 export const pushApi = {
-  subscribe: (subscription: any) => api.post('/push/subscribe', subscription),
-  unsubscribe: () => api.post('/push/unsubscribe'),
+  subscribe: (data: { subscription: any; deviceId: string }) => api.post('/push/subscribe', data),
+  unsubscribe: (deviceId: string | null) => api.post('/push/unsubscribe', { deviceId }),
 };
 
 export default api;

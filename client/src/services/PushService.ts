@@ -32,12 +32,42 @@ export class PushService {
         });
       }
 
-      // 서버에 구독 정보 전송
-      await pushApi.subscribe(subscription);
+      // 기기 고유 ID 생성 또는 가져오기
+      let deviceId = localStorage.getItem('spark_device_id');
+      if (!deviceId) {
+        deviceId = crypto.randomUUID();
+        localStorage.setItem('spark_device_id', deviceId);
+      }
+
+      // 서버에 구독 정보와 deviceId 전송
+      await pushApi.subscribe({
+        subscription,
+        deviceId
+      });
       console.log('User is subscribed to Push Notifications');
       return true;
     } catch (error) {
       console.error('Failed to subscribe to push notifications:', error);
+      return false;
+    }
+  }
+
+  static async unsubscribeFromPush() {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      
+      if (subscription) {
+        await subscription.unsubscribe();
+      }
+
+      const deviceId = localStorage.getItem('spark_device_id');
+      await pushApi.unsubscribe(deviceId);
+      
+      console.log('User is unsubscribed from Push Notifications');
+      return true;
+    } catch (error) {
+      console.error('Failed to unsubscribe from push notifications:', error);
       return false;
     }
   }

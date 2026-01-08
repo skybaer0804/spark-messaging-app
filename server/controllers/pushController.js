@@ -1,14 +1,24 @@
-const User = require('../models/User');
+const PushSubscription = require('../models/PushSubscription');
 
 exports.subscribe = async (req, res) => {
   try {
-    const subscription = req.body;
+    const { subscription, deviceId } = req.body;
     const userId = req.user.id;
 
-    // 유저 정보에 푸시 구독 정보 저장
-    await User.findByIdAndUpdate(userId, {
-      pushSubscription: subscription
-    });
+    if (!subscription || !deviceId) {
+      return res.status(400).json({ message: 'Subscription and deviceId are required' });
+    }
+
+    // Upsert subscription for the specific device
+    await PushSubscription.findOneAndUpdate(
+      { userId, deviceId },
+      { 
+        subscription, 
+        isActive: true, 
+        updatedAt: Date.now() 
+      },
+      { upsert: true, new: true }
+    );
 
     res.status(201).json({ message: 'Subscription saved successfully' });
   } catch (error) {
@@ -18,12 +28,22 @@ exports.subscribe = async (req, res) => {
 
 exports.unsubscribe = async (req, res) => {
   try {
+    const { deviceId } = req.body;
     const userId = req.user.id;
 
-    // 푸시 구독 정보 삭제
-    await User.findByIdAndUpdate(userId, {
-      $unset: { pushSubscription: "" }
-    });
+    if (deviceId) {
+      // Deactivate for specific device
+      await PushSubscription.findOneAndUpdate(
+        { userId, deviceId },
+        { isActive: false, updatedAt: Date.now() }
+      );
+    } else {
+      // Deactivate all for the user if no deviceId provided
+      await PushSubscription.updateMany(
+        { userId },
+        { isActive: false, updatedAt: Date.now() }
+      );
+    }
 
     res.status(200).json({ message: 'Unsubscribed successfully' });
   } catch (error) {

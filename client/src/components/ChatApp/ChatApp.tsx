@@ -11,12 +11,12 @@ import { Typography } from '@/ui-component/Typography/Typography';
 import { Paper } from '@/ui-component/Paper/Paper';
 import { List, ListItem, ListItemText, ListItemAvatar } from '@/ui-component/List/List';
 import { Avatar } from '@/ui-component/Avatar/Avatar';
-import { IconArrowLeft, IconSend, IconPaperclip, IconX, IconFile, IconDownload, IconBug, IconBugOff } from '@tabler/icons-react';
+import { IconArrowLeft, IconSend, IconPaperclip, IconX, IconFile, IconDownload, IconBug, IconBugOff, IconUsers } from '@tabler/icons-react';
 import { Button } from '@/ui-component/Button/Button';
 import { chatPendingJoinRoom, clearPendingJoinChatRoom } from '@/stores/chatRoomsStore';
 import './ChatApp.scss';
 
-import type { Message, ChatRoom } from './types';
+import type { Message, ChatRoom, ChatUser } from './types';
 
 interface ChatRoomSidebarProps {
   isConnected: boolean;
@@ -24,8 +24,12 @@ interface ChatRoomSidebarProps {
   setRoomIdInput: (next: string) => void;
   handleCreateRoom: () => void;
   roomList: ChatRoom[];
+  userList: ChatUser[];
+  selectedUserIds: string[];
+  toggleUserSelection: (userId: string) => void;
   currentRoom: ChatRoom | null;
   handleRoomSelect: (roomId: string) => void;
+  leaveRoom: () => void;
 }
 
 function ChatRoomSidebar({
@@ -34,9 +38,27 @@ function ChatRoomSidebar({
   setRoomIdInput,
   handleCreateRoom,
   roomList,
+  userList,
+  selectedUserIds,
+  toggleUserSelection,
   currentRoom,
   handleRoomSelect,
+  leaveRoom,
 }: ChatRoomSidebarProps) {
+  const [showInviteList, setShowInviteList] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, roomId: string } | null>(null);
+
+  const handleContextMenu = (e: MouseEvent, roomId: string) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, roomId });
+  };
+
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
+
   return (
     <Paper
       elevation={0}
@@ -46,31 +68,66 @@ function ChatRoomSidebar({
         borderRight: '1px solid var(--color-border-default)',
         display: 'flex',
         flexDirection: 'column',
+        position: 'relative',
       }}
       className="chat-app__sidebar"
     >
       <Box padding="md">
-        <Stack direction="row" spacing="sm">
-          <Input
-            value={roomIdInput}
-            onInput={(e) => setRoomIdInput(e.currentTarget.value)}
-            placeholder="New Room Name"
-            disabled={!isConnected}
-            onKeyPress={(e) => e.key === 'Enter' && handleCreateRoom()}
-            fullWidth
-          />
+        <Stack spacing="sm">
+          <Flex gap="sm">
+            <Input
+              value={roomIdInput}
+              onInput={(e) => {
+                setRoomIdInput(e.currentTarget.value);
+                if (e.currentTarget.value && !showInviteList) setShowInviteList(true);
+              }}
+              placeholder="New Room Name"
+              disabled={!isConnected}
+              onKeyPress={(e) => e.key === 'Enter' && handleCreateRoom()}
+              fullWidth
+            />
+            <IconButton 
+              onClick={() => setShowInviteList(!showInviteList)}
+              color={showInviteList ? 'primary' : 'secondary'}
+              title="초대할 유저 목록"
+            >
+              <IconUsers size={20} />
+            </IconButton>
+          </Flex>
+          
+          {showInviteList && (
+            <Paper variant="outlined" style={{ maxHeight: '200px', overflowY: 'auto', backgroundColor: 'var(--color-bg-tertiary)' }}>
+              <List size="small">
+                {userList.map((user) => (
+                  <ListItem key={user._id} onClick={() => toggleUserSelection(user._id)} style={{ cursor: 'pointer' }}>
+                    <ListItemAvatar>
+                      <Avatar src={user.avatar} size="small">{user.username.substring(0, 1)}</Avatar>
+                    </ListItemAvatar>
+                    <ListItemText primary={user.username} primaryTypographyProps={{ variant: 'body-small' }} />
+                    <input 
+                      type="checkbox" 
+                      checked={selectedUserIds.includes(user._id)} 
+                      onChange={() => {}} 
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+          )}
+
           <Button
             onClick={handleCreateRoom}
             disabled={!isConnected || !roomIdInput.trim()}
             size="sm"
             variant="primary"
-            title="새 채팅방 생성"
+            fullWidth
           >
-            Create
+            Create Room {selectedUserIds.length > 0 && `(${selectedUserIds.length} invited)`}
           </Button>
         </Stack>
       </Box>
-      <Box style={{ flex: 1, overflowY: 'auto' }}>
+      <Box style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--color-border-default)' }}>
         <List>
           {roomList.length === 0
             ? !isConnected && (
@@ -84,6 +141,7 @@ function ChatRoomSidebar({
                 <ListItem
                   key={room._id}
                   onClick={() => handleRoomSelect(room._id)}
+                  onContextMenu={(e) => handleContextMenu(e, room._id)}
                   style={{
                     cursor: 'pointer',
                     backgroundColor: currentRoom?._id === room._id ? 'var(--color-bg-tertiary)' : 'transparent',
@@ -99,6 +157,41 @@ function ChatRoomSidebar({
               ))}
         </List>
       </Box>
+
+      {contextMenu && (
+        <Paper
+          elevation={4}
+          style={{
+            position: 'fixed',
+            top: contextMenu.y,
+            left: contextMenu.x,
+            zIndex: 1000,
+            padding: '4px 0',
+            minWidth: '120px',
+            backgroundColor: 'var(--color-bg-default)',
+            border: '1px solid var(--color-border-default)',
+          }}
+        >
+          <List size="small" style={{ padding: 0 }}>
+            <ListItem 
+              onClick={() => {
+                if (currentRoom?._id === contextMenu.roomId) {
+                  leaveRoom();
+                } else {
+                  toast.info('해당 방에 먼저 들어가주세요.');
+                }
+                setContextMenu(null);
+              }}
+              style={{ cursor: 'pointer', '&:hover': { backgroundColor: 'var(--color-bg-tertiary)' } }}
+            >
+              <ListItemText 
+                primary="방 나가기" 
+                primaryTypographyProps={{ variant: 'body-small', color: 'error' }} 
+              />
+            </ListItem>
+          </List>
+        </Paper>
+      )}
     </Paper>
   );
 }
@@ -113,6 +206,9 @@ export function ChatApp() {
     setRoomIdInput,
     currentRoom,
     roomList,
+    userList,
+    selectedUserIds,
+    toggleUserSelection,
     sendMessage,
     handleRoomSelect,
     handleCreateRoom,
@@ -141,6 +237,7 @@ export function ChatApp() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imageModal, setImageModal] = useState<{ url: string; fileName: string } | null>(null);
   const [isComposing, setIsComposing] = useState(false);
+  const [showUserList, setShowUserList] = useState(false);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -233,8 +330,12 @@ export function ChatApp() {
             setRoomIdInput={setRoomIdInput}
             handleCreateRoom={handleCreateRoom}
             roomList={roomList}
+            userList={userList}
+            selectedUserIds={selectedUserIds}
+            toggleUserSelection={toggleUserSelection}
             currentRoom={currentRoom}
             handleRoomSelect={handleRoomSelect}
+            leaveRoom={leaveRoom}
           />
         </Box>
         {!isMobile && (
@@ -257,8 +358,12 @@ export function ChatApp() {
             setRoomIdInput={setRoomIdInput}
             handleCreateRoom={handleCreateRoom}
             roomList={roomList}
+            userList={userList}
+            selectedUserIds={selectedUserIds}
+            toggleUserSelection={toggleUserSelection}
             currentRoom={currentRoom}
             handleRoomSelect={handleRoomSelect}
+            leaveRoom={leaveRoom}
           />
         </Box>
       )}
@@ -282,100 +387,160 @@ export function ChatApp() {
             <Box style={{ flex: 1 }}>
               <Typography variant="h3">{currentRoom.name}</Typography>
             </Box>
+            <IconButton
+              onClick={() => setShowUserList(!showUserList)}
+              color={showUserList ? 'primary' : 'secondary'}
+              title="참여자 목록"
+            >
+              <IconUsers size={20} />
+            </IconButton>
             <IconButton onClick={toggleDebug} color={debugEnabled ? 'primary' : 'secondary'} title="디버그 모드 토글">
               {debugEnabled ? <IconBug size={20} /> : <IconBugOff size={20} />}
             </IconButton>
           </Stack>
         </Paper>
 
-        {/* Messages Area */}
-        <Box
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            padding: 'var(--space-gap-lg)',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-          ref={messagesRef}
-        >
-          <Stack spacing="md" style={{ flex: 1, minHeight: 0 }}>
-            {messages.map((msg) => {
-              const isOwnMessage = msg.senderId === socketId || msg.type === 'sent';
-              return (
-                <Flex
-                  key={msg.id}
-                  direction="column"
-                  align={isOwnMessage ? 'flex-end' : 'flex-start'}
-                  style={{ width: '100%' }}
-                >
-                  <Flex direction="column" align={isOwnMessage ? 'flex-end' : 'flex-start'} style={{ maxWidth: '70%' }}>
-                    <Flex align="center" gap="sm" style={{ marginBottom: '4px' }}>
-                      <Typography variant="caption" color="text-secondary">
-                        {msg.senderId || 'Unknown'}
-                      </Typography>
-                      <Typography variant="caption" color="text-tertiary">
-                        {formatTimestamp(msg.timestamp)}
-                      </Typography>
-                    </Flex>
-                    <Paper
-                      elevation={1}
-                      padding="sm"
-                      style={{
-                        borderRadius: isOwnMessage ? '12px 0 12px 12px' : '0 12px 12px 12px',
-                        backgroundColor: isOwnMessage
-                          ? 'var(--color-interactive-primary)'
-                          : 'var(--color-surface-level-1)',
-                        color: isOwnMessage ? 'var(--primitive-gray-0)' : 'inherit',
-                      }}
+        <Box style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
+          {/* Messages Area */}
+          <Box
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              padding: 'var(--space-gap-lg)',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            ref={messagesRef}
+          >
+            <Stack spacing="md" style={{ flex: 1, minHeight: 0 }}>
+              {messages.map((msg) => {
+                const isOwnMessage = msg.senderId === socketId || msg.type === 'sent';
+                return (
+                  <Flex
+                    key={msg.id}
+                    direction="column"
+                    align={isOwnMessage ? 'flex-end' : 'flex-start'}
+                    style={{ width: '100%' }}
+                  >
+                    <Flex
+                      direction="column"
+                      align={isOwnMessage ? 'flex-end' : 'flex-start'}
+                      style={{ maxWidth: '70%' }}
                     >
-                      {msg.fileData ? (
-                        <Box>
-                          {msg.fileData.fileType === 'image' ? (
-                            <Box>
-                              <img
-                                src={msg.fileData.data}
-                                alt={msg.fileData.fileName}
-                                style={{
-                                  maxWidth: '100%',
-                                  maxHeight: '200px',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                }}
-                                onClick={() => handleImageClick(msg.fileData!.data, msg.fileData!.fileName)}
-                              />
-                            </Box>
-                          ) : (
-                            <Flex align="center" gap="sm">
-                              <IconFile size={24} />
+                      <Flex align="center" gap="sm" style={{ marginBottom: '4px' }}>
+                        <Typography variant="caption" color="text-secondary">
+                          {msg.senderName || (msg.senderId ? msg.senderId.substring(0, 6) : 'Unknown')}
+                        </Typography>
+                        <Typography variant="caption" color="text-tertiary">
+                          {formatTimestamp(msg.timestamp)}
+                        </Typography>
+                      </Flex>
+                      <Paper
+                        elevation={1}
+                        padding="sm"
+                        style={{
+                          borderRadius: isOwnMessage ? '12px 0 12px 12px' : '0 12px 12px 12px',
+                          backgroundColor: isOwnMessage
+                            ? 'var(--color-interactive-primary)'
+                            : 'var(--color-surface-level-1)',
+                          color: isOwnMessage ? 'var(--primitive-gray-0)' : 'inherit',
+                        }}
+                      >
+                        {msg.fileData ? (
+                          <Box>
+                            {msg.fileData.fileType === 'image' ? (
                               <Box>
-                                <Typography variant="body-small" style={{ fontWeight: 'bold' }}>
-                                  {msg.fileData.fileName}
-                                </Typography>
-                                <Typography variant="caption">{formatFileSize(msg.fileData.size)}</Typography>
+                                <img
+                                  src={msg.fileData.data}
+                                  alt={msg.fileData.fileName}
+                                  style={{
+                                    maxWidth: '100%',
+                                    maxHeight: '200px',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                  }}
+                                  onClick={() => handleImageClick(msg.fileData!.data, msg.fileData!.fileName)}
+                                />
                               </Box>
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  downloadFile(msg.fileData!.fileName, msg.fileData!.data, msg.fileData!.mimeType)
-                                }
-                              >
-                                <IconDownload size={16} />
-                              </IconButton>
-                            </Flex>
-                          )}
-                        </Box>
-                      ) : (
-                        <Typography variant="body-medium">{msg.content}</Typography>
-                      )}
-                    </Paper>
+                            ) : (
+                              <Flex align="center" gap="sm">
+                                <IconFile size={24} />
+                                <Box>
+                                  <Typography variant="body-small" style={{ fontWeight: 'bold' }}>
+                                    {msg.fileData.fileName}
+                                  </Typography>
+                                  <Typography variant="caption">{formatFileSize(msg.fileData.size)}</Typography>
+                                </Box>
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    downloadFile(msg.fileData!.fileName, msg.fileData!.data, msg.fileData!.mimeType)
+                                  }
+                                >
+                                  <IconDownload size={16} />
+                                </IconButton>
+                              </Flex>
+                            )}
+                          </Box>
+                        ) : (
+                          <Typography variant="body-medium">{msg.content}</Typography>
+                        )}
+                      </Paper>
+                    </Flex>
                   </Flex>
-                </Flex>
-              );
-            })}
-          </Stack>
+                );
+              })}
+            </Stack>
+          </Box>
+
+          {/* User List Sidebar */}
+          {showUserList && (
+            <Paper
+              elevation={0}
+              square
+              style={{
+                width: '240px',
+                borderLeft: '1px solid var(--color-border-default)',
+                display: 'flex',
+                flexDirection: 'column',
+                backgroundColor: 'var(--color-bg-secondary)',
+              }}
+            >
+              <Box padding="md" style={{ borderBottom: '1px solid var(--color-border-default)' }}>
+                <Typography variant="h4">참여자 ({currentRoom.members?.length || 0})</Typography>
+              </Box>
+              <Box style={{ flex: 1, overflowY: 'auto' }}>
+                <List>
+                  {currentRoom.members?.map((member) => (
+                    <ListItem key={member._id}>
+                      <ListItemAvatar>
+                        <Avatar
+                          src={member.avatar}
+                          variant="circular"
+                          size="small"
+                          style={{
+                            border: `2px solid ${
+                              member.status === 'online' ? 'var(--color-success-main)' : 'var(--color-text-tertiary)'
+                            }`,
+                          }}
+                        >
+                          {member.username.substring(0, 1).toUpperCase()}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={member.username}
+                        secondary={member.status === 'online' ? 'Online' : 'Offline'}
+                        primaryTypographyProps={{ variant: 'body-small', fontWeight: 600 }}
+                        secondaryTypographyProps={{ variant: 'caption' }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            </Paper>
+          )}
         </Box>
 
         {/* Input Area */}

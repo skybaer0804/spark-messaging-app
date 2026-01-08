@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createRoom, getRooms, sendMessage, getMessages, uploadFile } = require('../controllers/chatController');
+const { createRoom, getRooms, sendMessage, getMessages, uploadFile, setActiveRoom } = require('../controllers/chatController');
 const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
@@ -10,6 +10,7 @@ router.post('/rooms', createRoom);
 router.get('/rooms', getRooms);
 router.post('/messages', sendMessage);
 router.get('/messages/:roomId', getMessages);
+router.post('/active-room', setActiveRoom);
 
 // 파일 업로드 라우트 추가
 router.post('/upload', upload.single('file'), uploadFile);

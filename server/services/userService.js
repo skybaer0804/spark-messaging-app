@@ -45,6 +45,48 @@ class UserService {
       return {};
     }
   }
+
+  // 사용자가 현재 보고 있는 활성 채팅방 설정
+  async setActiveRoom(userId, roomId) {
+    try {
+      if (roomId) {
+        await client.set(`user:activeRoom:${userId}`, roomId);
+      } else {
+        await client.del(`user:activeRoom:${userId}`);
+      }
+    } catch (error) {
+      console.error('Error setting user active room in Redis:', error);
+    }
+  }
+
+  // 사용자의 현재 활성 채팅방 조회
+  async getActiveRoom(userId) {
+    try {
+      return await client.get(`user:activeRoom:${userId}`);
+    } catch (error) {
+      console.error('Error getting user active room from Redis:', error);
+      return null;
+    }
+  }
+
+  // 여러 유저의 활성 채팅방 동시 조회
+  async getUsersActiveRooms(userIds) {
+    try {
+      if (!userIds || userIds.length === 0) return {};
+      const pipeline = client.multi();
+      userIds.forEach((id) => {
+        pipeline.get(`user:activeRoom:${id}`);
+      });
+      const results = await pipeline.exec();
+      return userIds.reduce((acc, id, index) => {
+        acc[id] = results[index] || null;
+        return acc;
+      }, {});
+    } catch (error) {
+      console.error('Error getting multiple users active rooms from Redis:', error);
+      return {};
+    }
+  }
 }
 
 module.exports = new UserService();

@@ -82,3 +82,13 @@ exports.getMe = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({ _id: { $ne: req.user.id } }).select('username email avatar status');
+    res.json(users);
+  } catch (error) {
+    console.error('GetAllUsers error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};

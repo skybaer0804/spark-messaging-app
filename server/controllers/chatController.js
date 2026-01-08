@@ -152,20 +152,27 @@ exports.sendMessage = async (req, res) => {
       senderId,
     );
 
-    // 5. 푸시 알림 전송 (오프라인인 유저에게만)
+    // 5. 푸시 알림 전송 (오프라인이거나 현재 방에 있지 않은 유저에게만)
     const potentialRecipientIds = room.members
       .filter((m) => m._id.toString() !== senderId)
       .map((m) => m._id.toString());
 
     if (potentialRecipientIds.length > 0) {
-      // Redis에서 유저들의 상태를 확인
-      const userStatuses = await userService.getUsersStatus(potentialRecipientIds);
+      // Redis에서 유저들의 상태 및 활성 채팅방 확인
+      const [userStatuses, activeRooms] = await Promise.all([
+        userService.getUsersStatus(potentialRecipientIds),
+        userService.getUsersActiveRooms(potentialRecipientIds),
+      ]);
 
-      const offlineRecipientIds = potentialRecipientIds.filter((id) => userStatuses[id] === 'offline');
+      const recipientIdsToNotify = potentialRecipientIds.filter((id) => {
+        const isOffline = userStatuses[id] === 'offline';
+        const isNotInRoom = activeRooms[id] !== roomId;
+        return isOffline || isNotInRoom;
+      });
 
-      if (offlineRecipientIds.length > 0) {
+      if (recipientIdsToNotify.length > 0) {
         notificationService.notifyNewMessage(
-          offlineRecipientIds,
+          recipientIdsToNotify,
           sender ? sender.username : 'Unknown',
           content,
           roomId,
@@ -187,5 +194,18 @@ exports.getMessages = async (req, res) => {
     res.json(messages);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch messages', error: error.message });
+  }
+};
+
+// 사용자의 활성 채팅방 상태 업데이트 (푸시 발송 필터링용)
+exports.setActiveRoom = async (req, res) => {
+  try {
+    const { roomId } = req.body;
+    const userId = req.user.id;
+
+    await userService.setActiveRoom(userId, roomId);
+    res.json({ message: 'Active room updated' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update active room', error: error.message });
   }
 };

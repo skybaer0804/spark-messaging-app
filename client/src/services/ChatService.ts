@@ -58,8 +58,13 @@ export class ChatService {
     this.userId = userId;
   }
 
-  public setCurrentRoom(roomId: string | null) {
+  public async setCurrentRoom(roomId: string | null) {
     this.currentRoomRef = roomId;
+    try {
+      await chatApi.setActiveRoom(roomId);
+    } catch (error) {
+      console.error('Failed to set active room on server:', error);
+    }
   }
 
   public getCurrentRoom(): string | null {
