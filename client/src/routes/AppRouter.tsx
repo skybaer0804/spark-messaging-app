@@ -25,7 +25,12 @@ function ProtectedRoute({ children, ...rest }: any) {
   }, [isAuthenticated.value, loading.value]);
 
   if (loading.value) return <div>Loading...</div>;
-  return isAuthenticated.value ? <>{children}</> : null;
+  if (!isAuthenticated.value) return null;
+
+  if (typeof children === 'function') {
+    return children(rest);
+  }
+  return <>{children}</>;
 }
 
 export function AppRouter() {

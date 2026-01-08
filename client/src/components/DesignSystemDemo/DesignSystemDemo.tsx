@@ -20,7 +20,6 @@ export function DesignSystemDemo({ focusSection }: DesignSystemDemoProps) {
         <Stack spacing="lg">
           <Paper padding="lg" className="design-system-demo__header">
             <Stack spacing="xs">
-              <Typography variant="h2">Design System Demo</Typography>
               <Typography variant="body-medium" color="text-secondary">
                 ui-component별 예시를 파일 단위로 분리했습니다. 사이드바의 “디자인” 하위 메뉴에서 항목을 선택하세요.
               </Typography>
