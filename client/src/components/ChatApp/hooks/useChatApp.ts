@@ -21,6 +21,7 @@ export function useChatApp() {
   const [uploadingFile, setUploadingFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [socketId, setSocketId] = useState<string | null>(null);
+  const [debugEnabled, setDebugEnabled] = useState(localStorage.getItem('chat_debug_mode') === 'true');
 
   const connectionServiceRef = useRef<ConnectionService | null>(null);
   const chatServiceRef = useRef<ChatService | null>(null);
@@ -78,6 +79,13 @@ export function useChatApp() {
       console.error('❌ Error:', error);
       setIsConnected(false);
     });
+
+    // 디버그 모드 초기화
+    if (chatService) {
+      (window as any).toggleChatDebug = (enabled: boolean) => {
+        chatService.setDebugMode(enabled);
+      };
+    }
 
     // Room 리스트 업데이트 (룸 생성 메시지 수신 시 리스트 갱신)
     roomService.onMessage(() => {
@@ -279,6 +287,14 @@ export function useChatApp() {
     }
   };
 
+  const toggleDebug = () => {
+    const nextValue = !debugEnabled;
+    setDebugEnabled(nextValue);
+    if (chatServiceRef.current) {
+      chatServiceRef.current.setDebugMode(nextValue);
+    }
+  };
+
   return {
     isConnected,
     messages,
@@ -296,5 +312,7 @@ export function useChatApp() {
     uploadingFile,
     uploadProgress,
     socketId,
+    debugEnabled,
+    toggleDebug,
   };
 }

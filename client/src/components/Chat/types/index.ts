@@ -62,6 +62,10 @@ export interface ChatAdapter {
   onRoomSelect?(roomId: string): void | Promise<void>;
   onRoomCreate?(): void | Promise<void>;
   onRoomLeave?(): void | Promise<void>;
+
+  // 디버그 모드 관련
+  isDebugMode?(): boolean;
+  toggleDebug?(): void;
 }
 
 // ChatConfig 인터페이스 (UI 설정)

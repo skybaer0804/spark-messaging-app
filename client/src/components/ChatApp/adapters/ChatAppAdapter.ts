@@ -88,4 +88,12 @@ export class ChatAppAdapter implements ChatAdapter {
   async onRoomLeave(): Promise<void> {
     await this.chatAppHook.leaveRoom();
   }
+
+  isDebugMode(): boolean {
+    return (this.chatAppHook as any).debugEnabled;
+  }
+
+  toggleDebug(): void {
+    (this.chatAppHook as any).toggleDebug();
+  }
 }

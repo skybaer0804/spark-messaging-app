@@ -11,7 +11,7 @@ import { Typography } from '@/ui-component/Typography/Typography';
 import { Paper } from '@/ui-component/Paper/Paper';
 import { List, ListItem, ListItemText, ListItemAvatar } from '@/ui-component/List/List';
 import { Avatar } from '@/ui-component/Avatar/Avatar';
-import { IconArrowLeft, IconSend, IconPaperclip, IconX, IconFile, IconDownload } from '@tabler/icons-react';
+import { IconArrowLeft, IconSend, IconPaperclip, IconX, IconFile, IconDownload, IconBug, IconBugOff } from '@tabler/icons-react';
 import { Button } from '@/ui-component/Button/Button';
 import { chatPendingJoinRoom, clearPendingJoinChatRoom } from '@/stores/chatRoomsStore';
 import './ChatApp.scss';
@@ -121,6 +121,8 @@ export function ChatApp() {
     uploadingFile,
     uploadProgress,
     socketId,
+    debugEnabled,
+    toggleDebug,
   } = useChatApp();
 
   // Sidebar에서 "이 룸으로 들어가기" 요청을 보내면 여기서 실제 join을 수행
@@ -277,7 +279,12 @@ export function ChatApp() {
               <IconArrowLeft />
             </IconButton>
             <Avatar variant="rounded">{currentRoom.name.substring(0, 2)}</Avatar>
-            <Typography variant="h3">{currentRoom.name}</Typography>
+            <Box style={{ flex: 1 }}>
+              <Typography variant="h3">{currentRoom.name}</Typography>
+            </Box>
+            <IconButton onClick={toggleDebug} color={debugEnabled ? 'primary' : 'secondary'} title="디버그 모드 토글">
+              {debugEnabled ? <IconBug size={20} /> : <IconBugOff size={20} />}
+            </IconButton>
           </Stack>
         </Paper>
 

@@ -32,10 +32,26 @@ export class ChatService {
   private unsubscribeCallbacks: Array<() => void> = [];
   private currentRoomRef: string | null = null;
   private userId: string | null = null;
+  private debugMode: boolean = false;
 
   constructor(client: SparkMessaging, connectionService: ConnectionService) {
     this.client = client;
     this.connectionService = connectionService;
+    
+    // 로컬 스토리지에서 디버그 모드 설정 확인
+    this.debugMode = localStorage.getItem('chat_debug_mode') === 'true';
+  }
+
+  public setDebugMode(enabled: boolean) {
+    this.debugMode = enabled;
+    localStorage.setItem('chat_debug_mode', enabled.toString());
+    console.log(`[ChatService] Debug Mode ${enabled ? 'Enabled' : 'Disabled'}`);
+  }
+
+  private logDebug(message: string, data?: any) {
+    if (this.debugMode) {
+      console.log(`%c[ChatDebug] ${message}`, 'color: #00bcd4; font-weight: bold;', data || '');
+    }
   }
 
   public setUserId(userId: string | null) {
@@ -52,8 +68,11 @@ export class ChatService {
 
   public onMessage(callback: MessageCallback, filterByRoom: boolean = false): () => void {
     const unsubscribe = this.client.onMessage((msg: MessageData) => {
+      this.logDebug('Received Global Message:', msg);
+
       // Room에 있으면 일반 메시지는 무시
       if (filterByRoom && this.currentRoomRef) {
+        this.logDebug('Global message ignored (currently in a room)');
         return;
       }
 
@@ -103,8 +122,11 @@ export class ChatService {
 
   public onRoomMessage(callback: RoomMessageCallback): () => void {
     const unsubscribe = this.client.onRoomMessage((msg: RoomMessageData) => {
+      this.logDebug('Received Room Message:', msg);
+
       // 현재 Room의 메시지만 처리
       if (msg.room !== this.currentRoomRef) {
+        this.logDebug(`Room message ignored (Mismatch: ${msg.room} !== ${this.currentRoomRef})`);
         return;
       }
 

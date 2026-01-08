@@ -137,4 +137,14 @@ export class ReverseAuctionChatAdapter implements ChatAdapter {
   getEmptyMessage(): string {
     return '메시지가 없습니다.';
   }
+
+  // 디버그 모드 관련
+  isDebugMode(): boolean {
+    return localStorage.getItem('chat_debug_mode') === 'true';
+  }
+
+  toggleDebug(): void {
+    const nextValue = !this.isDebugMode();
+    this.chatService.setDebugMode(nextValue);
+  }
 }
