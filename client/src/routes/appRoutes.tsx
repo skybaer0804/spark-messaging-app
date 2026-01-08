@@ -1,13 +1,31 @@
 import type { JSX } from 'preact';
-import { IconBell, IconGavel, IconMessageCircle, IconPalette, IconHome } from '@tabler/icons-react';
+import {
+  IconBell,
+  IconGavel,
+  IconMessageCircle,
+  IconPalette,
+  IconHome,
+  IconUser,
+  IconUsers,
+} from '@tabler/icons-react';
 import { ChatApp } from '@/components/ChatApp/ChatApp';
 import { NotificationApp } from '@/components/NotificationApp/NotificationApp';
 import { VideoMeeting } from '@/components/VideoMeeting/VideoMeeting';
 import { DesignSystemDemo } from '@/components/DesignSystemDemo/DesignSystemDemo';
 import { HomePage } from '@/components/HomePage/HomePage';
 import { AuthPage } from '@/components/Auth/AuthPage';
+import { Profile } from '@/components/Profile/Profile';
+import { Organization } from '@/components/Organization/Organization';
 
-export type AppRouteId = 'home' | 'chatapp' | 'notification' | 'reverse-auction' | 'design-system' | 'auth';
+export type AppRouteId =
+  | 'home'
+  | 'chatapp'
+  | 'notification'
+  | 'reverse-auction'
+  | 'design-system'
+  | 'auth'
+  | 'profile'
+  | 'organization';
 
 export interface AppRouteNode {
   id: AppRouteId;
@@ -101,6 +119,22 @@ export const appRoutes: AppRouteNode[] = [
     icon: <IconBell size={20} />,
     title: 'Notification',
     element: <NotificationApp />,
+  },
+  {
+    id: 'profile',
+    label: '프로필',
+    path: '/profile',
+    icon: <IconUser size={20} />,
+    title: 'Profile',
+    element: <Profile />,
+  },
+  {
+    id: 'organization',
+    label: '조직',
+    path: '/organization',
+    icon: <IconUsers size={20} />,
+    title: 'Organization',
+    element: <Organization />,
   },
   {
     id: 'reverse-auction',

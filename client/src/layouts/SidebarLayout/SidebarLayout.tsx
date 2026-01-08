@@ -2,6 +2,7 @@ import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo } from 'preact/hooks';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { Content } from '@/layouts/Content/Content';
+import { Header } from '../Header/Header';
 import { Drawer } from '@/ui-component/Drawer/Drawer';
 import { Grid } from '@/ui-component/Layout/Grid';
 import { useTheme } from '@/context/ThemeProvider';
@@ -43,47 +44,56 @@ function SidebarLayoutInner({ headerTitle, isConnected, socketId, children }: Si
   }, [pathname, secondMenuPinned]);
 
   return (
-    <Grid 
-      className={`sidebar-layout ${secondMenuPinned && pinnedSecondMenuRoute ? 'sidebar-layout--with-second-menu' : ''}`}
-      columns="var(--sidebar-layout-columns)" 
-      gap="none"
-    >
-      {/* 데스크톱: 고정 사이드바 */}
-      <aside className="sidebar-layout__sidebar" aria-label="사이드바">
-        <Sidebar />
-      </aside>
-
-      {/* 고정된 2차 사이드메뉴 */}
-      {secondMenuPinned && pinnedSecondMenuRoute && (
-        <aside className="sidebar-layout__second-menu" aria-label="2차 사이드메뉴">
-          <SecondMenuDrawer
-            open={true}
-            onClose={() => {}}
-            title={pinnedSecondMenuRoute.label}
-            children={pinnedSecondMenuRoute.children}
-          />
-        </aside>
-      )}
-
-      {/* 메인 콘텐츠 */}
-      <div className="sidebar-layout__content">
-        <Content headerTitle={headerTitle} isConnected={isConnected} socketId={socketId}>
-          {children}
-        </Content>
+    <div className="sidebar-layout">
+      <div className="sidebar-layout__header">
+        <Header 
+          title={headerTitle} 
+          isConnected={isConnected} 
+          socketId={socketId}
+        />
       </div>
-
-      {/* 모바일: 오버레이 Drawer */}
-      <Drawer
-        open={deviceSize === 'mobile' && isMobileSidebarOpen}
-        onClose={closeMobileSidebar}
-        anchor="left"
-        title="메뉴"
-        width="var(--sidebar-width)"
-        className="sidebar-layout__mobile-drawer"
+      <Grid 
+        className={`sidebar-layout__container ${secondMenuPinned && pinnedSecondMenuRoute ? 'sidebar-layout--with-second-menu' : ''}`}
+        columns="var(--sidebar-layout-columns)" 
+        gap="none"
       >
-        <Sidebar />
-      </Drawer>
-    </Grid>
+        {/* 데스크톱: 고정 사이드바 */}
+        <aside className="sidebar-layout__sidebar" aria-label="사이드바">
+          <Sidebar />
+        </aside>
+
+        {/* 고정된 2차 사이드메뉴 */}
+        {secondMenuPinned && pinnedSecondMenuRoute && (
+          <aside className="sidebar-layout__second-menu" aria-label="2차 사이드메뉴">
+            <SecondMenuDrawer
+              open={true}
+              onClose={() => {}}
+              title={pinnedSecondMenuRoute.label}
+              children={pinnedSecondMenuRoute.children}
+            />
+          </aside>
+        )}
+
+        {/* 메인 콘텐츠 */}
+        <div className="sidebar-layout__content">
+          <Content>
+            {children}
+          </Content>
+        </div>
+
+        {/* 모바일: 오버레이 Drawer */}
+        <Drawer
+          open={deviceSize === 'mobile' && isMobileSidebarOpen}
+          onClose={closeMobileSidebar}
+          anchor="left"
+          title="메뉴"
+          width="var(--sidebar-width)"
+          className="sidebar-layout__mobile-drawer"
+        >
+          <Sidebar />
+        </Drawer>
+      </Grid>
+    </div>
   );
 }
 

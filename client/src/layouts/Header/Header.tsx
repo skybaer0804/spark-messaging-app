@@ -6,7 +6,7 @@ import { Flex } from '@/ui-component/Layout/Flex';
 import { Typography } from '@/ui-component/Typography/Typography';
 import { ThemeCustomization } from '@/components/ThemeCustomization/ThemeCustomization';
 import { Select, SelectOption } from '@/ui-component/Select/Select';
-import { IconMoon, IconSun, IconWifi, IconWifiOff, IconSettings } from '@tabler/icons-react';
+import { IconMoon, IconSun, IconWifi, IconWifiOff, IconSettings, IconUser } from '@tabler/icons-react';
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes } from '@/routes/appRoutes';
 
@@ -80,6 +80,15 @@ export function Header({ title, isConnected, socketId }: HeaderProps) {
 
           {/* 컨트롤 버튼 */}
           <Flex align="center" gap="xs" className="header__controls">
+            <IconButton
+              size="medium"
+              color="default"
+              onClick={() => navigate('/profile')}
+              title="프로필"
+              className="header__icon-button"
+            >
+              <IconUser size={20} />
+            </IconButton>
             <IconButton
               size="medium"
               color="default"

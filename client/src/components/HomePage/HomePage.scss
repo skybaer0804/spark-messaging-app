@@ -4,6 +4,11 @@
   width: 100%;
   min-height: 100%;
   background: var(--color-background-default);
+  padding: var(--space-padding-card-lg);
+
+  @media (max-width: 768px) {
+    padding: var(--space-padding-card-md);
+  }
 
   &__intro {
     text-align: center;

@@ -12,6 +12,7 @@ import { Button } from '@/ui-component/Button/Button';
 import { Divider } from '@/ui-component/Divider/Divider';
 import { ThemeCustomization } from '@/components/ThemeCustomization/ThemeCustomization';
 import { Avatar } from '@/ui-component/Avatar/Avatar';
+import { useAuth } from '@/hooks/useAuth';
 import { chatCurrentRoom, chatRoomList, clearPendingJoinChatRoom, requestJoinChatRoom } from '@/stores/chatRoomsStore';
 import { useRecentChatRooms } from './hooks/useRecentChatRooms';
 import { SecondMenuDrawer } from './SecondMenuDrawer';
@@ -50,6 +51,7 @@ export function Sidebar() {
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [hoveredSecondMenuId, setHoveredSecondMenuId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { user } = useAuth();
 
   const { secondMenuPinned } = sidebarConfig;
   const isMobile = deviceSize === 'mobile';
@@ -264,6 +266,7 @@ export function Sidebar() {
                 <List disablePadding>
                   {mainRoutes
                     .filter((r) => r.id !== 'home')
+                    .filter((r) => r.id !== 'notification' || user.value?.role === 'Admin')
                     .map((r) => {
                       const isActive = activeMainRoute?.id === r.id;
                       return (

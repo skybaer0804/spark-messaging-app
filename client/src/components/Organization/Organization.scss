@@ -1,0 +1,15 @@
+.organization {
+  padding: var(--space-padding-card-lg);
+
+  @media (max-width: 768px) {
+    padding: var(--space-padding-card-md);
+  }
+
+  &__card {
+    max-width: 800px;
+  }
+
+  &__subtitle {
+    margin-bottom: var(--space-gap-md);
+  }
+}

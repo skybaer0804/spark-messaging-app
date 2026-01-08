@@ -168,9 +168,6 @@ export function HomePage() {
         {/* 앱 소개글 */}
         <Paper padding="lg" elevation={1} className="home-page__intro">
           <Stack spacing="md">
-            <Typography variant="h1" className="home-page__title">
-              Spark Messaging Demo
-            </Typography>
             <Typography variant="body-large" color="text-secondary" className="home-page__subtitle">
               실시간 통신을 위한 다양한 애플리케이션을 경험해보세요. Socket.IO 기반의 강력한 메시징 시스템으로 채팅,
               알림, 역경매 등 다양한 기능을 제공합니다.

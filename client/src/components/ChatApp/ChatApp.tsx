@@ -25,6 +25,9 @@ import {
 } from '@tabler/icons-react';
 import { Button } from '@/ui-component/Button/Button';
 import { chatPendingJoinRoom, clearPendingJoinChatRoom } from '@/stores/chatRoomsStore';
+import { useAuth } from '@/hooks/useAuth';
+import { authApi } from '@/services/authService';
+import { toast } from 'react-toastify';
 import './ChatApp.scss';
 
 import type { Message, ChatRoom, ChatUser } from './types';

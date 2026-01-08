@@ -15,7 +15,7 @@ function DesignSystemRoute(props: { ui?: string }) {
   return <DesignSystemDemo focusSection={props.ui} />;
 }
 
-function ProtectedRoute({ component: Component, ...rest }: any) {
+function ProtectedRoute({ children, ...rest }: any) {
   const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
@@ -25,12 +25,11 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
   }, [isAuthenticated.value, loading.value]);
 
   if (loading.value) return <div>Loading...</div>;
-  return isAuthenticated.value ? <Component {...rest} /> : null;
+  return isAuthenticated.value ? <>{children}</> : null;
 }
 
 export function AppRouter() {
   const { setPathname } = useRouterState();
-  const { isAuthenticated } = useAuth();
 
   const handleRouteChange = (e: RouterOnChangeArgs) => {
     setPathname(e.url || '/');
@@ -38,27 +37,31 @@ export function AppRouter() {
 
   return (
     <Router onChange={handleRouteChange}>
-      {appRoutes
-        .filter((r) => r.id !== 'design-system')
-        .map((r) => {
-          if (r.id === 'auth') {
-            return <Route key={r.id} path={r.path} component={() => r.element} />;
-          }
+      {appRoutes.map((r) => {
+        if (r.id === 'auth') {
           return (
-            <Route
-              key={r.id}
-              path={r.path}
-              component={() => <ProtectedRoute component={() => r.element} />}
-            />
+            <div key={r.id} path={r.path}>
+              {r.element}
+            </div>
           );
-        })}
+        }
+        return (
+          <ProtectedRoute key={r.id} path={r.path}>
+            {r.element}
+          </ProtectedRoute>
+        );
+      })}
 
-      <Route path="/design-system" component={(props: any) => <ProtectedRoute component={DesignSystemRoute} {...props} />} />
-      <Route path="/design-system/:ui" component={(props: any) => <ProtectedRoute component={DesignSystemRoute} {...props} />} />
+      <ProtectedRoute path="/design-system">
+        <DesignSystemDemo />
+      </ProtectedRoute>
+      <ProtectedRoute path="/design-system/:ui">
+        {(props: any) => <DesignSystemDemo focusSection={props.ui} />}
+      </ProtectedRoute>
 
-      <Route path="/legal/privacy-policy" component={PrivacyPolicy} />
+      <PrivacyPolicy path="/legal/privacy-policy" />
 
-      <Route default component={RouteNotFound} />
+      <RouteNotFound default />
     </Router>
   );
 }
