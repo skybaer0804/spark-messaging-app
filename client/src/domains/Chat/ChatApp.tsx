@@ -542,10 +542,10 @@ function ChatAppContent() {
           >
             <Stack spacing="md" style={{ flex: 1, minHeight: 0 }}>
               {messages.map((msg) => {
-                const isOwnMessage = msg.senderId === socketId || msg.type === 'sent';
+                const isOwnMessage = msg.senderId === user?.id || msg.type === 'sent';
                 return (
                   <Flex
-                    key={msg.id}
+                    key={msg._id}
                     direction="column"
                     align={isOwnMessage ? 'flex-end' : 'flex-start'}
                     style={{ width: '100%' }}
@@ -556,9 +556,11 @@ function ChatAppContent() {
                       style={{ maxWidth: '70%' }}
                     >
                       <Flex align="center" gap="sm" style={{ marginBottom: '4px' }}>
-                        <Typography variant="caption" color="text-secondary">
-                          {msg.senderName || (msg.senderId ? msg.senderId.substring(0, 6) : 'Unknown')}
-                        </Typography>
+                        {!isOwnMessage && (
+                          <Typography variant="caption" color="text-secondary">
+                            {msg.senderName || (msg.senderId ? msg.senderId.substring(0, 6) : 'Unknown')}
+                          </Typography>
+                        )}
                         <Typography variant="caption" color="text-tertiary">
                           {formatTimestamp(msg.timestamp)}
                         </Typography>
@@ -572,6 +574,7 @@ function ChatAppContent() {
                             ? 'var(--color-interactive-primary)'
                             : 'var(--color-surface-level-1)',
                           color: isOwnMessage ? 'var(--primitive-gray-0)' : 'inherit',
+                          alignSelf: isOwnMessage ? 'flex-end' : 'flex-start',
                         }}
                       >
                         {msg.fileData ? (

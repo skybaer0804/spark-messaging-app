@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { Typography } from '@/ui-components/Typography/Typography';
-import { Card } from '@/ui-components/Card/Card';
+import { Card, CardBody } from '@/ui-components/Card/Card';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Box } from '@/ui-components/Layout/Box';
 import { Avatar } from '@/ui-components/Avatar/Avatar';
@@ -65,102 +65,104 @@ export function Profile() {
   return (
     <div className="profile">
       <Card className="profile__card">
-        <Flex direction="column" gap="xl">
-          <header className="profile__header">
-            <Flex align="center" justify="space-between" fullWidth>
-              <Flex align="center" gap="lg">
-                <Avatar size="xl" className="profile__avatar">
-                  {formData.username.substring(0, 1)}
-                </Avatar>
-                <Box>
-                  <Typography variant="h2">{formData.username}</Typography>
-                  <Typography variant="body-medium" color="text-secondary">
-                    {formData.role} Account
-                  </Typography>
-                </Box>
+        <CardBody>
+          <Flex direction="column" gap="xl">
+            <header className="profile__header">
+              <Flex align="center" justify="space-between" fullWidth>
+                <Flex align="center" gap="lg">
+                  <Avatar size="xl" className="profile__avatar">
+                    {formData.username.substring(0, 1)}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h2">{formData.username}</Typography>
+                    <Typography variant="body-medium" color="text-secondary">
+                      {formData.role} Account
+                    </Typography>
+                  </Box>
+                </Flex>
+                {!isEditing ? (
+                  <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)}>
+                    <IconEdit size={18} /> 수정하기
+                  </Button>
+                ) : (
+                  <Flex gap="sm">
+                    <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
+                      취소
+                    </Button>
+                    <Button variant="primary" size="sm" onClick={handleSave} disabled={loading}>
+                      <IconDeviceFloppy size={18} /> 저장
+                    </Button>
+                  </Flex>
+                )}
               </Flex>
-              {!isEditing ? (
-                <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)}>
-                  <IconEdit size={18} /> 수정하기
-                </Button>
-              ) : (
-                <Flex gap="sm">
-                  <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
-                    취소
-                  </Button>
-                  <Button variant="primary" size="sm" onClick={handleSave} disabled={loading}>
-                    <IconDeviceFloppy size={18} /> 저장
-                  </Button>
-                </Flex>
-              )}
-            </Flex>
-          </header>
+            </header>
 
-          <Box className="profile__body">
-            <Flex direction="column" gap="lg">
-              <div className="profile__field">
-                <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                  <IconUser size={18} color="var(--color-text-secondary)" />
-                  <Typography variant="label-medium" color="secondary">
-                    이름
-                  </Typography>
-                </Flex>
-                {isEditing ? (
-                  <Input
-                    fullWidth
-                    value={formData.username}
-                    onInput={(e) => setFormData({ ...formData, username: e.currentTarget.value })}
-                  />
-                ) : (
-                  <Typography variant="body-large" className="profile__value">
-                    {formData.username}
-                  </Typography>
-                )}
-              </div>
+            <Box className="profile__body">
+              <Flex direction="column" gap="lg">
+                <div className="profile__field">
+                  <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
+                    <IconUser size={18} color="var(--color-text-secondary)" />
+                    <Typography variant="label-medium" color="secondary">
+                      이름
+                    </Typography>
+                  </Flex>
+                  {isEditing ? (
+                    <Input
+                      fullWidth
+                      value={formData.username}
+                      onInput={(e) => setFormData({ ...formData, username: e.currentTarget.value })}
+                    />
+                  ) : (
+                    <Typography variant="body-large" className="profile__value">
+                      {formData.username}
+                    </Typography>
+                  )}
+                </div>
 
-              <div className="profile__field">
-                <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                  <IconMail size={18} color="var(--color-text-secondary)" />
-                  <Typography variant="label-medium" color="secondary">
-                    이메일
-                  </Typography>
-                </Flex>
-                {isEditing ? (
-                  <Input
-                    fullWidth
-                    value={formData.email}
-                    onInput={(e) => setFormData({ ...formData, email: e.currentTarget.value })}
-                  />
-                ) : (
-                  <Typography variant="body-large" className="profile__value">
-                    {formData.email}
-                  </Typography>
-                )}
-              </div>
+                <div className="profile__field">
+                  <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
+                    <IconMail size={18} color="var(--color-text-secondary)" />
+                    <Typography variant="label-medium" color="secondary">
+                      이메일
+                    </Typography>
+                  </Flex>
+                  {isEditing ? (
+                    <Input
+                      fullWidth
+                      value={formData.email}
+                      onInput={(e) => setFormData({ ...formData, email: e.currentTarget.value })}
+                    />
+                  ) : (
+                    <Typography variant="body-large" className="profile__value">
+                      {formData.email}
+                    </Typography>
+                  )}
+                </div>
 
-              <div className="profile__field">
-                <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                  <IconShield size={18} color="var(--color-text-secondary)" />
-                  <Typography variant="label-medium" color="secondary">
-                    권한 설정 (테스트)
-                  </Typography>
-                </Flex>
-                {isEditing ? (
-                  <Select
-                    fullWidth
-                    options={roleOptions}
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: (e.currentTarget as HTMLSelectElement).value })}
-                  />
-                ) : (
-                  <Typography variant="body-large" className="profile__value">
-                    {roleOptions.find((r) => r.value === formData.role)?.label}
-                  </Typography>
-                )}
-              </div>
-            </Flex>
-          </Box>
-        </Flex>
+                <div className="profile__field">
+                  <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
+                    <IconShield size={18} color="var(--color-text-secondary)" />
+                    <Typography variant="label-medium" color="secondary">
+                      권한 설정 (테스트)
+                    </Typography>
+                  </Flex>
+                  {isEditing ? (
+                    <Select
+                      fullWidth
+                      options={roleOptions}
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: (e.currentTarget as HTMLSelectElement).value })}
+                    />
+                  ) : (
+                    <Typography variant="body-large" className="profile__value">
+                      {roleOptions.find((r) => r.value === formData.role)?.label}
+                    </Typography>
+                  )}
+                </div>
+              </Flex>
+            </Box>
+          </Flex>
+        </CardBody>
       </Card>
     </div>
   );

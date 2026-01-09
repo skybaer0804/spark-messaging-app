@@ -26,12 +26,12 @@ exports.createRoom = async (req, res) => {
     await newRoom.save();
 
     // 모든 멤버에 대해 UserChatRoom 초기 레코드 생성
-    const userChatRoomPromises = roomMembers.map(userId => 
+    const userChatRoomPromises = roomMembers.map((userId) =>
       UserChatRoom.findOneAndUpdate(
         { userId, roomId: newRoom._id },
         { userId, roomId: newRoom._id },
-        { upsert: true, new: true }
-      )
+        { upsert: true, new: true },
+      ),
     );
     await Promise.all(userChatRoomPromises);
 
@@ -48,35 +48,55 @@ exports.createRoom = async (req, res) => {
 exports.getRooms = async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     // UserChatRoom에서 해당 유저의 방 목록 조회
     const userRooms = await UserChatRoom.find({ userId })
       .populate({
         path: 'roomId',
         populate: [
           { path: 'members', select: 'username avatar status' },
-          { 
+          {
             path: 'lastMessage',
-            populate: { path: 'senderId', select: 'username' }
-          }
-        ]
+            populate: { path: 'senderId', select: 'username' },
+          },
+        ],
       })
       .sort({ 'roomId.updatedAt': -1 });
 
     // 응답 포맷팅 (프론트엔드 호환성 유지)
-    const formattedRooms = userRooms.map(ur => {
+    const formattedRooms = userRooms.map((ur) => {
       const room = ur.roomId.toObject();
       return {
         ...room,
         unreadCount: ur.unreadCount,
         isPinned: ur.isPinned,
-        notificationEnabled: ur.notificationEnabled
+        notificationEnabled: ur.notificationEnabled,
       };
     });
 
     res.json(formattedRooms);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch rooms', error: error.message });
+  }
+};
+
+// 채팅방 나가기
+exports.leaveRoom = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const userId = req.user.id;
+
+    // 1. UserChatRoom 레코드 삭제 (사용자의 방 목록에서 제거)
+    await UserChatRoom.findOneAndDelete({ userId, roomId });
+
+    // 2. ChatRoom의 members 배열에서 사용자 제거
+    await ChatRoom.findByIdAndUpdate(roomId, {
+      $pull: { members: userId },
+    });
+
+    res.json({ message: 'Successfully left the room', roomId });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to leave room', error: error.message });
   }
 };
 
@@ -174,13 +194,10 @@ exports.sendMessage = async (req, res) => {
     await room.save();
 
     // 4. 수신자들의 unreadCount 증가
-    const allMemberIds = room.members.map(m => m._id.toString());
-    const recipientIds = allMemberIds.filter(id => id !== senderId);
-    
-    await UserChatRoom.updateMany(
-      { roomId, userId: { $in: recipientIds } },
-      { $inc: { unreadCount: 1 } }
-    );
+    const allMemberIds = room.members.map((m) => m._id.toString());
+    const recipientIds = allMemberIds.filter((id) => id !== senderId);
+
+    await UserChatRoom.updateMany({ roomId, userId: { $in: recipientIds } }, { $inc: { unreadCount: 1 } });
 
     const sender = room.members.find((m) => m._id.toString() === senderId);
 
@@ -235,17 +252,17 @@ exports.sendMessage = async (req, res) => {
 exports.syncMessages = async (req, res) => {
   try {
     const { roomId, fromSequence } = req.query;
-    
+
     const messages = await Message.find({
       roomId,
-      sequenceNumber: { $gt: parseInt(fromSequence) || 0 }
+      sequenceNumber: { $gt: parseInt(fromSequence) || 0 },
     })
-    .populate('senderId', 'username avatar')
-    .sort({ sequenceNumber: 1 });
+      .populate('senderId', 'username avatar')
+      .sort({ sequenceNumber: 1 });
 
     res.json({
       messages,
-      count: messages.length
+      count: messages.length,
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to sync messages', error: error.message });
@@ -258,10 +275,7 @@ exports.markAsRead = async (req, res) => {
     const { roomId } = req.params;
     const userId = req.user.id;
 
-    await UserChatRoom.findOneAndUpdate(
-      { userId, roomId },
-      { unreadCount: 0 }
-    );
+    await UserChatRoom.findOneAndUpdate({ userId, roomId }, { unreadCount: 0 });
 
     res.json({ message: 'Marked as read' });
   } catch (error) {

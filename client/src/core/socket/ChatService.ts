@@ -113,6 +113,11 @@ export class ChatService {
     return response.data;
   }
 
+  public async leaveRoom(roomId: string) {
+    const response = await chatApi.leaveRoom(roomId);
+    return response.data;
+  }
+
   public cleanup() {
     this.unsubscribeCallbacks.forEach((unsubscribe) => unsubscribe());
     this.unsubscribeCallbacks = [];

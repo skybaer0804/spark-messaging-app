@@ -8,7 +8,7 @@ import './Sidebar.scss';
 export function Sidebar() {
   const { pathname, navigate } = useRouterState();
 
-  const lnbRouteIds = ['chatapp', 'notification', 'video-meeting', 'settings', 'profile'];
+  const lnbRouteIds = ['chatapp', 'notification', 'video-meeting'];
   
   const lnbRoutes = useMemo(() => {
     return lnbRouteIds.map(id => appRoutes.find(r => r.id === id)).filter(Boolean) as AppRouteNode[];

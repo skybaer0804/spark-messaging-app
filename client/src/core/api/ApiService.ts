@@ -58,11 +58,11 @@ export const chatApi = {
   getRooms: () => api.get('/chat/rooms'),
   createRoom: (data: { name: string; members?: string[]; invitedOrgs?: string[]; isGroup?: boolean }) =>
     api.post('/chat/rooms', data),
+  leaveRoom: (roomId: string) => api.post(`/chat/leave/${roomId}`),
   getMessages: (roomId: string) => api.get(`/chat/messages/${roomId}`),
-  sendMessage: (data: { roomId: string; content: string; type?: string; tempId?: string }) => 
+  sendMessage: (data: { roomId: string; content: string; type?: string; tempId?: string }) =>
     api.post('/chat/messages', data),
-  syncMessages: (roomId: string, fromSequence: number) => 
-    api.get(`/chat/sync/${roomId}?fromSequence=${fromSequence}`),
+  syncMessages: (roomId: string, fromSequence: number) => api.get(`/chat/sync/${roomId}?fromSequence=${fromSequence}`),
   markAsRead: (roomId: string) => api.post(`/chat/read/${roomId}`),
   uploadFile: (formData: FormData) =>
     api.post('/chat/upload', formData, {

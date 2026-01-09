@@ -100,10 +100,21 @@ export function useChatApp() {
     if (!currentRoom || !isConnected) return;
 
     try {
+      // 1. DB에서 제거 (UserChatRoom 삭제 및 Room 멤버에서 제거)
+      await chatService.leaveRoom(currentRoom._id);
+
+      // 2. 소켓 채널 퇴장
       await roomService.leaveRoom(currentRoom._id);
+
+      // 3. 클라이언트 상태 초기화
       setCurrentRoom(null);
       setMessages([]);
       await chatService.setCurrentRoom(null);
+
+      // 4. 목록 새로고침
+      await refreshRoomList();
+
+      showSuccess('채팅방을 나갔습니다.');
     } catch (error) {
       console.error('Failed to leave room:', error);
       showError('Room 나가기 실패');

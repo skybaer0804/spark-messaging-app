@@ -1,5 +1,7 @@
 import { useState } from 'preact/hooks';
 import { useTheme, PresetColor } from '@/core/context/ThemeProvider';
+import { useAuth } from '@/core/hooks/useAuth';
+import { useRouterState } from '@/routes/RouterState';
 import { Drawer } from '@/ui-components/Drawer/Drawer';
 import { Stack } from '@/ui-components/Layout/Stack';
 import { Flex } from '@/ui-components/Layout/Flex';
@@ -7,7 +9,8 @@ import { Typography } from '@/ui-components/Typography/Typography';
 import { Button } from '@/ui-components/Button/Button';
 import { Switch } from '@/ui-components/Switch/Switch';
 import { Paper } from '@/ui-components/Paper/Paper';
-import { IconPalette, IconShape, IconColorSwatch } from '@tabler/icons-preact';
+import { Divider } from '@/ui-components/Divider/Divider';
+import { IconPalette, IconShape, IconColorSwatch, IconLogout } from '@tabler/icons-preact';
 import './ThemeCustomization.scss';
 
 interface ThemeCustomizationProps {
@@ -43,6 +46,9 @@ export function ThemeCustomization({ open, onClose }: ThemeCustomizationProps) {
     deviceSize,
   } = useTheme();
 
+  const { signOut, isAuthenticated } = useAuth();
+  const { navigate } = useRouterState();
+
   const [localBorderRadius, setLocalBorderRadius] = useState(borderRadius);
 
   const handleBorderRadiusChange = (value: number) => {
@@ -50,15 +56,21 @@ export function ThemeCustomization({ open, onClose }: ThemeCustomizationProps) {
     setBorderRadius(value);
   };
 
+  const handleLogout = () => {
+    signOut();
+    onClose();
+    navigate('/login');
+  };
+
   const isMobile = deviceSize === 'mobile';
-  const drawerWidth = isMobile ? '70vw' : '400px';
+  const drawerWidth = isMobile ? '85vw' : '400px';
 
   return (
     <Drawer
       open={open}
       onClose={onClose}
       anchor="right"
-      title="테마 설정"
+      title="테마 및 계정 설정"
       width={drawerWidth}
       className="theme-customization__drawer"
     >
@@ -86,6 +98,22 @@ export function ThemeCustomization({ open, onClose }: ThemeCustomizationProps) {
             </Flex>
           </Stack>
         </Paper>
+
+        {/* 계정 설정 (로그아웃) */}
+        {isAuthenticated && (
+          <Paper elevation={2} padding="md">
+            <Stack spacing="md">
+              <Typography variant="body-large">계정 설정</Typography>
+              <Divider />
+              <Button variant="secondary" fullWidth onClick={handleLogout} className="theme-customization__logout-btn">
+                <Flex align="center" justify="center" gap="sm">
+                  <IconLogout size={18} />
+                  <Typography variant="body-small">로그아웃</Typography>
+                </Flex>
+              </Button>
+            </Stack>
+          </Paper>
+        )}
 
         {/* 프리셋 색상 */}
         <Paper elevation={2} padding="md">

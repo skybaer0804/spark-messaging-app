@@ -11,28 +11,29 @@
     width: 100%;
     max-width: 600px;
     height: fit-content;
-    padding: var(--spacing-xl);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--elevation-shadow-2);
+    padding: var(--space-padding-xl); // 더 넓은 패딩 적용
+    border-radius: var(--primitive-radius-large);
+    box-shadow: var(--elevation-shadow-3); // 더 깊은 그림자 효과
     background-color: var(--color-bg-default);
   }
 
   &__header {
     border-bottom: 1px solid var(--color-border-default);
     padding-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
   }
 
   &__avatar {
     background-color: var(--color-interactive-primary);
     color: var(--primitive-gray-0);
-    font-size: 2rem;
+    font-size: 2.5rem; // 아바타 크기 조정
     font-weight: 700;
   }
 
   &__field {
     display: flex;
     flex-direction: column;
-    padding: var(--spacing-md);
+    padding: var(--space-padding-lg); // 필드 내부 패딩 증가
     border-radius: var(--radius-md);
     background-color: var(--color-bg-secondary);
     transition: background-color 0.2s ease;
