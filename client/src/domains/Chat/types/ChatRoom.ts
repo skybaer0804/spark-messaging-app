@@ -13,13 +13,16 @@ export interface ChatRoom {
   name?: string;
   description?: string;
   members: ChatUser[];
-  isGroup: boolean;
+  type: 'public' | 'private' | 'direct' | 'team' | 'discussion';
+  organizationId: string;
+  teamId?: string;
+  parentId?: string;
   isPrivate?: boolean;
   lastMessage?: Message;
-  roomType: 'DIRECT' | 'DISCUSSION' | 'CHANNEL' | 'TEAM' | 'VIDEO_MEETING' | 'DEFAULT';
+  lastSequenceNumber?: number;
   createdAt: string;
   updatedAt: string;
-  unreadCount?: number; // UserChatRoom 정보가 포함될 때를 위해 추가
+  unreadCount?: number;
   isPinned?: boolean;
   notificationEnabled?: boolean;
 }

@@ -116,7 +116,16 @@ export class ChatService {
     return response.data;
   }
 
-  public async createRoom(data: { name: string; members?: string[]; invitedOrgs?: string[]; isGroup?: boolean }) {
+  public async createRoom(data: {
+    name?: string;
+    members?: string[];
+    description?: string;
+    organizationId?: string;
+    type?: string;
+    teamId?: string;
+    parentId?: string;
+    isPrivate?: boolean;
+  }) {
     const response = await chatApi.createRoom(data);
     return response.data;
   }

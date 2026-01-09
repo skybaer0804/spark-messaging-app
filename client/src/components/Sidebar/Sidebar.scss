@@ -1,7 +1,7 @@
 .lnb {
-  width: 80px;
+  width: 64px;
   height: 100%;
-  background-color: var(--color-background-primary);
+  background-color: #1e1f22; // 다크 테마 워크스페이스 바 색상
   border-right: 1px solid var(--color-border-default);
   display: flex;
   flex-direction: column;
@@ -11,29 +11,129 @@
   &__container {
     display: flex;
     flex-direction: column;
+    align-items: center;
     height: 100%;
-    padding: var(--primitive-space-4) 0;
+    padding: var(--primitive-space-3) 0;
   }
 
-  &__header {
+  &__user {
+    position: relative;
+    margin-bottom: var(--primitive-space-2);
+    cursor: pointer;
+
+    &-avatar {
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+      &:hover {
+        border-color: var(--color-interactive-primary);
+      }
+    }
+  }
+
+  &__user-status {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #1e1f22;
+    &--online {
+      background-color: #23a55a;
+    }
+    &--away {
+      background-color: #f0b232;
+    }
+    &--busy {
+      background-color: #f23f43;
+    }
+    &--offline {
+      background-color: #80848e;
+    }
+  }
+
+  &__divider {
+    width: 32px;
+    height: 2px;
+    background-color: var(--color-border-default);
+    margin: var(--primitive-space-2) 0;
+    border-radius: 1px;
+  }
+
+  &__workspaces {
     display: flex;
-    justify-content: center;
-    padding-bottom: var(--primitive-space-6);
+    flex-direction: column;
+    gap: var(--primitive-space-2);
+    margin-bottom: var(--primitive-space-2);
   }
 
-  &__logo {
+  &__workspace-item {
+    position: relative;
+    cursor: pointer;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 8px;
+      background-color: #fff;
+      border-radius: 0 4px 4px 0;
+      transition: height 0.2s;
+      opacity: 0;
+    }
+
+    &:hover::before {
+      opacity: 1;
+      height: 20px;
+    }
+
+    &--active::before {
+      opacity: 1;
+      height: 40px;
+    }
+  }
+
+  &__workspace-icon {
     width: 48px;
     height: 48px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-interactive-primary);
-    cursor: pointer;
-    border-radius: var(--primitive-radius-md);
-    transition: background-color 0.2s;
+    color: #fff;
+    font-weight: bold;
+    font-size: 18px;
+    transition: border-radius 0.2s, transform 0.2s;
 
     &:hover {
-      background-color: var(--color-background-secondary);
+      border-radius: 16px;
+    }
+  }
+
+  .lnb__workspace-item--active .lnb__workspace-icon {
+    border-radius: 16px;
+  }
+
+  &__add-workspace {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--color-background-secondary);
+    color: #23a55a;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      border-radius: 16px;
+      background-color: #23a55a;
+      color: #fff;
     }
   }
 
@@ -43,48 +143,39 @@
     align-items: center;
     gap: var(--primitive-space-2);
     flex: 1;
+    margin-top: var(--primitive-space-2);
   }
 
   &__item {
-    width: 64px;
-    height: 64px;
+    width: 48px;
+    height: 48px;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     border: none;
     background: none;
     cursor: pointer;
-    border-radius: var(--primitive-radius-md);
-    color: var(--color-text-secondary);
+    border-radius: 50%;
+    color: #b5bac1;
     transition: all 0.2s;
     padding: 0;
 
     &:hover {
-      background-color: var(--color-background-secondary);
-      color: var(--color-text-primary);
+      background-color: var(--color-interactive-primary);
+      color: #fff;
+      border-radius: 16px;
     }
 
     &--active {
-      color: var(--color-interactive-primary);
-      background-color: var(--color-surface-level-1);
-
-      .lnb__item-icon {
-        transform: scale(1.1);
-      }
+      background-color: var(--color-interactive-primary);
+      color: #fff;
+      border-radius: 16px;
     }
 
     &-icon {
-      margin-bottom: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.2s;
-    }
-
-    &-label {
-      font-size: 10px;
-      font-weight: var(--primitive-font-weight-bold);
     }
   }
 
@@ -94,9 +185,17 @@
     flex-direction: column;
     align-items: center;
   }
+
+  &__logo {
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    opacity: 0.6;
+    &:hover {
+      opacity: 1;
+    }
+  }
 }
 
-// 모바일에서는 LNB를 숨기고 BottomTab을 사용하므로 SidebarLayout에서 처리
 @media (max-width: 768px) {
   .lnb {
     display: none;

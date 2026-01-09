@@ -8,29 +8,20 @@
   background-color: var(--color-background-primary);
   overflow: hidden;
 
-  &__header {
-    flex-shrink: 0;
-    z-index: var(--layout-z-sticky);
-    border-bottom: 1px solid var(--color-border-default);
-    background-color: var(--color-background-primary);
-  }
+  // 2.2.0: 글로벌 헤더 제거됨
 
   &__container {
     flex: 1;
     display: grid;
     min-height: 0;
     width: 100%;
-    // docs 스타일의 중앙 정렬 컨테이너가 필요하다면 아래 주석 해제
-    // max-width: 1200px; 
-    // margin: 0 auto;
 
-    // Grid.tsx가 내부에서 grid-template-columns를 --grid-template-columns로 구성하므로
-    // 여기서는 "columns"에 전달할 변수만 관리합니다.
-    // 기본은 LNB 너비 (80px)
-    --sidebar-layout-columns: 80px 1fr;
+    // 기본은 Workspace 바 (64px) + 채팅방 리스트 (260px) + 1fr
+    // 현재 Sidebar 컴포넌트가 80px을 차지하고 있으므로 64px로 조정 검토 필요
+    --sidebar-layout-columns: 64px 1fr;
 
     &.sidebar-layout--with-second-menu {
-      --sidebar-layout-columns: 80px var(--sidebar-second-menu-width) 1fr;
+      --sidebar-layout-columns: 64px 260px 1fr;
     }
   }
 
@@ -77,5 +68,3 @@
     }
   }
 }
-
-

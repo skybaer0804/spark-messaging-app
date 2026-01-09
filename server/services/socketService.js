@@ -33,7 +33,29 @@ class SocketService {
     }
   }
 
-  // 추가적인 소켓 관련 유틸리티 로직 (방 참여 등)을 여기에 구현할 수 있습니다.
+  async broadcastEvent(event, data, targetIds = []) {
+    if (!this.client) return;
+
+    try {
+      // 공통 이벤트 브로드캐스트 (SDK의 sendMessage 활용 가능)
+      // targetIds가 있으면 해당 유저들에게만, 없으면 전체 브로드캐스트
+      await this.client.sendMessage(event, {
+        ...data,
+        targetIds,
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      console.error(`Failed to broadcast event ${event}:`, error);
+    }
+  }
+
+  async notifyUnreadCount(userId, roomId, unreadCount) {
+    await this.broadcastEvent('UNREAD_COUNT_UPDATED', { roomId, unreadCount }, [userId]);
+  }
+
+  async notifyRoomListUpdated(userId) {
+    await this.broadcastEvent('ROOM_LIST_UPDATED', {}, [userId]);
+  }
 }
 
 module.exports = new SocketService();

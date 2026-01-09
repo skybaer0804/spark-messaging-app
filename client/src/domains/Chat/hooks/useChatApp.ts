@@ -30,7 +30,7 @@ export function useChatApp() {
 
   // 전역 사이드바 동기화
   useEffect(() => {
-    setChatRoomList(roomList.map((r: ChatRoom) => r.name));
+    setChatRoomList(roomList.map((r: ChatRoom) => r.name || ''));
   }, [roomList]);
 
   useEffect(() => {
@@ -64,18 +64,21 @@ export function useChatApp() {
     }
   };
 
-  const handleCreateRoom = async (roomType: ChatRoom['roomType'] = 'DIRECT') => {
-    // DIRECT의 경우 이름이 없어도 멤버가 있으면 생성 가능
-    if (roomType !== 'DIRECT' && !roomIdInput.trim()) return;
+  const handleCreateRoom = async (type: ChatRoom['type'] = 'direct', extraData: any = {}) => {
+    // direct의 경우 이름이 없어도 멤버가 있으면 생성 가능
+    if (type !== 'direct' && !roomIdInput.trim() && !extraData.name) return;
     if (!isConnected) return;
 
     try {
       const newRoom = await chatService.createRoom({
-        name: roomType === 'DIRECT' ? undefined : roomIdInput.trim(),
-        members: selectedUserIds.length > 0 ? selectedUserIds : undefined,
-        invitedOrgs: selectedOrgIds.length > 0 ? selectedOrgIds : undefined,
-        roomType,
-        isGroup: roomType !== 'DIRECT',
+        name: extraData.name || (type === 'direct' ? undefined : roomIdInput.trim()),
+        description: extraData.description,
+        members: selectedUserIds.length > 0 ? selectedUserIds : extraData.members || undefined,
+        organizationId: extraData.organizationId || 'current_org_id', // 실제 연동 필요
+        type,
+        teamId: extraData.teamId,
+        parentId: extraData.parentId,
+        isPrivate: extraData.isPrivate || false,
       });
 
       await refreshRoomList();
@@ -84,7 +87,7 @@ export function useChatApp() {
       setRoomIdInput('');
       setSelectedUserIds([]);
       setSelectedOrgIds([]);
-      showSuccess(`${roomType} 채팅방이 생성되었습니다.`);
+      showSuccess(`${type} 채팅방이 생성되었습니다.`);
     } catch (error) {
       console.error('Failed to create room:', error);
       showError('Room 생성 실패');

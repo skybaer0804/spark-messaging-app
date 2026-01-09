@@ -1,24 +1,32 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
-  roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom', index: true },
-  senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom', required: true },
+  senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   content: { type: String, required: true },
-  type: { type: String, enum: ['text', 'file', 'image', 'video', 'audio'], default: 'text' },
-  fileUrl: { type: String },      // 원본 파일 경로 (S3 또는 서버 로컬)
-  thumbnailUrl: { type: String }, // 이미지 썸네일 경로
-  fileName: { type: String },     // 원본 파일명
-  fileSize: { type: Number },     // 파일 크기
-  mimeType: { type: String },     // MIME 타입
-  readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  type: {
+    type: String,
+    enum: ['text', 'file', 'image', 'system'],
+    default: 'text',
+  },
+  // [필수] 메시지 시퀀스: 방 내에서 1씩 증가하여 메시지 순서 및 누락 확인
   sequenceNumber: { type: Number, required: true },
-  tempId: { type: String }, // 낙관적 업데이트 대응
-  isDeleted: { type: Boolean, default: false },
-  deletedBy: { type: String, enum: ['sender', 'all', null], default: null },
-  timestamp: { type: Date, default: Date.now }
+
+  // [낙관적 업데이트용] 클라이언트에서 생성한 임시 ID 및 상태
+  tempId: { type: String },
+  status: {
+    type: String,
+    enum: ['sending', 'sent', 'failed'],
+    default: 'sent',
+  },
+
+  fileUrl: { type: String },
+  fileName: { type: String },
+  readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  timestamp: { type: Date, default: Date.now },
 });
 
-// 방별 시퀀스 번호 기반 조회를 위한 인덱스
-messageSchema.index({ roomId: 1, sequenceNumber: 1 }, { unique: true });
+// 특정 방의 시퀀스 번호로 빠른 조회를 위한 인덱스
+messageSchema.index({ roomId: 1, sequenceNumber: 1 });
 
 module.exports = mongoose.model('Message', messageSchema);

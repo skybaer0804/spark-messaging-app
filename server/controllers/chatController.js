@@ -10,33 +10,37 @@ const imageService = require('../services/imageService');
 // 채팅방 생성
 exports.createRoom = async (req, res) => {
   try {
-    const { name, members, invitedOrgs, roomType = 'DIRECT', description, orgId, isPrivate } = req.body;
+    const { name, members, type = 'public', description, organizationId, teamId, parentId, isPrivate } = req.body;
     const currentUserId = req.user.id;
 
     // 멤버 목록에 현재 사용자 추가 (중복 방지)
     const roomMembers = [...new Set([...(members || []), currentUserId])];
 
-    // 1:1 대화방(DIRECT)인 경우 중복 체크
-    if (roomType === 'DIRECT' && roomMembers.length === 2) {
+    // 1:1 대화방(direct)인 경우 중복 체크
+    if (type === 'direct' && roomMembers.length === 2) {
       const existingRoom = await ChatRoom.findOne({
-        roomType: 'DIRECT',
-        members: { $all: roomMembers, $size: 2 }
+        type: 'direct',
+        members: { $all: roomMembers, $size: 2 },
+        organizationId,
       });
 
       if (existingRoom) {
-        const populatedRoom = await ChatRoom.findById(existingRoom._id).populate('members', 'username avatar status');
+        const populatedRoom = await ChatRoom.findById(existingRoom._id).populate(
+          'members',
+          'username profileImage status',
+        );
         return res.status(200).json(populatedRoom);
       }
     }
 
     const newRoom = new ChatRoom({
-      name: roomType === 'DIRECT' ? null : (name || 'New Room'),
+      name: type === 'direct' ? null : name || 'New Room',
       description,
       members: roomMembers,
-      invitedOrgs: invitedOrgs || [],
-      orgId,
-      roomType,
-      isGroup: roomType !== 'DIRECT',
+      organizationId,
+      type,
+      teamId,
+      parentId,
       isPrivate: !!isPrivate,
     });
 
@@ -52,8 +56,13 @@ exports.createRoom = async (req, res) => {
     );
     await Promise.all(userChatRoomPromises);
 
+    // 2.2.0: 모든 멤버에게 방 목록 업데이트 알림
+    roomMembers.forEach((userId) => {
+      socketService.notifyRoomListUpdated(userId);
+    });
+
     // 생성된 방 정보를 멤버들과 함께 리턴
-    const populatedRoom = await ChatRoom.findById(newRoom._id).populate('members', 'username avatar status');
+    const populatedRoom = await ChatRoom.findById(newRoom._id).populate('members', 'username profileImage status');
 
     res.status(201).json(populatedRoom);
   } catch (error) {
@@ -65,31 +74,35 @@ exports.createRoom = async (req, res) => {
 exports.getRooms = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { organizationId } = req.query;
+
+    const query = { userId };
 
     // UserChatRoom에서 해당 유저의 방 목록 조회
-    const userRooms = await UserChatRoom.find({ userId })
-      .populate({
-        path: 'roomId',
-        populate: [
-          { path: 'members', select: 'username avatar status' },
-          {
-            path: 'lastMessage',
-            populate: { path: 'senderId', select: 'username' },
-          },
-        ],
-      })
-      .sort({ 'roomId.updatedAt': -1 });
-
-    // 응답 포맷팅 (프론트엔드 호환성 유지)
-    const formattedRooms = userRooms.map((ur) => {
-      const room = ur.roomId.toObject();
-      return {
-        ...room,
-        unreadCount: ur.unreadCount,
-        isPinned: ur.isPinned,
-        notificationEnabled: ur.notificationEnabled,
-      };
+    let userRooms = await UserChatRoom.find(query).populate({
+      path: 'roomId',
+      populate: [
+        { path: 'members', select: 'username profileImage status' },
+        {
+          path: 'lastMessage',
+          populate: { path: 'senderId', select: 'username' },
+        },
+      ],
     });
+
+    // 워크스페이스 필터링 및 응답 포맷팅
+    const formattedRooms = userRooms
+      .filter((ur) => ur.roomId && (!organizationId || ur.roomId.organizationId.toString() === organizationId))
+      .map((ur) => {
+        const room = ur.roomId.toObject();
+        return {
+          ...room,
+          unreadCount: ur.unreadCount,
+          isPinned: ur.isPinned,
+          notificationEnabled: ur.notificationEnabled,
+        };
+      })
+      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
     res.json(formattedRooms);
   } catch (error) {
@@ -137,7 +150,19 @@ exports.uploadFile = async (req, res) => {
       thumbnailUrl = await imageService.createThumbnail(file.path, file.filename);
     }
 
-    // 1. DB에 메시지 저장
+    // 1. 시퀀스 번호 원자적 증가 및 방 정보 업데이트
+    const room = await ChatRoom.findByIdAndUpdate(roomId, { $inc: { lastSequenceNumber: 1 } }, { new: true }).populate(
+      'members',
+      'username',
+    );
+
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    const sequenceNumber = room.lastSequenceNumber;
+
+    // 2. DB에 메시지 저장
     const newMessage = new Message({
       roomId,
       senderId,
@@ -148,29 +173,31 @@ exports.uploadFile = async (req, res) => {
       fileName: file.originalname,
       fileSize: file.size,
       mimeType: file.mimetype,
+      sequenceNumber,
     });
     await newMessage.save();
 
-    // 2. 채팅방 정보 가져오기 및 업데이트
-    const room = await ChatRoom.findById(roomId).populate('members', 'username');
-    if (room) {
-      room.lastMessage = newMessage._id;
-      await room.save();
-    }
+    // 3. 채팅방 마지막 메시지 업데이트
+    room.lastMessage = newMessage._id;
+    await room.save();
 
-    // 3. Socket 브로드캐스트 (파일 정보 포함)
+    // 4. Socket 브로드캐스트 (파일 정보 포함)
     const sender = room.members.find((m) => m._id.toString() === senderId);
 
     await socketService.sendRoomMessage(
       roomId,
       type,
       {
+        _id: newMessage._id,
         content: newMessage.content,
         fileUrl: newMessage.fileUrl,
         thumbnailUrl: newMessage.thumbnailUrl,
         fileName: newMessage.fileName,
         fileSize: newMessage.fileSize,
+        senderId,
         senderName: sender ? sender.username : 'Unknown',
+        sequenceNumber,
+        timestamp: newMessage.timestamp,
       },
       senderId,
     );
@@ -187,9 +214,17 @@ exports.sendMessage = async (req, res) => {
     const { roomId, content, type, tempId } = req.body;
     const senderId = req.user.id;
 
-    // 1. 시퀀스 번호 결정 (방별 고유)
-    const lastMessage = await Message.findOne({ roomId }).sort({ sequenceNumber: -1 });
-    const sequenceNumber = lastMessage ? lastMessage.sequenceNumber + 1 : 1;
+    // 1. 시퀀스 번호 원자적 증가 및 방 정보 업데이트
+    const room = await ChatRoom.findByIdAndUpdate(roomId, { $inc: { lastSequenceNumber: 1 } }, { new: true }).populate(
+      'members',
+      'username',
+    );
+
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    const sequenceNumber = room.lastSequenceNumber;
 
     // 2. DB에 메시지 저장
     const newMessage = new Message({
@@ -202,11 +237,7 @@ exports.sendMessage = async (req, res) => {
     });
     await newMessage.save();
 
-    // 3. 채팅방 정보 업데이트
-    const room = await ChatRoom.findById(roomId).populate('members', 'username');
-    if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
-    }
+    // 3. 채팅방 마지막 메시지 업데이트
     room.lastMessage = newMessage._id;
     await room.save();
 
@@ -215,6 +246,14 @@ exports.sendMessage = async (req, res) => {
     const recipientIds = allMemberIds.filter((id) => id !== senderId);
 
     await UserChatRoom.updateMany({ roomId, userId: { $in: recipientIds } }, { $inc: { unreadCount: 1 } });
+
+    // 2.2.0: 수신자들에게 실시간 안읽음 카운트 알림
+    recipientIds.forEach(async (userId) => {
+      const userChatRoom = await UserChatRoom.findOne({ userId, roomId });
+      if (userChatRoom) {
+        socketService.notifyUnreadCount(userId, roomId, userChatRoom.unreadCount);
+      }
+    });
 
     const sender = room.members.find((m) => m._id.toString() === senderId);
 
@@ -234,9 +273,7 @@ exports.sendMessage = async (req, res) => {
       senderId,
     );
 
-    // 6. 소켓으로 UNREAD_COUNT_UPDATED 브로드캐스트 (선택적 구현, 현재는 SDK가 sendRoomMessage로 처리)
-
-    // 7. 푸시 알림 전송 (오프라인이거나 현재 방에 있지 않은 유저에게만)
+    // 6. 푸시 알림 전송 (오프라인이거나 현재 방에 있지 않은 유저에게만)
     if (recipientIds.length > 0) {
       const [userStatuses, activeRooms] = await Promise.all([
         userService.getUsersStatus(recipientIds),
@@ -268,13 +305,14 @@ exports.sendMessage = async (req, res) => {
 // 메시지 동기화 (누락 메시지 조회)
 exports.syncMessages = async (req, res) => {
   try {
-    const { roomId, fromSequence } = req.query;
+    const { roomId } = req.params;
+    const { fromSequence } = req.query;
 
     const messages = await Message.find({
       roomId,
       sequenceNumber: { $gt: parseInt(fromSequence) || 0 },
     })
-      .populate('senderId', 'username avatar')
+      .populate('senderId', 'username profileImage')
       .sort({ sequenceNumber: 1 });
 
     res.json({
@@ -304,8 +342,19 @@ exports.markAsRead = async (req, res) => {
 exports.getMessages = async (req, res) => {
   try {
     const { roomId } = req.params;
-    const messages = await Message.find({ roomId }).populate('senderId', 'username avatar').sort({ timestamp: 1 });
-    res.json(messages);
+    const { limit = 50, beforeSequence } = req.query;
+
+    const query = { roomId };
+    if (beforeSequence) {
+      query.sequenceNumber = { $lt: parseInt(beforeSequence) };
+    }
+
+    const messages = await Message.find(query)
+      .populate('senderId', 'username profileImage status')
+      .sort({ sequenceNumber: -1 })
+      .limit(parseInt(limit));
+
+    res.json(messages.reverse());
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch messages', error: error.message });
   }

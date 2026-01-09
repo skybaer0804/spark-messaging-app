@@ -1,19 +1,20 @@
 const mongoose = require('mongoose');
 
 const chatRoomSchema = new mongoose.Schema({
-  name: { type: String }, // 1:1의 경우 이름이 없을 수 있으므로 default 제거
-  description: { type: String }, // 방 설명 추가
-  members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  invitedOrgs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Organization' }],
-  orgId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization' }, // 소속 조직 ID
-  roomType: {
+  name: { type: String, required: true },
+  description: { type: String },
+  type: {
     type: String,
-    enum: ['DIRECT', 'DISCUSSION', 'CHANNEL', 'TEAM', 'VIDEO_MEETING'],
-    default: 'DIRECT',
+    enum: ['public', 'private', 'direct', 'team', 'discussion'], // team, discussion 추가
+    default: 'public',
   },
-  isGroup: { type: Boolean, default: false },
-  isPrivate: { type: Boolean, default: false }, // 공개/비공개 여부 (채널, 팀용)
+  members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  organizationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true }, // 워크스페이스 연결 필수화
+  teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom' }, // 팀 내 채널인 경우
+  parentId: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom' }, // 토론방인 경우 상위 방 ID
   lastMessage: { type: mongoose.Schema.Types.ObjectId, ref: 'Message' },
+  lastSequenceNumber: { type: Number, default: 0 }, // 해당 방의 마지막 메시지 번호 추적
+  isArchived: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
 

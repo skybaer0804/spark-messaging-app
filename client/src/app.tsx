@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback } from 'preact/hooks';
 import sparkMessagingClient from './config/sparkMessaging';
-import { appRoutes, findRouteTitleByPath, getDesignSystemComponentFromPath } from './routes/appRoutes';
+import { appRoutes, getDesignSystemComponentFromPath } from './routes/appRoutes';
 import { SidebarLayout } from './layouts/SidebarLayout/SidebarLayout';
 import { RouterStateProvider } from './routes/RouterState';
 import { ensureSparkMessagingConnected } from '@/core/utils/ensureSparkMessagingConnected';
@@ -20,10 +20,6 @@ import './index.css';
 export function App() {
   const { isAuthenticated, loading } = useAuth();
   const { showInfo } = useToast();
-
-  const [isConnected, setIsConnected] = useState(false);
-  const [socketId, setSocketId] = useState<string | null>(null);
-  const socketIdRef = useRef<string | null>(null);
 
   // 초기 경로 가져오기
   const getInitialRoute = () => {
@@ -91,12 +87,7 @@ export function App() {
     // SDK 연결 초기화
     const initializeConnection = async () => {
       try {
-        const status = await ensureSparkMessagingConnected();
-        if (status.isConnected) {
-          setIsConnected(true);
-          setSocketId(status.socketId);
-          socketIdRef.current = status.socketId;
-        }
+        await ensureSparkMessagingConnected();
       } catch (error) {
         console.error('연결 초기화 실패:', error);
       }
@@ -105,23 +96,13 @@ export function App() {
     initializeConnection();
 
     // 연결 상태 핸들러
-    const handleConnected = (data: any) => {
-      setIsConnected(true);
-      setSocketId(data.socketId);
-      socketIdRef.current = data.socketId;
+    const handleConnected = (_data: any) => {
+      // v2.2.0: 개별 컴포넌트에서 상태 관리
     };
 
     // 연결 상태 변경 핸들러
-    const handleConnectionStateChange = (connected: boolean) => {
-      setIsConnected(connected);
-      if (connected) {
-        const status = sparkMessagingClient.getConnectionStatus();
-        setSocketId(status.socketId);
-        socketIdRef.current = status.socketId;
-      } else {
-        setSocketId(null);
-        socketIdRef.current = null;
-      }
+    const handleConnectionStateChange = (_connected: boolean) => {
+      // v2.2.0: 개별 컴포넌트에서 상태 관리
     };
 
     // 알림 메시지 수신 핸들러
@@ -202,15 +183,11 @@ export function App() {
     return appRoutes.find((r) => r.id === 'home')?.element || <div />;
   };
 
-  const headerTitle = findRouteTitleByPath(currentRoute);
-
   return (
     <div className="app">
       <RouterStateProvider pathname={currentRoute} onNavigate={handleNavigate}>
         <div className="app__main">
-          <SidebarLayout headerTitle={headerTitle} isConnected={isConnected} socketId={socketId}>
-            {renderContent()}
-          </SidebarLayout>
+          <SidebarLayout>{renderContent()}</SidebarLayout>
         </div>
       </RouterStateProvider>
     </div>
