@@ -6,8 +6,8 @@ const notificationSchema = new mongoose.Schema({
   senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   scheduledAt: { type: Date }, // 예약 발송 시간
   isSent: { type: Boolean, default: false },
-  targetType: { type: String, enum: ['all', 'organization'], default: 'all' },
-  targetId: { type: mongoose.Schema.Types.ObjectId }, // 특정 조직 ID 등
+  targetType: { type: String, enum: ['all', 'workspace'], default: 'all' },
+  targetId: { type: mongoose.Schema.Types.ObjectId }, // 특정 워크스페이스 ID 등
   createdAt: { type: Date, default: Date.now },
 });
 

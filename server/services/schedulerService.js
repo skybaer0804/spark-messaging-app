@@ -10,7 +10,7 @@ class SchedulerService {
       console.log('[Scheduler] Checking for scheduled notifications...');
       this.processScheduledNotifications();
     });
-    
+
     console.log('Scheduler Service Initialized (1-hour interval)');
   }
 
@@ -20,7 +20,7 @@ class SchedulerService {
       // 예약 시간이 지났고 아직 발송되지 않은 알림 조회
       const pendingNotifications = await Notification.find({
         scheduledAt: { $lte: now },
-        isSent: false
+        isSent: false,
       });
 
       console.log(`[Scheduler] Found ${pendingNotifications.length} pending notifications`);
@@ -36,22 +36,18 @@ class SchedulerService {
   async sendNotification(notification) {
     try {
       let targetUserIds = [];
-      
+
       if (notification.targetType === 'all') {
         const users = await User.find().select('_id');
-        targetUserIds = users.map(u => u._id.toString());
-      } else if (notification.targetType === 'organization') {
-        const users = await User.find({ orgId: notification.targetId }).select('_id');
-        targetUserIds = users.map(u => u._id.toString());
+        targetUserIds = users.map((u) => u._id.toString());
+      } else if (notification.targetType === 'workspace') {
+        const users = await User.find({ workspaces: notification.targetId }).select('_id');
+        targetUserIds = users.map((u) => u._id.toString());
       }
 
       if (targetUserIds.length > 0) {
-        await notificationService.notifyGlobal(
-          targetUserIds,
-          notification.title,
-          notification.content
-        );
-        
+        await notificationService.notifyGlobal(targetUserIds, notification.title, notification.content);
+
         notification.isSent = true;
         await notification.save();
         console.log(`[Scheduler] Notification sent: ${notification.title}`);

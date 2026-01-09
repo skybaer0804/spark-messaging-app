@@ -5,15 +5,8 @@ import { useChat } from '../context/ChatContext';
 import { useChatRoom } from './useChatRoom';
 import { ChatRoom } from '../types';
 
-export interface Organization {
-  _id: string;
-  name: string;
-  dept1: string;
-  dept2?: string;
-}
-
 export function useChatApp() {
-  const { isConnected, socketId, roomList, userList, orgList, services, refreshRoomList, debugEnabled, toggleDebug } =
+  const { isConnected, socketId, roomList, userList, workspaceList, services, refreshRoomList, debugEnabled, toggleDebug } =
     useChat();
 
   const { currentRoom, messages, sendMessage, handleRoomSelect, setCurrentRoom, setMessages } = useChatRoom();
@@ -21,7 +14,7 @@ export function useChatApp() {
   const [input, setInput] = useState('');
   const [roomIdInput, setRoomIdInput] = useState('chat');
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
-  const [selectedOrgIds, setSelectedOrgIds] = useState<string[]>([]);
+  const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState<string[]>([]);
   const [uploadingFile, setUploadingFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const { showSuccess, showError } = useToast();
@@ -86,7 +79,7 @@ export function useChatApp() {
 
       setRoomIdInput('');
       setSelectedUserIds([]);
-      setSelectedOrgIds([]);
+      setSelectedWorkspaceIds([]);
       showSuccess(`${type} 채팅방이 생성되었습니다.`);
     } catch (error) {
       console.error('Failed to create room:', error);
@@ -98,8 +91,8 @@ export function useChatApp() {
     setSelectedUserIds((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
   };
 
-  const toggleOrgSelection = (orgId: string) => {
-    setSelectedOrgIds((prev) => (prev.includes(orgId) ? prev.filter((id) => id !== orgId) : [...prev, orgId]));
+  const toggleWorkspaceSelection = (workspaceId: string) => {
+    setSelectedWorkspaceIds((prev) => (prev.includes(workspaceId) ? prev.filter((id) => id !== workspaceId) : [...prev, workspaceId]));
   };
 
   const leaveRoom = async () => {
@@ -137,11 +130,11 @@ export function useChatApp() {
     currentRoom,
     roomList,
     userList,
-    orgList,
+    workspaceList,
     selectedUserIds,
-    selectedOrgIds,
+    selectedWorkspaceIds,
     toggleUserSelection,
-    toggleOrgSelection,
+    toggleWorkspaceSelection,
     sendMessage: handleSendMessage,
     handleRoomSelect,
     handleCreateRoom,

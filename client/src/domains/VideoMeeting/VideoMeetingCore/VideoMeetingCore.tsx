@@ -14,7 +14,7 @@ import { Typography } from '@/ui-components/Typography/Typography';
 import { Card, CardHeader, CardBody, CardFooter } from '@/ui-components/Card/Card';
 import { StatusChip } from '@/ui-components/StatusChip/StatusChip';
 import { IconArrowLeft, IconCalendar, IconVideo, IconUsers } from '@tabler/icons-preact';
-import { authApi, orgApi } from '@/core/api/ApiService';
+import { authApi, workspaceApi } from '@/core/api/ApiService';
 
 interface VideoMeetingCoreProps {
   store: VideoMeetingStore;
@@ -40,16 +40,16 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
     description: '',
     scheduledAt: '',
     invitedUsers: [] as string[],
-    invitedOrgs: [] as string[],
+    invitedWorkspaces: [] as string[],
   });
   const [userList, setUserList] = useState<any[]>([]);
-  const [orgList, setOrgList] = useState<any[]>([]);
+  const [workspaceList, setWorkspaceList] = useState<any[]>([]);
 
   useEffect(() => {
     if (showScheduleForm) {
-      Promise.all([authApi.getUsers(), orgApi.getOrganizations()]).then(([uRes, oRes]) => {
+      Promise.all([authApi.getUsers(), workspaceApi.getWorkspaces()]).then(([uRes, wsRes]) => {
         setUserList(uRes.data);
-        setOrgList(oRes.data);
+        setWorkspaceList(wsRes.data);
       });
     }
   }, [showScheduleForm]);
@@ -110,8 +110,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                     <Box>
                       <Typography
                         variant="body-small"
-                        fontWeight={600}
-                        style={{ marginBottom: '8px', display: 'block' }}
+                        style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}
                       >
                         Scheduled Time
                       </Typography>
@@ -129,7 +128,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                     </Box>
                   </Stack>
                   <Stack spacing="md">
-                    <Typography variant="body-small" fontWeight={600}>
+                    <Typography variant="body-small" style={{ fontWeight: 600 }}>
                       Invite Participants
                     </Typography>
                     <Box
@@ -142,8 +141,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                     >
                       <Typography
                         variant="caption"
-                        padding="xs"
-                        style={{ backgroundColor: 'var(--color-bg-tertiary)', display: 'block' }}
+                        style={{ backgroundColor: 'var(--color-bg-tertiary)', display: 'block', padding: '4px' }}
                       >
                         Users
                       </Typography>
@@ -164,26 +162,23 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                       ))}
                       <Typography
                         variant="caption"
-                        padding="xs"
-                        style={{ backgroundColor: 'var(--color-bg-tertiary)', display: 'block' }}
+                        style={{ backgroundColor: 'var(--color-bg-tertiary)', display: 'block', padding: '4px' }}
                       >
-                        Organizations
+                        Workspaces
                       </Typography>
-                      {orgList.map((o) => (
-                        <Flex key={o._id} padding="xs" align="center" gap="sm">
+                      {workspaceList.map((ws) => (
+                        <Flex key={ws._id} padding="xs" align="center" gap="sm">
                           <input
                             type="checkbox"
-                            checked={newMeeting.invitedOrgs.includes(o._id)}
+                            checked={newMeeting.invitedWorkspaces.includes(ws._id)}
                             onChange={(e) => {
                               const ids = e.currentTarget.checked
-                                ? [...newMeeting.invitedOrgs, o._id]
-                                : newMeeting.invitedOrgs.filter((id) => id !== o._id);
-                              setNewMeeting({ ...newMeeting, invitedOrgs: ids });
+                                ? [...newMeeting.invitedWorkspaces, ws._id]
+                                : newMeeting.invitedWorkspaces.filter((id) => id !== ws._id);
+                              setNewMeeting({ ...newMeeting, invitedWorkspaces: ids });
                             }}
                           />
-                          <Typography variant="body-small">
-                            {o.name} ({o.dept1})
-                          </Typography>
+                          <Typography variant="body-small">{ws.name}</Typography>
                         </Flex>
                       ))}
                     </Box>

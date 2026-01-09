@@ -101,7 +101,7 @@ export const notificationApi = {
     title: string;
     content: string;
     scheduledAt?: string;
-    targetType?: 'all' | 'organization';
+    targetType?: 'all' | 'workspace';
     targetId?: string;
   }) => api.post('/notification', data),
 };
@@ -113,7 +113,7 @@ export const videoMeetingApi = {
     description?: string;
     scheduledAt: string;
     invitedUsers?: string[];
-    invitedOrgs?: string[];
+    invitedWorkspaces?: string[];
   }) => api.post('/video-meeting', data),
   startMeeting: (meetingId: string) => api.post(`/video-meeting/${meetingId}/start`),
 };

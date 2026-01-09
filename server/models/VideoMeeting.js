@@ -8,7 +8,7 @@ const videoMeetingSchema = new mongoose.Schema({
   scheduledAt: { type: Date, required: true }, // 시작 예약 시간
   status: { type: String, enum: ['scheduled', 'ongoing', 'completed', 'cancelled'], default: 'scheduled' },
   invitedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  invitedOrgs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Organization' }],
+  invitedWorkspaces: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' }],
   maxParticipants: { type: Number, default: 20 },
   recordingUrl: { type: String },
   isRecording: { type: Boolean, default: false },

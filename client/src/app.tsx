@@ -168,7 +168,7 @@ export function App() {
     const { user } = useAuth();
     const hasWorkspaces = user?.workspaces && user.workspaces.length > 0;
 
-    if (!hasWorkspaces && !currentRoute.startsWith('/organization')) {
+    if (!hasWorkspaces && !currentRoute.startsWith('/workspace')) {
       return (
         <Flex
           direction="column"
@@ -184,7 +184,7 @@ export function App() {
             <br />
             새로운 워크스페이스를 생성하거나 기존 워크스페이스에 초대받아야 합니다.
           </Typography>
-          <Button variant="primary" onClick={() => handleNavigate('/organization')}>
+          <Button variant="primary" onClick={() => handleNavigate('/workspace')}>
             워크스페이스 생성하러 가기
           </Button>
         </Flex>

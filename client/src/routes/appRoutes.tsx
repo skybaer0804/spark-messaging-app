@@ -17,7 +17,7 @@ import { DesignSystemDemo } from '@/components/DesignSystemDemo/DesignSystemDemo
 import { HomePage } from '@/components/HomePage/HomePage';
 import { AuthPage } from '@/components/Auth/AuthPage';
 import { Profile } from '@/components/Profile/Profile';
-import { Organization } from '@/components/Organization/Organization';
+import { Workspace } from '@/components/Workspace/Workspace';
 import { ThemeCustomization } from '@/components/ThemeCustomization/ThemeCustomization';
 
 export type AppRouteId =
@@ -29,7 +29,7 @@ export type AppRouteId =
   | 'design-system'
   | 'auth'
   | 'profile'
-  | 'organization';
+  | 'workspace';
 
 export interface AppRouteNode {
   id: AppRouteId;
@@ -145,12 +145,12 @@ export const appRoutes: AppRouteNode[] = [
     element: <Profile />,
   },
   {
-    id: 'organization',
-    label: '조직',
-    path: '/organization',
+    id: 'workspace',
+    label: '워크스페이스',
+    path: '/workspace',
     icon: <IconUsers size={24} />,
-    title: 'Organization',
-    element: <Organization />,
+    title: 'Workspace',
+    element: <Workspace />,
   },
   {
     id: 'design-system',

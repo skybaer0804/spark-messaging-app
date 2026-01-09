@@ -3,16 +3,16 @@ import { useToast } from '@/core/context/ToastContext';
 import sparkMessagingClient from '../../../config/sparkMessaging';
 import { ConnectionService } from '@/core/socket/ConnectionService';
 import { NotificationService } from '@/core/socket/NotificationService';
-import { orgApi, notificationApi } from '@/core/api/ApiService';
-import type { Organization } from '../../ChatApp/hooks/useChatApp';
+import { workspaceApi, notificationApi } from '@/core/api/ApiService';
+import type { Workspace } from '../../Chat/types/ChatRoom';
 
 export function useNotificationApp() {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [scheduledDate, setScheduledAt] = useState('');
-  const [targetType, setTargetType] = useState<'all' | 'organization'>('all');
+  const [targetType, setTargetType] = useState<'all' | 'workspace'>('all');
   const [targetId, setTargetId] = useState('');
-  const [orgList, setOrgList] = useState<Organization[]>([]);
+  const [workspaceList, setWorkspaceList] = useState<Workspace[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const { showSuccess, showError } = useToast();
   const notificationServiceRef = useRef<NotificationService | null>(null);
@@ -30,17 +30,17 @@ export function useNotificationApp() {
       setIsConnected(connected);
     });
 
-    const fetchOrgs = async () => {
+    const fetchWorkspaces = async () => {
       try {
-        const res = await orgApi.getOrganizations();
-        setOrgList(res.data);
+        const res = await workspaceApi.getWorkspaces();
+        setWorkspaceList(res.data);
         if (res.data.length > 0) setTargetId(res.data[0]._id);
       } catch (err) {
-        console.error('Failed to fetch orgs:', err);
+        console.error('Failed to fetch workspaces:', err);
       }
     };
 
-    fetchOrgs();
+    fetchWorkspaces();
 
     return () => {
       connectionService.cleanup();
@@ -54,7 +54,7 @@ export function useNotificationApp() {
         content: message,
         scheduledAt: scheduledDate || undefined,
         targetType,
-        targetId: targetType === 'organization' ? targetId : undefined,
+        targetId: targetType === 'workspace' ? targetId : undefined,
       });
 
       setTitle('');
@@ -78,7 +78,7 @@ export function useNotificationApp() {
     setTargetType,
     targetId,
     setTargetId,
-    orgList,
+    workspaceList,
     isConnected,
     handleSend,
   };

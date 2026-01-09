@@ -50,8 +50,7 @@ import { useRouterState } from '@/routes/RouterState';
 import { getDirectChatName } from './utils/chatUtils';
 import './ChatApp.scss';
 
-import type { ChatRoom, ChatUser } from './types';
-import type { Organization } from './hooks/useChatApp';
+import type { ChatRoom, ChatUser, Workspace } from './types';
 
 interface ChatRoomSidebarProps {
   isConnected: boolean;
@@ -60,11 +59,11 @@ interface ChatRoomSidebarProps {
   handleCreateRoom: (type: ChatRoom['type'], extraData?: any) => void;
   roomList: ChatRoom[];
   userList: ChatUser[];
-  orgList: Organization[];
+  workspaceList: Workspace[];
   selectedUserIds: string[];
-  selectedOrgIds: string[];
+  selectedWorkspaceIds: string[];
   toggleUserSelection: (userId: string) => void;
-  toggleOrgSelection: (orgId: string) => void;
+  toggleWorkspaceSelection: (workspaceId: string) => void;
   currentRoom: ChatRoom | null;
   handleRoomSelect: (roomId: string) => void;
   leaveRoom: () => void;
@@ -86,11 +85,11 @@ function ChatRoomSidebar({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isConnected: _isConnected,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  orgList: _orgList,
+  workspaceList: _workspaceList,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  selectedOrgIds: _selectedOrgIds,
+  selectedWorkspaceIds: _selectedWorkspaceIds,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  toggleOrgSelection: _toggleOrgSelection,
+  toggleWorkspaceSelection: _toggleWorkspaceSelection,
 }: ChatRoomSidebarProps) {
   const [showInviteList, setShowInviteList] = useState(false);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
@@ -608,11 +607,11 @@ function ChatAppContent() {
     currentRoom,
     roomList,
     userList,
-    orgList,
+    workspaceList,
     selectedUserIds,
-    selectedOrgIds,
+    selectedWorkspaceIds,
     toggleUserSelection,
-    toggleOrgSelection,
+    toggleWorkspaceSelection,
     sendMessage,
     handleRoomSelect: handleRoomSelectRaw,
     handleCreateRoom,
@@ -869,11 +868,11 @@ function ChatAppContent() {
             handleCreateRoom={handleCreateRoom}
             roomList={roomList}
             userList={userList}
-            orgList={orgList}
+            workspaceList={workspaceList}
             selectedUserIds={selectedUserIds}
-            selectedOrgIds={selectedOrgIds}
+            selectedWorkspaceIds={selectedWorkspaceIds}
             toggleUserSelection={toggleUserSelection}
-            toggleOrgSelection={toggleOrgSelection}
+            toggleWorkspaceSelection={toggleWorkspaceSelection}
             currentRoom={currentRoom}
             handleRoomSelect={onRoomSelect}
             leaveRoom={leaveRoom}
@@ -905,11 +904,11 @@ function ChatAppContent() {
             handleCreateRoom={handleCreateRoom}
             roomList={roomList}
             userList={userList}
-            orgList={orgList}
+            workspaceList={workspaceList}
             selectedUserIds={selectedUserIds}
-            selectedOrgIds={selectedOrgIds}
+            selectedWorkspaceIds={selectedWorkspaceIds}
             toggleUserSelection={toggleUserSelection}
-            toggleOrgSelection={toggleOrgSelection}
+            toggleWorkspaceSelection={toggleWorkspaceSelection}
             currentRoom={currentRoom}
             handleRoomSelect={onRoomSelect}
             leaveRoom={leaveRoom}

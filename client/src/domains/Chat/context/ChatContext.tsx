@@ -7,16 +7,15 @@ import { RoomService } from '../services/RoomService';
 import { FileTransferService } from '@/core/api/FileTransferService';
 import { useAuth } from '@/core/hooks/useAuth';
 import { authApi, workspaceApi } from '@/core/api/ApiService';
-import { ChatRoom, ChatUser } from '../types';
+import { ChatRoom, ChatUser, Workspace } from '../types';
 import { currentWorkspaceId } from '@/stores/chatRoomsStore';
-import { Organization } from '../hooks/useChatApp';
 
 interface ChatContextType {
   isConnected: boolean;
   socketId: string | null;
   roomList: ChatRoom[];
   userList: ChatUser[];
-  orgList: Organization[];
+  workspaceList: Workspace[];
   services: {
     connection: ConnectionService;
     chat: ChatService;
@@ -25,7 +24,7 @@ interface ChatContextType {
   };
   refreshRoomList: () => Promise<void>;
   refreshUserList: () => Promise<void>;
-  refreshOrgList: () => Promise<void>;
+  refreshWorkspaceList: () => Promise<void>;
   isLoading: boolean;
   debugEnabled: boolean;
   toggleDebug: () => void;
@@ -39,7 +38,7 @@ export function ChatProvider({ children }: { children: any }) {
   const [socketId, setSocketId] = useState<string | null>(null);
   const [roomList, setRoomList] = useState<ChatRoom[]>([]);
   const [userList, setUserList] = useState<ChatUser[]>([]);
-  const [orgList, setOrgList] = useState<Organization[]>([]);
+  const [workspaceList, setWorkspaceList] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [debugEnabled, setDebugEnabled] = useState(localStorage.getItem('chat_debug_mode') === 'true');
 
@@ -70,10 +69,10 @@ export function ChatProvider({ children }: { children: any }) {
     }
   };
 
-  const refreshOrgList = async () => {
+  const refreshWorkspaceList = async () => {
     try {
       const response = await workspaceApi.getWorkspaces();
-      setOrgList(response.data);
+      setWorkspaceList(response.data);
     } catch (error) {
       console.error('Failed to load workspaces:', error);
     }
@@ -121,7 +120,7 @@ export function ChatProvider({ children }: { children: any }) {
     // Initial load
     const init = async () => {
       setIsLoading(true);
-      await Promise.all([refreshRoomList(), refreshUserList(), refreshOrgList()]);
+      await Promise.all([refreshRoomList(), refreshUserList(), refreshWorkspaceList()]);
 
       const status = connectionService.getConnectionStatus();
       if (status.isConnected) {
@@ -154,7 +153,7 @@ export function ChatProvider({ children }: { children: any }) {
     socketId,
     roomList,
     userList,
-    orgList,
+    workspaceList,
     services: {
       connection: connectionServiceRef.current,
       chat: chatServiceRef.current,
@@ -163,7 +162,7 @@ export function ChatProvider({ children }: { children: any }) {
     },
     refreshRoomList,
     refreshUserList,
-    refreshOrgList,
+    refreshWorkspaceList,
     isLoading,
     debugEnabled,
     toggleDebug,

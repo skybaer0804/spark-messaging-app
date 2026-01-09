@@ -1,13 +1,25 @@
 import { Message } from './Message';
 
+export interface Workspace {
+  _id: string;
+  name: string;
+  initials?: string;
+  color?: string;
+  projectPublicKey?: string;
+  projectUrl?: string;
+  createdAt?: string;
+}
+
 export interface ChatUser {
   _id: string;
   username: string;
+  email?: string;
   avatar?: string;
   profileImage?: string;
   status?: 'online' | 'offline' | 'away' | 'busy';
   statusText?: string;
   role?: string;
+  workspaces?: Workspace[];
 }
 
 export interface ChatRoom {

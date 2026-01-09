@@ -26,7 +26,7 @@ export function NotificationApp() {
     setTargetType,
     targetId,
     setTargetId,
-    orgList,
+    workspaceList,
     isConnected,
     handleSend,
   } = useNotificationApp();
@@ -78,19 +78,19 @@ export function NotificationApp() {
               onChange={(e) => setTargetType(e.currentTarget.value as any)}
               options={[
                 { label: 'All Users', value: 'all' },
-                { label: 'Specific Organization', value: 'organization' },
+                { label: 'Specific Workspace', value: 'workspace' },
               ]}
               style={{ flex: 1 }}
             />
 
-            {targetType === 'organization' && (
+            {targetType === 'workspace' && (
               <Select
-                label="Select Organization"
+                label="Select Workspace"
                 value={targetId}
                 onChange={(e) => setTargetId(e.currentTarget.value)}
-                options={orgList.map((org) => ({
-                  label: `${org.name} (${org.dept1})`,
-                  value: org._id,
+                options={workspaceList.map((ws) => ({
+                  label: ws.name,
+                  value: ws._id,
                 }))}
                 style={{ flex: 1 }}
               />

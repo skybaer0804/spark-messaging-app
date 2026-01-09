@@ -1,12 +1,16 @@
-import { useMemo, useEffect } from 'preact/hooks';
+import { useMemo, useEffect, useState } from 'preact/hooks';
 import { IconSparkles, IconPlus, IconHome } from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes, type AppRouteNode } from '@/routes/appRoutes';
 import { currentWorkspaceId, setCurrentWorkspaceId } from '@/stores/chatRoomsStore';
+import { workspaceApi } from '@/core/api/ApiService';
+import { useAuth } from '@/core/hooks/useAuth';
 import './Sidebar.scss';
 
 export function Sidebar() {
   const { pathname, navigate } = useRouterState();
+  const { user } = useAuth();
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
 
   const lnbRouteIds = ['chatapp', 'notification', 'video-meeting'];
 
@@ -14,20 +18,25 @@ export function Sidebar() {
     return lnbRouteIds.map((id) => appRoutes.find((r) => r.id === id)).filter(Boolean) as AppRouteNode[];
   }, []);
 
-  // 가상의 워크스페이스 목록 (TODO: 실제 API 연동)
-  const workspaces = [
-    { id: '1', name: 'Spark', initials: 'S', color: '#4f46e5' },
-    { id: '2', name: 'Development', initials: 'D', color: '#10b981' },
-    { id: '3', name: 'DevStudy', initials: 'DS', color: '#f59e0b' },
-  ];
+  const fetchWorkspaces = async () => {
+    try {
+      const res = await workspaceApi.getWorkspaces();
+      setWorkspaces(res.data);
+      if (res.data.length > 0 && !currentWorkspaceId.value) {
+        setCurrentWorkspaceId(res.data[0]._id);
+      }
+    } catch (err) {
+      console.error('Failed to fetch workspaces:', err);
+    }
+  };
 
   useEffect(() => {
-    if (!currentWorkspaceId.value) {
-      setCurrentWorkspaceId(workspaces[0].id);
+    if (user) {
+      fetchWorkspaces();
     }
-  }, []);
+  }, [user]);
 
-  const activeOrg = currentWorkspaceId.value;
+  const activeWorkspaceId = currentWorkspaceId.value;
 
   const handleWorkspaceSelect = (id: string) => {
     setCurrentWorkspaceId(id);
@@ -49,17 +58,17 @@ export function Sidebar() {
         <div className="lnb__workspaces">
           {workspaces.map((ws) => (
             <div
-              key={ws.id}
-              className={`lnb__workspace-item ${activeOrg === ws.id ? 'lnb__workspace-item--active' : ''}`}
-              onClick={() => handleWorkspaceSelect(ws.id)}
+              key={ws._id}
+              className={`lnb__workspace-item ${activeWorkspaceId === ws._id ? 'lnb__workspace-item--active' : ''}`}
+              onClick={() => handleWorkspaceSelect(ws._id)}
               title={ws.name}
             >
               <div className="lnb__workspace-icon" style={{ backgroundColor: ws.color }}>
-                {ws.initials}
+                {ws.initials || ws.name.substring(0, 1).toUpperCase()}
               </div>
             </div>
           ))}
-          <button className="lnb__add-workspace" title="Add workspace">
+          <button className="lnb__add-workspace" title="Add workspace" onClick={() => navigate('/workspace')}>
             <IconPlus size={20} />
           </button>
         </div>
