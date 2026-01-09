@@ -6,7 +6,7 @@ import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { ThemeCustomization } from '@/components/ThemeCustomization/ThemeCustomization';
 import { Select, SelectOption } from '@/ui-components/Select/Select';
-import { IconMoon, IconSun, IconWifi, IconWifiOff, IconSettings, IconUser, IconLogin } from '@tabler/icons-react';
+import { IconMoon, IconSun, IconWifi, IconWifiOff, IconSettings, IconUser, IconLogin } from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes } from '@/routes/appRoutes';
 import { useAuth } from '@/core/hooks/useAuth';

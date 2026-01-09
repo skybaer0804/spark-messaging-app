@@ -1,5 +1,5 @@
 import { useMemo } from 'preact/hooks';
-import { IconSparkles } from '@tabler/icons-react';
+import { IconSparkles } from '@tabler/icons-preact';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes, type AppRouteNode } from '@/routes/appRoutes';

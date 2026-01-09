@@ -6,7 +6,7 @@ import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Tabs, TabsItem } from '@/ui-components/Tabs/Tabs';
 import { Button } from '@/ui-components/Button/Button';
-import { IconMessageCircle, IconBell, IconVideo } from '@tabler/icons-react';
+import { IconMessageCircle, IconBell, IconVideo } from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';
 import './HomePage.scss';
 

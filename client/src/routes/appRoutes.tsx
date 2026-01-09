@@ -8,7 +8,8 @@ import {
   IconUser,
   IconUsers,
   IconVideo,
-} from '@tabler/icons-react';
+  IconSettings,
+} from '@tabler/icons-preact';
 import { ChatApp } from '@/domains/Chat';
 import { NotificationApp } from '@/domains/Notification';
 import { VideoMeeting } from '@/domains/VideoMeeting';

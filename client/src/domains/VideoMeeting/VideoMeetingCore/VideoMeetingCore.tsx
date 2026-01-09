@@ -13,7 +13,7 @@ import { Paper } from '@/ui-components/Paper/Paper';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Card, CardHeader, CardBody, CardFooter } from '@/ui-components/Card/Card';
 import { StatusChip } from '@/ui-components/StatusChip/StatusChip';
-import { IconArrowLeft, IconCalendar, IconVideo, IconUsers } from '@tabler/icons-react';
+import { IconArrowLeft, IconCalendar, IconVideo, IconUsers } from '@tabler/icons-preact';
 import { authApi, orgApi } from '@/core/api/ApiService';
 
 interface VideoMeetingCoreProps {

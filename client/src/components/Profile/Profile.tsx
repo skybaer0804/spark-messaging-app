@@ -10,7 +10,7 @@ import { Select } from '@/ui-components/Select/Select';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
 import { authApi } from '@/core/api/ApiService';
-import { IconUser, IconMail, IconShield, IconDeviceFloppy, IconEdit } from '@tabler/icons-react';
+import { IconUser, IconMail, IconShield, IconDeviceFloppy, IconEdit } from '@tabler/icons-preact';
 import './Profile.scss';
 
 export function Profile() {
@@ -18,7 +18,7 @@ export function Profile() {
   const { showSuccess, showError } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     username: user?.username || '',
     email: user?.email || '',
@@ -43,10 +43,10 @@ export function Profile() {
       const response = await authApi.updateNotificationSettings({
         // 예시로 notification settings API 사용 또는 유저 정보 수정 API 호출
       } as any);
-      
+
       const updatedUser = { ...user, ...formData };
       updateUser(updatedUser as any);
-      
+
       showSuccess('프로필이 성공적으로 업데이트되었습니다.');
       setIsEditing(false);
     } catch (err) {
@@ -85,7 +85,9 @@ export function Profile() {
                 </Button>
               ) : (
                 <Flex gap="sm">
-                  <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>취소</Button>
+                  <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
+                    취소
+                  </Button>
                   <Button variant="primary" size="sm" onClick={handleSave} disabled={loading}>
                     <IconDeviceFloppy size={18} /> 저장
                   </Button>
@@ -99,50 +101,60 @@ export function Profile() {
               <div className="profile__field">
                 <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
                   <IconUser size={18} color="var(--color-text-secondary)" />
-                  <Typography variant="label-medium" color="secondary">이름</Typography>
+                  <Typography variant="label-medium" color="secondary">
+                    이름
+                  </Typography>
                 </Flex>
                 {isEditing ? (
-                  <Input 
-                    fullWidth 
-                    value={formData.username} 
-                    onInput={(e) => setFormData({...formData, username: e.currentTarget.value})}
+                  <Input
+                    fullWidth
+                    value={formData.username}
+                    onInput={(e) => setFormData({ ...formData, username: e.currentTarget.value })}
                   />
                 ) : (
-                  <Typography variant="body-large" className="profile__value">{formData.username}</Typography>
+                  <Typography variant="body-large" className="profile__value">
+                    {formData.username}
+                  </Typography>
                 )}
               </div>
 
               <div className="profile__field">
                 <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
                   <IconMail size={18} color="var(--color-text-secondary)" />
-                  <Typography variant="label-medium" color="secondary">이메일</Typography>
+                  <Typography variant="label-medium" color="secondary">
+                    이메일
+                  </Typography>
                 </Flex>
                 {isEditing ? (
-                  <Input 
-                    fullWidth 
-                    value={formData.email} 
-                    onInput={(e) => setFormData({...formData, email: e.currentTarget.value})}
+                  <Input
+                    fullWidth
+                    value={formData.email}
+                    onInput={(e) => setFormData({ ...formData, email: e.currentTarget.value })}
                   />
                 ) : (
-                  <Typography variant="body-large" className="profile__value">{formData.email}</Typography>
+                  <Typography variant="body-large" className="profile__value">
+                    {formData.email}
+                  </Typography>
                 )}
               </div>
 
               <div className="profile__field">
                 <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
                   <IconShield size={18} color="var(--color-text-secondary)" />
-                  <Typography variant="label-medium" color="secondary">권한 설정 (테스트)</Typography>
+                  <Typography variant="label-medium" color="secondary">
+                    권한 설정 (테스트)
+                  </Typography>
                 </Flex>
                 {isEditing ? (
-                  <Select 
+                  <Select
                     fullWidth
                     options={roleOptions}
                     value={formData.role}
-                    onChange={(e) => setFormData({...formData, role: (e.currentTarget as HTMLSelectElement).value})}
+                    onChange={(e) => setFormData({ ...formData, role: (e.currentTarget as HTMLSelectElement).value })}
                   />
                 ) : (
                   <Typography variant="body-large" className="profile__value">
-                    {roleOptions.find(r => r.value === formData.role)?.label}
+                    {roleOptions.find((r) => r.value === formData.role)?.label}
                   </Typography>
                 )}
               </div>

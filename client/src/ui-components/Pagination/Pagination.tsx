@@ -1,6 +1,6 @@
 import { JSX } from 'preact';
 import { useMemo, useState } from 'preact/hooks';
-import { IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from '@tabler/icons-react';
+import { IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from '@tabler/icons-preact';
 import { useTheme } from '@/core/context/ThemeProvider';
 import './Pagination.scss';
 
@@ -235,12 +235,12 @@ export function Pagination({
                   isPage
                     ? `${target} 페이지`
                     : item.type === 'first'
-                      ? '첫 페이지'
-                      : item.type === 'previous'
-                        ? '이전 페이지'
-                        : item.type === 'next'
-                          ? '다음 페이지'
-                          : '마지막 페이지'
+                    ? '첫 페이지'
+                    : item.type === 'previous'
+                    ? '이전 페이지'
+                    : item.type === 'next'
+                    ? '다음 페이지'
+                    : '마지막 페이지'
                 }
                 onClick={(e) => setPage(target, e)}
               >
@@ -255,5 +255,3 @@ export function Pagination({
     </nav>
   );
 }
-
-

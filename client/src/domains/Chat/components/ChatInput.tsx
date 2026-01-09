@@ -7,7 +7,7 @@ import { Paper } from '@/ui-components/Paper/Paper';
 import { Stack } from '@/ui-components/Layout/Stack';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Box } from '@/ui-components/Layout/Box';
-import { IconPaperclip, IconSend } from '@tabler/icons-react';
+import { IconPaperclip, IconSend } from '@tabler/icons-preact';
 import './Chat.scss';
 
 interface ChatInputProps {

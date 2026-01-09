@@ -1,6 +1,6 @@
 import { JSX } from 'preact';
 import { useMemo, useState } from 'preact/hooks';
-import { IconChevronDown } from '@tabler/icons-react';
+import { IconChevronDown } from '@tabler/icons-preact';
 import { useTheme } from '@/core/context/ThemeProvider';
 import './Accordion.scss';
 
@@ -126,6 +126,3 @@ export function Accordion({
     </div>
   );
 }
-
-
-

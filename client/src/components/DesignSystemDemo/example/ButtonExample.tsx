@@ -3,7 +3,7 @@ import { Flex } from '@/ui-components/Layout/Flex';
 import { Button } from '@/ui-components/Button/Button';
 import { IconButton } from '@/ui-components/Button/IconButton';
 import { Typography } from '@/ui-components/Typography/Typography';
-import { IconPlus, IconSearch } from '@tabler/icons-react';
+import { IconPlus, IconSearch } from '@tabler/icons-preact';
 import type { DesignSystemExampleDefinition } from './types';
 
 const exampleData = {
@@ -13,7 +13,7 @@ const exampleData = {
 
 const usageCode = `import { Button } from '@/ui-components/Button/Button';
 import { IconButton } from '@/ui-components/Button/IconButton';
-import { IconSearch } from '@tabler/icons-react';
+import { IconSearch } from '@tabler/icons-preact';
 
 <Button variant="primary">Primary</Button>
 <Button variant="secondary" size="sm">Secondary</Button>
@@ -46,9 +46,3 @@ export const buttonExample: DesignSystemExampleDefinition = {
     </Stack>
   ),
 };
-
-
-
-
-
-

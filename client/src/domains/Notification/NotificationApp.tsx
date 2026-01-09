@@ -7,7 +7,7 @@ import { Stack } from '@/ui-components/Layout/Stack';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Typography } from '@/ui-components/Typography/Typography';
-import { IconSend, IconCalendar } from '@tabler/icons-react';
+import { IconSend, IconCalendar } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
 import './NotificationApp.scss';
 

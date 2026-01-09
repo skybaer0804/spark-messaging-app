@@ -1,5 +1,5 @@
 import type { ChatAdapter, ChatMessage } from '../../Chat/types';
-import type { useChatApp } from '@/core/hooks/useChatApp';
+import type { useChatApp } from '../hooks/useChatApp';
 
 export class ChatAppAdapter implements ChatAdapter {
   private chatAppHook: ReturnType<typeof useChatApp>;

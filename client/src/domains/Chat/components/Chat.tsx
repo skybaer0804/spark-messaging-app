@@ -8,7 +8,7 @@ import { Box } from '@/ui-components/Layout/Box';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { IconButton } from '@/ui-components/Button/IconButton';
-import { IconVideo, IconUsers, IconSettings } from '@tabler/icons-react';
+import { IconVideo, IconUsers, IconSettings } from '@tabler/icons-preact';
 import './Chat.scss';
 
 interface ChatProps {

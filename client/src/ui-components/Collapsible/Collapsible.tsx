@@ -1,6 +1,6 @@
 import { JSX } from 'preact';
 import { useState } from 'preact/hooks';
-import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
+import { IconChevronDown, IconChevronRight } from '@tabler/icons-preact';
 import { Flex } from '../Layout/Flex';
 import { Typography } from '../Typography/Typography';
 import './Collapsible.scss';

@@ -6,7 +6,7 @@ import { Flex } from '@/ui-components/Layout/Flex';
 import { Box } from '@/ui-components/Layout/Box';
 import { IconButton } from '@/ui-components/Button/IconButton';
 import { Stack } from '@/ui-components/Layout/Stack';
-import { IconX } from '@tabler/icons-react';
+import { IconX } from '@tabler/icons-preact';
 import './Chat.scss';
 
 interface FilePreviewProps {

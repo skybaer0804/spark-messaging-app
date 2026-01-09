@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact';
-import { IconPin, IconPinFilled } from '@tabler/icons-react';
+import { IconPin, IconPinFilled } from '@tabler/icons-preact';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { List, ListItem, ListItemText } from '@/ui-components/List/List';
 import { IconButton } from '@/ui-components/Button/IconButton';

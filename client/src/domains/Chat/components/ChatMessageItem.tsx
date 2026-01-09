@@ -7,7 +7,7 @@ import { Typography } from '@/ui-components/Typography/Typography';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Box } from '@/ui-components/Layout/Box';
 import { IconButton } from '@/ui-components/Button/IconButton';
-import { IconDownload, IconCheck, IconClock, IconAlertCircle } from '@tabler/icons-react';
+import { IconDownload, IconCheck, IconClock, IconAlertCircle } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
 import './Chat.scss';
 

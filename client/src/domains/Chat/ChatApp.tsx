@@ -24,19 +24,19 @@ import {
   IconUsers,
   IconSettings,
   IconVideo,
-} from '@tabler/icons-react';
+} from '@tabler/icons-preact';
 import { Button } from '@/ui-components/Button/Button';
 import { chatPendingJoinRoom, clearPendingJoinChatRoom } from '@/stores/chatRoomsStore';
 import { useAuth } from '@/core/hooks/useAuth';
 import { authApi } from '@/core/api/ApiService';
 import { useToast } from '@/core/context/ToastContext';
-import { ChatProvider } from '@/core/context/ChatContext';
-import { ChatDataProvider } from '@/core/context/ChatDataProvider';
+import { ChatProvider } from './context/ChatContext';
+import { ChatDataProvider } from './context/ChatDataProvider';
 import { useRouterState } from '@/routes/RouterState';
 import './ChatApp.scss';
 
 import type { ChatRoom, ChatUser } from './types';
-import type { Organization } from '@/core/hooks/useChatApp';
+import type { Organization } from './hooks/useChatApp';
 
 interface ChatRoomSidebarProps {
   isConnected: boolean;

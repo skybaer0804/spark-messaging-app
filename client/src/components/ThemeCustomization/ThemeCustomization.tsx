@@ -7,7 +7,7 @@ import { Typography } from '@/ui-components/Typography/Typography';
 import { Button } from '@/ui-components/Button/Button';
 import { Switch } from '@/ui-components/Switch/Switch';
 import { Paper } from '@/ui-components/Paper/Paper';
-import { IconPalette, IconShape, IconColorSwatch } from '@tabler/icons-react';
+import { IconPalette, IconShape, IconColorSwatch } from '@tabler/icons-preact';
 import './ThemeCustomization.scss';
 
 interface ThemeCustomizationProps {

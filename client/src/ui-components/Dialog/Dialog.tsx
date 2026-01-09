@@ -1,6 +1,6 @@
 import { JSX } from 'preact';
 import { useEffect, useMemo, useRef } from 'preact/hooks';
-import { IconX } from '@tabler/icons-react';
+import { IconX } from '@tabler/icons-preact';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { IconButton } from '../Button/IconButton';
 import './Dialog.scss';
@@ -162,10 +162,3 @@ export function Dialog({
     </div>
   );
 }
-
-
-
-
-
-
-

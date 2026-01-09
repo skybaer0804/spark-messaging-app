@@ -3,7 +3,7 @@ import { BottomNavigation } from '@/ui-components/BottomNavigation/BottomNavigat
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Stack } from '@/ui-components/Layout/Stack';
-import { IconHome, IconSearch, IconUser } from '@tabler/icons-react';
+import { IconHome, IconSearch, IconUser } from '@tabler/icons-preact';
 import type { DesignSystemExampleDefinition } from './types';
 
 const usageCode = `import { BottomNavigation } from '@/ui-components/BottomNavigation/BottomNavigation';
@@ -44,9 +44,3 @@ export const bottomNavigationExample: DesignSystemExampleDefinition = {
     );
   },
 };
-
-
-
-
-
-

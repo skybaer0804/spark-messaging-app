@@ -1,4 +1,4 @@
-import { IconMessageCircle, IconBell, IconVideo, IconSettings, IconUser } from '@tabler/icons-react';
+import { IconMessageCircle, IconBell, IconVideo, IconSettings, IconUser } from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';
 import './BottomTab.scss';
 

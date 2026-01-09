@@ -1,7 +1,7 @@
 import { Badge } from '@/ui-components/Badge/Badge';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
-import { IconMail, IconBell } from '@tabler/icons-react';
+import { IconMail, IconBell } from '@tabler/icons-preact';
 import type { DesignSystemExampleDefinition } from './types';
 
 const exampleData = {
@@ -10,7 +10,7 @@ const exampleData = {
 };
 
 const usageCode = `import { Badge } from '@/ui-components/Badge/Badge';
-import { IconMail } from '@tabler/icons-react';
+import { IconMail } from '@tabler/icons-preact';
 
 <Badge badgeContent={4} color="error">
   <IconMail size={24} />
@@ -39,9 +39,3 @@ export const badgeExample: DesignSystemExampleDefinition = {
     </Flex>
   ),
 };
-
-
-
-
-
-

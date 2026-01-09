@@ -7,7 +7,7 @@ import { Box } from '@/ui-components/Layout/Box';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
-import { IconPlayerPlay, IconPlayerStop } from '@tabler/icons-react';
+import { IconPlayerPlay, IconPlayerStop } from '@tabler/icons-preact';
 
 interface VideoConferenceProps {
   adapter: VideoConferenceAdapter;
@@ -112,36 +112,35 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
   // 모바일 모드 또는 영상 활성화된 경우
   return (
     <Box style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
       {/* PC 모드: 메인 영상 + 서브 영상 하단 가로 정렬 */}
       {!isMobile ? (
         <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', minHeight: 0 }}>
           {/* 메인 영상 (자신) - 최대 width */}
-        {effectiveIsVideoEnabled && effectiveLocalStream && (
-          <Paper
-            elevation={0}
-            style={{
+          {effectiveIsVideoEnabled && effectiveLocalStream && (
+            <Paper
+              elevation={0}
+              style={{
                 flex: 1,
-              position: 'relative',
-              overflow: 'hidden',
+                position: 'relative',
+                overflow: 'hidden',
                 width: '100%',
-              aspectRatio: '16/9',
+                aspectRatio: '16/9',
                 border: '2px solid var(--color-interactive-primary)',
-              padding: 0,
-              backgroundColor: 'black',
+                padding: 0,
+                backgroundColor: 'black',
                 minHeight: 0,
                 maxWidth: '100%',
-            }}
-          >
-            <video
-              ref={(el) => {
-                localVideoRef.current = el;
-                if (el && effectiveSocketId) {
-                  handleSetVideoRef('local', el);
-                }
               }}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
+            >
+              <video
+                ref={(el) => {
+                  localVideoRef.current = el;
+                  if (el && effectiveSocketId) {
+                    handleSetVideoRef('local', el);
+                  }
+                }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
               {/* Stop Video 버튼 우하단 */}
               <Box
                 style={{
@@ -158,57 +157,57 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                   <IconPlayerStop size={18} />
                 </IconButton>
               </Box>
-            <Box
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                padding: '4px',
-                textAlign: 'center',
+              <Box
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  padding: '4px',
+                  textAlign: 'center',
                   zIndex: 5,
-              }}
-            >
-              <Typography variant="caption" style={{ color: 'white' }}>
-                Me ({effectiveSocketId?.substring(0, 6)})
-              </Typography>
-            </Box>
-          </Paper>
-        )}
+                }}
+              >
+                <Typography variant="caption" style={{ color: 'white' }}>
+                  Me ({effectiveSocketId?.substring(0, 6)})
+                </Typography>
+              </Box>
+            </Paper>
+          )}
 
           {/* 서브 영상들 하단 가로 정렬 */}
           {effectiveParticipants.filter((p) => p.socketId !== effectiveSocketId).length > 0 && (
             <Flex gap="sm" style={{ flexShrink: 0, overflowX: 'auto' }}>
-        {effectiveParticipants
-          .filter((p) => p.socketId !== effectiveSocketId)
-          .map((participant) => (
-            <Paper
-              key={participant.socketId}
-              elevation={0}
-              style={{
-                position: 'relative',
-                overflow: 'hidden',
+              {effectiveParticipants
+                .filter((p) => p.socketId !== effectiveSocketId)
+                .map((participant) => (
+                  <Paper
+                    key={participant.socketId}
+                    elevation={0}
+                    style={{
+                      position: 'relative',
+                      overflow: 'hidden',
                       width: '200px',
-                aspectRatio: '16/9',
-                border: '1px solid var(--color-border-default)',
-                padding: 0,
-                backgroundColor: 'black',
+                      aspectRatio: '16/9',
+                      border: '1px solid var(--color-border-default)',
+                      padding: 0,
+                      backgroundColor: 'black',
                       flexShrink: 0,
-              }}
-            >
-              <video
-                ref={(el) => {
-                  handleSetVideoRef(participant.socketId, el);
-                }}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  display: participant.stream ? 'block' : 'none',
-                }}
-              />
-              {participant.isVideoEnabled !== false && participant.stream ? (
+                    }}
+                  >
+                    <video
+                      ref={(el) => {
+                        handleSetVideoRef(participant.socketId, el);
+                      }}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: participant.stream ? 'block' : 'none',
+                      }}
+                    />
+                    {participant.isVideoEnabled !== false && participant.stream ? (
                       <Box
                         style={{
                           position: 'absolute',
@@ -338,60 +337,60 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                     }}
                   />
                   {mainParticipant.isVideoEnabled !== false && mainParticipant.stream ? (
-                <Box
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                    padding: '4px',
-                    textAlign: 'center',
-                  }}
-                >
-                  <Typography variant="caption" style={{ color: 'white' }}>
+                    <Box
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        padding: '4px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <Typography variant="caption" style={{ color: 'white' }}>
                         {mainParticipant.name} ({mainParticipant.role === 'demander' ? 'Host' : 'Participant'})
-                  </Typography>
-                </Box>
-              ) : (
-                <Box
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#f0f0f0',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  <Typography variant="body-small" align="center">
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#f0f0f0',
+                        color: 'var(--color-text-secondary)',
+                      }}
+                    >
+                      <Typography variant="body-small" align="center">
                         {mainParticipant.name}
-                    <br />
-                    <Typography variant="caption" component="span">
+                        <br />
+                        <Typography variant="caption" component="span">
                           {mainParticipant.role === 'demander' ? 'Host' : 'Participant'}
-                    </Typography>
-                    <br />
-                    <Typography variant="caption" component="span" style={{ color: 'var(--color-primary-main)' }}>
+                        </Typography>
+                        <br />
+                        <Typography variant="caption" component="span" style={{ color: 'var(--color-primary-main)' }}>
                           {mainParticipant.isVideoEnabled === false ? 'Video Stopped' : 'Connecting...'}
-                    </Typography>
-                  </Typography>
-                </Box>
-              )}
-            </Paper>
+                        </Typography>
+                      </Typography>
+                    </Box>
+                  )}
+                </Paper>
               ) : null;
             })()
           ) : (
-          <Paper
-            variant="outlined"
-            style={{
+            <Paper
+              variant="outlined"
+              style={{
                 flex: 1,
-              aspectRatio: '16/9',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderStyle: 'dashed',
+                aspectRatio: '16/9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderStyle: 'dashed',
                 minHeight: 0,
                 position: 'relative',
               }}
@@ -405,11 +404,11 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                   style={{
                     width: '64px',
                     height: '64px',
-            }}
-          >
+                  }}
+                >
                   <IconPlayerPlay size={32} />
                 </IconButton>
-            <Typography variant="body-medium" color="text-secondary">
+                <Typography variant="body-medium" color="text-secondary">
                   Start Video
                 </Typography>
               </Flex>
@@ -429,50 +428,48 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
               }}
             >
               {/* 자신의 영상 (메인이 아닐 때만 표시) */}
-              {effectiveIsVideoEnabled &&
-                effectiveLocalStream &&
-                mainVideoSocketId !== 'local' && (
-                  <Paper
-                    elevation={0}
-                    onClick={() => setMainVideoSocketId('local')}
+              {effectiveIsVideoEnabled && effectiveLocalStream && mainVideoSocketId !== 'local' && (
+                <Paper
+                  elevation={0}
+                  onClick={() => setMainVideoSocketId('local')}
+                  style={{
+                    position: 'relative',
+                    overflow: 'hidden',
+                    width: '120px',
+                    aspectRatio: '16/9',
+                    border: '1px solid var(--color-border-default)',
+                    padding: 0,
+                    backgroundColor: 'black',
+                    flexShrink: 0,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <video
+                    ref={(el) => {
+                      localVideoRef.current = el;
+                      if (el && effectiveSocketId) {
+                        handleSetVideoRef('local', el);
+                      }
+                    }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <Box
                     style={{
-                      position: 'relative',
-                      overflow: 'hidden',
-                      width: '120px',
-                      aspectRatio: '16/9',
-                      border: '1px solid var(--color-border-default)',
-                      padding: 0,
-                      backgroundColor: 'black',
-                      flexShrink: 0,
-                      cursor: 'pointer',
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                      padding: '2px',
+                      textAlign: 'center',
                     }}
                   >
-                    <video
-                      ref={(el) => {
-                        localVideoRef.current = el;
-                        if (el && effectiveSocketId) {
-                          handleSetVideoRef('local', el);
-                        }
-                      }}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <Box
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                        padding: '2px',
-                        textAlign: 'center',
-                      }}
-                    >
-                      <Typography variant="caption" style={{ color: 'white', fontSize: '0.65rem' }}>
-                        Me
-            </Typography>
-                    </Box>
-          </Paper>
-        )}
+                    <Typography variant="caption" style={{ color: 'white', fontSize: '0.65rem' }}>
+                      Me
+                    </Typography>
+                  </Box>
+                </Paper>
+              )}
 
               {/* 다른 참가자들의 영상 */}
               {effectiveParticipants

@@ -1,6 +1,6 @@
 import { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
-import { IconX } from '@tabler/icons-react';
+import { IconX } from '@tabler/icons-preact';
 import { IconButton } from '@/ui-components/Button/IconButton';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';

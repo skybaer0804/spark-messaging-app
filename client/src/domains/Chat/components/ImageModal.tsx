@@ -1,7 +1,7 @@
 import { memo } from 'preact/compat';
 import { Box } from '@/ui-components/Layout/Box';
 import { IconButton } from '@/ui-components/Button/IconButton';
-import { IconX } from '@tabler/icons-react';
+import { IconX } from '@tabler/icons-preact';
 import './Chat.scss';
 
 interface ImageModalProps {

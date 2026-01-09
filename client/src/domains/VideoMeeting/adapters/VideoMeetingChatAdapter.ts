@@ -47,7 +47,7 @@ export class VideoMeetingChatAdapter implements ChatAdapter {
       console.warn('[DEBUG] 메시지 전송 실패:', {
         content: content.trim(),
         currentRoom,
-        isConnected: this.reverseAuctionStore.isConnected.value,
+        isConnected: this.videoMeetingStore.isConnected.value,
       });
       return;
     }
