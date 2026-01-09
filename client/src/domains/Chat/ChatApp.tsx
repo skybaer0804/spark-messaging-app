@@ -1,7 +1,7 @@
 import { useChatApp } from './hooks/useChatApp';
 import { formatTimestamp } from '@/core/utils/messageUtils';
 import { formatFileSize, downloadFile } from '@/core/utils/fileUtils';
-import { useRef, useEffect, useState } from 'preact/hooks';
+import { useRef, useEffect, useState, useMemo } from 'preact/hooks';
 import { IconButton } from '@/ui-components/Button/IconButton';
 import { Input } from '@/ui-components/Input/Input';
 import { Box } from '@/ui-components/Layout/Box';
@@ -24,6 +24,18 @@ import {
   IconUsers,
   IconSettings,
   IconVideo,
+  IconHash,
+  IconLock,
+  IconMessageCircle,
+  IconHierarchy,
+  IconChevronDown,
+  IconChevronRight,
+  IconHome,
+  IconSearch,
+  IconAddressBook,
+  IconArrowsExchange,
+  IconEdit,
+  IconDotsVertical,
 } from '@tabler/icons-preact';
 import { Button } from '@/ui-components/Button/Button';
 import { chatPendingJoinRoom, clearPendingJoinChatRoom } from '@/stores/chatRoomsStore';
@@ -42,7 +54,7 @@ interface ChatRoomSidebarProps {
   isConnected: boolean;
   roomIdInput: string;
   setRoomIdInput: (next: string) => void;
-  handleCreateRoom: () => void;
+  handleCreateRoom: (type?: ChatRoom['roomType']) => void;
   roomList: ChatRoom[];
   userList: ChatUser[];
   orgList: Organization[];
@@ -56,195 +68,283 @@ interface ChatRoomSidebarProps {
 }
 
 function ChatRoomSidebar({
-  isConnected,
   roomIdInput,
   setRoomIdInput,
   handleCreateRoom,
   roomList,
   userList,
-  orgList,
   selectedUserIds,
-  selectedOrgIds,
   toggleUserSelection,
-  toggleOrgSelection,
   currentRoom,
   handleRoomSelect,
   leaveRoom,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isConnected: _isConnected,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  orgList: _orgList,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  selectedOrgIds: _selectedOrgIds,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  toggleOrgSelection: _toggleOrgSelection,
 }: ChatRoomSidebarProps) {
   const [showInviteList, setShowInviteList] = useState(false);
-  const [inviteTab, setInviteTab] = useState<'user' | 'org'>('user');
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; roomId: string } | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    DIRECT: true,
+    TEAM: true,
+    CHANNEL: true,
+    DISCUSSION: true,
+  });
   const { showInfo } = useToast();
+  const { user: currentUser } = useAuth();
+  const { navigate } = useRouterState();
 
   const handleContextMenu = (e: MouseEvent, roomId: string) => {
     e.preventDefault();
     setContextMenu({ x: e.clientX, y: e.clientY, roomId });
   };
 
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
   useEffect(() => {
-    const handleClick = () => setContextMenu(null);
+    const handleClick = () => {
+      setContextMenu(null);
+      setShowCreateMenu(false);
+    };
     window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
   }, []);
 
-  return (
-    <Paper
-      elevation={0}
-      square
-      style={{
-        height: '100%',
-        borderRight: '1px solid var(--color-border-default)',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-      }}
-      className="chat-app__sidebar"
-    >
-      <Box padding="md">
-        <Stack spacing="sm">
-          <Flex gap="sm">
-            <Input
-              value={roomIdInput}
-              onInput={(e) => {
-                setRoomIdInput(e.currentTarget.value);
-                if (e.currentTarget.value && !showInviteList) setShowInviteList(true);
-              }}
-              placeholder="New Room Name"
-              disabled={!isConnected}
-              onKeyPress={(e) => e.key === 'Enter' && handleCreateRoom()}
-              fullWidth
-            />
-            <IconButton
-              onClick={() => setShowInviteList(!showInviteList)}
-              color={showInviteList ? 'primary' : 'secondary'}
-              title="초대할 유저 목록"
-            >
-              <IconUsers size={20} />
-            </IconButton>
-          </Flex>
+  const getDirectChatName = (room: ChatRoom) => {
+    if (room.roomType !== 'DIRECT') return room.name;
+    const otherMember = room.members.find((m) => m._id !== currentUser?.id);
+    return otherMember ? otherMember.username : 'Unknown';
+  };
 
-          {showInviteList && (
-            <Paper
-              variant="outlined"
-              style={{ maxHeight: '300px', overflowY: 'auto', backgroundColor: 'var(--color-bg-tertiary)' }}
+  const getRoomIcon = (room: ChatRoom) => {
+    switch (room.roomType) {
+      case 'DIRECT':
+        return null;
+      case 'CHANNEL':
+        return room.isPrivate ? <IconLock size={18} /> : <IconHash size={18} />;
+      case 'TEAM':
+        return <IconHierarchy size={18} />;
+      case 'DISCUSSION':
+        return <IconMessageCircle size={18} />;
+      default:
+        return <IconHash size={18} />;
+    }
+  };
+
+  const groupedRooms = useMemo(() => {
+    return {
+      DIRECT: roomList.filter((r) => r.roomType === 'DIRECT'),
+      TEAM: roomList.filter((r) => r.roomType === 'TEAM'),
+      CHANNEL: roomList.filter((r) => r.roomType === 'CHANNEL'),
+      DISCUSSION: roomList.filter((r) => r.roomType === 'DISCUSSION'),
+      OTHER: roomList.filter((r) => !['DIRECT', 'TEAM', 'CHANNEL', 'DISCUSSION'].includes(r.roomType)),
+    };
+  }, [roomList]);
+
+  const renderRoomItem = (room: ChatRoom) => {
+    const isActive = currentRoom?._id === room._id;
+    const directMember = room.roomType === 'DIRECT' ? room.members.find((m) => m._id !== currentUser?.id) : null;
+    const roomName = getDirectChatName(room);
+
+    return (
+      <div
+        key={room._id}
+        className={`chat-app__sidebar-item ${isActive ? 'chat-app__sidebar-item--active' : ''}`}
+        onClick={() => handleRoomSelect(room._id)}
+        onContextMenu={(e) => handleContextMenu(e, room._id)}
+      >
+        <div className="avatar">
+          {room.roomType === 'DIRECT' ? (
+            <>
+              <Avatar src={directMember?.avatar} size="sm">
+                {roomName?.substring(0, 1)}
+              </Avatar>
+              <div className={`avatar-status avatar-status--${directMember?.status || 'offline'}`} />
+            </>
+          ) : (
+            <Avatar
+              variant="rounded"
+              size="sm"
+              style={{ backgroundColor: room.roomType === 'TEAM' ? '#e11d48' : '#64748b' }}
             >
-              <Flex style={{ borderBottom: '1px solid var(--color-border-default)' }}>
+              {room.roomType === 'TEAM' ? roomName?.substring(0, 1).toUpperCase() : getRoomIcon(room)}
+            </Avatar>
+          )}
+        </div>
+        <div className="chat-app__sidebar-item-content">
+          <div className="chat-app__sidebar-item-name">{roomName}</div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSection = (type: keyof typeof groupedRooms, label: string) => {
+    const rooms = groupedRooms[type];
+    const isExpanded = expandedSections[type] !== false;
+
+    return (
+      <div key={type}>
+        <div className="chat-app__sidebar-section-header" onClick={() => toggleSection(type)}>
+          <span className="icon">{isExpanded ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}</span>
+          {label}
+        </div>
+        {isExpanded && <div className="chat-app__sidebar-section-content">{rooms.map(renderRoomItem)}</div>}
+      </div>
+    );
+  };
+
+  return (
+    <div
+      className="chat-app__sidebar"
+      style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}
+    >
+      {/* Top Toolbar - 이미지 기반 */}
+      <div className="chat-app__sidebar-toolbar">
+        <IconButton size="small" onClick={() => navigate('/')}>
+          <IconHome size={20} />
+        </IconButton>
+        <IconButton size="small">
+          <IconSearch size={20} />
+        </IconButton>
+        <IconButton size="small" title="디렉토리">
+          <IconAddressBook size={20} />
+        </IconButton>
+        <IconButton size="small">
+          <IconArrowsExchange size={20} />
+        </IconButton>
+        <IconButton
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowCreateMenu(!showCreateMenu);
+          }}
+        >
+          <IconEdit size={20} />
+        </IconButton>
+        <IconButton size="small">
+          <IconDotsVertical size={20} />
+        </IconButton>
+      </div>
+
+      {/* Create Menu Dropdown */}
+      {showCreateMenu && (
+        <div className="chat-app__create-menu" onClick={(e) => e.stopPropagation()}>
+          <div className="chat-app__create-menu-header">새로 만들기</div>
+          <div
+            className="chat-app__create-menu-item"
+            onClick={() => {
+              setShowInviteList(true);
+              setShowCreateMenu(false);
+            }}
+          >
+            <IconMessageCircle size={18} className="icon" /> 1:1 대화방
+          </div>
+          <div className="chat-app__create-menu-item">
+            <IconMessageCircle size={18} className="icon" /> 토론
+          </div>
+          <div
+            className="chat-app__create-menu-item"
+            onClick={() => {
+              handleCreateRoom('CHANNEL');
+              setShowCreateMenu(false);
+            }}
+          >
+            <IconHash size={18} className="icon" /> 채널
+          </div>
+          <div
+            className="chat-app__create-menu-item"
+            onClick={() => {
+              handleCreateRoom('TEAM');
+              setShowCreateMenu(false);
+            }}
+          >
+            <IconHierarchy size={18} className="icon" /> 팀
+          </div>
+        </div>
+      )}
+
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {renderSection('DIRECT', '개인 대화방')}
+        {renderSection('TEAM', 'Teams')}
+        {renderSection('CHANNEL', 'Channel')}
+        {renderSection('DISCUSSION', 'Discussion')}
+
+        {showInviteList && (
+          <div
+            style={{
+              position: 'fixed',
+              top: '10%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 2000,
+              width: '90%',
+              maxWidth: '500px',
+            }}
+          >
+            <Paper elevation={4} padding="md" style={{ backgroundColor: 'var(--color-bg-default)' }}>
+              <Flex justify="space-between" align="center" style={{ marginBottom: '16px' }}>
+                <Typography variant="h3">New direct message</Typography>
+                <IconButton onClick={() => setShowInviteList(false)}>
+                  <IconX />
+                </IconButton>
+              </Flex>
+              <Typography variant="body-small" color="text-secondary" style={{ marginBottom: '16px' }}>
+                여러 사용자와 채팅을 하려고 합니다. 1:1 메시지를 사용하여 같은 대화방에 있는 모든 사람과 대화하고 싶은
+                사람을 추가하십시오.
+              </Typography>
+              <Input
+                fullWidth
+                placeholder="이름 입력"
+                value={roomIdInput}
+                onInput={(e) => setRoomIdInput(e.currentTarget.value)}
+                style={{ marginBottom: '16px' }}
+              />
+              <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '16px' }}>
+                <List>
+                  {userList
+                    .filter((u) => u.username.includes(roomIdInput))
+                    .map((user) => (
+                      <ListItem
+                        key={user._id}
+                        onClick={() => toggleUserSelection(user._id)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <ListItemAvatar>
+                          <Avatar src={user.avatar} size="sm">
+                            {user.username.substring(0, 1)}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText primary={user.username} secondary={`@${user.username}`} />
+                        <input type="checkbox" checked={selectedUserIds.includes(user._id)} readOnly />
+                      </ListItem>
+                    ))}
+                </List>
+              </div>
+              <Flex justify="flex-end" gap="sm">
+                <Button onClick={() => setShowInviteList(false)}>취소</Button>
                 <Button
-                  variant={inviteTab === 'user' ? 'primary' : 'secondary'}
-                  fullWidth
-                  size="sm"
-                  onClick={() => setInviteTab('user')}
-                  style={{
-                    borderRadius: 0,
+                  variant="primary"
+                  disabled={selectedUserIds.length === 0}
+                  onClick={() => {
+                    handleCreateRoom(selectedUserIds.length > 1 ? 'DISCUSSION' : 'DIRECT');
+                    setShowInviteList(false);
                   }}
                 >
-                  Users
-                </Button>
-                <Button
-                  variant={inviteTab === 'org' ? 'primary' : 'secondary'}
-                  fullWidth
-                  size="sm"
-                  onClick={() => setInviteTab('org')}
-                  style={{
-                    borderRadius: 0,
-                  }}
-                >
-                  Orgs
+                  개설
                 </Button>
               </Flex>
-
-              {inviteTab === 'user' ? (
-                <List>
-                  {userList.map((user) => (
-                    <ListItem
-                      key={user._id}
-                      onClick={() => toggleUserSelection(user._id)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <ListItemAvatar>
-                        <Avatar src={user.avatar} size="sm">
-                          {user.username.substring(0, 1)}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText primary={user.username} />
-                      <input
-                        type="checkbox"
-                        checked={selectedUserIds.includes(user._id)}
-                        readOnly
-                        style={{ cursor: 'pointer' }}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              ) : (
-                <List>
-                  {orgList.map((org) => (
-                    <ListItem key={org._id} onClick={() => toggleOrgSelection(org._id)} style={{ cursor: 'pointer' }}>
-                      <ListItemAvatar>
-                        <Avatar variant="rounded" size="sm">
-                          {org.name.substring(0, 1)}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={org.name}
-                        secondary={`${org.dept1}${org.dept2 ? ' > ' + org.dept2 : ''}`}
-                      />
-                      <input
-                        type="checkbox"
-                        checked={selectedOrgIds.includes(org._id)}
-                        readOnly
-                        style={{ cursor: 'pointer' }}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              )}
             </Paper>
-          )}
-
-          <Button
-            onClick={handleCreateRoom}
-            disabled={!isConnected || !roomIdInput.trim()}
-            size="sm"
-            variant="primary"
-            fullWidth
-          >
-            Create Room{' '}
-            {(selectedUserIds.length > 0 || selectedOrgIds.length > 0) &&
-              `(${selectedUserIds.length}U, ${selectedOrgIds.length}O)`}
-          </Button>
-        </Stack>
-      </Box>
-      <Box style={{ flex: 1, overflowY: 'auto', borderTop: '1px solid var(--color-border-default)' }}>
-        <List>
-          {roomList.length === 0
-            ? !isConnected && (
-                <Box padding="md">
-                  <Typography variant="body-medium" color="text-secondary" align="center">
-                    Connecting...
-                  </Typography>
-                </Box>
-              )
-            : roomList.map((room) => (
-                <ListItem
-                  key={room._id}
-                  onClick={() => handleRoomSelect(room._id)}
-                  onContextMenu={(e) => handleContextMenu(e, room._id)}
-                  style={{
-                    cursor: 'pointer',
-                    backgroundColor: currentRoom?._id === room._id ? 'var(--color-bg-tertiary)' : 'transparent',
-                  }}
-                >
-                  <ListItemAvatar>
-                    <Avatar variant="rounded" style={{ backgroundColor: 'var(--primitive-primary-500)' }}>
-                      {room.name.substring(0, 2).toUpperCase()}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText primary={room.name} secondary={currentRoom?._id === room._id ? 'Active' : ''} />
-                </ListItem>
-              ))}
-        </List>
-      </Box>
+          </div>
+        )}
+      </div>
 
       {contextMenu && (
         <Paper
@@ -277,7 +377,7 @@ function ChatRoomSidebar({
           </List>
         </Paper>
       )}
-    </Paper>
+    </div>
   );
 }
 
@@ -503,9 +603,9 @@ function ChatAppContent() {
             <IconButton onClick={leaveRoom}>
               <IconArrowLeft />
             </IconButton>
-            <Avatar variant="rounded">{currentRoom.name.substring(0, 2)}</Avatar>
+            <Avatar variant="rounded">{(currentRoom.name || 'Room').substring(0, 2)}</Avatar>
             <Box style={{ flex: 1 }}>
-              <Typography variant="h3">{currentRoom.name}</Typography>
+              <Typography variant="h3">{currentRoom.name || 'Unnamed Room'}</Typography>
             </Box>
             <IconButton
               onClick={() => {
@@ -533,16 +633,17 @@ function ChatAppContent() {
         </Paper>
 
         <Box style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
-          {/* Messages Area */}
+          {/* Messages Area - Slack 스타일 배경 적용 */}
           <Box
             style={{
               flex: 1,
               minHeight: 0,
               overflowY: 'auto',
               overflowX: 'hidden',
-              padding: 'var(--space-gap-lg)',
+              padding: '20px',
               display: 'flex',
               flexDirection: 'column',
+              backgroundColor: '#ffffff', // 메시지 영역은 다시 밝게
             }}
             ref={messagesRef}
           >

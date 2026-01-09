@@ -10,13 +10,18 @@ export interface ChatUser {
 
 export interface ChatRoom {
   _id: string;
-  name: string;
+  name?: string;
+  description?: string;
   members: ChatUser[];
   isGroup: boolean;
+  isPrivate?: boolean;
   lastMessage?: Message;
-  roomType: 'DEFAULT' | 'VIDEO_MEETING';
+  roomType: 'DIRECT' | 'DISCUSSION' | 'CHANNEL' | 'TEAM' | 'VIDEO_MEETING' | 'DEFAULT';
   createdAt: string;
   updatedAt: string;
+  unreadCount?: number; // UserChatRoom 정보가 포함될 때를 위해 추가
+  isPinned?: boolean;
+  notificationEnabled?: boolean;
 }
 
 export interface UserChatRoom {

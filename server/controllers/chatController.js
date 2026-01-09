@@ -10,17 +10,34 @@ const imageService = require('../services/imageService');
 // 채팅방 생성
 exports.createRoom = async (req, res) => {
   try {
-    const { name, members, invitedOrgs, isGroup } = req.body;
+    const { name, members, invitedOrgs, roomType = 'DIRECT', description, orgId, isPrivate } = req.body;
     const currentUserId = req.user.id;
 
     // 멤버 목록에 현재 사용자 추가 (중복 방지)
     const roomMembers = [...new Set([...(members || []), currentUserId])];
 
+    // 1:1 대화방(DIRECT)인 경우 중복 체크
+    if (roomType === 'DIRECT' && roomMembers.length === 2) {
+      const existingRoom = await ChatRoom.findOne({
+        roomType: 'DIRECT',
+        members: { $all: roomMembers, $size: 2 }
+      });
+
+      if (existingRoom) {
+        const populatedRoom = await ChatRoom.findById(existingRoom._id).populate('members', 'username avatar status');
+        return res.status(200).json(populatedRoom);
+      }
+    }
+
     const newRoom = new ChatRoom({
-      name: name || (isGroup ? 'Group Chat' : 'Direct Message'),
+      name: roomType === 'DIRECT' ? null : (name || 'New Room'),
+      description,
       members: roomMembers,
       invitedOrgs: invitedOrgs || [],
-      isGroup: !!isGroup || (invitedOrgs && invitedOrgs.length > 0),
+      orgId,
+      roomType,
+      isGroup: roomType !== 'DIRECT',
+      isPrivate: !!isPrivate,
     });
 
     await newRoom.save();

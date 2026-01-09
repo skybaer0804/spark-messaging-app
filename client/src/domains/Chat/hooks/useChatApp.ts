@@ -64,15 +64,18 @@ export function useChatApp() {
     }
   };
 
-  const handleCreateRoom = async () => {
-    if (!roomIdInput.trim() || !isConnected) return;
+  const handleCreateRoom = async (roomType: ChatRoom['roomType'] = 'DIRECT') => {
+    // DIRECT의 경우 이름이 없어도 멤버가 있으면 생성 가능
+    if (roomType !== 'DIRECT' && !roomIdInput.trim()) return;
+    if (!isConnected) return;
 
     try {
       const newRoom = await chatService.createRoom({
-        name: roomIdInput.trim(),
+        name: roomType === 'DIRECT' ? undefined : roomIdInput.trim(),
         members: selectedUserIds.length > 0 ? selectedUserIds : undefined,
         invitedOrgs: selectedOrgIds.length > 0 ? selectedOrgIds : undefined,
-        isGroup: true,
+        roomType,
+        isGroup: roomType !== 'DIRECT',
       });
 
       await refreshRoomList();
@@ -81,7 +84,7 @@ export function useChatApp() {
       setRoomIdInput('');
       setSelectedUserIds([]);
       setSelectedOrgIds([]);
-      showSuccess('채팅방이 생성되었습니다.');
+      showSuccess(`${roomType} 채팅방이 생성되었습니다.`);
     } catch (error) {
       console.error('Failed to create room:', error);
       showError('Room 생성 실패');
