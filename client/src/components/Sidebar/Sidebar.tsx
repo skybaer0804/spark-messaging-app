@@ -1,14 +1,12 @@
-import { useMemo, useState } from 'preact/hooks';
-import { IconSparkles, IconPlus } from '@tabler/icons-preact';
+import { useMemo, useEffect } from 'preact/hooks';
+import { IconSparkles, IconPlus, IconHome } from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes, type AppRouteNode } from '@/routes/appRoutes';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
-import { useAuth } from '@/core/hooks/useAuth';
+import { currentWorkspaceId, setCurrentWorkspaceId } from '@/stores/chatRoomsStore';
 import './Sidebar.scss';
 
 export function Sidebar() {
   const { pathname, navigate } = useRouterState();
-  const { user } = useAuth();
 
   const lnbRouteIds = ['chatapp', 'notification', 'video-meeting'];
 
@@ -16,24 +14,33 @@ export function Sidebar() {
     return lnbRouteIds.map((id) => appRoutes.find((r) => r.id === id)).filter(Boolean) as AppRouteNode[];
   }, []);
 
-  // 가상의 워크스페이스 목록
+  // 가상의 워크스페이스 목록 (TODO: 실제 API 연동)
   const workspaces = [
     { id: '1', name: 'Spark', initials: 'S', color: '#4f46e5' },
     { id: '2', name: 'Development', initials: 'D', color: '#10b981' },
     { id: '3', name: 'DevStudy', initials: 'DS', color: '#f59e0b' },
   ];
 
-  const [activeOrg, setActiveOrg] = useState(workspaces[0].id);
+  useEffect(() => {
+    if (!currentWorkspaceId.value) {
+      setCurrentWorkspaceId(workspaces[0].id);
+    }
+  }, []);
+
+  const activeOrg = currentWorkspaceId.value;
+
+  const handleWorkspaceSelect = (id: string) => {
+    setCurrentWorkspaceId(id);
+  };
 
   return (
     <aside className="lnb">
       <div className="lnb__container">
-        {/* 2.2.0: 사용자 프로필 (상단 배치) */}
-        <div className="lnb__user">
-          <Avatar src={user?.profileImage} size="sm" className="lnb__user-avatar" title={user?.username}>
-            {user?.username?.substring(0, 1)}
-          </Avatar>
-          <div className="lnb__user-status lnb__user-status--online" />
+        {/* 2.2.0: 홈 아이콘 (상단 배치) */}
+        <div className="lnb__header">
+          <div className="lnb__logo" onClick={() => navigate('/')} title="Home">
+            <IconHome size={28} />
+          </div>
         </div>
 
         <div className="lnb__divider" />
@@ -44,7 +51,7 @@ export function Sidebar() {
             <div
               key={ws.id}
               className={`lnb__workspace-item ${activeOrg === ws.id ? 'lnb__workspace-item--active' : ''}`}
-              onClick={() => setActiveOrg(ws.id)}
+              onClick={() => handleWorkspaceSelect(ws.id)}
               title={ws.name}
             >
               <div className="lnb__workspace-icon" style={{ backgroundColor: ws.color }}>
@@ -79,7 +86,7 @@ export function Sidebar() {
 
         {/* 하단 로고 */}
         <div className="lnb__footer">
-          <div className="lnb__logo" onClick={() => navigate('/')} title="Spark Messaging">
+          <div className="lnb__logo lnb__logo--small" onClick={() => navigate('/')} title="Spark Messaging">
             <IconSparkles size={24} />
           </div>
         </div>

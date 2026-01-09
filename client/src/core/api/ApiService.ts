@@ -50,18 +50,20 @@ export const authApi = {
   login: (data: any) => api.post('/auth/login', data),
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
-  getUsers: () => api.get('/auth/users'),
+  getUsers: (workspaceId?: string) => api.get('/auth/users', { params: { workspaceId } }),
+  updateProfile: (data: { username?: string; profileImage?: string; status?: string; statusText?: string }) =>
+    api.put('/auth/profile', data),
   updateNotificationSettings: (data: { globalEnabled?: boolean; roomPreferences?: Record<string, boolean> }) =>
     api.post('/auth/notification-settings', data),
 };
 
 export const chatApi = {
-  getRooms: () => api.get('/chat/rooms'),
+  getRooms: (workspaceId?: string) => api.get('/chat/rooms', { params: { workspaceId } }),
   createRoom: (data: {
     name?: string;
     members?: string[];
     description?: string;
-    organizationId?: string;
+    workspaceId?: string;
     type?: string;
     teamId?: string;
     parentId?: string;
@@ -82,9 +84,15 @@ export const chatApi = {
   setActiveRoom: (roomId: string | null) => api.post('/chat/active-room', { roomId }),
 };
 
-export const orgApi = {
-  getOrganizations: () => api.get('/org'),
-  createOrganization: (data: { name: string; dept1: string; dept2?: string }) => api.post('/org', data),
+export const workspaceApi = {
+  getWorkspaces: () => api.get('/workspace'),
+  getPrivateKey: (workspaceId: string) => api.get(`/workspace/${workspaceId}/private-key`),
+  createWorkspace: (data: { name: string; initials?: string; color?: string; projectUrl?: string }) =>
+    api.post('/workspace', data),
+  createCompany: (data: { name: string; workspaceId: string }) => api.post('/workspace/company', data),
+  createDept: (data: { name: string; companyId: string; workspaceId: string; parentId?: string }) =>
+    api.post('/workspace/dept', data),
+  getWorkspaceStructure: (workspaceId: string) => api.get(`/workspace/${workspaceId}/structure`),
 };
 
 export const notificationApi = {

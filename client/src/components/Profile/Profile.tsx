@@ -10,7 +10,7 @@ import { Select } from '@/ui-components/Select/Select';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
 import { authApi } from '@/core/api/ApiService';
-import { IconUser, IconMail, IconShield, IconDeviceFloppy, IconEdit } from '@tabler/icons-preact';
+import { IconUser, IconMail, IconDeviceFloppy, IconEdit, IconMessageCircle, IconHierarchy } from '@tabler/icons-preact';
 import './Profile.scss';
 
 export function Profile() {
@@ -22,7 +22,8 @@ export function Profile() {
   const [formData, setFormData] = useState({
     username: user?.username || '',
     email: user?.email || '',
-    role: user?.role || 'Normal',
+    status: user?.status || 'offline',
+    statusText: user?.statusText || '',
   });
 
   useEffect(() => {
@@ -30,7 +31,8 @@ export function Profile() {
       setFormData({
         username: user.username,
         email: user.email,
-        role: user.role,
+        status: user.status || 'offline',
+        statusText: user.statusText || '',
       });
     }
   }, [user]);
@@ -38,15 +40,13 @@ export function Profile() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // 실제 API endpoint는 프로젝트 상황에 맞춰 조정 필요
-      // 현재는 테스트용이므로 성공 가정 후 로컬 상태 업데이트
-      const response = await authApi.updateNotificationSettings({
-        // 예시로 notification settings API 사용 또는 유저 정보 수정 API 호출
-      } as any);
+      const res = await authApi.updateProfile({
+        username: formData.username,
+        status: formData.status,
+        statusText: formData.statusText,
+      });
 
-      const updatedUser = { ...user, ...formData };
-      updateUser(updatedUser as any);
-
+      updateUser(res.data);
       showSuccess('프로필이 성공적으로 업데이트되었습니다.');
       setIsEditing(false);
     } catch (err) {
@@ -56,10 +56,11 @@ export function Profile() {
     }
   };
 
-  const roleOptions = [
-    { value: 'Admin', label: '관리자' },
-    { value: 'Normal', label: '일반 사용자' },
-    { value: 'Guest', label: '게스트' },
+  const statusOptions = [
+    { value: 'online', label: '온라인' },
+    { value: 'away', label: '부재중' },
+    { value: 'busy', label: '다른 용무 중' },
+    { value: 'offline', label: '오프라인' },
   ];
 
   return (
@@ -70,13 +71,17 @@ export function Profile() {
             <header className="profile__header">
               <Flex align="center" justify="space-between" fullWidth>
                 <Flex align="center" gap="lg">
-                  <Avatar size="xl" className="profile__avatar">
-                    {formData.username.substring(0, 1)}
-                  </Avatar>
+                  <div style={{ position: 'relative' }}>
+                    <Avatar size="xl" className="profile__avatar" src={user?.profileImage}>
+                      {formData.username.substring(0, 1)}
+                    </Avatar>
+                    <div className={`avatar-status avatar-status--${formData.status}`} 
+                         style={{ position: 'absolute', bottom: 4, right: 4, width: 20, height: 20, border: '3px solid #fff' }} />
+                  </div>
                   <Box>
                     <Typography variant="h2">{formData.username}</Typography>
                     <Typography variant="body-medium" color="text-secondary">
-                      {formData.role} Account
+                      {user?.role} Account
                     </Typography>
                   </Box>
                 </Flex>
@@ -99,12 +104,11 @@ export function Profile() {
 
             <Box className="profile__body">
               <Flex direction="column" gap="lg">
+                {/* 이름 섹션 */}
                 <div className="profile__field">
                   <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
                     <IconUser size={18} color="var(--color-text-secondary)" />
-                    <Typography variant="label-medium" color="secondary">
-                      이름
-                    </Typography>
+                    <Typography variant="label-medium" color="secondary">이름</Typography>
                   </Flex>
                   {isEditing ? (
                     <Input
@@ -113,51 +117,70 @@ export function Profile() {
                       onInput={(e) => setFormData({ ...formData, username: e.currentTarget.value })}
                     />
                   ) : (
-                    <Typography variant="body-large" className="profile__value">
-                      {formData.username}
-                    </Typography>
+                    <Typography variant="body-large" className="profile__value">{formData.username}</Typography>
                   )}
                 </div>
 
+                {/* 상태 섹션 */}
+                <div className="profile__field">
+                  <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
+                    <IconMessageCircle size={18} color="var(--color-text-secondary)" />
+                    <Typography variant="label-medium" color="secondary">상태</Typography>
+                  </Flex>
+                  {isEditing ? (
+                    <Flex direction="column" gap="sm">
+                      <Select
+                        fullWidth
+                        options={statusOptions}
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: (e.currentTarget as HTMLSelectElement).value })}
+                      />
+                      <Input
+                        fullWidth
+                        placeholder="상태 메시지 입력"
+                        value={formData.statusText}
+                        onInput={(e) => setFormData({ ...formData, statusText: e.currentTarget.value })}
+                      />
+                    </Flex>
+                  ) : (
+                    <Box>
+                      <Typography variant="body-large" className="profile__value">
+                        {statusOptions.find(s => s.value === formData.status)?.label}
+                      </Typography>
+                      {formData.statusText && (
+                        <Typography variant="body-medium" color="text-secondary" style={{ marginTop: '4px' }}>
+                          {formData.statusText}
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                </div>
+
+                {/* 이메일 섹션 (수정 불가) */}
                 <div className="profile__field">
                   <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
                     <IconMail size={18} color="var(--color-text-secondary)" />
-                    <Typography variant="label-medium" color="secondary">
-                      이메일
-                    </Typography>
+                    <Typography variant="label-medium" color="secondary">이메일</Typography>
                   </Flex>
-                  {isEditing ? (
-                    <Input
-                      fullWidth
-                      value={formData.email}
-                      onInput={(e) => setFormData({ ...formData, email: e.currentTarget.value })}
-                    />
-                  ) : (
-                    <Typography variant="body-large" className="profile__value">
-                      {formData.email}
-                    </Typography>
-                  )}
+                  <Typography variant="body-large" className="profile__value" color="text-tertiary">
+                    {formData.email}
+                  </Typography>
                 </div>
 
+                {/* 소속 섹션 (수정 불가) */}
                 <div className="profile__field">
                   <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                    <IconShield size={18} color="var(--color-text-secondary)" />
-                    <Typography variant="label-medium" color="secondary">
-                      권한 설정 (테스트)
-                    </Typography>
+                    <IconHierarchy size={18} color="var(--color-text-secondary)" />
+                    <Typography variant="label-medium" color="secondary">소속 정보</Typography>
                   </Flex>
-                  {isEditing ? (
-                    <Select
-                      fullWidth
-                      options={roleOptions}
-                      value={formData.role}
-                      onChange={(e) => setFormData({ ...formData, role: (e.currentTarget as HTMLSelectElement).value })}
-                    />
-                  ) : (
-                    <Typography variant="body-large" className="profile__value">
-                      {roleOptions.find((r) => r.value === formData.role)?.label}
+                  <Box style={{ padding: '12px', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '8px' }}>
+                    <Typography variant="body-medium">
+                      {user?.companyId ? '회사 정보 로딩 중...' : '소속된 회사가 없습니다.'}
                     </Typography>
-                  )}
+                    <Typography variant="caption" color="text-secondary" style={{ display: 'block', marginTop: '4px' }}>
+                      관리자에게 문의하여 조직에 가입하세요.
+                    </Typography>
+                  </Box>
                 </div>
               </Flex>
             </Box>

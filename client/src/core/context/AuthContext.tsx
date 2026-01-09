@@ -9,6 +9,11 @@ export interface User {
   username: string;
   role: 'Admin' | 'Normal' | 'Guest';
   profileImage?: string;
+  status?: 'online' | 'away' | 'busy' | 'offline';
+  statusText?: string;
+  workspaces?: string[];
+  companyId?: string;
+  deptId?: string;
 }
 
 interface AuthContextType {

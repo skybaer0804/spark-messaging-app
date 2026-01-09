@@ -4,7 +4,9 @@ export interface ChatUser {
   _id: string;
   username: string;
   avatar?: string;
-  status?: 'online' | 'offline';
+  profileImage?: string;
+  status?: 'online' | 'offline' | 'away' | 'busy';
+  statusText?: string;
   role?: string;
 }
 
@@ -14,7 +16,7 @@ export interface ChatRoom {
   description?: string;
   members: ChatUser[];
   type: 'public' | 'private' | 'direct' | 'team' | 'discussion';
-  organizationId: string;
+  workspaceId: string;
   teamId?: string;
   parentId?: string;
   isPrivate?: boolean;

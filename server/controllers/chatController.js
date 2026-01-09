@@ -10,7 +10,7 @@ const imageService = require('../services/imageService');
 // 채팅방 생성
 exports.createRoom = async (req, res) => {
   try {
-    const { name, members, type = 'public', description, organizationId, teamId, parentId, isPrivate } = req.body;
+    const { name, members, type = 'public', description, workspaceId, teamId, parentId, isPrivate } = req.body;
     const currentUserId = req.user.id;
 
     // 멤버 목록에 현재 사용자 추가 (중복 방지)
@@ -21,7 +21,7 @@ exports.createRoom = async (req, res) => {
       const existingRoom = await ChatRoom.findOne({
         type: 'direct',
         members: { $all: roomMembers, $size: 2 },
-        organizationId,
+        workspaceId,
       });
 
       if (existingRoom) {
@@ -37,7 +37,7 @@ exports.createRoom = async (req, res) => {
       name: type === 'direct' ? null : name || 'New Room',
       description,
       members: roomMembers,
-      organizationId,
+      workspaceId,
       type,
       teamId,
       parentId,
@@ -74,7 +74,7 @@ exports.createRoom = async (req, res) => {
 exports.getRooms = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { organizationId } = req.query;
+    const { workspaceId } = req.query;
 
     const query = { userId };
 
@@ -92,7 +92,7 @@ exports.getRooms = async (req, res) => {
 
     // 워크스페이스 필터링 및 응답 포맷팅
     const formattedRooms = userRooms
-      .filter((ur) => ur.roomId && (!organizationId || ur.roomId.organizationId.toString() === organizationId))
+      .filter((ur) => ur.roomId && (!workspaceId || ur.roomId.workspaceId.toString() === workspaceId))
       .map((ur) => {
         const room = ur.roomId.toObject();
         return {

@@ -32,12 +32,12 @@ import {
   IconHierarchy,
   IconChevronDown,
   IconChevronRight,
-  IconHome,
   IconSearch,
   IconAddressBook,
   IconArrowsExchange,
   IconEdit,
   IconDotsVertical,
+  IconArrowLeft,
 } from '@tabler/icons-preact';
 import { Button } from '@/ui-components/Button/Button';
 import { chatPendingJoinRoom, clearPendingJoinChatRoom } from '@/stores/chatRoomsStore';
@@ -68,6 +68,7 @@ interface ChatRoomSidebarProps {
   currentRoom: ChatRoom | null;
   handleRoomSelect: (roomId: string) => void;
   leaveRoom: () => void;
+  onUserClick?: (userId: string) => void; // 사용자 클릭 핸들러 추가
 }
 
 function ChatRoomSidebar({
@@ -81,6 +82,7 @@ function ChatRoomSidebar({
   currentRoom,
   handleRoomSelect,
   leaveRoom,
+  onUserClick, // 추가
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isConnected: _isConnected,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -96,6 +98,8 @@ function ChatRoomSidebar({
   const [showCreateTeamDialog, setShowCreateTeamDialog] = useState(false);
   const [newRoomData, setNewRoomData] = useState({ name: '', topic: '', isPrivate: false });
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; roomId: string } | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     direct: true,
     team: true,
@@ -142,15 +146,34 @@ function ChatRoomSidebar({
     }
   };
 
+  // 검색 필터링된 룸 및 사용자 목록
+  const { filteredRoomList, filteredUserList } = useMemo(() => {
+    if (!searchQuery.trim()) return { filteredRoomList: roomList, filteredUserList: [] };
+    const lowerQuery = searchQuery.toLowerCase();
+
+    const filteredRooms = roomList.filter((r) => {
+      const roomName = r.type === 'direct' ? getDirectChatName(r, currentUser?.id) : r.name;
+      return roomName?.toLowerCase().includes(lowerQuery);
+    });
+
+    // 이미 채팅방이 있는 유저는 제외하고 검색 (또는 포함해서 검색 결과에 노출)
+    const filteredUsers = userList.filter((u) => {
+      if (u._id === currentUser?.id) return false;
+      return u.username.toLowerCase().includes(lowerQuery);
+    });
+
+    return { filteredRoomList: filteredRooms, filteredUserList: filteredUsers };
+  }, [roomList, userList, searchQuery, currentUser]);
+
   const groupedRooms = useMemo(() => {
     return {
-      direct: roomList.filter((r) => r.type === 'direct'),
-      team: roomList.filter((r) => r.type === 'team'),
-      public: roomList.filter((r) => r.type === 'public'),
-      private: roomList.filter((r) => r.type === 'private'),
-      discussion: roomList.filter((r) => r.type === 'discussion'),
+      direct: filteredRoomList.filter((r) => r.type === 'direct'),
+      team: filteredRoomList.filter((r) => r.type === 'team'),
+      public: filteredRoomList.filter((r) => r.type === 'public'),
+      private: filteredRoomList.filter((r) => r.type === 'private'),
+      discussion: filteredRoomList.filter((r) => r.type === 'discussion'),
     };
-  }, [roomList]);
+  }, [filteredRoomList]);
 
   const renderRoomItem = (room: ChatRoom) => {
     const isActive = currentRoom?._id === room._id;
@@ -161,13 +184,17 @@ function ChatRoomSidebar({
       <div
         key={room._id}
         className={`chat-app__sidebar-item ${isActive ? 'chat-app__sidebar-item--active' : ''}`}
-        onClick={() => handleRoomSelect(room._id)}
+        onClick={() => {
+          handleRoomSelect(room._id);
+          setIsSearching(false);
+          setSearchQuery('');
+        }}
         onContextMenu={(e) => handleContextMenu(e, room._id)}
       >
         <div className="avatar">
           {room.type === 'direct' ? (
             <>
-              <Avatar src={directMember?.avatar} size="sm">
+              <Avatar src={directMember?.profileImage || directMember?.avatar} size="sm">
                 {roomName?.substring(0, 1)}
               </Avatar>
               <div className={`avatar-status avatar-status--${directMember?.status || 'offline'}`} />
@@ -184,8 +211,38 @@ function ChatRoomSidebar({
         </div>
         <div className="chat-app__sidebar-item-content">
           <div className="chat-app__sidebar-item-name">{room.unreadCount ? <strong>{roomName}</strong> : roomName}</div>
+          {room.type === 'direct' && directMember?.statusText && (
+            <div className="chat-app__sidebar-item-status-text">{directMember.statusText}</div>
+          )}
         </div>
         {room.unreadCount ? <div className="chat-app__sidebar-item-badge">{room.unreadCount}</div> : null}
+      </div>
+    );
+  };
+
+  const renderUserItem = (user: ChatUser) => {
+    return (
+      <div
+        key={user._id}
+        className="chat-app__sidebar-item"
+        onClick={() => {
+          onUserClick?.(user._id);
+          setIsSearching(false);
+          setSearchQuery('');
+        }}
+      >
+        <div className="avatar">
+          <Avatar src={user.profileImage || user.avatar} size="sm">
+            {user.username.substring(0, 1)}
+          </Avatar>
+          <div className={`avatar-status avatar-status--${user.status || 'offline'}`} />
+        </div>
+        <div className="chat-app__sidebar-item-content">
+          <div className="chat-app__sidebar-item-name">{user.username}</div>
+          <div className="chat-app__sidebar-item-sub">
+            {user.status || 'offline'} • {user.role || 'Member'}
+          </div>
+        </div>
       </div>
     );
   };
@@ -230,32 +287,71 @@ function ChatRoomSidebar({
       className="chat-app__sidebar"
       style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}
     >
-      {/* Top Toolbar - 이미지 기반 */}
-      <div className="chat-app__sidebar-toolbar">
-        <IconButton size="small" onClick={() => navigate('/')}>
-          <IconHome size={20} />
-        </IconButton>
-        <IconButton size="small">
-          <IconSearch size={20} />
-        </IconButton>
-        <IconButton size="small" title="디렉토리">
-          <IconAddressBook size={20} />
-        </IconButton>
-        <IconButton size="small">
-          <IconArrowsExchange size={20} />
-        </IconButton>
-        <IconButton
-          size="small"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowCreateMenu(!showCreateMenu);
-          }}
-        >
-          <IconEdit size={20} />
-        </IconButton>
-        <IconButton size="small">
-          <IconDotsVertical size={20} />
-        </IconButton>
+      {/* 2.2.0: 채팅 사이드바 헤더 - 프로필 및 툴바 */}
+      <div className="chat-app__sidebar-header">
+        <Flex align="center" justify="space-between" style={{ padding: '12px 16px' }}>
+          {isSearching ? (
+            <Flex align="center" style={{ flex: 1, gap: '8px' }}>
+              <Input
+                fullWidth
+                autoFocus
+                placeholder="검색어를 입력하세요..."
+                value={searchQuery}
+                onInput={(e) => setSearchQuery(e.currentTarget.value)}
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#fff' }}
+              />
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setIsSearching(false);
+                  setSearchQuery('');
+                }}
+              >
+                <IconX size={20} />
+              </IconButton>
+            </Flex>
+          ) : (
+            <>
+              <div
+                className="chat-app__sidebar-profile"
+                onClick={() => navigate('/profile')}
+                style={{ cursor: 'pointer', position: 'relative' }}
+              >
+                <Avatar src={currentUser?.profileImage} size="sm">
+                  {currentUser?.username?.substring(0, 1)}
+                </Avatar>
+                <div
+                  className={`avatar-status avatar-status--${currentUser?.status || 'online'}`}
+                  style={{ border: '2px solid #2c333d' }}
+                />
+              </div>
+
+              <div className="chat-app__sidebar-actions">
+                <IconButton size="small" onClick={() => setIsSearching(true)}>
+                  <IconSearch size={20} />
+                </IconButton>
+                <IconButton size="small" title="디렉토리" onClick={() => navigate('/chatapp/directory')}>
+                  <IconAddressBook size={20} />
+                </IconButton>
+                <IconButton size="small" onClick={() => showInfo('준비 중입니다.')}>
+                  <IconArrowsExchange size={20} />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowCreateMenu(!showCreateMenu);
+                  }}
+                >
+                  <IconEdit size={20} />
+                </IconButton>
+                <IconButton size="small" onClick={() => showInfo('준비 중입니다.')}>
+                  <IconDotsVertical size={20} />
+                </IconButton>
+              </div>
+            </>
+          )}
+        </Flex>
       </div>
 
       {/* Create Menu Dropdown */}
@@ -296,6 +392,12 @@ function ChatRoomSidebar({
       )}
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
+        {isSearching && filteredUserList.length > 0 && (
+          <div>
+            <div className="chat-app__sidebar-section-header">사용자</div>
+            <div className="chat-app__sidebar-section-content">{filteredUserList.map(renderUserItem)}</div>
+          </div>
+        )}
         {renderSection('direct', '개인 대화방')}
         {renderSection('team', 'Teams')}
         {renderSection('public', 'Channels')}
@@ -343,7 +445,7 @@ function ChatRoomSidebar({
               .map((user) => (
                 <ListItem key={user._id} onClick={() => toggleUserSelection(user._id)} style={{ cursor: 'pointer' }}>
                   <ListItemAvatar>
-                    <Avatar src={user.avatar} size="sm">
+                    <Avatar src={user.profileImage || user.avatar} size="sm">
                       {user.username.substring(0, 1)}
                     </Avatar>
                   </ListItemAvatar>
@@ -489,10 +591,9 @@ function ChatRoomSidebar({
 }
 
 function ChatAppContent() {
-  const { pathname } = useRouterState();
+  const { pathname, navigate } = useRouterState();
 
   // 경로 방어 로직: /chatapp 경로가 아닐 경우 렌더링하지 않음
-  // (SidebarLayout에서 content로 들어오므로 중복 노출 방지)
   if (!pathname.startsWith('/chatapp')) {
     return null;
   }
@@ -521,12 +622,42 @@ function ChatAppContent() {
     uploadProgress,
     debugEnabled,
     toggleDebug,
+    setCurrentRoom, // useChatRoom에서 받아오도록 확인 필요
   } = useChatApp();
+
+  const [activeView, setActiveView] = useState<'chat' | 'directory' | 'home'>('home');
+  const [directoryTab, setDirectoryTab] = useState<'channel' | 'team' | 'user'>('channel');
+
+  useEffect(() => {
+    if (pathname === '/chatapp/directory') {
+      setActiveView('directory');
+    } else if (currentRoom) {
+      setActiveView('chat');
+    } else {
+      setActiveView('home');
+    }
+  }, [pathname, currentRoom]);
 
   const onRoomSelect = (roomId: string) => {
     const room = roomList.find((r) => r._id === roomId);
     if (room) {
       handleRoomSelectRaw(room);
+      navigate(`/chatapp/chat/${roomId}`);
+    }
+  };
+
+  const goToHome = () => {
+    setCurrentRoom(null);
+    navigate('/chatapp');
+  };
+
+  const startDirectChat = async (userId: string) => {
+    const existingRoom = roomList.find((r) => r.type === 'direct' && r.members.some((m) => m._id === userId));
+
+    if (existingRoom) {
+      onRoomSelect(existingRoom._id);
+    } else {
+      await handleCreateRoom('direct', { members: [userId] });
     }
   };
 
@@ -619,7 +750,93 @@ function ChatAppContent() {
       <Typography variant="h2" style={{ marginBottom: '8px' }}>
         Start Messaging
       </Typography>
-      <Typography variant="body-medium">Select a room from the sidebar to join the conversation.</Typography>
+      <Typography variant="body-medium">사이드바에서 방을 선택하거나 검색하여 대화를 시작하세요.</Typography>
+    </Flex>
+  );
+
+  // Directory View
+  const DirectoryView = () => (
+    <Flex direction="column" style={{ height: '100%', backgroundColor: 'var(--color-bg-default)' }}>
+      <Paper square padding="md" style={{ borderBottom: '1px solid var(--color-border-default)' }}>
+        <Typography variant="h2" style={{ marginBottom: '16px' }}>
+          디렉토리
+        </Typography>
+        <Flex gap="md">
+          <Button
+            variant={directoryTab === 'channel' ? 'primary' : 'secondary'}
+            onClick={() => setDirectoryTab('channel')}
+          >
+            채널
+          </Button>
+          <Button variant={directoryTab === 'team' ? 'primary' : 'secondary'} onClick={() => setDirectoryTab('team')}>
+            팀
+          </Button>
+          <Button variant={directoryTab === 'user' ? 'primary' : 'secondary'} onClick={() => setDirectoryTab('user')}>
+            사용자
+          </Button>
+        </Flex>
+      </Paper>
+
+      <Box style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+        {directoryTab === 'channel' && (
+          <List>
+            {roomList
+              .filter((r) => r.type === 'public')
+              .map((room) => (
+                <ListItem key={room._id} onClick={() => onRoomSelect(room._id)} style={{ cursor: 'pointer' }}>
+                  <ListItemAvatar>
+                    <Avatar variant="rounded">
+                      <IconHash />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText primary={room.name} secondary={room.description} />
+                </ListItem>
+              ))}
+          </List>
+        )}
+        {directoryTab === 'team' && (
+          <List>
+            {roomList
+              .filter((r) => r.type === 'team')
+              .map((room) => (
+                <ListItem key={room._id} onClick={() => onRoomSelect(room._id)} style={{ cursor: 'pointer' }}>
+                  <ListItemAvatar>
+                    <Avatar variant="rounded" style={{ backgroundColor: '#e11d48' }}>
+                      {room.name?.substring(0, 1).toUpperCase()}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText primary={room.name} secondary={`${room.members.length}명의 멤버`} />
+                </ListItem>
+              ))}
+          </List>
+        )}
+        {directoryTab === 'user' && (
+          <List>
+            {userList.map((user) => (
+              <ListItem key={user._id} onClick={() => startDirectChat(user._id)} style={{ cursor: 'pointer' }}>
+                <ListItemAvatar>
+                  <Box style={{ position: 'relative' }}>
+                    <Avatar src={user.avatar || user.profileImage} />
+                    <div
+                      className={`avatar-status avatar-status--${user.status || 'offline'}`}
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        right: 0,
+                        width: 12,
+                        height: 12,
+                        border: '2px solid #fff',
+                        borderRadius: '50%',
+                      }}
+                    />
+                  </Box>
+                </ListItemAvatar>
+                <ListItemText primary={user.username} secondary={user.status === 'online' ? 'Online' : 'Offline'} />
+              </ListItem>
+            ))}
+          </List>
+        )}
+      </Box>
     </Flex>
   );
 
@@ -635,7 +852,7 @@ function ChatAppContent() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  if (!currentRoom) {
+  if (activeView === 'home' || !currentRoom) {
     return (
       <Box style={{ display: 'flex', height: '100%', minHeight: 0 }} className="chat-app__container">
         <Box
@@ -660,15 +877,20 @@ function ChatAppContent() {
             currentRoom={currentRoom}
             handleRoomSelect={onRoomSelect}
             leaveRoom={leaveRoom}
+            onUserClick={startDirectChat}
           />
         </Box>
         {!isMobile && (
           <Box style={{ flex: 1, backgroundColor: 'var(--color-background-default)', height: '100%', minHeight: 0 }}>
-            <EmptyState />
+            {activeView === 'directory' ? <DirectoryView /> : <EmptyState />}
           </Box>
         )}
       </Box>
     );
+  }
+
+  if (activeView === 'directory' && isMobile) {
+    return <DirectoryView />;
   }
 
   // Active Chat Room - 모바일에서는 채팅창만 표시
@@ -691,6 +913,7 @@ function ChatAppContent() {
             currentRoom={currentRoom}
             handleRoomSelect={onRoomSelect}
             leaveRoom={leaveRoom}
+            onUserClick={startDirectChat}
           />
         </Box>
       )}
@@ -712,6 +935,11 @@ function ChatAppContent() {
           style={{ zIndex: 10, flexShrink: 0, borderBottom: '1px solid var(--color-border-default)' }}
         >
           <Stack direction="row" align="center" spacing="md">
+            {isMobile && (
+              <IconButton onClick={goToHome}>
+                <IconArrowLeft />
+              </IconButton>
+            )}
             <Box style={{ flex: 1 }}>
               <Flex align="center" gap="sm">
                 {currentRoom.type === 'private' || currentRoom.isPrivate ? (

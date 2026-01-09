@@ -98,7 +98,14 @@ exports.getMe = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({ _id: { $ne: req.user.id } }).select('username email avatar status');
+    const { workspaceId } = req.query;
+    const query = { _id: { $ne: req.user.id } };
+
+    if (workspaceId) {
+      query.workspaces = workspaceId;
+    }
+
+    const users = await User.find(query).select('username email profileImage status workspaces companyId deptId');
     res.json(users);
   } catch (error) {
     console.error('GetAllUsers error:', error);
@@ -124,6 +131,26 @@ exports.updateNotificationSettings = async (req, res) => {
     res.json({ message: 'Settings updated successfully' });
   } catch (error) {
     console.error('UpdateSettings error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { username, profileImage, status, statusText } = req.body;
+    const userId = req.user.id;
+
+    const updateData = {};
+    if (username) updateData.username = username;
+    if (profileImage) updateData.profileImage = profileImage;
+    if (status) updateData.status = status;
+    if (statusText !== undefined) updateData.statusText = statusText;
+
+    const updatedUser = await User.findByIdAndUpdate(userId, { $set: updateData }, { new: true }).select('-password');
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('UpdateProfile error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

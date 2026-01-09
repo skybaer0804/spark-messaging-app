@@ -12,7 +12,9 @@ const userSchema = new mongoose.Schema({
     default: 'offline',
   },
   statusText: { type: String, default: '' }, // 상태 메시지
-  organizations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Organization' }],
+  workspaces: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' }],
+  companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
+  deptId: { type: mongoose.Schema.Types.ObjectId, ref: 'Dept' },
   createdAt: { type: Date, default: Date.now },
 });
 

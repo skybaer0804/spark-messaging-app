@@ -74,7 +74,7 @@ export function useChatApp() {
         name: extraData.name || (type === 'direct' ? undefined : roomIdInput.trim()),
         description: extraData.description,
         members: selectedUserIds.length > 0 ? selectedUserIds : extraData.members || undefined,
-        organizationId: extraData.organizationId || 'current_org_id', // 실제 연동 필요
+        workspaceId: extraData.workspaceId || 'current_workspace_id', // 실제 연동 필요
         type,
         teamId: extraData.teamId,
         parentId: extraData.parentId,
@@ -152,5 +152,6 @@ export function useChatApp() {
     socketId,
     debugEnabled,
     toggleDebug,
+    setCurrentRoom,
   };
 }

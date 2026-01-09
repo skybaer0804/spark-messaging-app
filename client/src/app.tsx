@@ -10,6 +10,9 @@ import { PushService } from '@/core/api/PushService';
 import { AuthPage } from '@/components/Auth/AuthPage';
 import { DesignSystemDemo } from '@/components/DesignSystemDemo/DesignSystemDemo';
 import { PrivacyPolicy } from '@/components/PrivacyPolicy/PrivacyPolicy';
+import { Flex } from '@/ui-components/Layout/Flex';
+import { Typography } from '@/ui-components/Typography/Typography';
+import { Button } from '@/ui-components/Button/Button';
 import './app.scss';
 import './index.css';
 
@@ -156,10 +159,36 @@ export function App() {
     // 비로그인 상태에서 허용되는 경로
     if (!isAuthenticated) {
       if (currentRoute === '/register') {
-        // RegisterPage가 따로 있다면 여기에 추가 (현재 demo엔 AuthPage가 통합)
         return <AuthPage />;
       }
       return <AuthPage />;
+    }
+
+    // 워크스페이스 온보딩 체크
+    const { user } = useAuth();
+    const hasWorkspaces = user?.workspaces && user.workspaces.length > 0;
+
+    if (!hasWorkspaces && !currentRoute.startsWith('/organization')) {
+      return (
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          style={{ height: '80vh', textAlign: 'center', padding: '20px' }}
+        >
+          <Typography variant="h2" style={{ marginBottom: '16px' }}>
+            워크스페이스 참여가 필요합니다
+          </Typography>
+          <Typography variant="body-large" color="text-secondary" style={{ marginBottom: '32px' }}>
+            현재 소속된 워크스페이스가 없습니다.
+            <br />
+            새로운 워크스페이스를 생성하거나 기존 워크스페이스에 초대받아야 합니다.
+          </Typography>
+          <Button variant="primary" onClick={() => handleNavigate('/organization')}>
+            워크스페이스 생성하러 가기
+          </Button>
+        </Flex>
+      );
     }
 
     // 디자인 시스템 경로 처리

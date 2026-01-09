@@ -9,7 +9,7 @@ const chatRoomSchema = new mongoose.Schema({
     default: 'public',
   },
   members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  organizationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true }, // 워크스페이스 연결 필수화
+  workspaceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Workspace', required: true }, // 워크스페이스 연결 필수화
   teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom' }, // 팀 내 채널인 경우
   parentId: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom' }, // 토론방인 경우 상위 방 ID
   lastMessage: { type: mongoose.Schema.Types.ObjectId, ref: 'Message' },

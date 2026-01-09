@@ -101,8 +101,8 @@ export class ChatService {
     return response.data;
   }
 
-  public async getRooms() {
-    const response = await chatApi.getRooms();
+  public async getRooms(workspaceId?: string) {
+    const response = await chatApi.getRooms(workspaceId);
     return response.data;
   }
 
@@ -120,7 +120,7 @@ export class ChatService {
     name?: string;
     members?: string[];
     description?: string;
-    organizationId?: string;
+    workspaceId?: string;
     type?: string;
     teamId?: string;
     parentId?: string;

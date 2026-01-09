@@ -9,11 +9,16 @@ const socketService = require('./services/socketService');
 const configureWebPush = require('./config/push');
 const schedulerService = require('./services/schedulerService');
 
+const { initializeSystem } = require('./utils/initialize');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to Databases
-connectDB();
+connectDB().then(() => {
+  // DB 연결 후 시스템 초기화 실행
+  initializeSystem();
+});
 connectRedis();
 
 // Initialize Services
@@ -33,7 +38,7 @@ app.use('/uploads', express.static('C:/project/file'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/push', require('./routes/push'));
-app.use('/api/org', require('./routes/org'));
+app.use('/api/workspace', require('./routes/workspace'));
 app.use('/api/notification', require('./routes/notification'));
 app.use('/api/video-meeting', require('./routes/videoMeeting'));
 

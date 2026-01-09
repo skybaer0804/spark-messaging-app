@@ -6,8 +6,9 @@ import { ChatService } from '@/core/socket/ChatService';
 import { RoomService } from '../services/RoomService';
 import { FileTransferService } from '@/core/api/FileTransferService';
 import { useAuth } from '@/core/hooks/useAuth';
-import { authApi, orgApi } from '@/core/api/ApiService';
+import { authApi, workspaceApi } from '@/core/api/ApiService';
 import { ChatRoom, ChatUser } from '../types';
+import { currentWorkspaceId } from '@/stores/chatRoomsStore';
 import { Organization } from '../hooks/useChatApp';
 
 interface ChatContextType {
@@ -51,7 +52,8 @@ export function ChatProvider({ children }: { children: any }) {
 
   const refreshRoomList = async () => {
     try {
-      const rooms = await chatServiceRef.current.getRooms();
+      const workspaceId = currentWorkspaceId.value;
+      const rooms = await chatServiceRef.current.getRooms(workspaceId || undefined);
       setRoomList(rooms);
     } catch (error) {
       console.error('Failed to load rooms:', error);
@@ -60,7 +62,8 @@ export function ChatProvider({ children }: { children: any }) {
 
   const refreshUserList = async () => {
     try {
-      const response = await authApi.getUsers();
+      const workspaceId = currentWorkspaceId.value;
+      const response = await authApi.getUsers(workspaceId || undefined);
       setUserList(response.data);
     } catch (error) {
       console.error('Failed to load users:', error);
@@ -69,10 +72,10 @@ export function ChatProvider({ children }: { children: any }) {
 
   const refreshOrgList = async () => {
     try {
-      const response = await orgApi.getOrganizations();
+      const response = await workspaceApi.getWorkspaces();
       setOrgList(response.data);
     } catch (error) {
-      console.error('Failed to load organizations:', error);
+      console.error('Failed to load workspaces:', error);
     }
   };
 
@@ -137,6 +140,14 @@ export function ChatProvider({ children }: { children: any }) {
       unsubRoomMessage();
     };
   }, [user]);
+
+  // 워크스페이스 변경 시 데이터 새로고침
+  useEffect(() => {
+    if (user) {
+      refreshRoomList();
+      refreshUserList();
+    }
+  }, [currentWorkspaceId.value]);
 
   const value: ChatContextType = {
     isConnected,
