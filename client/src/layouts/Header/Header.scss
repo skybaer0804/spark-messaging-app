@@ -12,7 +12,7 @@
   flex-shrink: 0;
   width: 100%;
   min-width: 0; // 가로 스크롤 방지
-  overflow: hidden; // 가로 스크롤 방지
+  // overflow: hidden; // 메뉴 노출을 위해 제거
 
   @media (max-width: 768px) {
     height: 3.5rem; // 56px
@@ -207,5 +207,72 @@
         stroke: var(--primitive-gray-0);
       }
     }
+
+    &--active {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  &__settings-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  &__menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    z-index: var(--layout-z-popover);
+    min-width: 160px;
+    animation: headerMenuFadeIn 0.2s ease-out;
+
+    &-paper {
+      background-color: var(--color-background-primary);
+      border: 1px solid var(--color-border-default);
+      overflow: hidden;
+    }
+
+    &-item {
+      cursor: pointer;
+      color: var(--color-text-primary);
+      transition: background-color 0.2s ease;
+      padding: 0.75rem 1rem;
+
+      &:hover {
+        background-color: var(--color-action-hover);
+      }
+
+      svg {
+        color: var(--color-text-secondary);
+        flex-shrink: 0;
+      }
+
+      .list-item-text__primary {
+        font-size: 0.875rem;
+        font-weight: var(--primitive-font-weight-medium);
+      }
+    }
+  }
+
+  &__menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: calc(var(--layout-z-popover) - 1);
+    background: transparent;
+  }
+}
+
+@keyframes headerMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

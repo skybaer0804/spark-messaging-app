@@ -6,10 +6,22 @@ import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { ThemeCustomization } from '@/components/ThemeCustomization/ThemeCustomization';
 import { Select, SelectOption } from '@/ui-components/Select/Select';
-import { IconMoon, IconSun, IconWifi, IconWifiOff, IconSettings, IconUser, IconLogin } from '@tabler/icons-preact';
+import {
+  IconMoon,
+  IconSun,
+  IconWifi,
+  IconWifiOff,
+  IconSettings,
+  IconUser,
+  IconLogin,
+  IconPalette,
+  IconLogout,
+} from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes } from '@/routes/appRoutes';
 import { useAuth } from '@/core/hooks/useAuth';
+import { Paper } from '@/ui-components/Paper/Paper';
+import { List, ListItem, ListItemText } from '@/ui-components/List/List';
 
 interface HeaderProps {
   title: string;
@@ -21,7 +33,8 @@ export function Header({ title, isConnected, socketId }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
   const { pathname, navigate } = useRouterState();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { isAuthenticated, user } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { isAuthenticated, user, signOut } = useAuth();
 
   const homeRoute = appRoutes.find((r) => r.id === 'home');
   const viewOptions: SelectOption[] = [
@@ -34,6 +47,17 @@ export function Header({ title, isConnected, socketId }: HeaderProps) {
   const handleViewSelectChange = (e: Event) => {
     const target = e.currentTarget as HTMLSelectElement;
     navigate(target.value);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    setMenuOpen(false);
+    navigate('/login');
+  };
+
+  const openThemeSettings = () => {
+    setSettingsOpen(true);
+    setMenuOpen(false);
   };
 
   const mobileSelectValue = viewOptions.some((o) => o.value === pathname)
@@ -110,19 +134,48 @@ export function Header({ title, isConnected, socketId }: HeaderProps) {
             >
               {theme === 'light' ? <IconMoon size={20} /> : <IconSun size={20} />}
             </IconButton>
-            <IconButton
-              size="medium"
-              color="default"
-              onClick={() => setSettingsOpen(true)}
-              title="설정"
-              className="header__icon-button"
-            >
-              <IconSettings size={20} />
-            </IconButton>
+            <div className="header__settings-container">
+              <IconButton
+                size="medium"
+                color="default"
+                onClick={() => {
+                  console.log('Settings clicked, current state:', !menuOpen);
+                  setMenuOpen(!menuOpen);
+                }}
+                title="설정"
+                className={`header__icon-button ${menuOpen ? 'header__icon-button--active' : ''}`}
+              >
+                <IconSettings size={20} />
+              </IconButton>
+
+              {menuOpen && (
+                <div className="header__menu">
+                  <Paper elevation={4} className="header__menu-paper">
+                    <List disablePadding>
+                      <ListItem onClick={openThemeSettings} className="header__menu-item">
+                        <Flex align="center" gap="sm">
+                          <IconPalette size={18} />
+                          <ListItemText primary="테마" />
+                        </Flex>
+                      </ListItem>
+                      {isAuthenticated && (
+                        <ListItem onClick={handleLogout} className="header__menu-item">
+                          <Flex align="center" gap="sm">
+                            <IconLogout size={18} />
+                            <ListItemText primary="로그아웃" />
+                          </Flex>
+                        </ListItem>
+                      )}
+                    </List>
+                  </Paper>
+                </div>
+              )}
+            </div>
           </Flex>
         </Flex>
       </div>
       <ThemeCustomization open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      {menuOpen && <div className="header__menu-overlay" onClick={() => setMenuOpen(false)} />}
     </header>
   );
 }
