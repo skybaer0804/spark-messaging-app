@@ -80,10 +80,16 @@
           height: 10px;
           border-radius: 50%;
           border: 2px solid #2c333d;
-          
-          &--online { background-color: #2bac76; }
-          &--away { background-color: #f59e0b; }
-          &--offline { background-color: #94a3b8; }
+
+          &--online {
+            background-color: #2bac76;
+          }
+          &--away {
+            background-color: #f59e0b;
+          }
+          &--offline {
+            background-color: #94a3b8;
+          }
         }
       }
 
@@ -162,7 +168,7 @@
     &-header {
       padding: 16px;
       border-bottom: 1px solid #f1f5f9;
-      
+
       .typography {
         color: #1e293b;
       }
