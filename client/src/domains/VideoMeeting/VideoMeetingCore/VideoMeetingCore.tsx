@@ -1,6 +1,6 @@
 import { memo } from 'preact/compat';
 import { useState, useEffect } from 'preact/hooks';
-import type { Category, Room } from '../types';
+import type { Room } from '../types';
 import type { VideoMeetingStore } from '../stores/VideoMeetingStore';
 import { Button } from '@/ui-components/Button/Button';
 import { IconButton } from '@/ui-components/Button/IconButton';
@@ -20,11 +20,12 @@ import {
   IconCalendar,
   IconVideo,
   IconUsers,
-  IconLock,
-  IconLockOpen,
   IconLink,
+  IconPlus,
+  IconMessages,
 } from '@tabler/icons-preact';
-import { authApi, workspaceApi } from '@/core/api/ApiService';
+import { authApi } from '@/core/api/ApiService';
+import './VideoMeetingCore.scss';
 
 interface VideoMeetingCoreProps {
   store: VideoMeetingStore;
@@ -35,11 +36,8 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
   const userRole = store.userRole.value;
   const currentRoom = store.currentRoom.value;
   const roomList = store.roomList.value;
-  const showCreateForm = store.showCreateForm.value;
   const selectedCategory = store.selectedCategory.value;
-  const roomTitle = store.roomTitle.value;
   const pendingRequests = store.pendingRequests.value;
-  const joinRequestStatus = store.joinRequestStatus.value;
   const scheduledMeetings = store.scheduledMeetings.value;
   const myRooms = store.getMyRooms();
 
@@ -56,13 +54,11 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
     invitedWorkspaces: [] as string[],
   });
   const [userList, setUserList] = useState<any[]>([]);
-  const [workspaceList, setWorkspaceList] = useState<any[]>([]);
 
   useEffect(() => {
     if (drawerOpen) {
-      Promise.all([authApi.getUsers(), workspaceApi.getWorkspaces()]).then(([uRes, wsRes]) => {
+      authApi.getUsers().then((uRes) => {
         setUserList(uRes.data);
-        setWorkspaceList(wsRes.data);
       });
     }
   }, [drawerOpen]);
@@ -71,7 +67,6 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
     if (meetingForm.isReserved) {
       await store.scheduleMeeting(meetingForm);
     } else {
-      // 즉시 회의의 경우 기본 로직 수행 (필요시 확장)
       await store.createRoom(selectedCategory, meetingForm.title);
     }
     setDrawerOpen(false);
@@ -94,7 +89,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
   const copyJoinLink = (hash: string) => {
     const link = `${window.location.origin}/video-meeting/join/${hash}`;
     navigator.clipboard.writeText(link);
-    store.showSuccess('참여 링크가 복사되었습니다.');
+    console.log('Link copied:', link);
   };
 
   const handleJoinRoom = async (room: Room) => {
@@ -103,17 +98,36 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
 
   if (!currentRoom) {
     return (
-      <Box padding="lg" style={{ backgroundColor: 'var(--color-bg-secondary)', height: '100%', overflowY: 'auto' }}>
-        <Stack spacing="xl">
-          {/* Header Actions */}
-          <Flex justify="space-between" align="center">
-            <Typography variant="h2">화상 회의</Typography>
-            <Button variant="primary" onClick={() => setDrawerOpen(true)} disabled={!isConnected}>
-              <IconVideo size={18} style={{ marginRight: '8px' }} />새 회의 만들기
-            </Button>
-          </Flex>
+      <Box className="video-meeting-core">
+        <div className="video-meeting-core__container">
+          {/* 히어로 섹션 */}
+          <section className="video-meeting-core__hero">
+            <Stack spacing="sm">
+              <Flex align="center" gap="xs" className="video-meeting-core__badge">
+                <IconVideo size={16} />
+                <Typography variant="body-small">실시간 협업 도구</Typography>
+              </Flex>
+              <Typography variant="h1" className="video-meeting-core__title">
+                얼굴을 보며 <span className="highlight">소통</span>하세요
+              </Typography>
+              <Typography variant="body-large" className="video-meeting-core__desc">
+                언제 어디서나 팀원들과 실시간으로 연결되어 아이디어를 나누고 결정을 내릴 수 있습니다.
+              </Typography>
+              <Box style={{ marginTop: '24px' }}>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={() => setDrawerOpen(true)}
+                  disabled={!isConnected}
+                  style={{ padding: '12px 24px' }}
+                >
+                  <IconPlus size={20} style={{ marginRight: '8px' }} /> 새 회의 만들기
+                </Button>
+              </Box>
+            </Stack>
+          </section>
 
-          {/* Meeting Creation Drawer */}
+          {/* 회의 생성 Drawer */}
           <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="새 회의 만들기" width="450px">
             <Stack spacing="lg" padding="md">
               <Box>
@@ -248,108 +262,138 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
             </Stack>
           </Drawer>
 
-          {/* Meeting Lists */}
-          <Grid columns="repeat(auto-fill, minmax(350px, 1fr))" gap="xl">
-            {/* Scheduled Meetings */}
-            <Stack spacing="md" style={{ gridColumn: '1 / -1' }}>
-              <Typography variant="h3">회의 목록 ({scheduledMeetings.length})</Typography>
-              {scheduledMeetings.length === 0 ? (
-                <Paper padding="xl" variant="outlined" style={{ textAlign: 'center' }}>
-                  <Typography color="text-secondary">아직 예약되거나 진행 중인 회의가 없습니다.</Typography>
-                </Paper>
-              ) : (
-                <Grid columns="repeat(auto-fill, minmax(320px, 1fr))" gap="lg">
-                  {scheduledMeetings.map((m) => (
-                    <Card key={m._id} className="meeting-card">
-                      <CardHeader>
-                        <Flex justify="space-between" align="flex-start">
-                          <Stack spacing="xs">
-                            <Typography variant="h4">{m.title}</Typography>
-                            <Flex align="center" gap="xs">
-                              <IconCalendar size={14} color="var(--color-text-secondary)" />
-                              <Typography variant="caption" color="text-secondary">
+          {/* 회의 리스트 섹션 */}
+          <Box className="video-meeting-core__section">
+            <Stack spacing="xl">
+              {/* 예약 회의 */}
+              <Box>
+                <div className="video-meeting-core__section-header">
+                  <Typography variant="h3">예약된 회의 ({scheduledMeetings.length})</Typography>
+                </div>
+                {scheduledMeetings.length === 0 ? (
+                  <Paper className="video-meeting-core__empty-state">
+                    <Stack align="center" spacing="sm">
+                      <IconCalendar size={48} color="var(--color-text-tertiary)" />
+                      <Typography color="text-secondary" variant="body-large">
+                        아직 예약된 회의가 없습니다.
+                      </Typography>
+                    </Stack>
+                  </Paper>
+                ) : (
+                  <Grid container spacing={3} columns={4}>
+                    {scheduledMeetings.map((m) => (
+                      <Grid item key={m._id} xs={4} sm={2} md={1}>
+                        <Card className="video-meeting-core__meeting-card">
+                          <CardHeader>
+                            <Flex justify="space-between" align="flex-start">
+                              <Stack spacing="xs">
+                                <span className="meeting-type-tag">예약 회의</span>
+                                <Typography variant="h4">{m.title}</Typography>
+                              </Stack>
+                              <StatusChip
+                                label={m.status === 'ongoing' ? '진행중' : '대기중'}
+                                variant={m.status === 'ongoing' ? 'active' : 'badge'}
+                              />
+                            </Flex>
+                          </CardHeader>
+                          <CardBody>
+                            <Typography
+                              variant="body-small"
+                              color="text-secondary"
+                              style={{
+                                minHeight: '40px',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              {m.description || '회의에 대한 설명이 없습니다.'}
+                            </Typography>
+                            <div className="video-meeting-core__host-info">
+                              <IconCalendar size={14} color="var(--color-text-tertiary)" />
+                              <Typography variant="caption" color="text-tertiary">
                                 {new Date(m.scheduledAt).toLocaleString()}
                               </Typography>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                              <IconUsers size={14} color="var(--color-text-tertiary)" />
+                              <Typography variant="caption" color="text-tertiary">
+                                호스트: {m.hostId.username}
+                              </Typography>
+                            </div>
+                          </CardBody>
+                          <CardFooter>
+                            <Flex gap="sm" style={{ width: '100%' }}>
+                              <IconButton size="medium" onClick={() => copyJoinLink(m.joinHash)} title="참여 링크 복사">
+                                <IconLink size={18} />
+                              </IconButton>
+                              <Button
+                                fullWidth
+                                variant={m.status === 'ongoing' ? 'primary' : 'secondary'}
+                                disabled={m.status === 'completed' || m.status === 'cancelled'}
+                              >
+                                {m.status === 'ongoing' ? '참여하기' : '상세정보'}
+                              </Button>
                             </Flex>
-                          </Stack>
-                          <StatusChip
-                            label={
-                              m.status === 'ongoing'
-                                ? '진행중'
-                                : m.status === 'scheduled'
-                                ? '예정'
-                                : m.status === 'completed'
-                                ? '종료'
-                                : '취소'
-                            }
-                            variant={m.status === 'ongoing' ? 'active' : m.status === 'completed' ? 'default' : 'badge'}
-                          />
-                        </Flex>
-                      </CardHeader>
-                      <CardBody>
-                        <Typography variant="body-small" style={{ minHeight: '40px' }}>
-                          {m.description || '설명이 없습니다.'}
-                        </Typography>
-                        <Flex align="center" justify="space-between" style={{ marginTop: '16px' }}>
-                          <Flex align="center" gap="xs">
-                            <IconUsers size={14} color="var(--color-text-tertiary)" />
-                            <Typography variant="caption" color="text-tertiary">
-                              호스트: {m.hostId.username}
-                            </Typography>
-                          </Flex>
-                          {m.isPrivate ? (
-                            <IconLock size={14} color="var(--color-warning)" />
-                          ) : (
-                            <IconLockOpen size={14} color="var(--color-text-tertiary)" />
-                          )}
-                        </Flex>
-                      </CardBody>
-                      <CardFooter>
-                        <Flex gap="sm" fullWidth>
-                          <IconButton size="medium" onClick={() => copyJoinLink(m.joinHash)} title="참여 링크 복사">
-                            <IconLink size={18} />
-                          </IconButton>
-                          <Button
-                            fullWidth
-                            variant={m.status === 'ongoing' ? 'primary' : 'secondary'}
-                            disabled={m.status === 'completed' || m.status === 'cancelled'}
-                          >
-                            {m.status === 'ongoing' ? '지금 참여' : '상세 보기'}
-                          </Button>
-                        </Flex>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </Grid>
-              )}
-            </Stack>
+                          </CardFooter>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                )}
+              </Box>
 
-            {/* Active Socket Rooms (Public Only) */}
-            <Stack spacing="md" style={{ gridColumn: '1 / -1' }}>
-              <Typography variant="h3">진행 중인 공개 회의 ({roomList.length})</Typography>
-              <Grid columns="repeat(auto-fill, minmax(300px, 1fr))" gap="lg">
-                {roomList.map((room) => (
-                  <Card key={room.roomId}>
-                    <CardHeader>
-                      <Flex justify="space-between">
-                        <StatusChip label={room.category} variant="badge" />
-                        {myRooms.has(room.roomId) && <StatusChip label="내 회의실" variant="active" />}
-                      </Flex>
-                      <Typography variant="h4" style={{ marginTop: '8px' }}>
-                        {room.title}
+              {/* 진행 중인 공개 회의 */}
+              <Box>
+                <div className="video-meeting-core__section-header">
+                  <Typography variant="h3">공개 회의실 ({roomList.length})</Typography>
+                </div>
+                {roomList.length === 0 ? (
+                  <Paper className="video-meeting-core__empty-state">
+                    <Stack align="center" spacing="sm">
+                      <IconMessages size={48} color="var(--color-text-tertiary)" />
+                      <Typography color="text-secondary" variant="body-large">
+                        활성화된 공개 회의실이 없습니다.
                       </Typography>
-                    </CardHeader>
-                    <CardFooter>
-                      <Button fullWidth onClick={() => handleJoinRoom(room)}>
-                        참여하기
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </Grid>
+                    </Stack>
+                  </Paper>
+                ) : (
+                  <Grid container spacing={3} columns={4}>
+                    {roomList.map((room) => (
+                      <Grid item key={room.roomId} xs={4} sm={2} md={1}>
+                        <Card className="video-meeting-core__meeting-card">
+                          <CardHeader>
+                            <Flex justify="space-between">
+                              <span className="meeting-type-tag">{room.category}</span>
+                              {myRooms.has(room.roomId) && <StatusChip label="내 회의실" variant="active" />}
+                            </Flex>
+                            <Typography variant="h4" style={{ marginTop: '12px' }}>
+                              {room.title}
+                            </Typography>
+                          </CardHeader>
+                          <CardBody>
+                            <Flex align="center" gap="xs">
+                              <IconUsers size={14} color="var(--color-text-tertiary)" />
+                              <Typography variant="caption" color="text-tertiary">
+                                참가자 {room.participants || 0}명
+                              </Typography>
+                            </Flex>
+                          </CardBody>
+                          <CardFooter>
+                            <Button fullWidth onClick={() => handleJoinRoom(room)} variant="primary">
+                              참여하기
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                )}
+              </Box>
             </Stack>
-          </Grid>
-        </Stack>
+          </Box>
+        </div>
       </Box>
     );
   }

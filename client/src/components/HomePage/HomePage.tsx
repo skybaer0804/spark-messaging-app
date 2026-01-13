@@ -69,9 +69,9 @@ export function HomePage() {
           <Typography variant="h3" className="home-page__section-title">
             내 애플리케이션
           </Typography>
-          <Grid container spacing={3} columns={3} className="home-page__grid">
+          <Grid container spacing={3} columns={2} className="home-page__grid">
             {apps.map((app) => (
-              <Grid item key={app.id} xs={12} md={4}>
+              <Grid item key={app.id} xs={2} md={1}>
                 <Paper
                   className="home-page__card"
                   elevation={2}
