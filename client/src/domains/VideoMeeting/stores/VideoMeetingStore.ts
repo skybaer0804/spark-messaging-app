@@ -1,5 +1,5 @@
 import { signal, type Signal } from '@preact/signals';
-import sparkMessagingClient from '../../../config/sparkMessaging';
+import sparkMessagingClient, { MEETING_CONFIG } from '../../../config/sparkMessaging';
 import { ConnectionService } from '@/core/socket/ConnectionService';
 import { ChatService } from '@/core/socket/ChatService';
 import { FileTransferService } from '@/core/api/FileTransferService';
@@ -17,6 +17,9 @@ export interface ScheduledMeeting {
   status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
   hostId: { _id: string; username: string };
   roomId?: string;
+  joinHash: string;
+  isPrivate: boolean;
+  isReserved: boolean;
 }
 
 interface ToastFunctions {
@@ -105,10 +108,10 @@ export class VideoMeetingStore {
 
         // ChatService가 이미 ChatMessage 형태로 변환해주므로 그대로 사용
         const chatMessage: ChatMessage = {
-          id: message.id,
+          id: message._id,
           content: message.content,
-          timestamp: message.timestamp,
-          type: message.type,
+          timestamp: message.timestamp.getTime(),
+          type: message.type === 'file' ? 'file-transfer' : 'chat',
           senderId: message.senderId,
           fileData: message.fileData,
         };
@@ -120,7 +123,7 @@ export class VideoMeetingStore {
   // 초기화
   public initialize() {
     this.connectionService = new ConnectionService(sparkMessagingClient);
-    this.chatService = new ChatService(sparkMessagingClient, this.connectionService);
+    this.chatService = new ChatService(sparkMessagingClient);
     this.fileTransferService = new FileTransferService(sparkMessagingClient, this.connectionService, this.chatService);
     this.roomService = new RoomService(sparkMessagingClient, this.connectionService);
     this.participantService = new ParticipantService(sparkMessagingClient, this.connectionService);
@@ -223,59 +226,16 @@ export class VideoMeetingStore {
 
     // Participant 관리
     this.participantService.onRoomMessage({
-      onJoinRequest: () => {
-        this.pendingRequests.value = [...this.participantService!.getPendingRequests()];
-      },
-      onJoinApproved: async (socketId, roomId) => {
-        if (!this.connectionService || !this.roomService) return;
-
-        const status = this.connectionService.getConnectionStatus();
-        if (socketId === status.socketId) {
-          console.log('[DEBUG] 참가 승인됨 - 룸 입장 시작:', roomId);
-          this.joinRequestStatus.value = 'approved';
-          this.showSuccess('참가 요청이 승인되었습니다!');
-
-          const targetRoomId = roomId || this.requestedRoomId.value;
-          if (targetRoomId) {
-            try {
-              await this.roomService.joinRoom(targetRoomId);
-              const approvedRoom = this.roomService.getRoomList().find((r) => r.roomId === targetRoomId);
-              if (approvedRoom) {
-                this.currentRoom.value = approvedRoom;
-                this.userRole.value = 'supplier';
-                this.joinRequestStatus.value = 'idle';
-                this.requestedRoomId.value = null;
-              }
-            } catch (error) {
-              console.error('[ERROR] 승인된 룸 입장 실패:', error);
-            }
-          }
-        }
-      },
-      onJoinRejected: (socketId) => {
-        if (!this.connectionService || !this.roomService) return;
-
-        const status = this.connectionService.getConnectionStatus();
-        if (socketId === status.socketId) {
-          this.joinRequestStatus.value = 'rejected';
-          this.requestedRoomId.value = null;
-          this.showError('참가 요청이 거부되었습니다.');
-          if (this.currentRoom.value) {
-            this.roomService.leaveRoom(this.currentRoom.value.roomId);
-          }
-        }
-      },
       onUserJoined: (participant) => {
         if (!this.participantService) return;
-
-        const isApprovedSupplier =
-          this.participantService.getPendingRequests().find((r) => r.socketId === participant.socketId) === undefined;
-        if (isApprovedSupplier || this.userRole.value === 'demander') {
-          this.participants.value = [...this.participantService.getParticipants()];
-        }
+        console.log('[DEBUG] 사용자 입장:', participant.socketId);
+        this.participants.value = [...this.participantService.getParticipants()];
       },
-      onUserLeft: () => {
-        this.participants.value = [...this.participantService!.getParticipants()];
+      onUserLeft: (socketId) => {
+        if (!this.participantService) return;
+        console.log('[DEBUG] 사용자 퇴장:', socketId);
+        this.webRTCService?.removePeerConnection(socketId);
+        this.participants.value = [...this.participantService.getParticipants()];
       },
     });
 
@@ -338,59 +298,84 @@ export class VideoMeetingStore {
   public async joinRoom(room: Room): Promise<void> {
     if (!this.isConnected.value || !this.roomService || !this.participantService) return;
 
+    // 인원 제한 확인
+    const currentParticipantsCount = room.participants || 0;
+    if (currentParticipantsCount >= MEETING_CONFIG.MAX_PARTICIPANTS) {
+      this.showError(`인원이 가득 찼습니다. (최대 ${MEETING_CONFIG.MAX_PARTICIPANTS}명)`);
+      return;
+    }
+
     const isMyRoom = this.roomService.getMyRooms().has(room.roomId);
 
     if (this.roomService.getCurrentRoomRef() === room.roomId) {
       return;
     }
 
-    // 승인된 상태면 바로 입장
-    if (this.joinRequestStatus.value === 'approved' && !isMyRoom) {
-      try {
-        await this.roomService.joinRoom(room.roomId);
-        this.currentRoom.value = room;
-        this.userRole.value = 'supplier';
-        this.joinRequestStatus.value = 'idle';
-        return;
-      } catch (error) {
-        console.error('[ERROR] 승인된 룸 입장 실패:', error);
-      }
-    }
+    try {
+      // 모든 사용자가 즉시 입장 (허락 로직 제거)
+      await this.roomService.joinRoom(room.roomId);
+      this.currentRoom.value = room;
 
-    // 내 룸이면 바로 입장
-    if (isMyRoom) {
-      try {
-        await this.roomService.joinRoom(room.roomId);
+      if (isMyRoom) {
         this.participantService.setUserRole('demander');
         this.userRole.value = 'demander';
-        this.currentRoom.value = room;
-        this.pendingRequests.value = [];
-        this.joinRequestStatus.value = 'idle';
-      } catch (error) {
-        console.error('[ERROR] 룸 참가 실패:', error);
-        this.showError('룸 참가에 실패했습니다.');
+      } else {
+        this.participantService.setUserRole('supplier');
+        this.userRole.value = 'supplier';
       }
-    } else {
-      // 공급자는 참가 요청만 보내고 룸에 입장하지 않음
-      if (this.joinRequestStatus.value === 'idle' || this.joinRequestStatus.value === 'rejected') {
-        try {
-          this.joinRequestStatus.value = 'pending';
-          this.requestedRoomId.value = room.roomId;
-          await this.participantService.sendJoinRequest(room.roomId, room.category);
-          this.userRole.value = 'supplier';
-        } catch (error) {
-          console.error('[ERROR] 참가 요청 실패:', error);
-          this.showError('참가 요청에 실패했습니다.');
-          this.joinRequestStatus.value = 'idle';
-          this.requestedRoomId.value = null;
-        }
+
+      this.pendingRequests.value = [];
+      this.joinRequestStatus.value = 'idle';
+    } catch (error) {
+      console.error('[ERROR] 룸 참가 실패:', error);
+      this.showError('룸 참가에 실패했습니다.');
+    }
+  }
+
+  // 게스트 입장 로직
+  public async joinAsGuest(hash: string, nickname: string): Promise<void> {
+    if (!this.isConnected.value || !this.roomService || !this.participantService) return;
+
+    try {
+      const res = await videoMeetingApi.getMeetingByHash(hash);
+      const meeting = res.data;
+
+      if (!meeting.roomId) {
+        this.showError('유효하지 않은 회의실입니다.');
+        return;
       }
+
+      // 게스트 전용 역할 설정
+      this.userRole.value = 'guest' as any;
+
+      await this.roomService.joinRoom(meeting.roomId);
+
+      const room: Room = {
+        roomId: meeting.roomId,
+        title: meeting.title,
+        category: '회의',
+        hostSocketId: '',
+        participants: 0,
+        createdAt: Date.now(),
+      };
+      this.currentRoom.value = room;
+
+      this.showSuccess(`${nickname}님, 환영합니다!`);
+    } catch (error) {
+      console.error('[Guest] Join failed:', error);
+      this.showError('회의 참여에 실패했습니다.');
     }
   }
 
   // 참가 요청 승인
   public async approveRequest(requesterSocketId: string): Promise<void> {
     if (!this.currentRoom.value || !this.isConnected.value || !this.participantService) return;
+
+    // 인원 제한 확인
+    if (this.participants.value.length >= MEETING_CONFIG.MAX_PARTICIPANTS) {
+      this.showError(`최대 인원(${MEETING_CONFIG.MAX_PARTICIPANTS}명)을 초과하여 승인할 수 없습니다.`);
+      return;
+    }
 
     try {
       await this.participantService.approveRequest(this.currentRoom.value.roomId, requesterSocketId);
@@ -441,6 +426,10 @@ export class VideoMeetingStore {
   }
 
   public async refreshScheduledMeetings() {
+    // 게스트이거나 인증되지 않은 경우 호출하지 않음
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const res = await videoMeetingApi.getMeetings();
       this.scheduledMeetings.value = res.data;
@@ -455,6 +444,9 @@ export class VideoMeetingStore {
     scheduledAt: string;
     invitedUsers?: string[];
     invitedWorkspaces?: string[];
+    isReserved?: boolean;
+    isPrivate?: boolean;
+    password?: string;
   }) {
     try {
       await videoMeetingApi.createMeeting(data);

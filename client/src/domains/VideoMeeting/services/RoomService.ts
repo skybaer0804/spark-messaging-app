@@ -1,6 +1,7 @@
 import type SparkMessaging from '@skybaer0804/spark-messaging-client';
 import { ConnectionService } from '@/core/socket/ConnectionService';
 import { chatApi } from '@/core/api/ApiService';
+import { currentWorkspaceId } from '@/stores/chatRoomsStore';
 import type { Room, Category } from '../types';
 
 export type RoomCreatedCallback = (room: Room) => void;
@@ -98,6 +99,7 @@ export class RoomService {
     // v2.0.0: 백엔드 API를 통해 DB에 방 생성
     const response = await chatApi.createRoom({
       name: title.trim(),
+      workspaceId: currentWorkspaceId.value || undefined,
       isGroup: true,
     });
 

@@ -1,3 +1,4 @@
+import { useEffect } from 'preact/hooks';
 import { VideoConference } from './VideoConference/VideoConference';
 import { VideoMeetingVideoConferenceAdapter } from './VideoConference/adapters/VideoConferenceAdapter';
 import { Chat } from '@/domains/Chat';
@@ -50,12 +51,16 @@ function initializeStores(toast: { showSuccess: (m: string) => void; showError: 
 
       // VideoConferenceAdapter 생성 (Store 기반)
       const webRTCService = videoMeetingStoreInstance.getWebRTCService();
-      videoConferenceAdapterInstance = new VideoMeetingVideoConferenceAdapter(
-        videoStoreInstance,
-        videoMeetingStoreInstance,
-        webRTCService,
-      );
-      console.log('[DEBUG] VideoConferenceAdapter 생성 완료');
+      if (webRTCService) {
+        videoConferenceAdapterInstance = new VideoMeetingVideoConferenceAdapter(
+          videoStoreInstance,
+          videoMeetingStoreInstance,
+          webRTCService,
+        );
+        console.log('[DEBUG] VideoConferenceAdapter 생성 완료');
+      } else {
+        console.warn('[WARN] WebRTCService가 없습니다.');
+      }
       console.log('[DEBUG] 모든 Store 초기화 완료');
     } catch (error) {
       console.error('[ERROR] Store 초기화 실패:', error);
@@ -76,6 +81,19 @@ export function VideoMeeting() {
   const videoConferenceAdapter = videoConferenceAdapterInstance;
 
   const currentRoom = videoMeetingStore.currentRoom.value;
+
+  useEffect(() => {
+    // URL query parameter 확인 (guest join용)
+    const params = new URLSearchParams(window.location.search);
+    const joinHash = params.get('join');
+    const guestNickname = sessionStorage.getItem('guest_nickname');
+
+    if (joinHash && guestNickname) {
+      // 게스트 입장 로직 수행
+      console.log(`[Guest] Joining meeting with hash: ${joinHash} as ${guestNickname}`);
+      videoMeetingStore.joinAsGuest(joinHash, guestNickname);
+    }
+  }, []);
 
   return (
     <div className="video-meeting">

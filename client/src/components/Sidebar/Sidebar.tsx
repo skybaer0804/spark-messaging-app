@@ -110,6 +110,8 @@ export function Sidebar() {
           })}
         </nav>
 
+        <div className="lnb__divider" />
+
         <div className="lnb__footer">
           <div
             className={`lnb__workspace-item ${pathname.startsWith('/profile') ? 'lnb__workspace-item--active' : ''}`}

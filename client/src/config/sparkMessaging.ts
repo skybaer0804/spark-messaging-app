@@ -6,12 +6,10 @@ const projectKey = import.meta.env.VITE_SPARK_PROJECT_KEY || 'default-project-ke
 // SDK 생성자 호출 (생성자 오버로드 사용)
 const sparkMessagingClient = new SparkMessaging(serverUrl, projectKey);
 
-// 또는 옵션 객체로 초기화
-// const sparkMessagingClient = new SparkMessaging({
-//     serverUrl,
-//     projectKey,
-//     debug: import.meta.env.DEV, // 개발 환경에서 디버그 모드
-//     autoConnect: true,
-// });
+// 회의 제한 설정
+export const MEETING_CONFIG = {
+  MAX_PARTICIPANTS: parseInt(import.meta.env.VITE_MEETING_MAX_PARTICIPANTS || '10', 10),
+  MAX_VIDEO_STREAMS: parseInt(import.meta.env.VITE_MEETING_MAX_VIDEO_STREAMS || '4', 10),
+};
 
 export default sparkMessagingClient;

@@ -2,6 +2,7 @@ const VideoMeeting = require('../models/VideoMeeting');
 const ChatRoom = require('../models/ChatRoom');
 const notificationService = require('../services/notificationService');
 const User = require('../models/User');
+const crypto = require('crypto');
 
 exports.getMeetings = async (req, res) => {
   try {
@@ -24,8 +25,15 @@ exports.getMeetings = async (req, res) => {
 
 exports.createMeeting = async (req, res) => {
   try {
-    const { title, description, scheduledAt, invitedUsers, invitedWorkspaces } = req.body;
+    const { title, description, scheduledAt, invitedUsers, invitedWorkspaces, isReserved, isPrivate, password } =
+      req.body;
     const hostId = req.user.id;
+
+    // joinHash 생성 (랜덤 12자리)
+    const joinHash = crypto.randomBytes(6).toString('hex');
+
+    // .env에서 최대 참가자 수 가져오기
+    const maxParticipants = parseInt(process.env.VIDEO_MEETING_MAX_PARTICIPANTS || '20', 10);
 
     // 1. 화상회의 데이터 생성
     const newMeeting = new VideoMeeting({
@@ -35,24 +43,29 @@ exports.createMeeting = async (req, res) => {
       scheduledAt: new Date(scheduledAt),
       invitedUsers: invitedUsers || [],
       invitedWorkspaces: invitedWorkspaces || [],
+      isReserved: isReserved || false,
+      isPrivate: isPrivate || false,
+      password: password || null,
+      joinHash,
+      status: 'scheduled',
+      maxParticipants, // 설정 적용
     });
 
     await newMeeting.save();
 
-    // 2. 채팅방 자동 생성 (v2.2.0 워크스페이스 구조 연동 필요 시 추가 보완)
-    // 현재는 단순하게 hostId와 초대받은 유저들로만 구성
+    // 2. 채팅방 자동 생성
     const newRoom = new ChatRoom({
       name: `Meeting: ${title}`,
       members: [hostId, ...(invitedUsers || [])],
-      workspaceId: req.body.workspaceId, // 클라이언트에서 넘겨주어야 함
-      type: 'public', // 화상회의용 룸 타입 설정
+      workspaceId: req.body.workspaceId,
+      type: 'public',
     });
 
     await newRoom.save();
     newMeeting.roomId = newRoom._id;
     await newMeeting.save();
 
-    // 3. 초대 대상자들에게 푸시 알림 예약
+    // 3. 초대 대상자들에게 푸시 알림 즉시 전송
     let recipientIds = [...(invitedUsers || [])];
     if (invitedWorkspaces && invitedWorkspaces.length > 0) {
       const workspaceUsers = await User.find({ workspaces: { $in: invitedWorkspaces } }).select('_id');
@@ -60,16 +73,66 @@ exports.createMeeting = async (req, res) => {
     }
 
     if (recipientIds.length > 0) {
-      notificationService.notifyGlobal(
-        recipientIds,
-        '새 회의 예약',
-        `${title} 회의가 ${new Date(scheduledAt).toLocaleString()}에 예약되었습니다.`,
-      );
+      notificationService.notifyGlobal(recipientIds, '새 회의 초대', `${title} 회의에 초대되었습니다.`, {
+        actionUrl: `/video-meeting/join/${joinHash}`,
+        metadata: { type: 'meeting', meetingId: newMeeting._id.toString() },
+      });
+    }
+
+    // 4. 예약 회의인 경우 1분 전 알림 예약 로직은 schedulerService에서 별도로 처리하거나
+    // 여기에 Notification 모델을 생성하여 저장 (schedulerService가 긁어갈 수 있도록)
+    if (isReserved) {
+      const Notification = require('../models/Notification');
+      const reminderTime = new Date(new Date(scheduledAt).getTime() - 60000); // 1분 전
+
+      const reminderNotification = new Notification({
+        title: `회의 시작 1분 전: ${title}`,
+        content: `잠시 후 ${title} 회의가 시작됩니다. 참여를 준비해주세요.`,
+        senderId: hostId,
+        scheduledAt: reminderTime,
+        targetType: 'all', // 단순화를 위해 all로 설정 (필요시 invitedUsers 타겟팅 로직 추가)
+        actionUrl: `/video-meeting/join/${joinHash}`,
+        metadata: { type: 'meeting_reminder', meetingId: newMeeting._id.toString() },
+      });
+      await reminderNotification.save();
     }
 
     res.status(201).json(newMeeting);
   } catch (error) {
     res.status(500).json({ message: 'Failed to create meeting', error: error.message });
+  }
+};
+
+exports.getMeetingByHash = async (req, res) => {
+  try {
+    const { hash } = req.params;
+    const meeting = await VideoMeeting.findOne({ joinHash: hash })
+      .populate('hostId', 'username profileImage')
+      .select('-password'); // 비밀번호는 제외하고 반환
+
+    if (!meeting) return res.status(404).json({ message: 'Meeting not found' });
+
+    res.json(meeting);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch meeting', error: error.message });
+  }
+};
+
+exports.verifyMeetingPassword = async (req, res) => {
+  try {
+    const { hash } = req.params;
+    const { password } = req.body;
+
+    const meeting = await VideoMeeting.findOne({ joinHash: hash });
+    if (!meeting) return res.status(404).json({ message: 'Meeting not found' });
+
+    if (meeting.isPrivate && meeting.password !== password) {
+      return res.status(401).json({ message: 'Invalid password' });
+    }
+
+    res.json({ success: true, message: 'Password verified' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to verify password', error: error.message });
   }
 };
 

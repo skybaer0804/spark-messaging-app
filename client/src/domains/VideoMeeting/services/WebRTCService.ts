@@ -384,6 +384,16 @@ export class WebRTCService {
     return this.peerConnections.get(socketId);
   }
 
+  public removePeerConnection(socketId: string) {
+    const pc = this.peerConnections.get(socketId);
+    if (pc) {
+      console.log('[DEBUG] PeerConnection 제거:', socketId);
+      pc.close();
+      this.peerConnections.delete(socketId);
+    }
+    this.videoRefs.delete(socketId);
+  }
+
   public cleanup() {
     this.stopLocalStream();
     this.unsubscribeCallbacks.forEach((unsubscribe) => unsubscribe());

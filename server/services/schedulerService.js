@@ -12,7 +12,30 @@ class SchedulerService {
       this.processScheduledNotifications();
     });
 
+    // 서버 시작 시 미발송된 알림(장애 복구) 체크
+    this.recoverMissedNotifications();
+
     console.log('Scheduler Service Initialized (Every 1 minute interval)');
+  }
+
+  async recoverMissedNotifications() {
+    try {
+      const now = new Date();
+      // 예약 시간이 지났거나 현재부터 1분 이내인 미발송 알림 조회
+      const missedNotifications = await Notification.find({
+        scheduledAt: { $ne: null, $lte: now },
+        isSent: false,
+      });
+
+      if (missedNotifications.length > 0) {
+        console.log(`[Scheduler] Recovering ${missedNotifications.length} missed notifications`);
+        for (const notification of missedNotifications) {
+          await this.sendNotification(notification);
+        }
+      }
+    } catch (error) {
+      console.error('[Scheduler] Error recovering missed notifications:', error);
+    }
   }
 
   async processScheduledNotifications() {

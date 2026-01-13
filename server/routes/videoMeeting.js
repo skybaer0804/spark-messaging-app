@@ -1,8 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const { getMeetings, createMeeting, startMeeting } = require('../controllers/videoMeetingController');
+const {
+  getMeetings,
+  createMeeting,
+  startMeeting,
+  getMeetingByHash,
+  verifyMeetingPassword,
+} = require('../controllers/videoMeetingController');
 const auth = require('../middleware/auth');
 
+// Public routes (Guests)
+router.get('/join/:hash', getMeetingByHash);
+router.post('/join/:hash/verify', verifyMeetingPassword);
+
+// Private routes (Authenticated)
 router.use(auth);
 
 router.get('/', getMeetings);

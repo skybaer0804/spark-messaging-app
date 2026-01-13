@@ -16,8 +16,41 @@ export class VideoMeetingVideoConferenceAdapter implements VideoConferenceAdapte
 
   // ... (rest of the file remains same, just replacing types)
   getLocalStream() {
-    return this.videoStore.localStream.value;
+    return this.webRTCService.getLocalStream();
   }
+  isVideoEnabled() {
+    return this.videoStore.isVideoEnabled.value;
+  }
+  getParticipants() {
+    return this.videoMeetingStore.participants.value;
+  }
+  getSocketId() {
+    return this.videoMeetingStore.socketId.value;
+  }
+  async startLocalStream() {
+    await this.webRTCService.startLocalStream();
+  }
+  async stopLocalStream() {
+    this.webRTCService.stopLocalStream();
+  }
+  setVideoRef(socketId: string, element: HTMLVideoElement | null) {
+    this.webRTCService.setVideoRef(socketId, element);
+  }
+
+  // Signal 기반 접근
+  getLocalStreamSignal() {
+    return this.videoStore.localStream;
+  }
+  getIsVideoEnabledSignal() {
+    return this.videoStore.isVideoEnabled;
+  }
+  getParticipantsSignal() {
+    return this.videoMeetingStore.participants;
+  }
+  getSocketIdSignal() {
+    return this.videoMeetingStore.socketId;
+  }
+
   getRemoteStreams() {
     return this.videoStore.remoteStreams.value;
   }
@@ -25,10 +58,25 @@ export class VideoMeetingVideoConferenceAdapter implements VideoConferenceAdapte
     return this.videoMeetingStore.isConnected.value;
   }
   async toggleVideo() {
-    await this.webRTCService.toggleVideo();
+    // Note: webRTCService.toggleVideo()가 없을 수도 있음. 
+    // 로컬 스트림 트랙 제어로 구현 필요
+    const stream = this.webRTCService.getLocalStream();
+    if (stream) {
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        this.videoStore.isVideoEnabled.value = videoTrack.enabled;
+      }
+    }
   }
   async toggleAudio() {
-    await this.webRTCService.toggleAudio();
+    const stream = this.webRTCService.getLocalStream();
+    if (stream) {
+      const audioTrack = stream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+      }
+    }
   }
   async leave() {
     await this.videoMeetingStore.leaveRoom();

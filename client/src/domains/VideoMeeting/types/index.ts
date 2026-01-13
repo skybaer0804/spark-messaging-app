@@ -1,4 +1,4 @@
-export type UserRole = 'demander' | 'supplier' | 'admin';
+export type UserRole = 'demander' | 'supplier' | 'admin' | 'guest';
 
 export type Category = '회의' | '웨비나' | '상담';
 
@@ -8,13 +8,17 @@ export interface Participant {
   role: UserRole;
   isVideoEnabled?: boolean;
   isAudioEnabled?: boolean;
+  stream?: MediaStream; // 추가
 }
 
 export interface Room {
-  id: string;
+  id?: string;
+  roomId: string; // 주요 ID로 사용
   title: string;
   category: Category;
-  hostId: string;
+  hostId?: string;
+  hostSocketId?: string;
+  participants?: number;
   createdAt: number;
 }
 

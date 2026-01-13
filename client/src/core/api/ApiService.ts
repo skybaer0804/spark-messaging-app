@@ -61,8 +61,13 @@ export const authApi = {
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
   getUsers: (workspaceId?: string) => api.get('/auth/users', { params: { workspaceId } }),
-  updateProfile: (data: { username?: string; profileImage?: string; status?: string; statusText?: string; role?: string }) =>
-    api.put('/auth/profile', data),
+  updateProfile: (data: {
+    username?: string;
+    profileImage?: string;
+    status?: string;
+    statusText?: string;
+    role?: string;
+  }) => api.put('/auth/profile', data),
   updateNotificationSettings: (data: { globalEnabled?: boolean; roomPreferences?: Record<string, boolean> }) =>
     api.post('/auth/notification-settings', data),
 };
@@ -136,8 +141,14 @@ export const videoMeetingApi = {
     scheduledAt: string;
     invitedUsers?: string[];
     invitedWorkspaces?: string[];
+    isReserved?: boolean;
+    isPrivate?: boolean;
+    password?: string;
   }) => api.post('/video-meeting', data),
   startMeeting: (meetingId: string) => api.post(`/video-meeting/${meetingId}/start`),
+  getMeetingByHash: (hash: string) => api.get(`/video-meeting/join/${hash}`),
+  verifyMeetingPassword: (hash: string, password?: string) =>
+    api.post(`/video-meeting/join/${hash}/verify`, { password }),
 };
 
 export const pushApi = {

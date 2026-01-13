@@ -2,189 +2,124 @@ import { useState } from 'preact/hooks';
 import { Box } from '@/ui-components/Layout/Box';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Stack } from '@/ui-components/Layout/Stack';
+import { Grid } from '@/ui-components/Layout/Grid';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
-import { Tabs, TabsItem } from '@/ui-components/Tabs/Tabs';
 import { Button } from '@/ui-components/Button/Button';
-import { IconMessageCircle, IconBell, IconVideo } from '@tabler/icons-preact';
+import { IconMessageCircle, IconBell, IconVideo, IconChevronRight, IconRocket } from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';
+import { useAuth } from '@/core/hooks/useAuth';
 import './HomePage.scss';
 
 export function HomePage() {
   const { navigate } = useRouterState();
-  const [activeTab, setActiveTab] = useState<string>('chatapp');
+  const { user } = useAuth();
 
-  const appDescriptions: Record<string, { title: string; description: string; features: string[] }> = {
-    chatapp: {
+  const apps = [
+    {
+      id: 'chatapp',
       title: '실시간 채팅',
-      description:
-        'Socket.IO 기반의 실시간 채팅 애플리케이션입니다. 여러 채팅방을 생성하고 참여하여 실시간으로 메시지를 주고받을 수 있습니다.',
-      features: ['실시간 메시지 전송 및 수신', '다중 채팅방 지원', '파일 및 이미지 공유', '연결 상태 표시'],
-    },
-    notification: {
-      title: '알림 시스템',
-      description:
-        '실시간 알림을 받고 관리할 수 있는 시스템입니다. 다양한 유형의 알림을 처리하고 우선순위를 설정할 수 있습니다.',
-      features: ['실시간 알림 수신', '알림 우선순위 설정', '알림 히스토리 관리', '알림 필터링'],
-    },
-    'video-meeting': {
-      title: '화상회의 시스템',
-      description:
-        'WebRTC 기술을 활용한 고성능 화상회의 솔루션입니다. 실시간 비디오 및 오디오 통신을 통해 원격 협업을 지원합니다.',
-      features: ['고화질 실시간 영상 통화', '화면 공유 및 협업 도구', '채팅 및 파일 전송', '다양한 회의 모드 지원'],
-    },
-  };
-
-  const appTabs: TabsItem[] = [
-    {
-      value: 'chatapp',
-      label: '채팅',
-      content: (
-        <Box className="home-page__app-content">
-          <Stack spacing="md">
-            <Flex align="center" gap="sm">
-              <IconMessageCircle size={20} />
-              <Typography variant="h3">{appDescriptions.chatapp.title}</Typography>
-            </Flex>
-            <Typography variant="body-medium" color="text-secondary">
-              {appDescriptions.chatapp.description}
-            </Typography>
-            <Stack spacing="sm">
-              <Typography
-                variant="body-small"
-                color="text-secondary"
-                style={{ fontWeight: 'var(--primitive-font-weight-semibold)' }}
-              >
-                주요 기능:
-              </Typography>
-              <ul className="home-page__features-list">
-                {appDescriptions.chatapp.features.map((feature, index) => (
-                  <li key={index}>
-                    <Typography variant="body-small" color="text-secondary">
-                      {feature}
-                    </Typography>
-                  </li>
-                ))}
-              </ul>
-            </Stack>
-            <Flex justify="flex-end" style={{ marginTop: 'var(--space-gap-md)' }}>
-              <Button variant="primary" onClick={() => navigate('/chatapp')}>
-                체험해보기
-              </Button>
-            </Flex>
-          </Stack>
-        </Box>
-      ),
+      icon: <IconMessageCircle size={32} />,
+      description: 'Socket.IO 기반의 실시간 소통 시스템',
+      color: '#509EE3',
+      path: '/chatapp',
+      features: ['실시간 메시징', '파일 공유', '다중 채널'],
     },
     {
-      value: 'notification',
-      label: '알림',
-      content: (
-        <Box className="home-page__app-content">
-          <Stack spacing="md">
-            <Flex align="center" gap="sm">
-              <IconBell size={20} />
-              <Typography variant="h3">{appDescriptions.notification.title}</Typography>
-            </Flex>
-            <Typography variant="body-medium" color="text-secondary">
-              {appDescriptions.notification.description}
-            </Typography>
-            <Stack spacing="sm">
-              <Typography
-                variant="body-small"
-                color="text-secondary"
-                style={{ fontWeight: 'var(--primitive-font-weight-semibold)' }}
-              >
-                주요 기능:
-              </Typography>
-              <ul className="home-page__features-list">
-                {appDescriptions.notification.features.map((feature, index) => (
-                  <li key={index}>
-                    <Typography variant="body-small" color="text-secondary">
-                      {feature}
-                    </Typography>
-                  </li>
-                ))}
-              </ul>
-            </Stack>
-            <Flex justify="flex-end" style={{ marginTop: 'var(--space-gap-md)' }}>
-              <Button variant="primary" onClick={() => navigate('/notification')}>
-                체험해보기
-              </Button>
-            </Flex>
-          </Stack>
-        </Box>
-      ),
+      id: 'notification',
+      title: '스마트 알림',
+      icon: <IconBell size={32} />,
+      description: '중요한 업데이트를 놓치지 마세요',
+      color: '#E73C7E',
+      path: '/notification',
+      features: ['푸시 알림', '이력 관리', '우선순위'],
     },
     {
-      value: 'video-meeting',
-      label: '회의',
-      content: (
-        <Box className="home-page__app-content">
-          <Stack spacing="md">
-            <Flex align="center" gap="sm">
-              <IconVideo size={20} />
-              <Typography variant="h3">{appDescriptions['video-meeting'].title}</Typography>
-            </Flex>
-            <Typography variant="body-medium" color="text-secondary">
-              {appDescriptions['video-meeting'].description}
-            </Typography>
-            <Stack spacing="sm">
-              <Typography
-                variant="body-small"
-                color="text-secondary"
-                style={{ fontWeight: 'var(--primitive-font-weight-semibold)' }}
-              >
-                주요 기능:
-              </Typography>
-              <ul className="home-page__features-list">
-                {appDescriptions['video-meeting'].features.map((feature, index) => (
-                  <li key={index}>
-                    <Typography variant="body-small" color="text-secondary">
-                      {feature}
-                    </Typography>
-                  </li>
-                ))}
-              </ul>
-            </Stack>
-            <Flex justify="flex-end" style={{ marginTop: 'var(--space-gap-md)' }}>
-              <Button variant="primary" onClick={() => navigate('/video-meeting')}>
-                체험해보기
-              </Button>
-            </Flex>
-          </Stack>
-        </Box>
-      ),
+      id: 'video-meeting',
+      title: '화상 회의',
+      icon: <IconVideo size={32} />,
+      description: '얼굴을 마주하며 협업하는 비디오 콜',
+      color: '#23D5AB',
+      path: '/video-meeting',
+      features: ['WebRTC 영상', '화면 공유', '동시 접속'],
     },
   ];
 
-  const handleTabChange = (value: string | number) => {
-    setActiveTab(String(value));
-  };
-
   return (
     <Box className="home-page">
-      <Stack spacing="xl" style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* 앱 소개글 */}
-        <Paper padding="lg" elevation={1} className="home-page__intro">
-          <Stack spacing="md">
-            <Typography variant="body-large" color="text-secondary" className="home-page__subtitle">
-              실시간 통신을 위한 다양한 애플리케이션을 경험해보세요. Socket.IO 기반의 강력한 메시징 시스템으로 채팅,
-              알림, 화상회의 등 다양한 기능을 제공합니다.
+      <div className="home-page__container">
+        {/* 히어로 섹션 */}
+        <section className="home-page__hero">
+          <Stack spacing="sm">
+            <Flex align="center" gap="xs" className="home-page__badge">
+              <IconRocket size={16} />
+              <Typography variant="body-small">Spark Messaging v2.2.0</Typography>
+            </Flex>
+            <Typography variant="h1" className="home-page__welcome">
+              반가워요, <span className="highlight">{user?.username || '사용자'}</span>님!
+            </Typography>
+            <Typography variant="body-large" color="text-secondary" className="home-page__hero-desc">
+              오늘은 어떤 협업을 시작해볼까요? 왼쪽 메뉴 또는 아래 카드를 통해 앱을 실행하세요.
             </Typography>
           </Stack>
-        </Paper>
+        </section>
 
-        {/* 지원하는 앱 탭 */}
-        <Paper padding="lg" elevation={1} className="home-page__apps">
-          <Stack spacing="lg">
-            <Typography variant="h2" className="home-page__section-title">
-              지원하는 앱
-            </Typography>
-            <Tabs items={appTabs} value={activeTab} onChange={handleTabChange} variant="fullWidth" />
-          </Stack>
-        </Paper>
-      </Stack>
+        {/* 앱 그리드 */}
+        <section className="home-page__content">
+          <Typography variant="h3" className="home-page__section-title">
+            내 애플리케이션
+          </Typography>
+          <Grid container spacing={3} columns={3} className="home-page__grid">
+            {apps.map((app) => (
+              <Grid item key={app.id} xs={12} md={4}>
+                <Paper
+                  className="home-page__card"
+                  elevation={2}
+                  onClick={() => navigate(app.path)}
+                  style={{ '--app-color': app.color } as any}
+                >
+                  <div className="home-page__card-icon" style={{ backgroundColor: `${app.color}15`, color: app.color }}>
+                    {app.icon}
+                  </div>
+                  <Stack spacing="xs" className="home-page__card-body">
+                    <Typography variant="h4">{app.title}</Typography>
+                    <Typography variant="body-medium" color="text-secondary">
+                      {app.description}
+                    </Typography>
+                  </Stack>
+                  <div className="home-page__card-footer">
+                    <Flex gap="xs">
+                      {app.features.map((f) => (
+                        <span key={f} className="home-page__feature-tag">
+                          {f}
+                        </span>
+                      ))}
+                    </Flex>
+                    <div className="home-page__card-arrow">
+                      <IconChevronRight size={20} />
+                    </div>
+                  </div>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </section>
+
+        {/* 퀵 액션 / 상태 섹션 (추후 확장용) */}
+        <section className="home-page__footer-info">
+          <Paper className="home-page__info-banner" elevation={0}>
+            <Flex align="center" justify="space-between" wrap="wrap" gap="md">
+              <Stack spacing="xs">
+                <Typography variant="h4">도움이 필요하신가요?</Typography>
+                <Typography variant="body-medium" color="text-secondary">
+                  Spark Messaging의 다양한 기능을 마스터하려면 가이드를 확인하세요.
+                </Typography>
+              </Stack>
+              <Button variant="secondary">가이드 보기</Button>
+            </Flex>
+          </Paper>
+        </section>
+      </div>
     </Box>
   );
 }

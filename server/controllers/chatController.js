@@ -10,8 +10,17 @@ const imageService = require('../services/imageService');
 // 채팅방 생성
 exports.createRoom = async (req, res) => {
   try {
-    const { name, members, type = 'public', description, workspaceId, teamId, parentId, isPrivate } = req.body;
+    let { name, members, type = 'public', description, workspaceId, teamId, parentId, isPrivate } = req.body;
     const currentUserId = req.user.id;
+
+    // v2.2.0: workspaceId가 body에 없으면 헤더에서 확인
+    if (!workspaceId) {
+      workspaceId = req.headers['x-workspace-id'];
+    }
+
+    if (!workspaceId) {
+      return res.status(400).json({ message: 'workspaceId is required' });
+    }
 
     // 멤버 목록에 현재 사용자 추가 (중복 방지)
     const roomMembers = [...new Set([...(members || []), currentUserId])];

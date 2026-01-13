@@ -37,6 +37,64 @@ class SocketService {
           await userService.setActiveRoom(userId, null);
         }
       });
+
+      // v2.4.0: 화상회의 상태 자동 전환 핸들러 및 참가자 알림
+      this.client.on('ROOM_JOINED', async (data) => {
+        try {
+          const { roomId, userId, socketId, participantsCount } = data;
+
+          // 회의 상태 업데이트
+          const VideoMeeting = require('../models/VideoMeeting');
+          const meeting = await VideoMeeting.findOne({ roomId });
+
+          if (meeting && meeting.status === 'scheduled') {
+            meeting.status = 'ongoing';
+            await meeting.save();
+            console.log(`[Meeting] Meeting ${meeting._id} status changed to ongoing`);
+          }
+
+          // 다른 참가자들에게 새로운 사용자 입장 알림 (프론트엔드 로직 이동)
+          await this.client.sendRoomMessage(roomId, 'user-joined', {
+            socketId,
+            userId,
+            total: participantsCount,
+            timestamp: Date.now(),
+          });
+
+          console.log(`[Socket] User ${userId} (${socketId}) joined room ${roomId}. Total: ${participantsCount}`);
+        } catch (error) {
+          console.error('[Socket] Error in ROOM_JOINED handler:', error);
+        }
+      });
+
+      this.client.on('ROOM_LEFT', async (data) => {
+        try {
+          const { roomId, userId, socketId, participantsCount } = data;
+
+          // 다른 참가자들에게 사용자 퇴장 알림
+          await this.client.sendRoomMessage(roomId, 'user-left', {
+            socketId,
+            userId,
+            total: participantsCount,
+            timestamp: Date.now(),
+          });
+
+          if (participantsCount === 0) {
+            const VideoMeeting = require('../models/VideoMeeting');
+            const meeting = await VideoMeeting.findOne({ roomId });
+
+            if (meeting && meeting.status === 'ongoing') {
+              meeting.status = 'completed';
+              await meeting.save();
+              console.log(`[Meeting] Meeting ${meeting._id} status changed to completed`);
+            }
+          }
+
+          console.log(`[Socket] User ${userId} (${socketId}) left room ${roomId}. Total: ${participantsCount}`);
+        } catch (error) {
+          console.error('[Socket] Error in ROOM_LEFT handler:', error);
+        }
+      });
     } else {
       console.warn('Spark Messaging SDK does not support .on() event listeners in this version.');
     }
