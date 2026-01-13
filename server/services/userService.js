@@ -5,19 +5,23 @@ class UserService {
   // 유저 상태 설정 (Online/Offline)
   async setUserStatus(userId, status) {
     try {
+      const User = require('../models/User');
+
       // Redis에 유저 상태 저장 (key: user:status:id)
-      // 상태는 'online' 또는 'offline'
       await client.set(`user:status:${userId}`, status);
 
-      // 만약 'online'이면 마지막 활동 시간도 저장 (TTL 설정 가능)
+      // 만약 'online'이면 마지막 활동 시간도 저장
       if (status === 'online') {
         await client.set(`user:lastSeen:${userId}`, Date.now().toString());
       }
 
+      // MongoDB DB 업데이트 (v2.3.0 추가: DB 수정이 명시적으로 필요함)
+      await User.findByIdAndUpdate(userId, { status });
+
       // v2.2.0: 유저 상태 변경 이벤트 브로드캐스트
       socketService.broadcastEvent('USER_STATUS_CHANGED', { userId, status });
     } catch (error) {
-      console.error('Error setting user status in Redis:', error);
+      console.error('Error setting user status:', error);
     }
   }
 

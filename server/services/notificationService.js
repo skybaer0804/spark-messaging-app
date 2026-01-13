@@ -72,19 +72,18 @@ class NotificationService {
   }
 
   // 글로벌 공지사항 알림 전송
-  async notifyGlobal(recipientIds, title, content) {
+  async notifyGlobal(recipientIds, title, content, metadata = {}) {
     const payload = {
       title: title,
       body: content,
       icon: '/asset/spark_icon_192.png',
       data: {
-        url: '/',
-      }
+        url: metadata.actionUrl || metadata.url || '/',
+        ...metadata,
+      },
     };
 
-    const pushPromises = recipientIds.map(userId => 
-      this.sendPushNotification(userId, payload)
-    );
+    const pushPromises = recipientIds.map((userId) => this.sendPushNotification(userId, payload));
 
     await Promise.all(pushPromises);
   }

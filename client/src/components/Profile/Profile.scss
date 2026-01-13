@@ -11,29 +11,34 @@
     width: 100%;
     max-width: 600px;
     height: fit-content;
-    padding: var(--space-padding-xl); // 더 넓은 패딩 적용
-    border-radius: var(--primitive-radius-large);
-    box-shadow: var(--elevation-shadow-3); // 더 깊은 그림자 효과
-    background-color: var(--color-bg-default);
+    padding: var(--space-padding-lg);
+    border-radius: var(--primitive-radius-none);
+    box-shadow: none;
+    background-color: transparent;
+    border: none; // 카드 보더 제거
+
+    .card {
+      border: none !important;
+    }
   }
 
   &__header {
-    border-bottom: 1px solid var(--color-border-default);
-    padding-bottom: var(--spacing-xl);
-    margin-bottom: var(--spacing-lg);
+    // border-bottom 제거됨
+    padding-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
   }
 
   &__avatar {
     background-color: var(--color-interactive-primary);
     color: var(--primitive-gray-0);
-    font-size: 2.5rem; // 아바타 크기 조정
+    font-size: 2rem;
     font-weight: 700;
   }
 
   &__field {
     display: flex;
     flex-direction: column;
-    padding: var(--space-padding-lg); // 필드 내부 패딩 증가
+    padding: var(--space-padding-sm);
     border-radius: var(--radius-md);
     background-color: var(--color-bg-secondary);
     transition: background-color 0.2s ease;
@@ -48,4 +53,21 @@
     font-weight: 500;
     color: var(--color-text-primary);
   }
+
+  &__logout-container {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border-default);
+  }
+
+  // 탭 패널 패딩 제거 (MUI 또는 커스텀 Tabs 클래스 대응)
+  :global(.tabs-h0pi2t3-panel-info) {
+    padding: 0 !important;
+  }
+}
+
+// 탭 컴포넌트 내부 패널들에 대한 일반적인 패딩 제거 처리
+[id*='panel-info'],
+[id*='panel-workspaces'] {
+  padding: 0 !important;
 }

@@ -170,7 +170,7 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                 }}
               >
                 <Typography variant="caption" style={{ color: 'white' }}>
-                  Me ({effectiveSocketId?.substring(0, 6)})
+                  나 ({effectiveSocketId?.substring(0, 6)})
                 </Typography>
               </Box>
             </Paper>
@@ -303,7 +303,7 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                 }}
               >
                 <Typography variant="caption" style={{ color: 'white' }}>
-                  Me ({effectiveSocketId?.substring(0, 6)})
+                  나 ({effectiveSocketId?.substring(0, 6)})
                 </Typography>
               </Box>
             </Paper>
@@ -349,7 +349,7 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                       }}
                     >
                       <Typography variant="caption" style={{ color: 'white' }}>
-                        {mainParticipant.name} ({mainParticipant.role === 'demander' ? 'Host' : 'Participant'})
+                        {mainParticipant.name} ({mainParticipant.role === 'demander' ? '호스트' : '참가자'})
                       </Typography>
                     </Box>
                   ) : (
@@ -369,11 +369,11 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                         {mainParticipant.name}
                         <br />
                         <Typography variant="caption" component="span">
-                          {mainParticipant.role === 'demander' ? 'Host' : 'Participant'}
+                          {mainParticipant.role === 'demander' ? '호스트' : '참가자'}
                         </Typography>
                         <br />
                         <Typography variant="caption" component="span" style={{ color: 'var(--color-primary-main)' }}>
-                          {mainParticipant.isVideoEnabled === false ? 'Video Stopped' : 'Connecting...'}
+                          {mainParticipant.isVideoEnabled === false ? '영상 중지됨' : '연결 중...'}
                         </Typography>
                       </Typography>
                     </Box>
@@ -409,7 +409,7 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                   <IconPlayerPlay size={32} />
                 </IconButton>
                 <Typography variant="body-medium" color="text-secondary">
-                  Start Video
+                  영상 시작
                 </Typography>
               </Flex>
             </Paper>
@@ -465,7 +465,7 @@ function VideoConferenceComponent({ adapter }: VideoConferenceProps) {
                     }}
                   >
                     <Typography variant="caption" style={{ color: 'white', fontSize: '0.65rem' }}>
-                      Me
+                      나
                     </Typography>
                   </Box>
                 </Paper>

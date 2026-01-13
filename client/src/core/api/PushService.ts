@@ -103,6 +103,19 @@ export class PushService {
     }
   }
 
+  static async getSubscriptionStatus() {
+    try {
+      const deviceId = localStorage.getItem('spark_device_id');
+      if (!deviceId) return false;
+
+      const res = await pushApi.checkStatus(deviceId);
+      return res.data.isSubscribed;
+    } catch (error) {
+      console.error('Failed to get subscription status:', error);
+      return false;
+    }
+  }
+
   private static urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getWorkspaces,
+  getWorkspace,
   createWorkspace,
   createCompany,
   createDept,
@@ -15,6 +16,7 @@ const auth = require('../middleware/auth');
 router.use(auth);
 
 router.get('/', getWorkspaces);
+router.get('/:workspaceId', getWorkspace);
 router.get('/:workspaceId/private-key', getWorkspacePrivateKey);
 router.post('/', createWorkspace);
 router.patch('/:workspaceId', updateWorkspace);

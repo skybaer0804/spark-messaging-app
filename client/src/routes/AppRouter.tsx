@@ -1,5 +1,6 @@
 import Router, { Route, route } from 'preact-router';
 import type { RouterOnChangeArgs } from 'preact-router';
+import { cloneElement, isValidElement } from 'preact';
 import { appRoutes } from './appRoutes';
 import { useRouterState } from './RouterState';
 import { DesignSystemDemo } from '@/components/DesignSystemDemo/DesignSystemDemo';
@@ -30,7 +31,15 @@ function ProtectedRoute({ children, ...rest }: any) {
   if (typeof children === 'function') {
     return children(rest);
   }
-  return <>{children}</>;
+
+  // children이 vnode인 경우 props 주입 (id 등 route params 전달용)
+  const childrenWithProps = Array.isArray(children)
+    ? children.map((child) => (isValidElement(child) ? cloneElement(child as any, rest) : child))
+    : isValidElement(children)
+      ? cloneElement(children as any, rest)
+      : children;
+
+  return <>{childrenWithProps}</>;
 }
 
 export function AppRouter() {

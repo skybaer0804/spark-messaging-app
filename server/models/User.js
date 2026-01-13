@@ -12,9 +12,15 @@ const userSchema = new mongoose.Schema({
     default: 'offline',
   },
   statusText: { type: String, default: '' }, // 상태 메시지
+  role: {
+    type: String,
+    enum: ['admin', 'user', 'guest'],
+    default: 'user',
+  },
   workspaces: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' }],
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
   deptId: { type: mongoose.Schema.Types.ObjectId, ref: 'Dept' },
+  lastLogoutAt: { type: Date, default: Date.now },
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -7,28 +7,51 @@ import { Avatar } from '@/ui-components/Avatar/Avatar';
 import { Button } from '@/ui-components/Button/Button';
 import { Input } from '@/ui-components/Input/Input';
 import { Select } from '@/ui-components/Select/Select';
+import { Tabs } from '@/ui-components/Tabs/Tabs';
+import { Switch } from '@/ui-components/Switch/Switch';
 import { useAuth } from '@/core/hooks/useAuth';
+import { useRouterState } from '@/routes/RouterState';
 import { useToast } from '@/core/context/ToastContext';
-import { authApi } from '@/core/api/ApiService';
+import { authApi, workspaceApi } from '@/core/api/ApiService';
 import {
   IconUser,
   IconMail,
   IconDeviceFloppy,
   IconEdit,
   IconMessageCircle,
-  IconHierarchy,
   IconBell,
-  IconBellOff,
+  IconShieldLock,
+  IconChevronRight,
+  IconLogout,
 } from '@tabler/icons-preact';
 import { PushService } from '@/core/api/PushService';
 import './Profile.scss';
 
 export function Profile() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, signOut } = useAuth();
+  const { navigate } = useRouterState();
   const { showSuccess, showError } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [pushEnabled, setPushEnabled] = useState(Notification.permission === 'granted');
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
+
+  useEffect(() => {
+    const checkPushStatus = async () => {
+      const isSubscribed = await PushService.getSubscriptionStatus();
+      setPushEnabled(isSubscribed && Notification.permission === 'granted');
+    };
+    const fetchWorkspaces = async () => {
+      try {
+        const res = await workspaceApi.getWorkspaces();
+        setWorkspaces(res.data);
+      } catch (err) {
+        console.error('Failed to fetch workspaces:', err);
+      }
+    };
+    checkPushStatus();
+    fetchWorkspaces();
+  }, []);
 
   const handleTogglePush = async () => {
     if (pushEnabled) {
@@ -55,6 +78,7 @@ export function Profile() {
     email: user?.email || '',
     status: user?.status || 'offline',
     statusText: user?.statusText || '',
+    role: user?.role || 'user',
   });
 
   useEffect(() => {
@@ -64,6 +88,7 @@ export function Profile() {
         email: user.email,
         status: user.status || 'offline',
         statusText: user.statusText || '',
+        role: user.role || 'user',
       });
     }
   }, [user]);
@@ -75,6 +100,7 @@ export function Profile() {
         username: formData.username,
         status: formData.status,
         statusText: formData.statusText,
+        role: formData.role,
       });
 
       updateUser(res.data);
@@ -94,34 +120,237 @@ export function Profile() {
     { value: 'offline', label: '오프라인' },
   ];
 
+  const roleOptions = [
+    { value: 'admin', label: 'Admin (관리자)' },
+    { value: 'user', label: 'User (사용자)' },
+    { value: 'guest', label: 'Guest (게스트)' },
+  ];
+
+  const profileInfoContent = (
+    <Box className="profile__body">
+      <Flex direction="column" gap="sx">
+        {/* 이름 섹션 */}
+        <div className="profile__field">
+          <Flex align="center" gap="sm" style={{ marginBottom: '4px' }}>
+            <IconUser size={16} color="var(--color-text-secondary)" />
+            <Typography variant="body-small" color="secondary">
+              이름
+            </Typography>
+          </Flex>
+          {isEditing ? (
+            <Input
+              fullWidth
+              value={formData.username}
+              onInput={(e) => setFormData({ ...formData, username: e.currentTarget.value })}
+            />
+          ) : (
+            <Typography variant="body-medium" className="profile__value">
+              {formData.username}
+            </Typography>
+          )}
+        </div>
+
+        {/* 상태 섹션 */}
+        <div className="profile__field">
+          <Flex align="center" gap="sm" style={{ marginBottom: '4px' }}>
+            <IconMessageCircle size={16} color="var(--color-text-secondary)" />
+            <Typography variant="body-small" color="secondary">
+              상태
+            </Typography>
+          </Flex>
+          {isEditing ? (
+            <Flex direction="column" gap="xs">
+              <Select
+                fullWidth
+                options={statusOptions}
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: (e.currentTarget as HTMLSelectElement).value as any })
+                }
+              />
+              <Input
+                fullWidth
+                placeholder="상태 메시지 입력"
+                value={formData.statusText}
+                onInput={(e) => setFormData({ ...formData, statusText: e.currentTarget.value })}
+              />
+            </Flex>
+          ) : (
+            <Box>
+              <Typography variant="body-medium" className="profile__value">
+                {statusOptions.find((s) => s.value === formData.status)?.label}
+              </Typography>
+              {formData.statusText && (
+                <Typography variant="body-small" color="text-secondary" style={{ marginTop: '2px' }}>
+                  {formData.statusText}
+                </Typography>
+              )}
+            </Box>
+          )}
+        </div>
+
+        {/* 권한 섹션 */}
+        <div className="profile__field">
+          <Flex align="center" gap="sm" style={{ marginBottom: '4px' }}>
+            <IconShieldLock size={16} color="var(--color-text-secondary)" />
+            <Typography variant="body-small" color="secondary">
+              권한
+            </Typography>
+          </Flex>
+          {isEditing ? (
+            <Select
+              fullWidth
+              options={roleOptions}
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: (e.currentTarget as HTMLSelectElement).value as any })}
+            />
+          ) : (
+            <Typography variant="body-medium" className="profile__value">
+              {roleOptions.find((r) => r.value === formData.role)?.label || formData.role}
+            </Typography>
+          )}
+        </div>
+
+        {/* 이메일 섹션 (수정 불가) */}
+        <div className="profile__field">
+          <Flex align="center" gap="sm" style={{ marginBottom: '4px' }}>
+            <IconMail size={16} color="var(--color-text-secondary)" />
+            <Typography variant="body-small" color="secondary">
+              이메일
+            </Typography>
+          </Flex>
+          <Typography variant="body-medium" className="profile__value" color="text-tertiary">
+            {formData.email}
+          </Typography>
+        </div>
+
+        {/* 알림 설정 섹션 */}
+        <div className="profile__field">
+          <Flex align="center" gap="sm" style={{ marginBottom: '4px' }}>
+            <IconBell size={16} color="var(--color-text-secondary)" />
+            <Typography variant="body-small" color="secondary">
+              알림 설정
+            </Typography>
+          </Flex>
+          <Box style={{ padding: '8px', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '6px' }}>
+            <Flex justify="space-between" align="center">
+              <Box>
+                <Typography variant="body-small">웹 푸시 알림</Typography>
+                <Typography variant="caption" color="text-secondary">
+                  {pushEnabled ? '활성화됨' : '비활성화됨'}
+                </Typography>
+              </Box>
+              <Switch checked={pushEnabled} onChange={handleTogglePush} />
+            </Flex>
+          </Box>
+        </div>
+      </Flex>
+    </Box>
+  );
+
+  const workspacesContent = (
+    <Box className="profile__body">
+      <Flex direction="column" gap="sm">
+        {workspaces.length > 0 ? (
+          workspaces.map((ws) => (
+            <Box
+              key={ws._id}
+              onClick={() => navigate(`/workspace/${ws._id}`)}
+              style={{
+                padding: '12px',
+                backgroundColor: 'var(--color-bg-secondary)',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s',
+              }}
+              className="profile__workspace-item"
+            >
+              <div
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '6px',
+                  backgroundColor: ws.color || 'var(--color-interactive-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                }}
+              >
+                {ws.initials || ws.name.substring(0, 1).toUpperCase()}
+              </div>
+              <Box style={{ flex: 1 }}>
+                <Typography variant="body-medium" style={{ fontWeight: 600 }}>
+                  {ws.name}
+                </Typography>
+                <Typography variant="caption" color="text-secondary">
+                  {ws.description || '워크스페이스 설명이 없습니다.'}
+                </Typography>
+              </Box>
+              <IconChevronRight size={18} color="var(--color-text-tertiary)" />
+            </Box>
+          ))
+        ) : (
+          <Box style={{ padding: '24px', textAlign: 'center' }}>
+            <Typography variant="body-medium" color="text-secondary">
+              소속된 워크스페이스가 없습니다.
+            </Typography>
+          </Box>
+        )}
+      </Flex>
+    </Box>
+  );
+
+  const tabItems = [
+    { value: 'info', label: '프로필 정보', content: profileInfoContent },
+    { value: 'workspaces', label: '워크스페이스', content: workspacesContent },
+  ];
+
   return (
     <div className="profile">
       <Card className="profile__card">
         <CardBody>
-          <Flex direction="column" gap="xl">
+          <Flex direction="column" gap="lg">
             <header className="profile__header">
-              <Flex align="center" justify="space-between" fullWidth>
-                <Flex align="center" gap="lg">
+              <Flex align="center" justify="space-between" width="100%">
+                <Flex align="center" gap="md">
                   <div style={{ position: 'relative' }}>
-                    <Avatar size="xl" className="profile__avatar" src={user?.profileImage}>
+                    <Avatar size="xl" variant="rounded" className="profile__avatar" src={user?.profileImage}>
                       {formData.username.substring(0, 1)}
                     </Avatar>
-                    <div className={`avatar-status avatar-status--${formData.status}`} 
-                         style={{ position: 'absolute', bottom: 4, right: 4, width: 20, height: 20, border: '3px solid #fff' }} />
+                    <div
+                      className={`avatar-status avatar-status--${formData.status}`}
+                      style={{
+                        position: 'absolute',
+                        bottom: -2,
+                        right: -2,
+                        width: 16,
+                        height: 16,
+                        border: '2px solid #fff',
+                        borderRadius: '50%',
+                      }}
+                    />
                   </div>
                   <Box>
-                    <Typography variant="h2">{formData.username}</Typography>
-                    <Typography variant="body-medium" color="text-secondary">
-                      {user?.role} Account
+                    <Typography variant="h2" style={{ fontSize: '1.5rem' }}>
+                      {formData.username}
+                    </Typography>
+                    <Typography variant="body-small" color="text-secondary">
+                      {roleOptions.find((r) => r.value === formData.role)?.label || formData.role}
                     </Typography>
                   </Box>
                 </Flex>
                 {!isEditing ? (
                   <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)}>
-                    <IconEdit size={18} /> 수정하기
+                    <IconEdit size={18} /> 수정
                   </Button>
                 ) : (
-                  <Flex gap="sm">
+                  <Flex gap="xs">
                     <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
                       취소
                     </Button>
@@ -133,118 +362,19 @@ export function Profile() {
               </Flex>
             </header>
 
-            <Box className="profile__body">
-              <Flex direction="column" gap="lg">
-                {/* 이름 섹션 */}
-                <div className="profile__field">
-                  <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                    <IconUser size={18} color="var(--color-text-secondary)" />
-                    <Typography variant="label-medium" color="secondary">이름</Typography>
-                  </Flex>
-                  {isEditing ? (
-                    <Input
-                      fullWidth
-                      value={formData.username}
-                      onInput={(e) => setFormData({ ...formData, username: e.currentTarget.value })}
-                    />
-                  ) : (
-                    <Typography variant="body-large" className="profile__value">{formData.username}</Typography>
-                  )}
-                </div>
+            <Tabs items={tabItems} defaultValue="info" />
 
-                {/* 상태 섹션 */}
-                <div className="profile__field">
-                  <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                    <IconMessageCircle size={18} color="var(--color-text-secondary)" />
-                    <Typography variant="label-medium" color="secondary">상태</Typography>
-                  </Flex>
-                  {isEditing ? (
-                    <Flex direction="column" gap="sm">
-                      <Select
-                        fullWidth
-                        options={statusOptions}
-                        value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: (e.currentTarget as HTMLSelectElement).value })}
-                      />
-                      <Input
-                        fullWidth
-                        placeholder="상태 메시지 입력"
-                        value={formData.statusText}
-                        onInput={(e) => setFormData({ ...formData, statusText: e.currentTarget.value })}
-                      />
-                    </Flex>
-                  ) : (
-                    <Box>
-                      <Typography variant="body-large" className="profile__value">
-                        {statusOptions.find(s => s.value === formData.status)?.label}
-                      </Typography>
-                      {formData.statusText && (
-                        <Typography variant="body-medium" color="text-secondary" style={{ marginTop: '4px' }}>
-                          {formData.statusText}
-                        </Typography>
-                      )}
-                    </Box>
-                  )}
-                </div>
-
-                {/* 이메일 섹션 (수정 불가) */}
-                <div className="profile__field">
-                  <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                    <IconMail size={18} color="var(--color-text-secondary)" />
-                    <Typography variant="label-medium" color="secondary">이메일</Typography>
-                  </Flex>
-                  <Typography variant="body-large" className="profile__value" color="text-tertiary">
-                    {formData.email}
-                  </Typography>
-                </div>
-
-                {/* 소속 섹션 (수정 불가) */}
-                <div className="profile__field">
-                  <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                    <IconHierarchy size={18} color="var(--color-text-secondary)" />
-                    <Typography variant="label-medium" color="secondary">소속 정보</Typography>
-                  </Flex>
-                  <Box style={{ padding: '12px', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '8px' }}>
-                    <Typography variant="body-medium">
-                      {user?.companyId ? '회사 정보 로딩 중...' : '소속된 회사가 없습니다.'}
-                    </Typography>
-                    <Typography variant="caption" color="text-secondary" style={{ display: 'block', marginTop: '4px' }}>
-                      관리자에게 문의하여 조직에 가입하세요.
-                    </Typography>
-                  </Box>
-                </div>
-
-                {/* 알림 설정 섹션 */}
-                <div className="profile__field">
-                  <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                    <IconBell size={18} color="var(--color-text-secondary)" />
-                    <Typography variant="label-medium" color="secondary">알림 설정</Typography>
-                  </Flex>
-                  <Box style={{ padding: '12px', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '8px' }}>
-                    <Flex justify="space-between" align="center">
-                      <Box>
-                        <Typography variant="body-medium">
-                          웹 푸시 알림
-                        </Typography>
-                        <Typography variant="caption" color="text-secondary">
-                          {pushEnabled ? '현재 알림이 활성화되어 있습니다.' : '메시지 알림을 받으려면 기능을 켜주세요.'}
-                        </Typography>
-                      </Box>
-                      <Button 
-                        variant={pushEnabled ? 'secondary' : 'primary'} 
-                        size="sm" 
-                        onClick={handleTogglePush}
-                      >
-                        {pushEnabled ? (
-                          <><IconBellOff size={16} style={{ marginRight: '4px' }} /> 알림 끄기</>
-                        ) : (
-                          <><IconBell size={16} style={{ marginRight: '4px' }} /> 알림 켜기</>
-                        )}
-                      </Button>
-                    </Flex>
-                  </Box>
-                </div>
-              </Flex>
+            <Box className="profile__logout-container">
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={async () => {
+                  await signOut();
+                  navigate('/auth/login');
+                }}
+              >
+                <IconLogout size={18} style={{ marginRight: '8px' }} /> 로그아웃
+              </Button>
             </Box>
           </Flex>
         </CardBody>

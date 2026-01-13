@@ -61,7 +61,7 @@ export const authApi = {
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
   getUsers: (workspaceId?: string) => api.get('/auth/users', { params: { workspaceId } }),
-  updateProfile: (data: { username?: string; profileImage?: string; status?: string; statusText?: string }) =>
+  updateProfile: (data: { username?: string; profileImage?: string; status?: string; statusText?: string; role?: string }) =>
     api.put('/auth/profile', data),
   updateNotificationSettings: (data: { globalEnabled?: boolean; roomPreferences?: Record<string, boolean> }) =>
     api.post('/auth/notification-settings', data),
@@ -96,6 +96,7 @@ export const chatApi = {
 
 export const workspaceApi = {
   getWorkspaces: () => api.get('/workspace'),
+  getWorkspace: (workspaceId: string) => api.get(`/workspace/${workspaceId}`),
   getPrivateKey: (workspaceId: string) => api.get(`/workspace/${workspaceId}/private-key`),
   createWorkspace: (data: {
     name: string;
@@ -117,6 +118,7 @@ export const workspaceApi = {
 
 export const notificationApi = {
   getNotifications: () => api.get('/notification'),
+  syncNotifications: () => api.get('/notification/sync'),
   createNotification: (data: {
     title: string;
     content: string;
@@ -141,6 +143,7 @@ export const videoMeetingApi = {
 export const pushApi = {
   subscribe: (data: { subscription: any; deviceId: string }) => api.post('/push/subscribe', data),
   unsubscribe: (deviceId: string | null) => api.post('/push/unsubscribe', { deviceId }),
+  checkStatus: (deviceId: string) => api.get('/push/status', { params: { deviceId } }),
 };
 
 export default api;

@@ -51,3 +51,18 @@ exports.unsubscribe = async (req, res) => {
   }
 };
 
+exports.checkStatus = async (req, res) => {
+  try {
+    const { deviceId } = req.query;
+    const userId = req.user.id;
+
+    if (!deviceId) {
+      return res.status(400).json({ message: 'deviceId is required' });
+    }
+
+    const subscription = await PushSubscription.findOne({ userId, deviceId, isActive: true });
+    res.status(200).json({ isSubscribed: !!subscription });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to check status', error: error.message });
+  }
+};

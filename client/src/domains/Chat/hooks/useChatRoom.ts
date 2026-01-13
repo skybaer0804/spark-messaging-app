@@ -63,23 +63,9 @@ export function useChatRoom() {
           status: 'sent',
         });
         
-        // v2.2.0: 보낸 메시지에 대해 내 방 목록 실시간 업데이트
-        chatRoomList.value = chatRoomList.value.map((room: any) => {
-          if (room._id === currentRoom._id) {
-            return {
-              ...room,
-              lastMessage: {
-                _id: response._id,
-                content,
-                senderId: currentUserId,
-                senderName: user.username,
-                timestamp: new Date()
-              },
-              updatedAt: new Date().toISOString()
-            };
-          }
-          return room;
-        }).sort((a: any, b: any) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime());
+        // v2.3.0: 보낸 메시지에 대한 내 방 목록 업데이트는 
+        // 서버에서 오는 ROOM_LIST_UPDATED 소켓 이벤트를 통해 처리함 (Server-Side Authority)
+        // 기존의 수동 chatRoomList.value 업데이트 로직 제거
       } catch (error) {
         console.error('Failed to send message:', error);
         updateMessageStatus(tempId, { status: 'failed' });

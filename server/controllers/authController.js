@@ -98,6 +98,10 @@ exports.logout = async (req, res) => {
     const userId = req.user.id;
     // Redis에 오프라인 상태 저장
     await userService.setUserStatus(userId, 'offline');
+    
+    // v2.3.0: 로그아웃 시간 기록
+    await User.findByIdAndUpdate(userId, { lastLogoutAt: new Date() });
+
     console.log('Logout successful for user:', userId);
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
@@ -170,7 +174,7 @@ exports.updateNotificationSettings = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { username, profileImage, status, statusText } = req.body;
+    const { username, profileImage, status, statusText, role } = req.body;
     const userId = req.user.id;
 
     const updateData = {};
@@ -178,6 +182,7 @@ exports.updateProfile = async (req, res) => {
     if (profileImage) updateData.profileImage = profileImage;
     if (status) updateData.status = status;
     if (statusText !== undefined) updateData.statusText = statusText;
+    if (role) updateData.role = role;
 
     const updatedUser = await User.findByIdAndUpdate(userId, { $set: updateData }, { new: true }).select('-password');
 

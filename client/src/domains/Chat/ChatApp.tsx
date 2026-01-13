@@ -38,7 +38,6 @@ import {
   IconEdit,
   IconDotsVertical,
   IconArrowLeft,
-  IconUserCircle,
   IconCircleFilled,
   IconCircle,
   IconUser,
@@ -49,7 +48,6 @@ import { chatPendingJoinRoom, clearPendingJoinChatRoom } from '@/stores/chatRoom
 import { useAuth } from '@/core/hooks/useAuth';
 import { authApi } from '@/core/api/ApiService';
 import { useToast } from '@/core/context/ToastContext';
-import { ChatProvider } from './context/ChatContext';
 import { ChatDataProvider } from './context/ChatDataProvider';
 import { useRouterState } from '@/routes/RouterState';
 import { getDirectChatName } from './utils/chatUtils';
@@ -361,13 +359,26 @@ function ChatRoomSidebar({
                   e.stopPropagation();
                   setShowProfileMenu(!showProfileMenu);
                 }}
-                style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center' }}
+                style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                <IconUserCircle size={32} color="var(--color-text-secondary)" />
-                <div
-                  className={`avatar-status avatar-status--${currentUser?.status || 'online'}`}
-                  style={{ border: '2px solid #2c333d', bottom: '-2px', right: '-2px' }}
-                />
+                <div style={{ position: 'relative' }}>
+                  <Avatar src={currentUser?.profileImage} size="sm">
+                    {currentUser?.username?.substring(0, 1).toUpperCase() || <IconUser size={20} />}
+                  </Avatar>
+                  <div
+                    className={`avatar-status avatar-status--${currentUser?.status || 'online'}`}
+                    style={{
+                      border: '2px solid #2c333d',
+                      bottom: '-2px',
+                      right: '-2px',
+                      width: '10px',
+                      height: '10px',
+                    }}
+                  />
+                </div>
+                <Typography variant="body-medium" style={{ fontWeight: 'bold', color: 'inherit' }}>
+                  {currentUser?.username || 'User'}
+                </Typography>
               </div>
 
               {/* Profile Menu Dropdown */}
@@ -402,9 +413,6 @@ function ChatRoomSidebar({
                   </div>
 
                   <div className="chat-app__profile-menu-section">
-                    <Typography variant="caption" className="chat-app__profile-menu-section-title">
-                      상태
-                    </Typography>
                     <List disablePadding>
                       <ListItem onClick={() => handleUpdateStatus('online')} className="chat-app__profile-menu-item">
                         <IconCircleFilled size={14} style={{ color: '#2bac76', marginRight: '12px' }} />
@@ -420,7 +428,7 @@ function ChatRoomSidebar({
                       </ListItem>
                       <ListItem onClick={() => handleUpdateStatus('offline')} className="chat-app__profile-menu-item">
                         <IconCircle size={14} style={{ color: '#94a3b8', marginRight: '12px' }} />
-                        <ListItemText primary="오프라인인" />
+                        <ListItemText primary="오프라인" />
                       </ListItem>
                     </List>
                   </div>
@@ -428,9 +436,6 @@ function ChatRoomSidebar({
                   <Divider />
 
                   <div className="chat-app__profile-menu-section">
-                    <Typography variant="caption" className="chat-app__profile-menu-section-title">
-                      Account
-                    </Typography>
                     <List disablePadding>
                       <ListItem
                         onClick={() => {
@@ -1490,10 +1495,8 @@ export function ChatApp() {
   if (!isAuthenticated) return null;
 
   return (
-    <ChatProvider>
-      <ChatDataProvider>
-        <ChatAppContent />
-      </ChatDataProvider>
-    </ChatProvider>
+    <ChatDataProvider>
+      <ChatAppContent />
+    </ChatDataProvider>
   );
 }

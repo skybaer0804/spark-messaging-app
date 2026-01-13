@@ -151,24 +151,23 @@ exports.leaveRoom = async (req, res) => {
     const { roomId } = req.params;
     const userId = req.user.id;
 
-    const room = await ChatRoom.findById(roomId);
+    const room = await ChatRoom.findById(roomId).populate('members', 'username');
     if (!room) {
       return res.status(404).json({ message: 'Room not found' });
     }
+
+    const user = room.members.find((m) => m._id.toString() === userId.toString());
+    const username = user ? user.username : 'Unknown';
 
     // 1. UserChatRoom 레코드 삭제 (사용자의 방 목록에서 제거)
     await UserChatRoom.findOneAndDelete({ userId, roomId });
 
     // 2. ChatRoom의 members 배열에서 사용자 제거
-    room.members = room.members.filter((id) => id.toString() !== userId.toString());
+    room.members = room.members.filter((m) => m._id.toString() !== userId.toString());
 
     // 3. 1:1 대화방(direct)인 경우 추가 처리
     if (room.type === 'direct') {
-      // 상대방이 이미 나갔거나 내가 나감으로써 더 이상 '활성' 1:1 방이 아님
-      // identifier를 제거하여 나중에 같은 상대와 채팅 시 새 방이 생성되도록 함
       room.identifier = null;
-
-      // 방에 아무도 없으면 아카이브 처리, 한 명이라도 있으면 목록 유지 위해 아카이브 안 함
       if (room.members.length === 0) {
         room.isArchived = true;
       }
@@ -179,15 +178,49 @@ exports.leaveRoom = async (req, res) => {
       }
     }
 
+    // v2.3.0: 시스템 메시지 생성 (퇴장 알림)
+    if (room.members.length > 0) {
+      // 시퀀스 번호 증가
+      room.lastSequenceNumber += 1;
+      const sequenceNumber = room.lastSequenceNumber;
+
+      const systemMessage = new Message({
+        roomId,
+        senderId: userId, // 나간 사람이 보낸 것처럼 처리하거나 별도 시스템 ID 사용 가능
+        content: `${username}님이 나갔습니다.`,
+        type: 'system',
+        sequenceNumber,
+      });
+      await systemMessage.save();
+      room.lastMessage = systemMessage._id;
+
+      // 남은 멤버들에게 실시간 메시지 브로드캐스트
+      const messageData = {
+        _id: systemMessage._id,
+        roomId,
+        content: systemMessage.content,
+        senderId: userId,
+        senderName: 'System',
+        sequenceNumber,
+        timestamp: systemMessage.timestamp,
+      };
+      await socketService.sendRoomMessage(roomId, 'system', messageData, userId);
+    }
+
     await room.save();
 
-    // 4. 방에 남아있는 사람들에게 멤버가 나갔음을 알림 (Unknown 처리를 위해 목록 갱신)
+    // 4. 방에 남아있는 사람들에게 목록 갱신 알림
     room.members.forEach((memberId) => {
       socketService.notifyRoomListUpdated(memberId.toString());
     });
 
+    // 5. v2.3.0: 나간 본인에게도 방 목록이 갱신(제거)되어야 함을 알림
+    // 클라이언트가 이 응답을 받으면 목록에서 제거하겠지만, 소켓으로도 한 번 더 확실히 보냄
+    socketService.notifyRoomListUpdated(userId);
+
     res.json({ message: 'Successfully left the room', roomId });
   } catch (error) {
+    console.error('LeaveRoom error:', error);
     res.status(500).json({ message: 'Failed to leave room', error: error.message });
   }
 };
@@ -285,14 +318,28 @@ exports.uploadFile = async (req, res) => {
         });
       }
 
-      // 목록 정보(마지막 메시지 등)는 모든 수신자에게 업데이트 알림
-      recipientIds.forEach((userId) => {
-        socketService.notifyRoomListUpdated(userId, {
-          roomId,
-          lastMessage: messageData,
-          unreadCountIncrement: recipientIdsToIncrement.includes(userId) ? 1 : 0,
-        });
+    // v2.3.0: 목록 정보(마지막 메시지 등)는 모든 멤버에게 업데이트 알림
+    // 개별 사용자마다 unreadCount가 다르므로 각각 통지
+    for (const userId of allMemberIds) {
+      const userChatRoom = await UserChatRoom.findOne({ userId, roomId });
+      const roomObj = room.toObject();
+      
+      // 1:1 대화방 이름 처리 로직 동일하게 적용
+      if (roomObj.type === 'direct') {
+        const otherMember = roomObj.members.find((m) => m._id.toString() !== userId);
+        roomObj.displayName = otherMember ? otherMember.username : 'Unknown';
+        roomObj.displayAvatar = otherMember ? otherMember.profileImage : null;
+        roomObj.displayStatus = otherMember ? otherMember.status : 'offline';
+      } else {
+        roomObj.displayName = roomObj.name;
+      }
+
+      socketService.notifyRoomListUpdated(userId, {
+        ...roomObj,
+        unreadCount: userChatRoom ? userChatRoom.unreadCount : 0,
+        lastMessage: messageData,
       });
+    }
     }
 
     res.status(201).json(newMessage);
@@ -371,14 +418,28 @@ exports.sendMessage = async (req, res) => {
         });
       }
 
-      // 목록 정보는 모든 수신자에게 업데이트 알림
-      recipientIds.forEach((userId) => {
-        socketService.notifyRoomListUpdated(userId, {
-          roomId,
-          lastMessage: messageData,
-          unreadCountIncrement: recipientIdsToIncrement.includes(userId) ? 1 : 0,
-        });
+    // v2.3.0: 목록 정보(마지막 메시지 등)는 모든 멤버에게 업데이트 알림
+    // 개별 사용자마다 unreadCount가 다르므로 각각 통지
+    for (const userId of allMemberIds) {
+      const userChatRoom = await UserChatRoom.findOne({ userId, roomId });
+      const roomObj = room.toObject();
+      
+      // 1:1 대화방 이름 처리 로직 동일하게 적용
+      if (roomObj.type === 'direct') {
+        const otherMember = roomObj.members.find((m) => m._id.toString() !== userId);
+        roomObj.displayName = otherMember ? otherMember.username : 'Unknown';
+        roomObj.displayAvatar = otherMember ? otherMember.profileImage : null;
+        roomObj.displayStatus = otherMember ? otherMember.status : 'offline';
+      } else {
+        roomObj.displayName = roomObj.name;
+      }
+
+      socketService.notifyRoomListUpdated(userId, {
+        ...roomObj,
+        unreadCount: userChatRoom ? userChatRoom.unreadCount : 0,
+        lastMessage: messageData,
       });
+    }
     }
 
     // 5. Socket SDK를 통해 실시간 브로드캐스트 (MESSAGE_ADDED)

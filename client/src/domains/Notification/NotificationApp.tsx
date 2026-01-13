@@ -13,7 +13,7 @@ import './NotificationApp.scss';
 
 export function NotificationApp() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'Admin';
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
 
   const {
     title,
@@ -35,9 +35,9 @@ export function NotificationApp() {
     return (
       <Flex direction="column" align="center" justify="center" style={{ height: '100%', padding: '40px' }}>
         <Typography variant="h2" color="text-error">
-          Access Denied
+          접근 거부
         </Typography>
-        <Typography variant="body-medium">Only administrators can send system notifications.</Typography>
+        <Typography variant="body-medium">관리자만 시스템 알림을 보낼 수 있습니다.</Typography>
       </Flex>
     );
   }
@@ -46,46 +46,46 @@ export function NotificationApp() {
     <Paper square elevation={0} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box padding="lg" style={{ flex: 1, overflowY: 'auto' }}>
         <Typography variant="h3" style={{ marginBottom: '8px' }}>
-          Create System Notification
+          시스템 알림 생성
         </Typography>
         <Typography variant="body-medium" color="text-secondary" style={{ marginBottom: '24px' }}>
-          Send broadcast or targeted messages to users.
+          사용자들에게 전체 공지 또는 타겟 알림을 보냅니다.
         </Typography>
 
         <Stack spacing="xl">
           <Input
-            label="Notification Title"
+            label="알림 제목"
             value={title}
             onInput={(e) => setTitle(e.currentTarget.value)}
-            placeholder="Enter notification title..."
+            placeholder="알림 제목을 입력하세요..."
             fullWidth
           />
 
           <Input
-            label="Message Content"
+            label="메시지 내용"
             multiline
             rows={4}
             value={message}
             onInput={(e) => setMessage(e.currentTarget.value)}
-            placeholder="Enter your notification message here..."
+            placeholder="알림 메시지를 입력하세요..."
             fullWidth
           />
 
           <Flex gap="md">
             <Select
-              label="Target Type"
+              label="대상 유형"
               value={targetType}
               onChange={(e) => setTargetType(e.currentTarget.value as any)}
               options={[
-                { label: 'All Users', value: 'all' },
-                { label: 'Specific Workspace', value: 'workspace' },
+                { label: '전체 사용자', value: 'all' },
+                { label: '특정 워크스페이스', value: 'workspace' },
               ]}
               style={{ flex: 1 }}
             />
 
             {targetType === 'workspace' && (
               <Select
-                label="Select Workspace"
+                label="워크스페이스 선택"
                 value={targetId}
                 onChange={(e) => setTargetId(e.currentTarget.value)}
                 options={workspaceList.map((ws) => ({
@@ -99,7 +99,7 @@ export function NotificationApp() {
 
           <Box>
             <Typography variant="body-small" style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}>
-              Schedule Delivery (Optional)
+              예약 전송 (선택 사항)
             </Typography>
             <Flex gap="sm" align="center">
               <IconCalendar size={20} color="var(--color-text-tertiary)" />
@@ -118,7 +118,7 @@ export function NotificationApp() {
               />
             </Flex>
             <Typography variant="caption" color="text-secondary" style={{ marginTop: '4px', display: 'block' }}>
-              Leave blank for immediate delivery.
+              비워두면 즉시 전송됩니다.
             </Typography>
           </Box>
         </Stack>
@@ -134,7 +134,7 @@ export function NotificationApp() {
         >
           <Stack direction="row" align="center" spacing="sm" justify="center">
             <IconSend size={20} />
-            <span>Send Notification</span>
+            <span>알림 보내기</span>
           </Stack>
         </Button>
       </Box>

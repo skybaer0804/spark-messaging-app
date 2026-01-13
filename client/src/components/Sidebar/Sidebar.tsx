@@ -1,16 +1,24 @@
 import { useMemo, useEffect, useState } from 'preact/hooks';
-import { IconSparkles, IconPlus } from '@tabler/icons-preact';
+import { IconSparkles, IconPlus, IconUser } from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes, type AppRouteNode } from '@/routes/appRoutes';
 import { currentWorkspaceId, setCurrentWorkspaceId } from '@/stores/chatRoomsStore';
 import { workspaceApi } from '@/core/api/ApiService';
 import { useAuth } from '@/core/hooks/useAuth';
+import { useChat } from '@/domains/Chat/context/ChatContext';
+import { Badge } from '@/ui-components/Badge/Badge';
+import { Avatar } from '@/ui-components/Avatar/Avatar';
 import './Sidebar.scss';
 
 export function Sidebar() {
   const { pathname, navigate } = useRouterState();
   const { user } = useAuth();
+  const { roomList } = useChat();
   const [workspaces, setWorkspaces] = useState<any[]>([]);
+
+  const totalUnreadCount = useMemo(() => {
+    return roomList.reduce((acc, room) => acc + (room.unreadCount || 0), 0);
+  }, [roomList]);
 
   const lnbRouteIds = ['chatapp', 'notification', 'video-meeting'];
 
@@ -40,6 +48,7 @@ export function Sidebar() {
 
   const handleWorkspaceSelect = (id: string) => {
     setCurrentWorkspaceId(id);
+    navigate(`/workspace/${id}`);
   };
 
   return (
@@ -79,6 +88,8 @@ export function Sidebar() {
         <nav className="lnb__nav">
           {lnbRoutes.map((route) => {
             const isActive = pathname.startsWith(route.path) && (route.path !== '/' || pathname === '/');
+            const isChat = route.id === 'chatapp';
+
             return (
               <button
                 key={route.id}
@@ -87,11 +98,27 @@ export function Sidebar() {
                 onClick={() => navigate(route.path)}
                 title={route.label}
               >
-                <div className="lnb__item-icon">{route.icon}</div>
+                <div className="lnb__item-icon">
+                  {isChat && totalUnreadCount > 0 ? (
+                    <Badge badgeContent={totalUnreadCount} color="error">
+                      {route.icon}
+                    </Badge>
+                  ) : (
+                    route.icon
+                  )}
+                </div>
               </button>
             );
           })}
         </nav>
+
+        <div className="lnb__footer">
+          <div className="lnb__item" onClick={() => navigate('/profile')} title="Profile">
+            <Avatar src={user?.profileImage} variant="rounded" size="md" className="lnb__profile-avatar">
+              {user?.username?.substring(0, 1).toUpperCase() || <IconUser size={20} />}
+            </Avatar>
+          </div>
+        </div>
       </div>
     </aside>
   );

@@ -77,15 +77,38 @@ export function ToastProvider({ children }: { children: any }) {
     [showToast],
   );
 
-  // 전역 API 에러 이벤트 리스너
+  // 전역 API 에러 및 알림 이벤트 리스너
   useEffect(() => {
     const handleApiError = (event: any) => {
       showError(event.detail || '알 수 없는 오류가 발생했습니다.');
     };
 
+    const handleApiInfo = (event: any) => {
+      const { detail } = event;
+      const message = typeof detail === 'string' ? detail : detail?.message || detail?.content || '';
+      const actionUrl = typeof detail === 'string' ? null : detail?.actionUrl;
+
+      showInfo(
+        message,
+        5000,
+        actionUrl
+          ? {
+              label: '이동하기',
+              onClick: () => {
+                window.dispatchEvent(new CustomEvent('app-navigate', { detail: actionUrl }));
+              },
+            }
+          : undefined,
+      );
+    };
+
     window.addEventListener('api-error', handleApiError);
-    return () => window.removeEventListener('api-error', handleApiError);
-  }, [showError]);
+    window.addEventListener('api-info', handleApiInfo);
+    return () => {
+      window.removeEventListener('api-error', handleApiError);
+      window.removeEventListener('api-info', handleApiInfo);
+    };
+  }, [showError, showInfo]);
 
   return (
     <ToastContext.Provider value={{ showToast, showSuccess, showError, showInfo, showWarning, hideToast }}>

@@ -16,6 +16,30 @@ class SocketService {
 
     this.client = new SparkMessaging(serverUrl, projectKey);
     console.log('Spark Messaging SDK Initialized');
+
+    // v2.3.0: 서버 사이드에서 클라이언트의 접속 상태를 감시하여 상태 및 활성 방 동기화
+    // SDK 버전에 따라 .on 메서드가 없을 수 있으므로 방어적 코드로 수정
+    if (typeof this.client.on === 'function') {
+      this.client.on('CLIENT_CONNECTED', async (data) => {
+        const { userId } = data;
+        if (userId) {
+          const userService = require('./userService');
+          await userService.setUserStatus(userId, 'online');
+        }
+      });
+
+      this.client.on('CLIENT_DISCONNECTED', async (data) => {
+        const { userId } = data;
+        if (userId) {
+          const userService = require('./userService');
+          await userService.setUserStatus(userId, 'offline');
+          // v2.3.0: 앱 종료 시 활성 방 정보 초기화 (푸시 알림 수신 보장)
+          await userService.setActiveRoom(userId, null);
+        }
+      });
+    } else {
+      console.warn('Spark Messaging SDK does not support .on() event listeners in this version.');
+    }
   }
 
   async sendRoomMessage(roomId, type, content, senderId) {

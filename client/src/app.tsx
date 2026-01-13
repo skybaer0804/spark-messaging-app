@@ -13,6 +13,7 @@ import { PrivacyPolicy } from '@/components/PrivacyPolicy/PrivacyPolicy';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Button } from '@/ui-components/Button/Button';
+import { ChatProvider } from './domains/Chat/context/ChatContext';
 import './app.scss';
 import './index.css';
 
@@ -217,11 +218,21 @@ export function App() {
 
   return (
     <div className="app">
-      <RouterStateProvider pathname={currentRoute} onNavigate={handleNavigate}>
-        <div className="app__main">
-          <SidebarLayout>{renderContent()}</SidebarLayout>
-        </div>
-      </RouterStateProvider>
+      {isAuthenticated ? (
+        <ChatProvider>
+          <RouterStateProvider pathname={currentRoute} onNavigate={handleNavigate}>
+            <div className="app__main">
+              <SidebarLayout>{renderContent()}</SidebarLayout>
+            </div>
+          </RouterStateProvider>
+        </ChatProvider>
+      ) : (
+        <RouterStateProvider pathname={currentRoute} onNavigate={handleNavigate}>
+          <div className="app__main">
+            <SidebarLayout>{renderContent()}</SidebarLayout>
+          </div>
+        </RouterStateProvider>
+      )}
     </div>
   );
 }

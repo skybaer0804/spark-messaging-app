@@ -73,15 +73,15 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
         <Stack spacing="xl">
           {/* Header Actions */}
           <Flex justify="space-between" align="center">
-            <Typography variant="h2">Video Meetings</Typography>
+            <Typography variant="h2">화상 회의</Typography>
             <Stack direction="row" spacing="md">
               <Button variant="secondary" onClick={() => setShowScheduleForm(true)} disabled={!isConnected}>
                 <IconCalendar size={18} style={{ marginRight: '8px' }} />
-                Schedule Meeting
+                회의 예약
               </Button>
               <Button variant="primary" onClick={() => store.setShowCreateForm(true)} disabled={!isConnected}>
                 <IconVideo size={18} style={{ marginRight: '8px' }} />
-                Start Instant Meeting
+                즉시 회의 시작
               </Button>
             </Stack>
           </Flex>
@@ -90,17 +90,17 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
           {showScheduleForm && (
             <Paper padding="lg" elevation={3}>
               <Stack spacing="lg">
-                <Typography variant="h3">Schedule New Meeting</Typography>
+                <Typography variant="h3">새 회의 예약</Typography>
                 <Grid columns="1fr 1fr" gap="lg">
                   <Stack spacing="md">
                     <Input
-                      label="Meeting Title"
+                      label="회의 제목"
                       value={newMeeting.title}
                       onInput={(e) => setNewMeeting({ ...newMeeting, title: e.currentTarget.value })}
                       fullWidth
                     />
                     <Input
-                      label="Description"
+                      label="설명"
                       value={newMeeting.description}
                       onInput={(e) => setNewMeeting({ ...newMeeting, description: e.currentTarget.value })}
                       multiline
@@ -112,7 +112,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                         variant="body-small"
                         style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}
                       >
-                        Scheduled Time
+                        예약 시간
                       </Typography>
                       <input
                         type="datetime-local"
@@ -129,7 +129,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                   </Stack>
                   <Stack spacing="md">
                     <Typography variant="body-small" style={{ fontWeight: 600 }}>
-                      Invite Participants
+                      참가자 초대
                     </Typography>
                     <Box
                       style={{
@@ -143,7 +143,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                         variant="caption"
                         style={{ backgroundColor: 'var(--color-bg-tertiary)', display: 'block', padding: '4px' }}
                       >
-                        Users
+                        사용자
                       </Typography>
                       {userList.map((u) => (
                         <Flex key={u._id} padding="xs" align="center" gap="sm">
@@ -164,7 +164,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                         variant="caption"
                         style={{ backgroundColor: 'var(--color-bg-tertiary)', display: 'block', padding: '4px' }}
                       >
-                        Workspaces
+                        워크스페이스
                       </Typography>
                       {workspaceList.map((ws) => (
                         <Flex key={ws._id} padding="xs" align="center" gap="sm">
@@ -186,14 +186,14 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                 </Grid>
                 <Flex justify="flex-end" gap="md">
                   <Button variant="secondary" onClick={() => setShowScheduleForm(false)}>
-                    Cancel
+                    취소
                   </Button>
                   <Button
                     variant="primary"
                     onClick={handleScheduleMeeting}
                     disabled={!newMeeting.title || !newMeeting.scheduledAt}
                   >
-                    Save Schedule
+                    예약 저장
                   </Button>
                 </Flex>
               </Stack>
@@ -204,7 +204,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
           {showCreateForm && (
             <Paper padding="lg" elevation={3}>
               <Stack spacing="lg">
-                <Typography variant="h3">Start Instant Meeting</Typography>
+                <Typography variant="h3">즉시 회의 시작</Typography>
                 <Flex gap="sm">
                   {(['회의', '웨비나', '상담'] as Category[]).map((cat) => (
                     <Button
@@ -218,18 +218,18 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                   ))}
                 </Flex>
                 <Input
-                  label="Meeting Title"
+                  label="회의 제목"
                   value={roomTitle}
                   onInput={(e) => store.setRoomTitle(e.currentTarget.value)}
-                  placeholder="Enter meeting title..."
+                  placeholder="회의 제목을 입력하세요..."
                   fullWidth
                 />
                 <Flex justify="flex-end" gap="md">
                   <Button variant="secondary" onClick={() => store.setShowCreateForm(false)}>
-                    Cancel
+                    취소
                   </Button>
                   <Button variant="primary" onClick={handleCreateRoom} disabled={!roomTitle.trim()}>
-                    Create & Join
+                    생성 및 참여
                   </Button>
                 </Flex>
               </Stack>
@@ -240,11 +240,11 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
           <Grid columns="1fr 1fr" gap="xl">
             {/* Scheduled Meetings */}
             <Stack spacing="md">
-              <Typography variant="h3">Scheduled ({scheduledMeetings.length})</Typography>
+              <Typography variant="h3">예약된 회의 ({scheduledMeetings.length})</Typography>
               {scheduledMeetings.length === 0 ? (
                 <Paper padding="lg" variant="outlined">
                   <Typography align="center" color="text-secondary">
-                    No scheduled meetings.
+                    예약된 회의가 없습니다.
                   </Typography>
                 </Paper>
               ) : (
@@ -253,16 +253,16 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                     <CardHeader>
                       <Flex justify="space-between">
                         <Typography variant="h4">{m.title}</Typography>
-                        <StatusChip label={m.status} variant={m.status === 'ongoing' ? 'active' : 'default'} />
+                        <StatusChip label={m.status === 'ongoing' ? '진행중' : m.status} variant={m.status === 'ongoing' ? 'active' : 'default'} />
                       </Flex>
                       <Typography variant="caption" color="text-secondary">
                         {new Date(m.scheduledAt).toLocaleString()}
                       </Typography>
                     </CardHeader>
                     <CardBody>
-                      <Typography variant="body-small">{m.description || 'No description'}</Typography>
+                      <Typography variant="body-small">{m.description || '설명이 없습니다.'}</Typography>
                       <Typography variant="caption" style={{ marginTop: '8px', display: 'block' }}>
-                        Host: {m.hostId.username}
+                        호스트: {m.hostId.username}
                       </Typography>
                     </CardBody>
                     <CardFooter>
@@ -271,7 +271,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                         variant={m.status === 'ongoing' ? 'primary' : 'secondary'}
                         disabled={m.status === 'cancelled'}
                       >
-                        {m.status === 'ongoing' ? 'Join Now' : 'Details'}
+                        {m.status === 'ongoing' ? '지금 참여' : '상세 정보'}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -281,11 +281,11 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
 
             {/* Active Socket Rooms */}
             <Stack spacing="md">
-              <Typography variant="h3">Live Public Rooms ({roomList.length})</Typography>
+              <Typography variant="h3">현재 진행 중인 공개 회의 ({roomList.length})</Typography>
               {roomList.length === 0 ? (
                 <Paper padding="lg" variant="outlined">
                   <Typography align="center" color="text-secondary">
-                    No live public rooms.
+                    진행 중인 공개 회의가 없습니다.
                   </Typography>
                 </Paper>
               ) : (
@@ -294,7 +294,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                     <CardHeader>
                       <Flex justify="space-between">
                         <StatusChip label={room.category} variant="badge" />
-                        {myRooms.has(room.roomId) && <StatusChip label="My Room" variant="active" />}
+                        {myRooms.has(room.roomId) && <StatusChip label="내 회의실" variant="active" />}
                       </Flex>
                       <Typography variant="h4" style={{ marginTop: '8px' }}>
                         {room.title}
@@ -302,7 +302,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                     </CardHeader>
                     <CardFooter>
                       <Button fullWidth onClick={() => handleJoinRoom(room)}>
-                        Join Room
+                        참여하기
                       </Button>
                     </CardFooter>
                   </Card>
@@ -335,16 +335,16 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
               style={{ position: 'absolute', top: '60px', right: '20px', zIndex: 100, width: '300px' }}
             >
               <Stack spacing="sm">
-                <Typography variant="h4">Join Requests ({pendingRequests.length})</Typography>
+                <Typography variant="h4">참여 요청 ({pendingRequests.length})</Typography>
                 {pendingRequests.map((req) => (
                   <Paper key={req.socketId} variant="outlined" padding="sm">
                     <Typography variant="body-small">{req.name}</Typography>
                     <Flex gap="sm" style={{ marginTop: '8px' }}>
                       <Button size="sm" onClick={() => store.approveRequest(req.socketId)} fullWidth>
-                        Accept
+                        수락
                       </Button>
                       <Button size="sm" variant="secondary" onClick={() => store.rejectRequest(req.socketId)} fullWidth>
-                        Reject
+                        거절
                       </Button>
                     </Flex>
                   </Paper>

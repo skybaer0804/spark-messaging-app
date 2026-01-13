@@ -8,7 +8,7 @@ export interface User {
   id: string;
   email: string;
   username: string;
-  role: 'Admin' | 'Normal' | 'Guest';
+  role: 'admin' | 'user' | 'guest';
   profileImage?: string;
   status?: 'online' | 'away' | 'busy' | 'offline';
   statusText?: string;
@@ -22,7 +22,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (credentials: any) => Promise<any>;
   signUp: (userData: any) => Promise<any>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   updateUser: (updatedUser: User) => void;
   isAuthenticated: boolean;
 }

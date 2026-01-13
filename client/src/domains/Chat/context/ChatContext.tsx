@@ -7,7 +7,7 @@ import { ChatService } from '@/core/socket/ChatService';
 import { RoomService } from '../services/RoomService';
 import { FileTransferService } from '@/core/api/FileTransferService';
 import { useAuth } from '@/core/hooks/useAuth';
-import { authApi, workspaceApi } from '@/core/api/ApiService';
+import { authApi, workspaceApi, notificationApi } from '@/core/api/ApiService';
 import { messagesSignal } from '../hooks/useOptimisticUpdate';
 import { ChatRoom, ChatUser, Workspace } from '../types';
 import { currentWorkspaceId, chatRoomList } from '@/stores/chatRoomsStore';
@@ -147,22 +147,49 @@ export function ChatProvider({ children }: { children: any }) {
 
         console.log('[ChatContext] Received ROOM_LIST_UPDATED:', updateData);
 
-        // 데이터가 있는 경우 로컬 상태 즉시 반영 (Signal 활용)
-        if (updateData.roomId) {
-          const { roomId, lastMessage, unreadCountIncrement } = updateData;
-
+        // v2.3.0: 서버 주도 상태 (Server-Side Authority)
+        // 백엔드에서 완성된 room 객체를 보내주므로, 프론트엔드는 이를 그대로 반영함
+        if (updateData._id) {
+          const roomId = updateData._id;
           const currentRooms = chatRoomList.value;
-          const updatedRooms = currentRooms.map((room: any) => {
-            if (room._id === roomId) {
-              return {
-                ...room,
-                lastMessage: lastMessage || room.lastMessage,
-                unreadCount: (room.unreadCount || 0) + (unreadCountIncrement || 0),
-                updatedAt: new Date().toISOString(),
-              };
+
+          // v2.3.0: 새 메시지 토스트 알림 (내가 보낸 것이 아니고, 메시지가 있는 경우)
+          if (updateData.lastMessage && updateData.lastMessage.senderId !== user?.id && updateData.unreadCount > 0) {
+            // 현재 활성화된 방인지 체크 (간단히 URL로 체크하거나 전역 상태 활용)
+            const isActiveRoom = window.location.pathname.includes(`/chat/${roomId}`);
+
+            if (!isActiveRoom) {
+              window.dispatchEvent(
+                new CustomEvent('api-info', {
+                  detail: {
+                    message: `[채팅] ${updateData.displayName}: ${updateData.lastMessage.content}`,
+                    actionUrl: `/chat/${roomId}`,
+                  },
+                }),
+              );
             }
-            return room;
-          });
+          }
+
+          // 방이 이미 목록에 있으면 업데이트, 없으면 추가 (새 방 생성 등)
+          const roomExists = currentRooms.some((r: any) => r._id === roomId);
+          let updatedRooms;
+
+          if (roomExists) {
+            updatedRooms = currentRooms.map((room: any) => {
+              if (room._id === roomId) {
+                // 서버에서 온 데이터로 덮어쓰기 (프론트 계산 로직 제거)
+                return {
+                  ...room,
+                  ...updateData,
+                  updatedAt: updateData.updatedAt || new Date().toISOString(),
+                };
+              }
+              return room;
+            });
+          } else {
+            // 새 방인 경우 목록에 추가
+            updatedRooms = [updateData, ...currentRooms];
+          }
 
           // 리스트 상단으로 이동 (Sorting)
           updatedRooms.sort(
@@ -170,8 +197,12 @@ export function ChatProvider({ children }: { children: any }) {
           );
 
           updateRoomList(updatedRooms as any);
+        } else if (updateData.roomId && !updateData._id) {
+          // v2.2.0 호환성 유지: roomId만 오고 _id가 없는 경우 (예: 방에서 나간 본인 알림 등)
+          // 사실 v2.3.0에서는 _id가 오도록 수정함
+          refreshRoomList();
         } else {
-          // 데이터가 없으면 기존처럼 전체 새로고침
+          // 데이터가 없으면 전체 새로고침
           refreshRoomList();
         }
       }
@@ -209,6 +240,27 @@ export function ChatProvider({ children }: { children: any }) {
       }
 
       await Promise.all([refreshRoomList(), refreshUserList(), refreshWorkspaceList()]);
+
+      // v2.3.0: 로그인 시 미수신 전체 공지사항 동기화
+      try {
+        const response = await notificationApi.syncNotifications();
+        const pendingNotifications = response.data;
+        if (pendingNotifications && pendingNotifications.length > 0) {
+          pendingNotifications.forEach((notif: any) => {
+            // 앱 내 토스트 알림으로 표시 (metadata 포함)
+            window.dispatchEvent(
+              new CustomEvent('api-info', {
+                detail: {
+                  message: `[공지] ${notif.title}\n${notif.content}`,
+                  actionUrl: notif.actionUrl,
+                },
+              }),
+            );
+          });
+        }
+      } catch (error) {
+        console.error('Failed to sync notifications:', error);
+      }
 
       const status = connectionService.getConnectionStatus();
       if (status.isConnected) {

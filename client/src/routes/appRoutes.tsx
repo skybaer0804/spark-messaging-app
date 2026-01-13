@@ -18,6 +18,7 @@ import { HomePage } from '@/components/HomePage/HomePage';
 import { AuthPage } from '@/components/Auth/AuthPage';
 import { Profile } from '@/components/Profile/Profile';
 import { Workspace } from '@/components/Workspace/Workspace';
+import { WorkspaceDetail } from '@/components/Workspace/WorkspaceDetail';
 import { ThemeCustomization } from '@/components/ThemeCustomization/ThemeCustomization';
 
 export type AppRouteId =
@@ -29,7 +30,8 @@ export type AppRouteId =
   | 'design-system'
   | 'auth'
   | 'profile'
-  | 'workspace';
+  | 'workspace'
+  | 'workspace-detail';
 
 export interface AppRouteNode {
   id: AppRouteId;
@@ -151,6 +153,14 @@ export const appRoutes: AppRouteNode[] = [
     icon: <IconUsers size={24} />,
     title: 'Workspace',
     element: <Workspace />,
+  },
+  {
+    id: 'workspace-detail',
+    label: '워크스페이스 상세',
+    path: '/workspace/:id',
+    icon: <IconUsers size={24} />,
+    title: 'Workspace Detail',
+    element: <WorkspaceDetail />,
   },
   {
     id: 'design-system',

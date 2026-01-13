@@ -15,6 +15,18 @@ exports.getWorkspaces = async (req, res) => {
   }
 };
 
+// 특정 워크스페이스 상세 조회
+exports.getWorkspace = async (req, res) => {
+  try {
+    const { workspaceId } = req.params;
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) return res.status(404).json({ message: 'Workspace not found' });
+    res.json(workspace);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch workspace', error: error.message });
+  }
+};
+
 // 워크스페이스 비밀키 조회 (소유자 전용)
 exports.getWorkspacePrivateKey = async (req, res) => {
   try {
