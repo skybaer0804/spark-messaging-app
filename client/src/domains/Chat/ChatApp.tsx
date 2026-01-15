@@ -19,18 +19,12 @@ import {
   IconX,
   IconFile,
   IconDownload,
-  IconBug,
-  IconBugOff,
-  IconUsers,
-  IconSettings,
-  IconVideo,
   IconHash,
   IconLock,
   IconMessageCircle,
   IconHierarchy,
   IconChevronDown,
   IconChevronRight,
-  IconArrowLeft,
 } from '@tabler/icons-preact';
 import { Button } from '@/ui-components/Button/Button';
 import { chatPendingJoinRoom, clearPendingJoinChatRoom } from '@/stores/chatRoomsStore';
@@ -43,6 +37,7 @@ import { getDirectChatName } from './utils/chatUtils';
 import { ChatSidebarHeader } from './components/ChatSidebar/ChatSidebarHeader';
 import { ChatEmptyState } from './components/ChatEmptyState';
 import { DirectoryView } from './components/Directory/DirectoryView';
+import { ChatHeader } from './components/ChatHeader';
 import './ChatApp.scss';
 
 import type { ChatRoom, ChatUser, Workspace } from './types';
@@ -638,59 +633,16 @@ function ChatAppContent() {
         }}
       >
         {/* Chat Header */}
-        <Paper
-          square
-          elevation={1}
-          padding="sm"
-          style={{ zIndex: 10, flexShrink: 0, borderBottom: '1px solid var(--color-border-default)' }}
-        >
-          <Stack direction="row" align="center" spacing="md">
-            {isMobile && (
-              <IconButton onClick={goToHome}>
-                <IconArrowLeft />
-              </IconButton>
-            )}
-            <Box style={{ flex: 1 }}>
-              <Flex align="center" gap="sm">
-                {currentRoom.type === 'private' || currentRoom.isPrivate ? (
-                  <IconLock size={20} />
-                ) : (
-                  <IconHash size={20} />
-                )}
-                <Typography variant="h3" style={{ fontWeight: 800 }}>
-                  {currentRoom.displayName ||
-                    getDirectChatName(currentRoom, currentUser?.id || (currentUser as any)?._id)}
-                </Typography>
-              </Flex>
-              {currentRoom.description && (
-                <Typography variant="caption" color="text-secondary" style={{ marginLeft: '24px' }}>
-                  {currentRoom.description}
-                </Typography>
-              )}
-            </Box>
-            <IconButton
-              onClick={() => {
-                showSuccess('화상회의를 시작합니다.');
-              }}
-              title="화상회의"
-            >
-              <IconVideo size={20} />
-            </IconButton>
-            <IconButton
-              onClick={() => setShowUserList(!showUserList)}
-              color={showUserList ? 'primary' : 'secondary'}
-              title="참여자 목록"
-            >
-              <IconUsers size={20} />
-            </IconButton>
-            <IconButton onClick={() => setShowSettings(true)} color="secondary" title="설정">
-              <IconSettings size={20} />
-            </IconButton>
-            <IconButton onClick={toggleDebug} color={debugEnabled ? 'primary' : 'secondary'} title="디버그 모드 토글">
-              {debugEnabled ? <IconBug size={20} /> : <IconBugOff size={20} />}
-            </IconButton>
-          </Stack>
-        </Paper>
+        <ChatHeader
+          isMobile={isMobile}
+          goToHome={goToHome}
+          currentRoom={currentRoom}
+          showUserList={showUserList}
+          setShowUserList={setShowUserList}
+          setShowSettings={setShowSettings}
+          toggleDebug={toggleDebug}
+          debugEnabled={debugEnabled}
+        />
 
         <Box style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
           {/* Messages Area - Slack 스타일 배경 적용 */}
