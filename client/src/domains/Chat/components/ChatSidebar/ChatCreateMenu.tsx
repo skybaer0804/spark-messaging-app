@@ -90,9 +90,7 @@ export const ChatCreateMenu = ({
         userList={userList}
         selectedUserIds={selectedUserIds}
         toggleUserSelection={toggleUserSelection}
-        handleCreateRoom={(type) => handleCreateRoom(type, {})}
-        roomIdInput={roomIdInput}
-        setRoomIdInput={setRoomIdInput}
+        handleCreateRoom={(type, extraData) => handleCreateRoom(type, extraData || {})}
       />
       <DialogChatGroup
         open={showCreateChannelDialog}
