@@ -111,6 +111,11 @@ export function useChatApp() {
     if (!targetRoomId || !isConnected) return;
 
     try {
+      // [v2.4.0] 현재 보고 있는 방을 나가는 경우라면 즉시 경로 이동 (useEffect 재진입 방지)
+      if (currentRoom?._id === targetRoomId) {
+        window.location.href = '/chatapp'; // 확실한 리프레시 및 상태 초기화를 위해 href 사용 가능 (또는 navigate)
+      }
+
       // 1. DB에서 제거 (UserChatRoom 삭제 및 Room 멤버에서 제거)
       await chatService.leaveRoom(targetRoomId);
 

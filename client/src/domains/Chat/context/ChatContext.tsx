@@ -189,6 +189,14 @@ export function ChatProvider({ children }: { children: any }) {
           const roomId = updateData._id;
           const currentRooms = chatRoomList.value;
 
+          // [v2.4.0] 방 제거 알림 처리
+          if (updateData.isRemoved) {
+            console.log('[ChatContext] Removing room from list:', roomId);
+            const updatedRooms = currentRooms.filter((r: any) => r._id !== roomId);
+            chatRoomList.value = [...updatedRooms] as any;
+            return;
+          }
+
           // 방이 이미 목록에 있으면 업데이트, 없으면 추가 (새 방 생성 등)
           const roomExists = currentRooms.some((r: any) => r._id === roomId);
           let updatedRooms;

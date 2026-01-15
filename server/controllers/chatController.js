@@ -251,10 +251,10 @@ exports.leaveRoom = async (req, res) => {
     }
 
     // 5. v2.3.0: 나간 본인에게도 방 목록이 갱신(제거)되어야 함을 알림
-    // 클라이언트가 이 응답을 받으면 목록에서 제거하겠지만, 소켓으로도 한 번 더 확실히 보냄
+    // 클라이언트가 이 응답을 받으면 목록에서 제거함
     socketService.notifyRoomListUpdated(userId, {
       _id: roomId,
-      isRemoved: true,
+      isRemoved: true, // [v2.4.0] 이 플래그를 통해 프론트엔드에서 즉시 제거
       targetUserId: userId,
     });
 
@@ -347,6 +347,9 @@ exports.uploadFile = async (req, res) => {
     // v2.4.0: 실시간 안읽음 카운트 계산 및 통지
     for (const userId of allMemberIds) {
       try {
+        // [v2.4.0] 송신자 본인에게는 불필요한 목록 업데이트 전송 방지 (이미 읽음 상태임)
+        if (userId === senderId) continue;
+
         const userChatRoom = await UserChatRoom.findOne({ userId, roomId });
         if (!userChatRoom) continue;
 
@@ -436,6 +439,9 @@ exports.sendMessage = async (req, res) => {
 
     for (const userId of allMemberIds) {
       try {
+        // [v2.4.0] 송신자 본인에게는 불필요한 목록 업데이트 전송 방지 (이미 읽음 상태임)
+        if (userId === senderId) continue;
+
         const userChatRoom = await UserChatRoom.findOne({ userId, roomId });
         if (!userChatRoom) continue;
 
@@ -466,6 +472,8 @@ exports.sendMessage = async (req, res) => {
     await socketService.sendRoomMessage(roomId, newMessage.type, messageData, senderId);
 
     // 6. 푸시 알림 전송 (현재 방에 있지 않은 모든 유저에게)
+    const recipientIds = allMemberIds.filter((id) => id !== senderId);
+
     if (recipientIds.length > 0) {
       console.log(`[Push] Attempting to send push to recipients: ${recipientIds}`);
       const activeRooms = await userService.getUsersActiveRooms(recipientIds);
