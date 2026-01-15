@@ -34,7 +34,7 @@ import { DirectoryView } from './components/Directory/DirectoryView';
 import { ChatHeader } from './components/ChatHeader';
 import { ChatMemberPanel } from './components/ChatMemberPanel';
 import { ChatInput } from './components/ChatInput';
-import { ChatMessagesArea } from './components/ChatMessagesArea';
+import { ChatMessages } from './components/ChatMessages';
 import './ChatApp.scss';
 
 import type { ChatRoom, ChatUser, Workspace } from './types';
@@ -637,7 +637,7 @@ function ChatAppContent() {
 
         <Box style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
           {/* Messages Area - Slack 스타일 배경 적용 */}
-          <ChatMessagesArea
+          <ChatMessages
             messages={messages}
             currentUser={currentUser as any}
             currentRoom={currentRoom}

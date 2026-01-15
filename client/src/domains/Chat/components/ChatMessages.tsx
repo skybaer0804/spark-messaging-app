@@ -7,7 +7,7 @@ import { ChatMessageItem } from './ChatMessageItem';
 import type { Message, ChatRoom, ChatUser } from '../types';
 import './Chat.scss';
 
-interface ChatMessagesAreaProps {
+interface ChatMessagesProps {
   messages: Message[];
   currentUser?: ChatUser | null;
   currentRoom?: ChatRoom;
@@ -18,7 +18,7 @@ interface ChatMessagesAreaProps {
   classNamePrefix?: string;
 }
 
-function ChatMessagesAreaComponent({
+function ChatMessagesComponent({
   messages,
   currentUser,
   currentRoom,
@@ -27,7 +27,7 @@ function ChatMessagesAreaComponent({
   onImageClick,
   emptyMessage,
   classNamePrefix = 'chat',
-}: ChatMessagesAreaProps) {
+}: ChatMessagesProps) {
   const internalMessagesRef = useRef<HTMLDivElement>(null);
   const internalMessagesEndRef = useRef<HTMLDivElement>(null);
   const baseClass = classNamePrefix;
@@ -109,7 +109,7 @@ function ChatMessagesAreaComponent({
 }
 
 // memo로 메모이제이션하여 messages 배열 참조가 변경되지 않으면 리렌더링 방지
-export const ChatMessagesArea = memo(ChatMessagesAreaComponent, (prevProps, nextProps) => {
+export const ChatMessages = memo(ChatMessagesComponent, (prevProps, nextProps) => {
   // messages 배열 길이와 내용이 같으면 리렌더링하지 않음
   if (prevProps.messages.length !== nextProps.messages.length) {
     return false;

@@ -1,6 +1,6 @@
 import type { ChatAdapter, ChatConfig, ChatMessage } from './types';
 import type { Signal } from '@preact/signals';
-import { ChatMessagesArea } from './ChatMessagesArea';
+import { ChatMessages } from './ChatMessages';
 import { ChatInput } from './ChatInput';
 import { ImageModal } from './ImageModal';
 import { useChatCore } from './hooks/useChatCore';
@@ -107,7 +107,7 @@ function ChatComponent({ adapter, config = {}, classNamePrefix = 'chat', roomNam
           </Flex>
         </Flex>
       )}
-      <ChatMessagesArea
+      <ChatMessages
         messages={messages}
         currentUser={currentUser as any}
         onImageClick={handleImageClick}

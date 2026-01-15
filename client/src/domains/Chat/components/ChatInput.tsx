@@ -47,12 +47,7 @@ function ChatInputComponent({
   const [isComposing, setIsComposing] = useState(false);
 
   return (
-    <Paper
-      square
-      elevation={4}
-      padding="md"
-      style={{ flexShrink: 0, borderTop: '1px solid var(--color-border-default)' }}
-    >
+    <Paper square elevation={4} padding="md" style={{ flexShrink: 0 }}>
       <Stack spacing="sm">
         <FilePreview
           files={selectedFiles}
