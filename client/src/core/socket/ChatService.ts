@@ -97,7 +97,7 @@ export class ChatService {
         type: (msg.type as MessageType) || 'text',
         sequenceNumber: contentData.sequenceNumber || 0,
         tempId: contentData.tempId,
-        readBy: [],
+        readBy: contentData.readBy || [], // [v2.4.0] 서버에서 받은 readBy 반영
         timestamp: new Date(msg.timestamp || Date.now()),
         status: 'sent',
       };

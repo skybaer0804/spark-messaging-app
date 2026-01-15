@@ -48,32 +48,35 @@ export function ChatProvider({ children }: { children: any }) {
   useSignalEffect(() => {
     const signalValue = chatRoomList.value;
     if (Array.isArray(signalValue)) {
-      setRoomList([...signalValue] as any);
+      setRoomList([...signalValue]);
     }
   });
 
-  const updateRoomList = (rooms: ChatRoom[]) => {
+  const updateRoomList = (rooms: ChatRoom[], isSocketUpdate = false) => {
     // v2.4.0: 소켓 우선 정책 (Socket-First Policy)
-    // API에서 가져온 방 목록을 적용할 때, 소켓으로 이미 받은 최신 뱃지 정보를 잃지 않도록 병합함
     const currentRooms = chatRoomList.value;
 
     const mergedRooms = rooms.map((newRoom) => {
       const existingRoom = currentRooms.find((r: any) => r._id === (newRoom as any)._id);
       if (existingRoom) {
+        let finalUnreadCount = (newRoom as any).unreadCount;
+
+        // v2.4.0: 소켓 업데이트가 아닌 경우(예: 일반 API 조회)에만 로컬 상태와 병합 시도
+        // 소켓 업데이트(실시간 알림)인 경우 서버의 카운트를 100% 신뢰함
+        if (!isSocketUpdate) {
+          finalUnreadCount = Math.max(existingRoom.unreadCount || 0, (newRoom as any).unreadCount || 0);
+        }
+
         return {
           ...newRoom,
-          // API 카운트보다 현재 메모리 카운트가 높으면 소켓 데이터가 더 최신이라고 판단하여 유지
-          unreadCount:
-            existingRoom.unreadCount > (newRoom as any).unreadCount
-              ? existingRoom.unreadCount
-              : (newRoom as any).unreadCount,
+          unreadCount: finalUnreadCount,
         };
       }
       return newRoom;
     });
 
     chatRoomList.value = [...mergedRooms] as any;
-    setRoomList([...mergedRooms]);
+    // setRoomList는 useSignalEffect에서 자동으로 처리됨
   };
   const [debugEnabled, setDebugEnabled] = useState(localStorage.getItem('chat_debug_mode') === 'true');
 
@@ -218,7 +221,7 @@ export function ChatProvider({ children }: { children: any }) {
             (a: any, b: any) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime(),
           );
 
-          updateRoomList(updatedRooms as any);
+          updateRoomList(updatedRooms as any, true); // v2.4.0: 소켓 업데이트임을 명시
         } else if (updateData.roomId && !updateData._id) {
           // v2.2.0 호환성 유지: roomId만 오고 _id가 없는 경우 (예: 방에서 나간 본인 알림 등)
           // 사실 v2.3.0에서는 _id가 오도록 수정함

@@ -1259,21 +1259,30 @@ function ChatAppContent() {
                           position: 'relative',
                         }}
                       >
-                        {/* v2.2.0: 안읽음 표시 (1) */}
-                        {isOwnMessage && msg.status === 'sent' && (!msg.readBy || msg.readBy.length === 0) && (
-                          <Typography
-                            variant="caption"
-                            style={{
-                              position: 'absolute',
-                              left: '-20px',
-                              bottom: '2px',
-                              color: 'var(--primitive-yellow-600)',
-                              fontWeight: 'bold',
-                            }}
-                          >
-                            1
-                          </Typography>
-                        )}
+                        {/* v2.4.0: 안읽음 카운트 표시 (Slack/Kakao 스타일) */}
+                        {(() => {
+                          const totalMembers = currentRoom.members?.length || 0;
+                          const readCount = msg.readBy?.length || 0;
+                          const unreadCount = totalMembers - readCount;
+
+                          if (unreadCount > 0) {
+                            return (
+                              <Typography
+                                variant="caption"
+                                style={{
+                                  position: 'absolute',
+                                  [isOwnMessage ? 'left' : 'right']: '-24px',
+                                  bottom: '2px',
+                                  color: 'var(--primitive-yellow-600)',
+                                  fontWeight: 'bold',
+                                }}
+                              >
+                                {unreadCount}
+                              </Typography>
+                            );
+                          }
+                          return null;
+                        })()}
                         {msg.fileData ? (
                           <Box>
                             {msg.fileData.fileType === 'image' && msg.fileData.data ? (

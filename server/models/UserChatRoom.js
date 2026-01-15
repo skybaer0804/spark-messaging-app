@@ -4,33 +4,37 @@ const userChatRoomSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
   },
   roomId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ChatRoom',
-    required: true
+    required: true,
   },
   unreadCount: {
     type: Number,
-    default: 0
+    default: 0,
+  },
+  lastReadSequenceNumber: {
+    type: Number,
+    default: 0,
   },
   lastReadMessageId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Message'
+    ref: 'Message',
   },
   isPinned: {
     type: Boolean,
-    default: false
+    default: false,
   },
   notificationEnabled: {
     type: Boolean,
-    default: true
+    default: true,
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 // 복합 인덱스 (조회 최적화)
