@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useToast } from '@/core/context/ToastContext';
+import { useRouterState } from '@/routes/RouterState';
 import { setChatCurrentRoom, setChatRoomList, currentWorkspaceId } from '@/stores/chatRoomsStore';
 import { useChat } from '../context/ChatContext';
 import { useChatRoom } from './useChatRoom';
 import { ChatRoom } from '../types';
 
 export function useChatApp() {
+  const { navigate } = useRouterState();
   const {
     isConnected,
     socketId,
@@ -113,7 +115,7 @@ export function useChatApp() {
     try {
       // [v2.4.0] 현재 보고 있는 방을 나가는 경우라면 즉시 경로 이동 (useEffect 재진입 방지)
       if (currentRoom?._id === targetRoomId) {
-        window.location.href = '/chatapp'; // 확실한 리프레시 및 상태 초기화를 위해 href 사용 가능 (또는 navigate)
+        navigate('/chatapp');
       }
 
       // 1. DB에서 제거 (UserChatRoom 삭제 및 Room 멤버에서 제거)

@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useState } from 'preact/hooks';
+import { memo } from 'preact/compat';
 import { IconSparkles, IconPlus, IconUser } from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes, type AppRouteNode } from '@/routes/appRoutes';
@@ -10,7 +11,7 @@ import { Avatar } from '@/ui-components/Avatar/Avatar';
 import './Sidebar.scss';
 
 // v2.4.0: 뱃지 렌더링 최적화를 위한 개별 컴포넌트 분리
-function NavItem({ route, isActive, onClick }: { route: AppRouteNode; isActive: boolean; onClick: () => void }) {
+const NavItem = memo(({ route, isActive, onClick }: { route: AppRouteNode; isActive: boolean; onClick: () => void }) => {
   const isChat = route.id === 'chatapp';
   const unread = totalUnreadCount.value;
 
@@ -32,9 +33,9 @@ function NavItem({ route, isActive, onClick }: { route: AppRouteNode; isActive: 
       </div>
     </button>
   );
-}
+});
 
-export function Sidebar() {
+export const Sidebar = memo(() => {
   const { pathname, navigate } = useRouterState();
   const { user } = useAuth();
   const [workspaces, setWorkspaces] = useState<any[]>([]);
@@ -137,4 +138,4 @@ export function Sidebar() {
       </div>
     </aside>
   );
-}
+});

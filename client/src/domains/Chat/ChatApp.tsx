@@ -2,6 +2,7 @@ import { useChatApp } from './hooks/useChatApp';
 import { formatTimestamp } from '@/core/utils/messageUtils';
 import { formatFileSize, downloadFile } from '@/core/utils/fileUtils';
 import { useRef, useEffect, useState, useMemo } from 'preact/hooks';
+import { memo } from 'preact/compat';
 import { IconButton } from '@/ui-components/Button/IconButton';
 import { Input } from '@/ui-components/Input/Input';
 import { Box } from '@/ui-components/Layout/Box';
@@ -74,28 +75,29 @@ interface ChatRoomSidebarProps {
   onUserClick?: (userId: string) => void;
 }
 
-function ChatRoomSidebar({
-  roomIdInput,
-  setRoomIdInput,
-  handleCreateRoom,
-  roomList,
-  userList,
-  selectedUserIds,
-  toggleUserSelection,
-  currentRoom,
-  handleRoomSelect,
-  leaveRoom,
-  onUserClick, // 추가
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isConnected: _isConnected,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  workspaceList: _workspaceList,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  selectedWorkspaceIds: _selectedWorkspaceIds,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  toggleWorkspaceSelection: _toggleWorkspaceSelection,
-}: ChatRoomSidebarProps) {
-  const [showInviteList, setShowInviteList] = useState(false);
+const ChatRoomSidebar = memo(
+  ({
+    roomIdInput,
+    setRoomIdInput,
+    handleCreateRoom,
+    roomList,
+    userList,
+    selectedUserIds,
+    toggleUserSelection,
+    currentRoom,
+    handleRoomSelect,
+    leaveRoom,
+    onUserClick, // 추가
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    isConnected: _isConnected,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    workspaceList: _workspaceList,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    selectedWorkspaceIds: _selectedWorkspaceIds,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    toggleWorkspaceSelection: _toggleWorkspaceSelection,
+  }: ChatRoomSidebarProps) => {
+    const [showInviteList, setShowInviteList] = useState(false);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showCreateChannelDialog, setShowCreateChannelDialog] = useState(false);
@@ -739,7 +741,7 @@ function ChatRoomSidebar({
       )}
     </div>
   );
-}
+});
 
 // 2.2.0: Empty State for Chat Area - 컴포넌트 외부로 이동하여 리렌더링 시 애니메이션 중복 방지
 const EmptyState = () => (

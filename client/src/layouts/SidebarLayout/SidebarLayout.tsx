@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo } from 'preact/hooks';
+import { memo } from 'preact/compat';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { BottomTab } from '@/components/BottomTab/BottomTab';
 import { Content } from '@/layouts/Content/Content';
@@ -16,7 +17,7 @@ interface SidebarLayoutInnerProps {
   children: ComponentChildren;
 }
 
-function SidebarLayoutInner({ children }: SidebarLayoutInnerProps) {
+const SidebarLayoutInner = memo(({ children }: SidebarLayoutInnerProps) => {
   const { deviceSize, sidebarConfig } = useTheme();
   const { isMobileSidebarOpen, closeMobileSidebar } = useSidebarLayout();
   const { pathname } = useRouterState();
@@ -88,7 +89,7 @@ function SidebarLayoutInner({ children }: SidebarLayoutInnerProps) {
       </Grid>
     </div>
   );
-}
+});
 
 interface SidebarLayoutProps {
   children: ComponentChildren;

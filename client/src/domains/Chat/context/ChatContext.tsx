@@ -1,5 +1,5 @@
 import { createContext } from 'preact';
-import { useContext, useState, useEffect, useRef } from 'preact/hooks';
+import { useContext, useState, useEffect, useRef, useCallback, useMemo } from 'preact/hooks';
 import { useSignalEffect } from '@preact/signals';
 import sparkMessagingClient from '../../../config/sparkMessaging';
 import { ConnectionService } from '@/core/socket/ConnectionService';
@@ -87,7 +87,7 @@ export function ChatProvider({ children }: { children: any }) {
     new FileTransferService(sparkMessagingClient, connectionServiceRef.current, chatServiceRef.current),
   );
 
-  const refreshRoomList = async () => {
+  const refreshRoomList = useCallback(async () => {
     try {
       const workspaceId = currentWorkspaceId.value;
       const rooms = await chatServiceRef.current.getRooms(workspaceId || undefined);
@@ -95,9 +95,9 @@ export function ChatProvider({ children }: { children: any }) {
     } catch (error) {
       console.error('Failed to load rooms:', error);
     }
-  };
+  }, []);
 
-  const refreshUserList = async () => {
+  const refreshUserList = useCallback(async () => {
     try {
       const workspaceId = currentWorkspaceId.value;
       const response = await authApi.getUsers(workspaceId || undefined);
@@ -105,9 +105,9 @@ export function ChatProvider({ children }: { children: any }) {
     } catch (error) {
       console.error('Failed to load users:', error);
     }
-  };
+  }, []);
 
-  const refreshWorkspaceList = async () => {
+  const refreshWorkspaceList = useCallback(async () => {
     try {
       const response = await workspaceApi.getWorkspaces();
       const workspaces = response.data;
@@ -120,13 +120,16 @@ export function ChatProvider({ children }: { children: any }) {
     } catch (error) {
       console.error('Failed to load workspaces:', error);
     }
-  };
+  }, []);
 
-  const toggleDebug = () => {
-    const nextValue = !debugEnabled;
-    setDebugEnabled(nextValue);
-    chatServiceRef.current.setDebugMode(nextValue);
-  };
+  const toggleDebug = useCallback(() => {
+    setDebugEnabled((prev) => {
+      const nextValue = !prev;
+      localStorage.setItem('chat_debug_mode', String(nextValue));
+      chatServiceRef.current.setDebugMode(nextValue);
+      return nextValue;
+    });
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -325,7 +328,7 @@ export function ChatProvider({ children }: { children: any }) {
       unsubStatusChange();
       unsubRoomListUpdate();
     };
-  }, [user]);
+  }, [user, refreshRoomList, refreshUserList, refreshWorkspaceList]);
 
   // 워크스페이스 변경 시 데이터 새로고침
   useEffect(() => {
@@ -333,27 +336,42 @@ export function ChatProvider({ children }: { children: any }) {
       refreshRoomList();
       refreshUserList();
     }
-  }, [currentWorkspaceId.value]);
+  }, [currentWorkspaceId.value, user, refreshRoomList, refreshUserList]);
 
-  const value: ChatContextType = {
-    isConnected,
-    socketId,
-    roomList,
-    userList,
-    workspaceList,
-    services: {
-      connection: connectionServiceRef.current,
-      chat: chatServiceRef.current,
-      room: roomServiceRef.current,
-      fileTransfer: fileTransferServiceRef.current,
-    },
-    refreshRoomList,
-    refreshUserList,
-    refreshWorkspaceList,
-    isLoading,
-    debugEnabled,
-    toggleDebug,
-  };
+  const value: ChatContextType = useMemo(
+    () => ({
+      isConnected,
+      socketId,
+      roomList,
+      userList,
+      workspaceList,
+      services: {
+        connection: connectionServiceRef.current,
+        chat: chatServiceRef.current,
+        room: roomServiceRef.current,
+        fileTransfer: fileTransferServiceRef.current,
+      },
+      refreshRoomList,
+      refreshUserList,
+      refreshWorkspaceList,
+      isLoading,
+      debugEnabled,
+      toggleDebug,
+    }),
+    [
+      isConnected,
+      socketId,
+      roomList,
+      userList,
+      workspaceList,
+      refreshRoomList,
+      refreshUserList,
+      refreshWorkspaceList,
+      isLoading,
+      debugEnabled,
+      toggleDebug,
+    ],
+  );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }
