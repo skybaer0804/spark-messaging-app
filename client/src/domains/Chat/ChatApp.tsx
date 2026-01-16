@@ -86,7 +86,10 @@ function ChatAppContent() {
 
   const startDirectChat = async (userId: string) => {
     // 서버에서 identifier 기반으로 기존 활성 방을 찾거나 새 방을 생성하도록 위임
-    await handleCreateRoom('direct', { members: [userId] });
+    const newRoom = await handleCreateRoom('direct', { members: [userId] });
+    if (newRoom && newRoom._id) {
+      navigate(`/chatapp/chat/${newRoom._id}`);
+    }
   };
 
   // Sidebar에서 "이 룸으로 들어가기" 요청을 보내면 여기서 실제 join을 수행
@@ -188,22 +191,13 @@ function ChatAppContent() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  if (view === 'directory' && isMobile) {
-    return (
-      <DirectoryView
-        directoryTab={directoryTab}
-        setDirectoryTab={setDirectoryTab}
-        roomList={roomList}
-        onRoomSelect={onRoomSelect}
-        userList={userList}
-        startDirectChat={startDirectChat}
-      />
-    );
-  }
+  const showSidebar = !isMobile || view === 'home' || view === 'directory';
+  const showMainContent = !isMobile || view === 'chat';
 
-  if (view === 'home' || view === 'directory' || !currentRoom) {
-    return (
-      <Box style={{ display: 'flex', height: '100%', minHeight: 0 }} className="chat-app__container">
+  return (
+    <Box style={{ display: 'flex', height: '100%', minHeight: 0 }} className="chat-app__container">
+      {/* Sidebar Area */}
+      {showSidebar && (
         <Box
           style={{
             width: isMobile ? '100%' : '300px',
@@ -213,164 +207,156 @@ function ChatAppContent() {
         >
           <ChatSidebar />
         </Box>
-        {!isMobile && (
-          <Box style={{ flex: 1, backgroundColor: 'var(--color-background-default)', height: '100%', minHeight: 0 }}>
-            {view === 'directory' ? (
-              <DirectoryView
-                directoryTab={directoryTab}
-                setDirectoryTab={setDirectoryTab}
-                roomList={roomList}
-                onRoomSelect={onRoomSelect}
-                userList={userList}
-                startDirectChat={startDirectChat}
-              />
-            ) : (
-              <ChatEmptyState />
-            )}
-          </Box>
-        )}
-      </Box>
-    );
-  }
+      )}
 
-  // Active Chat Room - 모바일에서는 채팅창만 표시
-  return (
-    <Box style={{ display: 'flex', height: '100%', minHeight: 0 }} className="chat-app__container">
-      {!isMobile && (
-        <Box style={{ width: '300px', flexShrink: 0 }} className="chat-app__sidebar-wrapper">
-          <ChatSidebar />
+      {/* Main Content Area */}
+      {showMainContent && (
+        <Box
+          style={{
+            flex: 1,
+            backgroundColor: 'var(--color-background-default)',
+            height: '100%',
+            minHeight: 0,
+            overflow: 'hidden',
+            display: view === 'home' || view === 'directory' ? 'block' : 'flex',
+            flexDirection: view === 'chat' ? 'column' : 'initial',
+          }}
+          className="chat-app__main-content"
+        >
+          {view === 'directory' ? (
+            <DirectoryView
+              directoryTab={directoryTab}
+              setDirectoryTab={setDirectoryTab}
+              roomList={roomList}
+              onRoomSelect={onRoomSelect}
+              userList={userList}
+              startDirectChat={startDirectChat}
+            />
+          ) : view === 'chat' && currentRoom ? (
+            <>
+              {/* Chat Header */}
+              <ChatHeader
+                isMobile={isMobile}
+                goToHome={goToHome}
+                currentRoom={currentRoom}
+                showUserList={showUserList}
+                setShowUserList={setShowUserList}
+                setShowSettings={setShowSettings}
+                toggleDebug={toggleDebug}
+                debugEnabled={debugEnabled}
+              />
+
+              <Box style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
+                {/* Messages Area */}
+                <ChatMessages
+                  messages={messages}
+                  currentUser={currentUser as any}
+                  currentRoom={currentRoom}
+                  messagesRef={messagesRef}
+                  messagesEndRef={messagesEndRef}
+                  onImageClick={handleImageClick}
+                />
+
+                {/* User List Sidebar */}
+                {showUserList && <ChatMemberPanel members={currentRoom.members} />}
+              </Box>
+
+              {/* Input Area */}
+              <ChatInput
+                input={input}
+                setInput={setInput}
+                selectedFiles={selectedFiles}
+                uploadingFile={uploadingFile}
+                uploadProgress={uploadProgress}
+                isConnected={isConnected}
+                placeholder={
+                  !isConnected
+                    ? 'Connecting...'
+                    : `Message #${
+                        currentRoom.displayName ||
+                        getDirectChatName(currentRoom, currentUser?.id || (currentUser as any)?._id)
+                      }`
+                }
+                showFileUpload={true}
+                onSendMessage={sendMessage}
+                onSendFile={handleFileSend}
+                onFileSelect={handleFileSelect}
+                onFileRemove={handleFileRemove}
+                onKeyPress={handleKeyPress}
+                classNamePrefix="chat-app"
+              />
+            </>
+          ) : (
+            <ChatEmptyState />
+          )}
         </Box>
       )}
-      <Flex
-        direction="column"
-        style={{
-          flex: 1,
-          backgroundColor: 'var(--color-background-default)',
-          height: '100%',
-          minHeight: 0,
-          overflow: 'hidden',
-        }}
-      >
-        {/* Chat Header */}
-        <ChatHeader
-          isMobile={isMobile}
-          goToHome={goToHome}
-          currentRoom={currentRoom}
-          showUserList={showUserList}
-          setShowUserList={setShowUserList}
-          setShowSettings={setShowSettings}
-          toggleDebug={toggleDebug}
-          debugEnabled={debugEnabled}
-        />
 
-        <Box style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
-          {/* Messages Area - Slack 스타일 배경 적용 */}
-          <ChatMessages
-            messages={messages}
-            currentUser={currentUser as any}
-            currentRoom={currentRoom}
-            messagesRef={messagesRef}
-            messagesEndRef={messagesEndRef}
-            onImageClick={handleImageClick}
-          />
+      {/* Modals */}
+      {imageModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={handleCloseImageModal}
+        >
+          <img src={imageModal.url} alt={imageModal.fileName} style={{ maxWidth: '90%', maxHeight: '90%' }} />
+        </div>
+      )}
 
-          {/* User List Sidebar */}
-          {showUserList && <ChatMemberPanel members={currentRoom.members} />}
-        </Box>
-
-        {/* Input Area */}
-        <ChatInput
-          input={input}
-          setInput={setInput}
-          selectedFiles={selectedFiles}
-          uploadingFile={uploadingFile}
-          uploadProgress={uploadProgress}
-          isConnected={isConnected}
-          placeholder={
-            !isConnected
-              ? 'Connecting...'
-              : `Message #${
-                  currentRoom.displayName ||
-                  getDirectChatName(currentRoom, currentUser?.id || (currentUser as any)?._id)
-                }`
-          }
-          showFileUpload={true}
-          onSendMessage={sendMessage}
-          onSendFile={handleFileSend}
-          onFileSelect={handleFileSelect}
-          onFileRemove={handleFileRemove}
-          onKeyPress={handleKeyPress}
-          classNamePrefix="chat-app"
-        />
-
-        {/* Image Modal */}
-        {imageModal && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.8)',
-              zIndex: 2000,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            onClick={handleCloseImageModal}
+      {showSettings && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 3000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={() => setShowSettings(false)}
+        >
+          <Paper
+            padding="lg"
+            style={{ width: '400px', backgroundColor: 'var(--color-bg-default)' }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <img src={imageModal.url} alt={imageModal.fileName} style={{ maxWidth: '90%', maxHeight: '90%' }} />
-          </div>
-        )}
-
-        {/* Settings Modal */}
-        {showSettings && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              zIndex: 3000,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            onClick={() => setShowSettings(false)}
-          >
-            <Paper
-              padding="lg"
-              style={{ width: '400px', backgroundColor: 'var(--color-bg-default)' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Typography variant="h3" style={{ marginBottom: '16px' }}>
-                Notification Settings
+            <Typography variant="h3" style={{ marginBottom: '16px' }}>
+              Notification Settings
+            </Typography>
+            <Stack spacing="md">
+              <Flex justify="space-between" align="center">
+                <Typography variant="body-medium">Global Notifications</Typography>
+                <input
+                  type="checkbox"
+                  checked={(currentUser as any)?.notificationSettings?.globalEnabled !== false}
+                  onChange={(e) => toggleGlobalNotifications(e.currentTarget.checked)}
+                />
+              </Flex>
+              <Divider />
+              <Typography variant="caption" color="text-secondary">
+                More detailed per-room settings coming soon...
               </Typography>
-              <Stack spacing="md">
-                <Flex justify="space-between" align="center">
-                  <Typography variant="body-medium">Global Notifications</Typography>
-                  {/* Switch component usage depends on implementation, assuming common props */}
-                  <input
-                    type="checkbox"
-                    checked={(currentUser as any)?.notificationSettings?.globalEnabled !== false}
-                    onChange={(e) => toggleGlobalNotifications(e.currentTarget.checked)}
-                  />
-                </Flex>
-                <Divider />
-                <Typography variant="caption" color="text-secondary">
-                  More detailed per-room settings coming soon...
-                </Typography>
-                <Button fullWidth onClick={() => setShowSettings(false)}>
-                  Close
-                </Button>
-              </Stack>
-            </Paper>
-          </div>
-        )}
-      </Flex>
+              <Button fullWidth onClick={() => setShowSettings(false)}>
+                Close
+              </Button>
+            </Stack>
+          </Paper>
+        </div>
+      )}
     </Box>
   );
 }

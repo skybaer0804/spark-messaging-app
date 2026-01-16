@@ -181,7 +181,7 @@ export const useChatSidebar = () => {
     if (!isConnected) return;
 
     try {
-      const newRoom = await chatService.createRoom({
+      const response = await chatService.createRoom({
         name: extraData.name || (type === 'direct' ? undefined : roomIdInput.trim()),
         description: extraData.description,
         members: selectedUserIds.length > 0 ? selectedUserIds : extraData.members || undefined,
@@ -192,7 +192,16 @@ export const useChatSidebar = () => {
         isPrivate: extraData.isPrivate || false,
       });
 
-      await refreshRoomList();
+      const newRoom = response.data;
+      const isNew = response.status === 201;
+
+      // 이미 목록에 있는 방인지 확인
+      const exists = roomList.some((r) => r._id === newRoom._id);
+
+      // 새 방이거나 목록에 없으면 새로고침
+      if (isNew || !exists) {
+        await refreshRoomList();
+      }
 
       if (newRoom && newRoom._id) {
         handleRoomSelect(newRoom._id, newRoom);
@@ -202,15 +211,16 @@ export const useChatSidebar = () => {
       setSelectedUserIds([]);
       setSelectedWorkspaceIds([]);
 
-      const typeMap: Record<string, string> = {
-        direct: '1:1 대화방',
-        public: '채널',
-        private: '비공개 채널',
-        team: '팀',
-        discussion: '토론',
-      };
-
-      showSuccess(`${typeMap[type] || type}이 생성되었습니다.`);
+      if (isNew) {
+        const typeMap: Record<string, string> = {
+          direct: '1:1 대화방',
+          public: '채널',
+          private: '비공개 채널',
+          team: '팀',
+          discussion: '토론',
+        };
+        showSuccess(`${typeMap[type] || type}이 생성되었습니다.`);
+      }
     } catch (error) {
       console.error('Failed to create room:', error);
       showError('Room 생성 실패');
@@ -232,11 +242,6 @@ export const useChatSidebar = () => {
 
       // v2.4.0: 낙관적 업데이트 - 목록에서 즉시 제거하여 반응성 향상
       chatRoomList.value = chatRoomList.value.filter((r: any) => r._id !== targetRoomId);
-
-      // 서버 DB 반영 시간을 고려하여 약간의 지연 후 새로고침 (Race Condition 방지)
-      setTimeout(() => {
-        refreshRoomList();
-      }, 500);
 
       showSuccess('채팅방을 나갔습니다.');
     } catch (error) {

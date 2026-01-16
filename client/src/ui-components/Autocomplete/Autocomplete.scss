@@ -52,9 +52,13 @@
   color: var(--color-text-primary);
   font-size: 14px;
 
-  &:hover,
-  &--highlighted {
+  &:hover {
     background-color: var(--color-surface-level-1);
+  }
+
+  &--highlighted {
+    background-color: var(--color-interactive-primary) !important;
+    color: var(--color-text-on-primary) !important;
   }
 
   &--selected {

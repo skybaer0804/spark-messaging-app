@@ -76,6 +76,17 @@ export const ChatSidebarHeader = ({
   };
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearching(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setIsSearching]);
+
+  useEffect(() => {
     const handleClick = () => {
       setShowProfileMenu(false);
     };
@@ -94,12 +105,7 @@ export const ChatSidebarHeader = ({
         style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center' }}
       >
         <div className="avatar">
-          <Avatar
-            src={currentUser?.profileImage}
-            variant="rounded"
-            size="sm"
-            style={{ backgroundColor: '#23D5AB' }}
-          >
+          <Avatar src={currentUser?.profileImage} variant="rounded" size="sm" style={{ backgroundColor: '#23D5AB' }}>
             {currentUser?.username?.substring(0, 1).toUpperCase() || <IconUser size={20} />}
           </Avatar>
           <div className={`avatar-status avatar-status--${currentUser?.status || 'online'}`} />

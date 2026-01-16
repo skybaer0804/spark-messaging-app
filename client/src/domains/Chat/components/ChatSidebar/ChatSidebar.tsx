@@ -1,4 +1,5 @@
 import { memo } from 'preact/compat';
+import { useEffect } from 'preact/hooks';
 import { useChatSidebar } from './hooks/useChatSidebar';
 import { IconButton } from '@/ui-components/Button/IconButton';
 import { Input } from '@/ui-components/Input/Input';
@@ -46,6 +47,19 @@ export const ChatSidebar = memo(() => {
     groupedRooms,
     filteredUserList,
   } = useChatSidebar();
+
+  // 검색창이 열릴 때 자동 포커스
+  useEffect(() => {
+    if (isSearching) {
+      // 약간의 지연을 두어 DOM이 완전히 렌더링된 후 포커스
+      setTimeout(() => {
+        const inputElement = document.querySelector('#chat-sidebar-search-input') as HTMLInputElement;
+        if (inputElement) {
+          inputElement.focus();
+        }
+      }, 0);
+    }
+  }, [isSearching]);
 
   const getRoomIcon = (room: any) => {
     switch (room.type) {
@@ -186,13 +200,26 @@ export const ChatSidebar = memo(() => {
           {isSearching ? (
             <Flex align="center" style={{ flex: 1, gap: '8px' }}>
               <Input
+                id="chat-sidebar-search-input"
                 fullWidth
-                autoFocus
                 placeholder="검색어를 입력하세요..."
                 value={searchQuery}
                 onInput={(e) => setSearchQuery(e.currentTarget.value)}
-                onKeyDown={handleSearchKeyDown}
-                style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#fff' }}
+                onKeyDown={(e) => {
+                  // ESC 키로 검색창 닫기
+                  if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setIsSearching(false);
+                    setSearchQuery('');
+                    return;
+                  }
+                  handleSearchKeyDown(e as any);
+                }}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  color: '#fff',
+                }}
+                className="chat-sidebar-search-input"
               />
               <IconButton
                 size="small"

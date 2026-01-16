@@ -36,22 +36,33 @@ export function AutocompleteMember({
     return userList.filter((user) => user._id !== currentUserId);
   }, [userList, currentUserId]);
 
-  // Autocomplete 옵션으로 변환
+  // 선택된 사용자 ID Set
+  const selectedUserIds = useMemo(() => {
+    return new Set(selectedUsers.map((u) => u._id));
+  }, [selectedUsers]);
+
+  // Autocomplete 옵션으로 변환 (선택된 사용자는 disabled로 표시)
   const options: AutocompleteOption<ChatUser>[] = useMemo(() => {
     return filteredUserList.map((user) => ({
       label: user.username,
       value: user,
+      disabled: selectedUserIds.has(user._id),
     }));
-  }, [filteredUserList]);
+  }, [filteredUserList, selectedUserIds]);
 
   // 선택된 사용자 ID 배열
   const selectedValues = useMemo(() => {
     return selectedUsers;
   }, [selectedUsers]);
 
-  // 옵션 필터링 (검색 기능)
+  // 옵션 필터링 (검색 기능만, 선택된 사용자는 disabled로 표시되므로 제외하지 않음)
   const filterOptions = (options: AutocompleteOption<ChatUser>[], inputValue: string): AutocompleteOption<ChatUser>[] => {
-    if (!inputValue.trim()) return options;
+    // 검색어가 없으면 모든 옵션 반환
+    if (!inputValue.trim()) {
+      return options;
+    }
+
+    // 검색어가 있으면 필터링
     const lowerInput = inputValue.toLowerCase();
     return options.filter((option) => {
       const user = option.value;
@@ -66,7 +77,6 @@ export function AutocompleteMember({
   // 옵션 렌더링
   const renderOption = (option: AutocompleteOption<ChatUser>) => {
     const user = option.value;
-    const isSelected = selectedUsers.some((u) => u._id === user._id);
 
     return (
       <Flex align="center" gap="sm" style={{ width: '100%' }}>
@@ -74,12 +84,11 @@ export function AutocompleteMember({
           {user.username.substring(0, 1)}
         </Avatar>
         <Flex direction="column" style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ fontWeight: isSelected ? 500 : 400 }}>{user.username}</span>
+          <span>{user.username}</span>
           {user.email && (
             <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>{user.email}</span>
           )}
         </Flex>
-        {isSelected && <span style={{ color: 'var(--color-interactive-primary)' }}>✓</span>}
       </Flex>
     );
   };

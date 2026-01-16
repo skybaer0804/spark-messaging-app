@@ -146,7 +146,8 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
       open={open}
       onClose={handleClose}
       title={isEditMode ? '팀 수정' : 'Create team'}
-      maxWidth="sm"
+      maxWidth={false}
+      style={{ maxWidth: '800px' }}
       fullWidth
       actions={
         <Flex gap="sm">

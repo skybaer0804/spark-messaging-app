@@ -71,7 +71,6 @@ export function Autocomplete<T = any>({
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const [popperStyle, setPopperStyle] = useState<{ top: string; left: string; width: string } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
   const selectedValues = useMemo(() => {
@@ -92,13 +91,22 @@ export function Autocomplete<T = any>({
     });
   };
 
-  const handleInputChange = (e: JSX.TargetedEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: JSX.TargetedEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const newValue = e.currentTarget.value;
     setInputValue(newValue);
     onInputChange?.(newValue);
     updatePopperPosition();
-    setOpen(true);
-    setHighlightedIndex(-1);
+    // 입력값이 있으면 목록 열기 (필터링은 useMemo에서 처리)
+    if (newValue.trim() || openOnFocus) {
+      setOpen(true);
+      // autoHighlight가 true이면 첫 번째 항목 하이라이트 (다음 렌더링에서)
+      if (!autoHighlight) {
+        setHighlightedIndex(-1);
+      }
+    } else {
+      setOpen(false);
+      setHighlightedIndex(-1);
+    }
   };
 
   const updatePopperPosition = () => {
@@ -119,10 +127,13 @@ export function Autocomplete<T = any>({
     if (openOnFocus && filteredOptions.length > 0) {
       updatePopperPosition();
       setOpen(true);
+      if (autoHighlight && filteredOptions.length > 0) {
+        setHighlightedIndex(0);
+      }
     }
   };
 
-  const handleInputBlur = (e: JSX.TargetedEvent<HTMLInputElement>) => {
+  const handleInputBlur = () => {
     // Delay to allow option click to fire first
     setTimeout(() => {
       if (!containerRef.current?.contains(document.activeElement)) {
@@ -154,42 +165,102 @@ export function Autocomplete<T = any>({
     }
   };
 
-  const handleKeyDown = (e: JSX.TargetedKeyboardEvent<HTMLInputElement>) => {
-    if (!open || filteredOptions.length === 0) {
-      if (e.key === 'Enter' && clearOnEscape && !disableClearable && inputValue) {
+  const handleKeyDown = (e: JSX.TargetedKeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    // 현재 필터링된 옵션 계산 (상태 업데이트 타이밍 문제 해결)
+    const currentFiltered = filterOptions(options, inputValue);
+
+    // 방향키 처리
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      // 필터링된 옵션이 있으면 목록 열기
+      if (currentFiltered.length > 0) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!open) {
+          updatePopperPosition();
+          setOpen(true);
+        }
+        // 하이라이트 인덱스 설정 (disabled 옵션 건너뛰기)
+        if (e.key === 'ArrowDown') {
+          setHighlightedIndex((prev) => {
+            let nextIndex = prev < 0 ? 0 : prev + 1;
+            // disabled 옵션 건너뛰기
+            let attempts = 0;
+            while (nextIndex < currentFiltered.length && currentFiltered[nextIndex]?.disabled && attempts < currentFiltered.length) {
+              nextIndex++;
+              attempts++;
+            }
+            // 마지막 항목에서 아래로 가면 첫 번째로 순환
+            if (nextIndex >= currentFiltered.length) {
+              nextIndex = 0;
+              while (nextIndex < currentFiltered.length && currentFiltered[nextIndex]?.disabled && attempts < currentFiltered.length * 2) {
+                nextIndex++;
+                attempts++;
+              }
+            }
+            return nextIndex >= currentFiltered.length ? 0 : nextIndex;
+          });
+        } else {
+          // ArrowUp
+          setHighlightedIndex((prev) => {
+            let nextIndex = prev < 0 ? currentFiltered.length - 1 : prev - 1;
+            // disabled 옵션 건너뛰기
+            let attempts = 0;
+            while (nextIndex >= 0 && currentFiltered[nextIndex]?.disabled && attempts < currentFiltered.length) {
+              nextIndex--;
+              attempts++;
+            }
+            // 첫 번째 항목에서 위로 가면 마지막으로 순환
+            if (nextIndex < 0) {
+              nextIndex = currentFiltered.length - 1;
+              while (nextIndex >= 0 && currentFiltered[nextIndex]?.disabled && attempts < currentFiltered.length * 2) {
+                nextIndex--;
+                attempts++;
+              }
+            }
+            return nextIndex < 0 ? currentFiltered.length - 1 : nextIndex;
+          });
+        }
+      }
+      return;
+    }
+
+    // Enter 키 처리
+    if (e.key === 'Enter') {
+      if (open && currentFiltered.length > 0 && highlightedIndex >= 0 && highlightedIndex < currentFiltered.length) {
+        const highlightedOption = currentFiltered[highlightedIndex];
+        // disabled 옵션은 선택하지 않음
+        if (!highlightedOption.disabled) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleOptionClick(highlightedOption);
+          return;
+        }
+      }
+      // Enter 키로 입력값 지우기
+      if (clearOnEscape && !disableClearable && inputValue) {
+        e.preventDefault();
         setInputValue('');
         onInputChange?.('');
       }
       return;
     }
 
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setHighlightedIndex((prev) => (prev < filteredOptions.length - 1 ? prev + 1 : autoHighlight ? 0 : prev));
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : autoHighlight ? filteredOptions.length - 1 : prev));
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
-          handleOptionClick(filteredOptions[highlightedIndex]);
-        }
-        break;
-      case 'Escape':
-        if (clearOnEscape) {
-          if (inputValue) {
-            setInputValue('');
-            onInputChange?.('');
-          } else {
-            setOpen(false);
-          }
+    // Escape 키 처리
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (clearOnEscape) {
+        if (inputValue) {
+          setInputValue('');
+          onInputChange?.('');
         } else {
           setOpen(false);
+          setHighlightedIndex(-1);
         }
-        break;
+      } else {
+        setOpen(false);
+        setHighlightedIndex(-1);
+      }
+      return;
     }
   };
 
@@ -235,6 +306,18 @@ export function Autocomplete<T = any>({
       }
     }
   }, [highlightedIndex, open]);
+
+  // 필터링된 옵션이 변경될 때 autoHighlight가 true이면 첫 번째 항목 하이라이트
+  useEffect(() => {
+    if (open && autoHighlight && filteredOptions.length > 0) {
+      // 입력값이 변경되면 항상 첫 번째 항목으로 리셋
+      if (highlightedIndex < 0 || highlightedIndex >= filteredOptions.length) {
+        setHighlightedIndex(0);
+      }
+    } else if (filteredOptions.length === 0) {
+      setHighlightedIndex(-1);
+    }
+  }, [filteredOptions, open, autoHighlight, highlightedIndex]);
 
   const displayValue = useMemo(() => {
     if (multiple) {

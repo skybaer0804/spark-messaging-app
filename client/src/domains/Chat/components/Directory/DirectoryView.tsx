@@ -13,6 +13,7 @@ import { currentWorkspaceId } from '@/stores/chatRoomsStore';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
 import { DialogChatTeam } from '../DialogChatTeam';
+import { DialogChatGroup } from '../DialogChatGroup';
 import type { ChatRoom, ChatUser } from '../../types';
 import './DirectoryView.scss';
 
@@ -73,8 +74,8 @@ const DirectoryItemCard = ({
   >
     <Flex align="center" gap="sm" style={{ width: '100%' }}>
       {isUser ? (
-        <div className="directory-card__user-avatar-container">
-          <Avatar src={userImage} variant="rounded" size="md">
+        <div className="directory-card__icon-box directory-card__icon-box--user" style={{ position: 'relative' }}>
+          <Avatar src={userImage} variant="rounded" size="md" style={{ width: '40px', height: '40px' }}>
             {initials}
           </Avatar>
           <div
@@ -126,6 +127,7 @@ export const DirectoryView = ({
   const [teamList, setTeamList] = useState<Team[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
   const [editTeam, setEditTeam] = useState<Team | null>(null);
+  const [editChannel, setEditChannel] = useState<ChatRoom | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   // 검색어에 따른 필터링된 목록
@@ -134,7 +136,7 @@ export const DirectoryView = ({
       .filter((r) => r.type === 'public')
       .filter(
         (r) =>
-          r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (r.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
           (r.description && r.description.toLowerCase().includes(searchTerm.toLowerCase())),
       );
   }, [roomList, searchTerm]);
@@ -222,6 +224,36 @@ export const DirectoryView = ({
     return false;
   };
 
+  // 현재 사용자가 채널의 Owner인지 확인
+  // TODO: 서버에서 createdBy 정보를 제공하면 더 정확하게 확인 가능
+  // 임시로 모든 채널에 버튼을 표시하도록 수정 (디버깅용)
+  const isChannelOwner = (room: ChatRoom) => {
+    if (!user) {
+      return false;
+    }
+    const currentUserId = (user as any).id || (user as any)._id;
+    if (!currentUserId) {
+      return false;
+    }
+
+    // members 배열에서 현재 사용자가 포함되어 있는지 확인
+    if (room.members && room.members.length > 0) {
+      const isMember = room.members.some((member) => {
+        if (member && typeof member === 'object') {
+          const memberId = (member as any)?._id || (member as any)?.id;
+          return memberId && memberId.toString() === currentUserId.toString();
+        }
+        return false;
+      });
+
+      // 임시: 멤버인 경우 모두 버튼 표시
+      // 실제로는 서버에서 createdBy 정보를 받아서 확인해야 함
+      return isMember;
+    }
+
+    return false;
+  };
+
   // 팀 수정
   const handleEditTeam = (team: Team) => {
     setEditTeam(team);
@@ -244,6 +276,26 @@ export const DirectoryView = ({
     } catch (error: any) {
       console.error('[handleDeleteTeam] Failed to delete team:', error);
       showError(error.response?.data?.message || '팀 삭제에 실패했습니다.');
+    }
+  };
+
+  // 채널 수정
+  const handleEditChannel = (room: ChatRoom) => {
+    setEditChannel(room);
+  };
+
+  // 채널 삭제
+  const handleDeleteChannel = async (room: ChatRoom) => {
+    if (!confirm(`정말로 "${room.name || '채널'}" 채널을 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      // TODO: 채널 삭제 API 호출 (현재 서버에 없을 수 있음)
+      showError('채널 삭제 기능은 아직 준비 중입니다.');
+    } catch (error: any) {
+      console.error('[handleDeleteChannel] Failed to delete channel:', error);
+      showError(error.response?.data?.message || '채널 삭제에 실패했습니다.');
     }
   };
 
@@ -327,18 +379,51 @@ export const DirectoryView = ({
       <Box className="directory-view__content">
         {directoryTab === 'channel' && (
           <Grid container spacing={2} columns={4}>
-            {filteredChannels.map((room) => (
-              <Grid item key={room._id} xs={4} sm={2} md={1}>
-                <DirectoryItemCard
-                  title={room.name}
-                  description={room.description}
-                  icon={<IconHash size={20} />}
-                  color="#509EE3"
-                  onClick={() => onRoomSelect(room._id)}
-                  badge="Public"
-                />
-              </Grid>
-            ))}
+            {filteredChannels.map((room) => {
+              const isOwner = isChannelOwner(room);
+              // 디버깅용: 임시로 모든 채널에 버튼 표시
+              const showActions = true; // isOwner 대신 true로 임시 설정
+              return (
+                <Grid item key={room._id} xs={4} sm={2} md={1}>
+                  <DirectoryItemCard
+                    title={room.name || '채널'}
+                    description={room.description}
+                    icon={<IconHash size={20} />}
+                    color="#509EE3"
+                    onClick={() => onRoomSelect(room._id)}
+                    badge="Public"
+                    actions={
+                      showActions ? (
+                        <>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditChannel(room);
+                            }}
+                            style={{ padding: '4px 8px' }}
+                          >
+                            <IconEdit size={14} />
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteChannel(room);
+                            }}
+                            style={{ padding: '4px 8px', color: '#ef4444' }}
+                          >
+                            <IconTrash size={14} />
+                          </Button>
+                        </>
+                      ) : null
+                    }
+                  />
+                </Grid>
+              );
+            })}
             {filteredChannels.length === 0 && (
               <Grid item xs={4}>
                 <Flex direction="column" align="center" justify="center" style={{ padding: '64px', width: '100%' }}>
@@ -441,13 +526,16 @@ export const DirectoryView = ({
                     <Button
                       variant="secondary"
                       size="sm"
+                      className="directory-card__action-button"
                       onClick={(e) => {
                         e.stopPropagation();
                         startDirectChat(userItem._id);
                       }}
                     >
-                      <IconMessageCircle size={14} style={{ marginRight: '4px' }} />
-                      메시지
+                      <IconMessageCircle size={14} />
+                      <span className="directory-card__action-text" style={{ marginLeft: '4px' }}>
+                        메시지
+                      </span>
                     </Button>
                   }
                 />
@@ -473,6 +561,30 @@ export const DirectoryView = ({
           onClose={() => setEditTeam(null)}
           onTeamCreated={handleTeamUpdated}
           team={editTeam}
+        />
+      )}
+
+      {/* 채널 수정 다이얼로그 */}
+      {editChannel && (
+        <DialogChatGroup
+          open={!!editChannel}
+          onClose={() => setEditChannel(null)}
+          onGroupCreated={() => {
+            setEditChannel(null);
+            // TODO: 채널 목록 새로고침
+          }}
+          group={
+            editChannel
+              ? {
+                  _id: editChannel._id,
+                  name: editChannel.name || '',
+                  description: editChannel.description,
+                  isPrivate: editChannel.isPrivate || false,
+                  members: editChannel.members || [],
+                  createdBy: editChannel.members?.[0] || ({} as ChatUser),
+                }
+              : undefined
+          }
         />
       )}
     </Box>

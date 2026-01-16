@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useToast } from '@/core/context/ToastContext';
 import { useRouterState } from '@/routes/RouterState';
-import { setChatCurrentRoom, setChatRoomList, currentWorkspaceId } from '@/stores/chatRoomsStore';
+import { setChatCurrentRoom, currentWorkspaceId } from '@/stores/chatRoomsStore';
 import { useChat } from '../context/ChatContext';
 import { useChatRoom } from './useChatRoom';
 import { ChatRoom } from '../types';
@@ -69,7 +69,7 @@ export function useChatApp() {
     if (!isConnected) return;
 
     try {
-      const newRoom = await chatService.createRoom({
+      const response = await chatService.createRoom({
         name: extraData.name || (type === 'direct' ? undefined : roomIdInput.trim()),
         description: extraData.description,
         members: selectedUserIds.length > 0 ? selectedUserIds : extraData.members || undefined,
@@ -80,8 +80,16 @@ export function useChatApp() {
         isPrivate: extraData.isPrivate || false,
       });
 
-      // 방 생성 후 목록 새로고침 완료를 기다림
-      await refreshRoomList();
+      const newRoom = response.data;
+      const isNew = response.status === 201;
+
+      // 이미 목록에 있는 방인지 확인
+      const exists = roomList.some((r) => r._id === newRoom._id);
+
+      // 새 방이거나 목록에 없으면 새로고침
+      if (isNew || !exists) {
+        await refreshRoomList();
+      }
 
       // 방 선택 및 해당 경로로 이동 (onRoomSelect는 ChatApp 컴포넌트에서 pathname 감지로 처리됨)
       if (newRoom && newRoom._id) {
@@ -92,15 +100,18 @@ export function useChatApp() {
       setSelectedUserIds([]);
       setSelectedWorkspaceIds([]);
 
-      const typeMap: Record<string, string> = {
-        direct: '1:1 대화방',
-        public: '채널',
-        private: '비공개 채널',
-        team: '팀',
-        discussion: '토론',
-      };
+      if (isNew) {
+        const typeMap: Record<string, string> = {
+          direct: '1:1 대화방',
+          public: '채널',
+          private: '비공개 채널',
+          team: '팀',
+          discussion: '토론',
+        };
+        showSuccess(`${typeMap[type] || type}이 생성되었습니다.`);
+      }
 
-      showSuccess(`${typeMap[type] || type}이 생성되었습니다.`);
+      return newRoom;
     } catch (error) {
       console.error('Failed to create room:', error);
       showError('Room 생성 실패');
@@ -139,9 +150,6 @@ export function useChatApp() {
         setMessages([]);
         await chatService.setCurrentRoom(null);
       }
-
-      // 4. 목록 새로고침
-      await refreshRoomList();
 
       showSuccess('채팅방을 나갔습니다.');
     } catch (error) {

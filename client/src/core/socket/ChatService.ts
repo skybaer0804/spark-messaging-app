@@ -143,8 +143,7 @@ export class ChatService {
     parentId?: string;
     isPrivate?: boolean;
   }) {
-    const response = await chatApi.createRoom(data);
-    return response.data;
+    return await chatApi.createRoom(data);
   }
 
   public async leaveRoom(roomId: string) {
