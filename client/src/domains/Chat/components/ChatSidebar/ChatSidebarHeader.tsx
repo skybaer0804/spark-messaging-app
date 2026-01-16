@@ -9,7 +9,6 @@ import { Divider } from '@/ui-components/Divider/Divider';
 import {
   IconSearch,
   IconAddressBook,
-  IconArrowsExchange,
   IconCircleFilled,
   IconCircle,
   IconUser,
@@ -92,26 +91,19 @@ export const ChatSidebarHeader = ({
           e.stopPropagation();
           setShowProfileMenu(!showProfileMenu);
         }}
-        style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', gap: '8px' }}
+        style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center' }}
       >
-        <div style={{ position: 'relative' }}>
-          <Avatar src={currentUser?.profileImage} size="sm">
+        <div className="avatar">
+          <Avatar
+            src={currentUser?.profileImage}
+            variant="rounded"
+            size="sm"
+            style={{ backgroundColor: '#23D5AB' }}
+          >
             {currentUser?.username?.substring(0, 1).toUpperCase() || <IconUser size={20} />}
           </Avatar>
-          <div
-            className={`avatar-status avatar-status--${currentUser?.status || 'online'}`}
-            style={{
-              border: '2px solid #2c333d',
-              bottom: '-2px',
-              right: '-2px',
-              width: '10px',
-              height: '10px',
-            }}
-          />
+          <div className={`avatar-status avatar-status--${currentUser?.status || 'online'}`} />
         </div>
-        <Typography variant="body-medium" style={{ fontWeight: 'bold', color: 'inherit' }}>
-          {currentUser?.username || 'User'}
-        </Typography>
       </div>
 
       {/* Profile Menu Dropdown */}
@@ -120,8 +112,13 @@ export const ChatSidebarHeader = ({
           <div className="chat-app__profile-menu-header">
             <Flex align="center" gap="md">
               <div style={{ position: 'relative' }}>
-                <Avatar src={currentUser?.profileImage} size="md">
-                  {currentUser?.username?.substring(0, 1)}
+                <Avatar
+                  src={currentUser?.profileImage}
+                  variant="rounded"
+                  size="md"
+                  style={{ backgroundColor: '#23D5AB' }}
+                >
+                  {currentUser?.username?.substring(0, 1).toUpperCase()}
                 </Avatar>
                 <div
                   className={`avatar-status avatar-status--${currentUser?.status || 'online'}`}

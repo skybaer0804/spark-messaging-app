@@ -88,8 +88,8 @@ export const ChatSidebar = memo(() => {
         <div className="avatar">
           {room.type === 'direct' ? (
             <>
-              <Avatar src={displayAvatar} size="sm">
-                {roomName?.substring(0, 1)}
+              <Avatar src={displayAvatar} variant="rounded" size="sm" style={{ backgroundColor: '#23D5AB' }}>
+                {roomName?.substring(0, 1).toUpperCase()}
               </Avatar>
               <div className={`avatar-status avatar-status--${displayStatus || 'offline'}`} />
             </>
@@ -139,8 +139,13 @@ export const ChatSidebar = memo(() => {
         }}
       >
         <div className="avatar">
-          <Avatar src={user.profileImage || user.avatar} size="sm">
-            {user.username.substring(0, 1)}
+          <Avatar
+            src={user.profileImage || user.avatar}
+            variant="rounded"
+            size="sm"
+            style={{ backgroundColor: '#23D5AB' }}
+          >
+            {user.username.substring(0, 1).toUpperCase()}
           </Avatar>
           <div className={`avatar-status avatar-status--${user.status || 'offline'}`} />
         </div>
