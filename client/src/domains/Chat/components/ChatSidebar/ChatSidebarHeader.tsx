@@ -31,7 +31,6 @@ interface ChatSidebarHeaderProps {
   handleCreateRoom: (type: any, extraData?: any) => void;
   roomIdInput: string;
   setRoomIdInput: (val: string) => void;
-  setActiveView: (view: 'chat' | 'directory' | 'home') => void;
 }
 
 export const ChatSidebarHeader = ({
@@ -42,7 +41,6 @@ export const ChatSidebarHeader = ({
   handleCreateRoom,
   roomIdInput,
   setRoomIdInput,
-  setActiveView,
 }: ChatSidebarHeaderProps) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { user: currentUser, signOut } = useAuth();
@@ -202,7 +200,7 @@ export const ChatSidebarHeader = ({
           size="small"
           onClick={(e) => {
             e.stopPropagation();
-            setActiveView('home');
+            navigate('/chatapp');
           }}
         >
           <IconHome size={20} />
@@ -210,7 +208,14 @@ export const ChatSidebarHeader = ({
         <IconButton size="small" onClick={() => setIsSearching(true)}>
           <IconSearch size={20} />
         </IconButton>
-        <IconButton size="small" title="디렉토리" onClick={() => navigate('/chatapp/directory')}>
+        <IconButton
+          size="small"
+          title="디렉토리"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate('/chatapp/directory');
+          }}
+        >
           <IconAddressBook size={20} />
         </IconButton>
         <IconButton
@@ -230,15 +235,6 @@ export const ChatSidebarHeader = ({
           roomIdInput={roomIdInput}
           setRoomIdInput={setRoomIdInput}
         />
-        {/* <IconButton
-          size="small"
-          onClick={(e) => {
-            e.stopPropagation();
-            showInfo('준비 중입니다.');
-          }}
-        >
-          <IconDotsVertical size={20} />
-        </IconButton> */}
       </div>
     </>
   );

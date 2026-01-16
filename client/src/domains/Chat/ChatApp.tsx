@@ -1,5 +1,5 @@
 import { useChatApp } from './hooks/useChatApp';
-import { useRef, useEffect, useState } from 'preact/hooks';
+import { useRef, useEffect, useState, useMemo } from 'preact/hooks';
 import { Box } from '@/ui-components/Layout/Box';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Stack } from '@/ui-components/Layout/Stack';
@@ -58,37 +58,30 @@ function ChatAppContent() {
     setCurrentRoom, // useChatRoom에서 받아오도록 확인 필요
   } = useChatApp();
 
-  const [activeView, setActiveView] = useState<'chat' | 'directory' | 'home'>('home');
+  const view = useMemo(() => {
+    if (pathname === '/chatapp/directory') return 'directory';
+    if (pathname.startsWith('/chatapp/chat/')) return 'chat';
+    return 'home';
+  }, [pathname]);
+
   const [directoryTab, setDirectoryTab] = useState<'channel' | 'team' | 'user'>('channel');
 
   useEffect(() => {
-    if (pathname === '/chatapp/directory') {
-      setActiveView('directory');
-    } else if (pathname.startsWith('/chatapp/chat/')) {
+    if (view === 'chat') {
       const roomId = pathname.split('/').pop();
-      // currentRoom._id와 roomId가 다를 때만 onRoomSelect 호출 (불필요한 중복 호출 방지)
       if (roomId && currentRoom?._id !== roomId && roomList.length > 0) {
         onRoomSelect(roomId);
       }
-      setActiveView('chat');
-    } else if (currentRoom) {
-      setActiveView('chat');
-    } else {
-      setActiveView('home');
     }
-  }, [pathname, currentRoom?._id, roomList]);
+  }, [pathname, currentRoom?._id, roomList, view]);
 
   const onRoomSelect = (roomId: string) => {
-    // roomList에서 찾기 시도
     const room = roomList.find((r) => r._id === roomId);
     if (room) {
       handleRoomSelectRaw(room);
       if (pathname !== `/chatapp/chat/${roomId}`) {
         navigate(`/chatapp/chat/${roomId}`);
       }
-    } else {
-      // 목록에 없으면(방금 생성된 경우 등) 강제 새로고침 후 재시도 가능하도록 로직 보완 필요
-      // 현재는 useChatApp의 handleCreateRoom -> refreshRoomList -> handleRoomSelect 흐름이 있음
     }
   };
 
@@ -201,7 +194,20 @@ function ChatAppContent() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  if (activeView === 'home' || !currentRoom) {
+  if (view === 'directory' && isMobile) {
+    return (
+      <DirectoryView
+        directoryTab={directoryTab}
+        setDirectoryTab={setDirectoryTab}
+        roomList={roomList}
+        onRoomSelect={onRoomSelect}
+        userList={userList}
+        startDirectChat={startDirectChat}
+      />
+    );
+  }
+
+  if (view === 'home' || view === 'directory' || !currentRoom) {
     return (
       <Box style={{ display: 'flex', height: '100%', minHeight: 0 }} className="chat-app__container">
         <Box
@@ -227,12 +233,11 @@ function ChatAppContent() {
             handleRoomSelect={onRoomSelect}
             leaveRoom={leaveRoom}
             onUserClick={startDirectChat}
-            setActiveView={setActiveView}
           />
         </Box>
         {!isMobile && (
           <Box style={{ flex: 1, backgroundColor: 'var(--color-background-default)', height: '100%', minHeight: 0 }}>
-            {activeView === 'directory' ? (
+            {view === 'directory' ? (
               <DirectoryView
                 directoryTab={directoryTab}
                 setDirectoryTab={setDirectoryTab}
@@ -247,19 +252,6 @@ function ChatAppContent() {
           </Box>
         )}
       </Box>
-    );
-  }
-
-  if (activeView === 'directory' && isMobile) {
-    return (
-      <DirectoryView
-        directoryTab={directoryTab}
-        setDirectoryTab={setDirectoryTab}
-        roomList={roomList}
-        onRoomSelect={onRoomSelect}
-        userList={userList}
-        startDirectChat={startDirectChat}
-      />
     );
   }
 
@@ -284,7 +276,6 @@ function ChatAppContent() {
             handleRoomSelect={onRoomSelect}
             leaveRoom={leaveRoom}
             onUserClick={startDirectChat}
-            setActiveView={setActiveView}
           />
         </Box>
       )}

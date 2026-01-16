@@ -37,7 +37,6 @@ export interface ChatRoomSidebarProps {
   handleRoomSelect: (roomId: string) => void;
   leaveRoom: (roomId?: string) => void; // v2.4.0: roomId 선택 사항 추가
   onUserClick?: (userId: string) => void;
-  setActiveView: (view: 'chat' | 'directory' | 'home') => void;
 }
 
 export const ChatRoomSidebar = memo(
@@ -53,7 +52,6 @@ export const ChatRoomSidebar = memo(
     handleRoomSelect,
     leaveRoom,
     onUserClick,
-    setActiveView,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     isConnected: _isConnected,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -130,16 +128,25 @@ export const ChatRoomSidebar = memo(
     }, [roomList, userList, searchQuery, currentUser]);
 
     const groupedRooms = useMemo(() => {
-      const directRooms = filteredRoomList.filter((r) => r.type === 'direct');
+      const currentUserId = currentUser?.id || (currentUser as any)?._id;
+
+      const sortRooms = (rooms: ChatRoom[]) => {
+        return [...rooms].sort((a, b) => {
+          const nameA = (a.displayName || getDirectChatName(a, currentUserId) || '').toLowerCase();
+          const nameB = (b.displayName || getDirectChatName(b, currentUserId) || '').toLowerCase();
+          if (nameA !== nameB) return nameA.localeCompare(nameB);
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        });
+      };
 
       return {
-        direct: directRooms,
-        team: filteredRoomList.filter((r) => r.type === 'team'),
-        public: filteredRoomList.filter((r) => r.type === 'public'),
-        private: filteredRoomList.filter((r) => r.type === 'private'),
-        discussion: filteredRoomList.filter((r) => r.type === 'discussion'),
+        direct: sortRooms(filteredRoomList.filter((r) => r.type === 'direct')),
+        team: sortRooms(filteredRoomList.filter((r) => r.type === 'team')),
+        public: sortRooms(filteredRoomList.filter((r) => r.type === 'public')),
+        private: sortRooms(filteredRoomList.filter((r) => r.type === 'private')),
+        discussion: sortRooms(filteredRoomList.filter((r) => r.type === 'discussion')),
       };
-    }, [filteredRoomList]);
+    }, [filteredRoomList, currentUser]);
 
     const renderRoomItem = (room: ChatRoom) => {
       const isActive = currentRoom?._id === room._id;
@@ -278,7 +285,6 @@ export const ChatRoomSidebar = memo(
                 handleCreateRoom={handleCreateRoom}
                 roomIdInput={roomIdInput}
                 setRoomIdInput={setRoomIdInput}
-                setActiveView={setActiveView}
               />
             )}
           </Flex>
