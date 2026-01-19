@@ -20,9 +20,19 @@ export function parseMarkdown(text: string, options: MarkdownParseOptions = {}):
 
   if (!text) return [];
 
+  // 방어 코드: 텍스트 길이 제한 (10만자)
+  const MAX_TEXT_LENGTH = 100000;
+  if (text.length > MAX_TEXT_LENGTH) {
+    return [{ type: 'text', content: text.substring(0, MAX_TEXT_LENGTH) }];
+  }
+
   const tokens: MarkdownToken[] = [];
   let currentIndex = 0;
   const textLength = text.length;
+  
+  // 방어 코드: 최대 반복 횟수 제한 (무한 루프 방지)
+  const MAX_ITERATIONS = textLength * 2;
+  let iterationCount = 0;
 
   /**
    * 코드 블록 파싱 (최우선)
@@ -134,7 +144,9 @@ export function parseMarkdown(text: string, options: MarkdownParseOptions = {}):
     // Strikethrough: ~~
     if (char === '~' && nextChar === '~') {
       let endIndex = currentIndex + 2;
-      while (endIndex < textLength - 1) {
+      // 방어 코드: 최대 검색 범위 제한 (1000자)
+      const maxSearchLength = Math.min(textLength - 1, currentIndex + 1000);
+      while (endIndex < maxSearchLength) {
         if (text[endIndex] === '~' && text[endIndex + 1] === '~') {
           const content = text.substring(currentIndex + 2, endIndex);
           currentIndex = endIndex + 2;
@@ -151,7 +163,9 @@ export function parseMarkdown(text: string, options: MarkdownParseOptions = {}):
     // Bold: ** 또는 __
     if ((char === '*' && nextChar === '*') || (char === '_' && nextChar === '_')) {
       let endIndex = currentIndex + 2;
-      while (endIndex < textLength - 1) {
+      // 방어 코드: 최대 검색 범위 제한 (1000자)
+      const maxSearchLength = Math.min(textLength - 1, currentIndex + 1000);
+      while (endIndex < maxSearchLength) {
         if (text[endIndex] === char && text[endIndex + 1] === char) {
           const content = text.substring(currentIndex + 2, endIndex);
           currentIndex = endIndex + 2;
@@ -171,7 +185,9 @@ export function parseMarkdown(text: string, options: MarkdownParseOptions = {}):
       if (nextChar === char) return null;
 
       let endIndex = currentIndex + 1;
-      while (endIndex < textLength) {
+      // 방어 코드: 최대 검색 범위 제한 (1000자)
+      const maxSearchLength = Math.min(textLength, currentIndex + 1000);
+      while (endIndex < maxSearchLength) {
         if (text[endIndex] === char) {
           const content = text.substring(currentIndex + 1, endIndex);
           currentIndex = endIndex + 1;
@@ -233,6 +249,23 @@ export function parseMarkdown(text: string, options: MarkdownParseOptions = {}):
 
   // 메인 파싱 루프
   while (currentIndex < textLength) {
+    // 방어 코드: 무한 루프 방지
+    iterationCount++;
+    if (iterationCount > MAX_ITERATIONS) {
+      // 최대 반복 횟수 초과 시 남은 텍스트를 일반 텍스트로 처리하고 중단
+      const remainingText = text.substring(currentIndex);
+      if (remainingText) {
+        tokens.push({
+          type: 'text',
+          content: remainingText,
+        });
+      }
+      break;
+    }
+
+    // 방어 코드: currentIndex가 증가하지 않으면 중단 (무한 루프 방지)
+    const previousIndex = currentIndex;
+
     if (maxNestingDepth !== undefined && maxNestingDepth <= 0) {
       // 최대 중첩 깊이 도달 시 일반 텍스트로 처리
       const remainingText = text.substring(currentIndex);
@@ -285,6 +318,16 @@ export function parseMarkdown(text: string, options: MarkdownParseOptions = {}):
     token = parseText();
     if (token) {
       tokens.push(token);
+    }
+
+    // 방어 코드: currentIndex가 증가하지 않으면 강제로 증가 (무한 루프 방지)
+    if (currentIndex === previousIndex) {
+      // 파싱이 진행되지 않으면 현재 문자를 텍스트로 처리하고 다음으로 이동
+      tokens.push({
+        type: 'text',
+        content: text[currentIndex],
+      });
+      currentIndex++;
     }
   }
 

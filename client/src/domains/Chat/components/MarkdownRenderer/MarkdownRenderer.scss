@@ -5,7 +5,7 @@
 
   // 기본 스타일
   &--default {
-    // 기본 스타일
+    // 기본 스타일은 상위에서 상속
   }
 
   &--compact {
@@ -32,25 +32,30 @@
   // Inline Code
   .markdown-inline-code {
     display: inline-block;
-    padding: 0.125em 0.375em;
+    padding: 0.25em 0.5em;
     margin: 0 0.125em;
-    background-color: var(--bg-highlight, rgba(0, 0, 0, 0.1));
-    border-radius: var(--shape-radius-sm, 3px);
+    // 블랙 계통 배경 (코드블럭보다 밝게)
+    background-color: var(--bg-code-inline, rgba(40, 40, 45, 0.95));
+    border-radius: var(--shape-radius-sm, 4px);
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
     font-size: 0.9em;
     line-height: 1.4;
+    color: var(--text-code, rgba(255, 255, 255, 0.9));
   }
 
   // Code Block
   .markdown-code-block {
     margin: 0.5em 0;
     padding: 0.75em 1em;
-    background-color: var(--bg-highlight, rgba(0, 0, 0, 0.05));
+    // 블랙 계통 배경 (인라인코드보다 어둡게)
+    background-color: var(--bg-code-block, rgba(30, 30, 35, 0.95));
     border-radius: var(--shape-radius-md, 6px);
     overflow-x: auto;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
     font-size: 0.875em;
     line-height: 1.5;
+    // 어두운 배경에 맞춰 텍스트 색상 조정
+    color: var(--text-code, rgba(255, 255, 255, 0.9));
 
     code {
       display: block;
@@ -65,17 +70,25 @@
 
   // Link
   .markdown-link {
-    color: var(--color-interactive-primary, #0066cc);
+    // 파란색으로 표시
+    color: var(--color-link, #0066cc);
+    // 링크임을 명확히 표시
     text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 2px;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: all 0.2s;
+    // 링크임을 더 명확히 하기 위한 스타일
+    font-weight: 500;
 
     &:hover {
-      opacity: 0.8;
+      color: var(--color-link-hover, #0052a3);
+      text-decoration-thickness: 2px;
     }
 
     &:visited {
-      color: var(--color-interactive-primary, #0066cc);
+      color: var(--color-link, #0066cc);
+      text-decoration: underline;
     }
   }
 

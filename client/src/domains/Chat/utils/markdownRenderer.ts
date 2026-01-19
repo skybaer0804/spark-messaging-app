@@ -17,14 +17,6 @@ function isValidUrl(url: string): boolean {
   }
 }
 
-/**
- * 텍스트를 안전하게 이스케이프 (XSS 방지)
- */
-function escapeHtml(text: string): string {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
 
 /**
  * 마크다운 토큰을 Preact VNode로 렌더링
@@ -32,37 +24,49 @@ function escapeHtml(text: string): string {
 export function renderMarkdownToken(token: MarkdownToken, key?: string | number): VNode {
   switch (token.type) {
     case 'text':
-      return h('span', { key }, token.content || '');
+      return h('span', { key }, token.content || '') as VNode;
 
     case 'bold':
       return h(
         'strong',
         { key, className: 'markdown-bold' },
         token.children?.map((child, idx) => renderMarkdownToken(child, idx)) || []
-      );
+      ) as VNode;
 
     case 'italic':
       return h(
         'em',
         { key, className: 'markdown-italic' },
         token.children?.map((child, idx) => renderMarkdownToken(child, idx)) || []
-      );
+      ) as VNode;
 
     case 'strikethrough':
       return h(
         'del',
         { key, className: 'markdown-strikethrough' },
         token.children?.map((child, idx) => renderMarkdownToken(child, idx)) || []
-      );
+      ) as VNode;
 
     case 'inlineCode':
+      // 코드에서는 HTML 엔티티를 표시해야 하므로 수동 이스케이프
+      const codeContent = (token.content || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
       return h(
         'code',
-        { key, className: 'markdown-inline-code' },
-        escapeHtml(token.content || '')
-      );
+        { key, className: 'markdown-inline-code', dangerouslySetInnerHTML: { __html: codeContent } }
+      ) as VNode;
 
     case 'codeBlock':
+      // 코드 블럭에서는 HTML 엔티티를 표시해야 하므로 수동 이스케이프
+      // 띄어쓰기는 그대로 유지하고, HTML 특수 문자만 이스케이프
+      const blockContent = (token.content || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
       return h(
         'pre',
         { key, className: 'markdown-code-block' },
@@ -70,10 +74,10 @@ export function renderMarkdownToken(token: MarkdownToken, key?: string | number)
           'code',
           {
             className: token.language ? `language-${token.language}` : undefined,
-          },
-          escapeHtml(token.content || '')
-        )
-      );
+            dangerouslySetInnerHTML: { __html: blockContent }
+          }
+        ) as VNode
+      ) as VNode;
 
     case 'link':
       const url = token.url || '';
@@ -95,13 +99,13 @@ export function renderMarkdownToken(token: MarkdownToken, key?: string | number)
           },
         },
         linkText
-      );
+      ) as VNode;
 
     case 'lineBreak':
-      return h('br', { key });
+      return h('br', { key }) as VNode;
 
     default:
-      return h('span', { key }, '');
+      return h('span', { key }, '') as VNode;
   }
 }
 
@@ -111,8 +115,24 @@ export function renderMarkdownToken(token: MarkdownToken, key?: string | number)
 export function renderMarkdown(text: string): VNode[] {
   if (!text) return [];
 
-  const tokens = parseMarkdown(text);
-  return tokens.map((token, idx) => renderMarkdownToken(token, idx));
+  try {
+    // 방어 코드: 중첩 깊이 제한 (5단계), 텍스트 길이 제한
+    if (text.length > 100000) {
+      return [h('span', { key: 0 }, text.substring(0, 100000)) as VNode];
+    }
+
+    const tokens = parseMarkdown(text, { maxNestingDepth: 5 });
+    
+    // 토큰 개수 제한 (1000개)
+    if (tokens.length > 1000) {
+      return [h('span', { key: 0 }, text) as VNode];
+    }
+
+    return tokens.map((token, idx) => renderMarkdownToken(token, idx));
+  } catch (error) {
+    // 파싱 에러 발생 시 일반 텍스트로 렌더링
+    return [h('span', { key: 0 }, text) as VNode];
+  }
 }
 
 /**

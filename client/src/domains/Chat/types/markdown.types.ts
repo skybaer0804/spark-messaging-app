@@ -12,6 +12,11 @@ export type MarkdownTokenType =
   | 'lineBreak';
 
 /**
+ * 포맷팅 타입 (에디터에서 사용)
+ */
+export type FormatType = 'bold' | 'italic' | 'strikethrough' | 'inlineCode' | 'codeBlock' | 'link';
+
+/**
  * 마크다운 토큰 인터페이스
  */
 export interface MarkdownToken {
