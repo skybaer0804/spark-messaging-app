@@ -22,6 +22,7 @@ interface MessageInputToolbarProps {
   onFormat: (type: FormatType) => void;
   onSaveSelection?: () => void;
   onEmojiClick?: () => void;
+  onEmojiButtonRef?: (ref: HTMLButtonElement | null) => void;
   onVoiceClick?: () => void;
   onVideoClick?: () => void;
   onFileClick?: () => void;
@@ -39,6 +40,7 @@ function MessageInputToolbarComponent({
   onFormat,
   onSaveSelection,
   onEmojiClick,
+  onEmojiButtonRef,
   onVoiceClick,
   onVideoClick,
   onFileClick,
@@ -60,6 +62,7 @@ function MessageInputToolbarComponent({
     <Flex gap="xs" align="center" className="message-input-toolbar">
       {/* 이모지 버튼 */}
       <IconButton
+        ref={(el: HTMLButtonElement | null) => onEmojiButtonRef?.(el)}
         onClick={onEmojiClick}
         disabled={disabled}
         color="secondary"

@@ -1,14 +1,16 @@
 import { useRef, useState, useEffect } from 'preact/hooks';
-import { memo } from 'preact/compat';
+import { memo, lazy, Suspense } from 'preact/compat';
 import { FilePreview } from './FilePreview';
 import { Input } from '@/ui-components/Input/Input';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Stack } from '@/ui-components/Layout/Stack';
-import { Box } from '@/ui-components/Layout/Box';
 import { MessageInputToolbar } from './MessageInput/MessageInputToolbar';
 import { AddLinkModal } from './MessageInput/AddLinkModal';
 import { useFormatting } from './MessageInput/hooks/useFormatting';
 import './Chat.scss';
+
+// 이모지 피커 lazy loading
+const EmojiPicker = lazy(() => import('./MessageInput/EmojiPicker/EmojiPicker').then(module => ({ default: module.EmojiPicker })));
 
 interface ChatInputProps {
   input: string;
@@ -44,9 +46,12 @@ function ChatInputComponent({
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const savedSelectionRef = useRef<{ start: number; end: number } | null>(null);
   const [isComposing, setIsComposing] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [selectedTextForLink, setSelectedTextForLink] = useState('');
 
   // 포맷팅 훅 (단축키 핸들러 포함)
@@ -78,7 +83,7 @@ function ChatInputComponent({
           uploadProgress={uploadProgress}
           onRemove={onFileRemove}
         />
-        <Box className="chat-input-container" style={{ position: 'relative', width: '100%' }}>
+        <div ref={containerRef} className="chat-input-container" style={{ position: 'relative', width: '100%' }}>
           <Input
             multiline
             value={input}
@@ -186,7 +191,12 @@ function ChatInputComponent({
             }}
             onSaveSelection={saveSelection}
             onEmojiClick={() => {
-              // TODO: 이모지 피커 구현
+              setEmojiPickerOpen(!emojiPickerOpen);
+            }}
+            onEmojiButtonRef={(el) => {
+              if (el) {
+                emojiButtonRef.current = el;
+              }
             }}
             onVoiceClick={() => {
               // TODO: 음성 메시지 구현
@@ -200,7 +210,7 @@ function ChatInputComponent({
             showFileUpload={showFileUpload}
             canSend={input.trim().length > 0 || selectedFiles.length > 0}
           />
-        </Box>
+        </div>
       </Stack>
       
       {/* 링크 추가 모달 */}
@@ -234,6 +244,36 @@ function ChatInputComponent({
         }}
         initialText={selectedTextForLink}
       />
+      
+      {/* 이모지 피커 (lazy loading) */}
+      {emojiPickerOpen && (
+        <Suspense fallback={null}>
+          <EmojiPicker
+            anchorRef={containerRef}
+            isOpen={emojiPickerOpen}
+            onClose={() => setEmojiPickerOpen(false)}
+            onSelect={(emoji) => {
+              const targetTextarea = textareaRef.current;
+              if (!targetTextarea) return;
+              
+              const start = targetTextarea.selectionStart;
+              const end = targetTextarea.selectionEnd;
+              const before = input.substring(0, start);
+              const after = input.substring(end);
+              const newText = before + emoji + after;
+              
+              setInput(newText);
+              
+              // 커서 위치 조정
+              setTimeout(() => {
+                const newPos = start + emoji.length;
+                targetTextarea.setSelectionRange(newPos, newPos);
+                targetTextarea.focus();
+              }, 0);
+            }}
+          />
+        </Suspense>
+      )}
     </Paper>
   );
 }
