@@ -47,6 +47,14 @@ export class ChatAppAdapter implements ChatAdapter {
     return this.chatAppHook.currentRoom?.name || null;
   }
 
+  getCurrentRoomMembers(): any[] {
+    return this.chatAppHook.currentRoom?.members || [];
+  }
+
+  getWorkspaceUsers(): any[] {
+    return this.chatAppHook.userList || [];
+  }
+
   getUploadingFile(): File | null {
     return this.chatAppHook.uploadingFile;
   }

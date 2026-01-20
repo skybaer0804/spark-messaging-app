@@ -14,6 +14,8 @@ export interface ChatAdapter {
   // 상태 관리
   isConnected(): boolean;
   getCurrentRoom(): string | null;
+  getCurrentRoomMembers?(): any[];
+  getWorkspaceUsers?(): any[];
 
   // 입력 상태 관리 (선택적)
   getInput?(): string;

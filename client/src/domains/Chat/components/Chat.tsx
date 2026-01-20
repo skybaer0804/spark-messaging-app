@@ -117,6 +117,8 @@ function ChatComponent({ adapter, config = {}, classNamePrefix = 'chat', roomNam
       <ChatInput
         input={input}
         setInput={setInput}
+        members={adapter.getWorkspaceUsers?.() || []}
+        roomMembers={adapter.getCurrentRoomMembers?.() || []}
         selectedFiles={selectedFiles}
         uploadingFile={adapter.getUploadingFile?.() || null}
         uploadProgress={adapter.getUploadProgress?.() || 0}

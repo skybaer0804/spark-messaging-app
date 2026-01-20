@@ -6,6 +6,7 @@ import { Paper } from '@/ui-components/Paper/Paper';
 import { Stack } from '@/ui-components/Layout/Stack';
 import { MessageInputToolbar } from './MessageInput/MessageInputToolbar';
 import { AddLinkModal } from './MessageInput/AddLinkModal';
+import { MentionPicker } from './MessageInput/MentionPicker/MentionPicker';
 import { useFormatting } from './MessageInput/hooks/useFormatting';
 import './Chat.scss';
 
@@ -15,6 +16,8 @@ const EmojiPicker = lazy(() => import('./MessageInput/EmojiPicker/EmojiPicker').
 interface ChatInputProps {
   input: string;
   setInput: (value: string) => void;
+  members?: any[];
+  roomMembers?: any[];
   selectedFiles: File[];
   uploadingFile?: File | null;
   uploadProgress?: number;
@@ -32,6 +35,8 @@ interface ChatInputProps {
 function ChatInputComponent({
   input,
   setInput,
+  members = [],
+  roomMembers = [],
   selectedFiles,
   uploadingFile,
   uploadProgress = 0,
@@ -52,7 +57,33 @@ function ChatInputComponent({
   const [isComposing, setIsComposing] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [mentionOpen, setMentionOpen] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
+  const [mentionPos, setMentionPos] = useState(0);
   const [selectedTextForLink, setSelectedTextForLink] = useState('');
+
+  // @ 감지 및 MentionPicker 제어
+  useEffect(() => {
+    if (!textareaRef.current) return;
+    
+    const textarea = textareaRef.current;
+    const cursorPos = textarea.selectionStart;
+    const textBeforeCursor = input.substring(0, cursorPos);
+    const lastAtIdx = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtIdx !== -1 && (lastAtIdx === 0 || textBeforeCursor[lastAtIdx - 1] === ' ')) {
+      const searchStr = textBeforeCursor.substring(lastAtIdx + 1);
+      // 공백이 포함되지 않은 경우에만 멘션 모드 유지
+      if (!searchStr.includes(' ')) {
+        setMentionSearch(searchStr);
+        setMentionOpen(true);
+        setMentionPos(lastAtIdx);
+        return;
+      }
+    }
+    
+    setMentionOpen(false);
+  }, [input]);
 
   // 포맷팅 훅 (단축키 핸들러 포함)
   const { applyFormat, handleKeyDown: handleFormatKeyDown, setIsComposing: setFormattingComposing, saveSelection, insertLink } = useFormatting({
@@ -274,6 +305,38 @@ function ChatInputComponent({
           />
         </Suspense>
       )}
+
+      {/* 멘션 피커 */}
+      {mentionOpen && (
+        <MentionPicker
+          members={members}
+          roomMembers={roomMembers}
+          search={mentionSearch}
+          anchorRef={containerRef}
+          onClose={() => setMentionOpen(false)}
+          onSelect={(item) => {
+            const targetTextarea = textareaRef.current;
+            if (!targetTextarea) return;
+            
+            const cursorPos = targetTextarea.selectionStart;
+            const beforeMention = input.substring(0, mentionPos);
+            const afterMention = input.substring(cursorPos);
+            
+            const mentionText = typeof item === 'string' ? item : item.username;
+            const newText = beforeMention + '@' + mentionText + ' ' + afterMention;
+            
+            setInput(newText);
+            setMentionOpen(false);
+            
+            // 커서 위치 조정
+            setTimeout(() => {
+              const newPos = beforeMention.length + mentionText.length + 2; // @ + text + space
+              targetTextarea.setSelectionRange(newPos, newPos);
+              targetTextarea.focus();
+            }, 0);
+          }}
+        />
+      )}
     </Paper>
   );
 }
@@ -287,6 +350,8 @@ export const ChatInput = memo(ChatInputComponent, (prevProps, nextProps) => {
     prevProps.selectedFiles.length === nextProps.selectedFiles.length &&
     prevProps.classNamePrefix === nextProps.classNamePrefix &&
     prevProps.showFileUpload === nextProps.showFileUpload &&
-    prevProps.placeholder === nextProps.placeholder
+    prevProps.placeholder === nextProps.placeholder &&
+    prevProps.members === nextProps.members &&
+    prevProps.roomMembers === nextProps.roomMembers
   );
 });

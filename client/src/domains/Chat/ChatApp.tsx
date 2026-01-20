@@ -279,6 +279,8 @@ function ChatAppContent() {
               <ChatInput
                 input={input}
                 setInput={setInput}
+                members={userList}
+                roomMembers={currentRoom.members}
                 selectedFiles={selectedFiles}
                 uploadingFile={uploadingFile}
                 uploadProgress={uploadProgress}
