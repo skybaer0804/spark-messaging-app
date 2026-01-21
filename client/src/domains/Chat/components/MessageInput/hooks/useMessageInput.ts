@@ -1,6 +1,8 @@
 import { useState, useRef } from 'preact/hooks';
 import { useChatApp } from '../../../hooks/useChatApp';
 import { useAuth } from '@/core/hooks/useAuth';
+import { useToast } from '@/core/context/ToastContext';
+import { FileTransferService } from '@/core/api/FileTransferService';
 
 export const useMessageInput = () => {
   const {
@@ -15,6 +17,7 @@ export const useMessageInput = () => {
   } = useChatApp();
 
   const { user: currentUser } = useAuth();
+  const { showError } = useToast();
   
   const [isComposing, setIsComposing] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -32,9 +35,26 @@ export const useMessageInput = () => {
   const handleFileSelect = (e: Event) => {
     const target = e.target as HTMLInputElement;
     const files = Array.from(target.files || []);
+    
     if (files.length > 0) {
-      setSelectedFiles((prev) => [...prev, ...files]);
+      // 각 파일 검증
+      const validFiles: File[] = [];
+      const fileTransferService = new FileTransferService(null as any, null as any, null as any);
+      
+      files.forEach((file) => {
+        const validation = fileTransferService.validateFile(file);
+        if (validation.valid) {
+          validFiles.push(file);
+        } else {
+          showError(`${file.name}: ${validation.error || '파일 검증 실패'}`);
+        }
+      });
+      
+      if (validFiles.length > 0) {
+        setSelectedFiles((prev) => [...prev, ...validFiles]);
+      }
     }
+    
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }

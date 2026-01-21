@@ -17,6 +17,7 @@ import { ChatMemberPanel } from './components/ChatMemberPanel';
 import { ChatInput } from './components/ChatInput';
 import { ChatMessages } from './components/ChatMessages';
 import { ChatSetting } from './components/ChatSetting/ChatSetting';
+import { ImageModal } from './components/ImageModal';
 import './ChatApp.scss';
 
 function ChatAppContent() {
@@ -308,25 +309,13 @@ function ChatAppContent() {
         </Box>
       )}
 
-      {/* Modals */}
+      {/* Image Modal */}
       {imageModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            zIndex: 2000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          onClick={handleCloseImageModal}
-        >
-          <img src={imageModal.url} alt={imageModal.fileName} style={{ maxWidth: '90%', maxHeight: '90%' }} />
-        </div>
+        <ImageModal
+          url={imageModal.url}
+          fileName={imageModal.fileName}
+          onClose={handleCloseImageModal}
+        />
       )}
     </Box>
   );

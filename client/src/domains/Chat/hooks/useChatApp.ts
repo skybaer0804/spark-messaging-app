@@ -45,6 +45,13 @@ export function useChatApp() {
   const handleFileSend = async (file: File) => {
     if (!isConnected || !currentRoom) return;
 
+    // 파일 검증
+    const validation = fileTransferService.validateFile(file);
+    if (!validation.valid) {
+      showError(validation.error || '파일 전송 실패');
+      return;
+    }
+
     setUploadingFile(file);
     setUploadProgress(0);
 
@@ -55,11 +62,12 @@ export function useChatApp() {
       setUploadingFile(null);
       setUploadProgress(0);
       showSuccess('파일 전송 완료');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send file:', error);
       setUploadingFile(null);
       setUploadProgress(0);
-      showError('파일 전송 실패');
+      const errorMessage = error?.response?.data?.error || error?.message || '파일 전송 실패';
+      showError(errorMessage);
     }
   };
 

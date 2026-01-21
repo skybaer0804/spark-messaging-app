@@ -23,12 +23,28 @@ export function useChatRoom() {
         // v2.2.0: 서버 데이터 모델에 맞춰 포맷팅 (Populate된 senderId 처리)
         const formatted = history.map((msg: any) => {
           const senderObj = typeof msg.senderId === 'object' ? msg.senderId : null;
+          
+          // 파일 데이터 변환 (fileUrl, thumbnailUrl → fileData)
+          let fileData: any = undefined;
+          if (msg.fileUrl || msg.thumbnailUrl) {
+            fileData = {
+              fileName: msg.fileName || 'unknown',
+              fileType: msg.type || 'file',
+              mimeType: msg.mimeType || 'application/octet-stream',
+              size: msg.fileSize || 0,
+              url: msg.fileUrl, // 원본 파일 URL
+              thumbnail: msg.thumbnailUrl, // 썸네일 URL (이미지인 경우)
+              data: msg.thumbnailUrl || msg.fileUrl, // 표시용 (썸네일 우선, 없으면 원본)
+            };
+          }
+          
           return {
             ...msg,
             senderId: senderObj ? senderObj._id : msg.senderId,
             senderName: msg.senderName || (senderObj ? senderObj.username : 'Unknown'),
             timestamp: new Date(msg.timestamp),
             status: 'sent',
+            fileData, // 파일 데이터 추가
           };
         });
 

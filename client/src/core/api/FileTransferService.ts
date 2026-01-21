@@ -22,8 +22,8 @@ export class FileTransferService {
   static readonly SUPPORTED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
   static readonly SUPPORTED_AUDIO_TYPES = ['audio/mpeg', 'audio/wav', 'audio/ogg'];
 
-  // 파일 크기 제한 (MB)
-  static readonly MAX_FILE_SIZE = 10; // 10MB
+  // 파일 크기 제한 (MB) - 서버와 동일하게 50MB
+  static readonly MAX_FILE_SIZE = 50; // 50MB
 
   constructor(_client: SparkMessaging, _connectionService: ConnectionService, chatService: ChatService) {
     this.chatService = chatService;
@@ -89,7 +89,7 @@ export class FileTransferService {
     if (file.size > maxSizeBytes) {
       return {
         valid: false,
-        error: `파일 크기가 ${FileTransferService.MAX_FILE_SIZE}MB를 초과합니다.`,
+        error: `파일 크기가 ${FileTransferService.MAX_FILE_SIZE}MB를 초과합니다. 최대 ${FileTransferService.MAX_FILE_SIZE}MB까지 업로드 가능합니다.`,
       };
     }
 
@@ -98,7 +98,7 @@ export class FileTransferService {
     if (fileType === 'unknown') {
       return {
         valid: false,
-        error: '지원하지 않는 파일 타입입니다.',
+        error: '지원하지 않는 파일 타입입니다. 이미지, 문서, 동영상, 오디오 파일만 업로드 가능합니다.',
       };
     }
 

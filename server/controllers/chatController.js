@@ -6,6 +6,8 @@ const socketService = require('../services/socketService');
 const notificationService = require('../services/notificationService');
 const userService = require('../services/userService');
 const imageService = require('../services/imageService');
+const StorageService = require('../services/storage/StorageService');
+const sharp = require('sharp');
 
 // 멘션 파싱 유틸리티 함수
 function parseMentions(content, roomMembers) {
@@ -582,13 +584,46 @@ exports.uploadFile = async (req, res) => {
     const senderId = req.user.id;
     const file = req.file;
 
+    // ========================================
+    // 1️⃣ 파일 저장 (로컬 또는 S3 자동 선택)
+    // ========================================
+    const fileResult = await StorageService.saveFile(file, 'original');
+    const fileUrl = fileResult.url;
+
+    // ========================================
+    // 2️⃣ 이미지 썸네일 생성 (이미지인 경우)
+    // ========================================
     let type = 'file';
     let thumbnailUrl = null;
 
-    // 이미지일 경우 썸네일 생성
     if (file.mimetype.startsWith('image/')) {
       type = 'image';
-      thumbnailUrl = await imageService.createThumbnail(file.path, file.filename);
+
+      // 썸네일 생성 (로컬: file.path 사용, S3: file.buffer 사용)
+      let imageBuffer;
+      if (file.buffer) {
+        // S3 모드: 메모리 버퍼 사용
+        imageBuffer = file.buffer;
+      } else {
+        // 로컬 모드: 파일 경로에서 읽기
+        const fs = require('fs');
+        imageBuffer = fs.readFileSync(file.path);
+      }
+
+      const thumbnailBuffer = await sharp(imageBuffer)
+        .resize(300, 300, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .toFormat('webp')
+        .toBuffer();
+
+      const thumbnailFilename = `thumb_${fileResult.filename}.webp`;
+      const thumbnailResult = await StorageService.saveThumbnail(
+        thumbnailBuffer,
+        thumbnailFilename
+      );
+      thumbnailUrl = thumbnailResult.url;
     }
 
     // 1. 시퀀스 번호 원자적 증가 및 방 정보 업데이트
@@ -609,7 +644,7 @@ exports.uploadFile = async (req, res) => {
       senderId,
       content: `File: ${file.originalname}`,
       type,
-      fileUrl: file.path,
+      fileUrl: fileUrl, // HTTP URL로 저장
       thumbnailUrl: thumbnailUrl,
       fileName: file.originalname,
       fileSize: file.size,

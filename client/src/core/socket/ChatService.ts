@@ -83,6 +83,20 @@ export class ChatService {
       const payload = msg.content as any;
       const contentData = payload.content || {};
 
+      // 파일 데이터 변환 (fileUrl, thumbnailUrl → fileData)
+      let fileData: any = undefined;
+      if (contentData.fileUrl || contentData.thumbnailUrl) {
+        fileData = {
+          fileName: contentData.fileName || 'unknown',
+          fileType: (msg.type as MessageType) || 'file',
+          mimeType: contentData.mimeType || 'application/octet-stream',
+          size: contentData.fileSize || 0,
+          url: contentData.fileUrl, // 원본 파일 URL
+          thumbnail: contentData.thumbnailUrl, // 썸네일 URL (이미지인 경우)
+          data: contentData.thumbnailUrl || contentData.fileUrl, // 표시용 (썸네일 우선, 없으면 원본)
+        };
+      }
+
       const message: Message = {
         _id: contentData._id || `${msg.timestamp}-${Math.random()}`,
         roomId: msg.room,
@@ -100,6 +114,7 @@ export class ChatService {
         readBy: contentData.readBy || [], // [v2.4.0] 서버에서 받은 readBy 반영
         timestamp: new Date(msg.timestamp || Date.now()),
         status: 'sent',
+        fileData, // 파일 데이터 추가
       };
 
       callback(message);

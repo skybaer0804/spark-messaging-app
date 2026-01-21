@@ -30,9 +30,22 @@ export function base64ToBlob(base64Data: string, mimeType: string): Blob {
   return new Blob([byteArray], { type: mimeType });
 }
 
-// 파일 다운로드
-export function downloadFile(fileName: string, base64Data: string, mimeType: string): void {
-  const blob = base64ToBlob(base64Data, mimeType);
+// 파일 다운로드 (Base64 또는 URL)
+export function downloadFile(fileName: string, data: string, mimeType: string): void {
+  // URL인 경우 (http:// 또는 https://)
+  if (data.startsWith('http://') || data.startsWith('https://')) {
+    const link = document.createElement('a');
+    link.href = data;
+    link.download = fileName;
+    link.target = '_blank'; // 새 탭에서 열기 (CORS 문제 대비)
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    return;
+  }
+
+  // Base64인 경우
+  const blob = base64ToBlob(data, mimeType);
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -41,4 +54,27 @@ export function downloadFile(fileName: string, base64Data: string, mimeType: str
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+// URL에서 파일 다운로드 (fetch 사용)
+export async function downloadFileFromUrl(url: string, fileName: string): Promise<void> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error('Failed to download file:', error);
+    // 폴백: 새 탭에서 열기
+    window.open(url, '_blank');
+  }
 }

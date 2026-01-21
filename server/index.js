@@ -31,8 +31,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static files for uploads (Absolute path for local storage)
-app.use('/uploads', express.static('C:/project/file'));
+// Static files for uploads (Local storage)
+const fileServeUrl = process.env.FILE_SERVE_URL || 'http://localhost:5000/files';
+const fileBasePath = process.env.FILE_UPLOAD_PATH || 'C:/project/file';
+app.use('/files', express.static(fileBasePath));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
