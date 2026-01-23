@@ -135,7 +135,7 @@ export function ChatProvider({ children }: { children: any }) {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       chatServiceRef.current.setUserId(user.id);
     }
 
@@ -331,15 +331,15 @@ export function ChatProvider({ children }: { children: any }) {
       unsubStatusChange();
       unsubRoomListUpdate();
     };
-  }, [user, refreshRoomList, refreshUserList, refreshWorkspaceList]);
+  }, [user?.id, refreshRoomList, refreshUserList, refreshWorkspaceList]);
 
   // 워크스페이스 변경 시 데이터 새로고침
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       refreshRoomList();
       refreshUserList();
     }
-  }, [currentWorkspaceId.value, user, refreshRoomList, refreshUserList]);
+  }, [currentWorkspaceId.value, user?.id, refreshRoomList, refreshUserList]);
 
   const value: ChatContextType = useMemo(
     () => ({

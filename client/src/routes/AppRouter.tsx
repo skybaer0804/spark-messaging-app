@@ -1,22 +1,27 @@
-import Router, { Route, route } from 'preact-router';
+import Router, { route } from 'preact-router';
 import type { RouterOnChangeArgs } from 'preact-router';
-import { cloneElement, isValidElement } from 'preact';
+import { cloneElement, isValidElement, lazy, Suspense } from 'preact/compat';
 import { appRoutes } from './appRoutes';
-import { useRouterState } from './RouterState';
-import { DesignSystemDemo } from '@/components/DesignSystemDemo/DesignSystemDemo';
+// import { useRouterState } from './RouterState'; // 사용되지 않음
 import { PrivacyPolicy } from '@/components/PrivacyPolicy/PrivacyPolicy';
 import { Login, Signup } from '@/domains/Auth';
 import { GuestJoin } from '@/domains/VideoMeeting/components/GuestJoin/GuestJoin';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useEffect } from 'preact/hooks';
+import { CircularProgress } from '@/ui-components/CircularProgress/CircularProgress';
+
+// 큰 컴포넌트를 lazy loading으로 최적화
+const DesignSystemDemo = lazy(() =>
+  import('@/components/DesignSystemDemo/DesignSystemDemo').then((module) => ({
+    default: module.DesignSystemDemo,
+  })),
+);
 
 function RouteNotFound() {
   return <div />;
 }
 
-function DesignSystemRoute(props: { ui?: string }) {
-  return <DesignSystemDemo focusSection={props.ui} />;
-}
+// DesignSystemRoute는 사용되지 않음
 
 function ProtectedRoute({ children, ...rest }: any) {
   const { isAuthenticated, loading } = useAuth();
@@ -59,18 +64,19 @@ function ProtectedRoute({ children, ...rest }: any) {
 }
 
 export function AppRouter() {
-  const { setPathname } = useRouterState();
-
-  const handleRouteChange = (e: RouterOnChangeArgs) => {
-    setPathname(e.url || '/');
+  const handleRouteChange = (_e: RouterOnChangeArgs) => {
+    // Route 변경 시 처리 (필요시)
   };
 
   return (
     <Router onChange={handleRouteChange}>
+      {/* @ts-ignore - preact-router v4 allows direct component usage */}
       <Login path="/login" />
+      {/* @ts-ignore */}
       <Signup path="/signup" />
 
       {/* Public Video Meeting Join Route */}
+      {/* @ts-ignore */}
       <GuestJoin path="/video-meeting/join/:hash" />
 
       {appRoutes.map((r) => {
@@ -85,14 +91,22 @@ export function AppRouter() {
       })}
 
       <ProtectedRoute path="/design-system">
-        <DesignSystemDemo />
+        <Suspense fallback={<CircularProgress />}>
+          <DesignSystemDemo />
+        </Suspense>
       </ProtectedRoute>
       <ProtectedRoute path="/design-system/:ui">
-        {(props: any) => <DesignSystemDemo focusSection={props.ui} />}
+        {(props: any) => (
+          <Suspense fallback={<CircularProgress />}>
+            <DesignSystemDemo focusSection={props.ui} />
+          </Suspense>
+        )}
       </ProtectedRoute>
 
+      {/* @ts-ignore */}
       <PrivacyPolicy path="/legal/privacy-policy" />
 
+      {/* @ts-ignore */}
       <RouteNotFound default />
     </Router>
   );

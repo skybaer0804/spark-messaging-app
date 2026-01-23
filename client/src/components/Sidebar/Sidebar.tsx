@@ -40,11 +40,19 @@ export const Sidebar = memo(() => {
   const { user } = useAuth();
   const [workspaces, setWorkspaces] = useState<any[]>([]);
 
-  const lnbRouteIds = ['chatapp', 'video-meeting', 'notification'];
+  // Set으로 최적화: O(n) find() 반복 대신 Map 사용
+  const lnbRouteIds = useMemo(() => new Set(['chatapp', 'video-meeting', 'notification']), []);
 
   const lnbRoutes = useMemo(() => {
-    return lnbRouteIds.map((id) => appRoutes.find((r) => r.id === id)).filter(Boolean) as AppRouteNode[];
-  }, []);
+    // 단일 루프로 최적화
+    const result: AppRouteNode[] = [];
+    for (const route of appRoutes) {
+      if (lnbRouteIds.has(route.id)) {
+        result.push(route);
+      }
+    }
+    return result;
+  }, [lnbRouteIds]);
 
   const fetchWorkspaces = async () => {
     try {

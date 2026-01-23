@@ -1,7 +1,7 @@
 import type { JSX } from 'preact';
+import { lazy, Suspense } from 'preact/compat';
 import {
   IconBell,
-  IconGavel,
   IconMessageCircle,
   IconPalette,
   IconHome,
@@ -10,12 +10,33 @@ import {
   IconVideo,
   IconSettings,
 } from '@tabler/icons-preact';
-import { ChatApp } from '@/domains/Chat';
-import { NotificationApp } from '@/domains/Notification';
-import { VideoMeeting } from '@/domains/VideoMeeting';
-import { DesignSystemDemo } from '@/components/DesignSystemDemo/DesignSystemDemo';
+import { CircularProgress } from '@/ui-components/CircularProgress/CircularProgress';
+
+// 큰 컴포넌트들을 lazy loading으로 최적화
+const VideoMeeting = lazy(() =>
+  import('@/domains/VideoMeeting').then((module) => ({
+    default: module.VideoMeeting,
+  })),
+);
+
+const DesignSystemDemo = lazy(() =>
+  import('@/components/DesignSystemDemo/DesignSystemDemo').then((module) => ({
+    default: module.DesignSystemDemo,
+  })),
+);
+
+const ChatApp = lazy(() =>
+  import('@/domains/Chat').then((module) => ({
+    default: module.ChatApp,
+  })),
+);
+
+const NotificationApp = lazy(() =>
+  import('@/domains/Notification').then((module) => ({
+    default: module.NotificationApp,
+  })),
+);
 import { HomePage } from '@/components/HomePage/HomePage';
-import { AuthPage } from '@/components/Auth/AuthPage';
 import { Profile } from '@/components/Profile/Profile';
 import { Workspace } from '@/components/Workspace/Workspace';
 import { WorkspaceDetail } from '@/components/Workspace/WorkspaceDetail';
@@ -126,7 +147,11 @@ export const appRoutes: AppRouteNode[] = [
     path: '/chatapp',
     icon: <IconMessageCircle size={24} />,
     title: 'Chat',
-    element: <ChatApp />,
+    element: (
+      <Suspense fallback={<CircularProgress />}>
+        <ChatApp />
+      </Suspense>
+    ),
   },
   {
     id: 'notification',
@@ -134,7 +159,11 @@ export const appRoutes: AppRouteNode[] = [
     path: '/notification',
     icon: <IconBell size={24} />,
     title: 'Notification',
-    element: <NotificationApp />,
+    element: (
+      <Suspense fallback={<CircularProgress />}>
+        <NotificationApp />
+      </Suspense>
+    ),
   },
   {
     id: 'video-meeting',
@@ -142,7 +171,11 @@ export const appRoutes: AppRouteNode[] = [
     path: '/video-meeting',
     icon: <IconVideo size={24} />,
     title: 'Video Meeting',
-    element: <VideoMeeting />,
+    element: (
+      <Suspense fallback={<CircularProgress />}>
+        <VideoMeeting />
+      </Suspense>
+    ),
   },
   {
     id: 'settings',
@@ -186,7 +219,11 @@ export const appRoutes: AppRouteNode[] = [
     path: '/design-system',
     icon: <IconPalette size={24} />,
     title: 'Design System Demo',
-    element: <DesignSystemDemo />,
+    element: (
+      <Suspense fallback={<CircularProgress />}>
+        <DesignSystemDemo />
+      </Suspense>
+    ),
     secondMenu: true,
     children: [
       {
