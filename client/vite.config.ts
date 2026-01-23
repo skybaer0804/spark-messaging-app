@@ -134,6 +134,25 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  optimizeDeps: {
+    // Barrel file imports 최적화: @tabler/icons-preact의 개별 아이콘 import 최적화
+    include: ['@tabler/icons-preact'],
+    // Tree-shaking을 위한 esbuild 옵션
+    esbuildOptions: {
+      treeShaking: true,
+    },
+  },
+  build: {
+    // Rollup 옵션으로 tree-shaking 강화
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // 아이콘 라이브러리를 별도 청크로 분리하여 캐싱 최적화
+          'tabler-icons': ['@tabler/icons-preact'],
+        },
+      },
+    },
+  },
   css: {
     preprocessorOptions: {
       scss: {

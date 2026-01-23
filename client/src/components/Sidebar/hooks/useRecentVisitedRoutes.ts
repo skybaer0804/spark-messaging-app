@@ -63,7 +63,17 @@ export function useRecentVisitedRoutes(options?: { max?: number; excludePaths?: 
     });
   }, [excludePaths, max, pathname]);
 
-  return useMemo(() => paths.map(findRouteMetaByPath).filter(Boolean) as RecentVisitedRouteItem[], [paths]);
+  // 단일 루프로 최적화: map().filter() 체인을 하나로 통합
+  return useMemo(() => {
+    const result: RecentVisitedRouteItem[] = [];
+    for (const path of paths) {
+      const meta = findRouteMetaByPath(path);
+      if (meta) {
+        result.push(meta);
+      }
+    }
+    return result;
+  }, [paths]);
 }
 
 

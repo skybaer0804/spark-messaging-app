@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback, useMemo } from 'preact/hooks';
+import { lazy, Suspense } from 'preact/compat';
 import sparkMessagingClient from './config/sparkMessaging';
 import { appRoutes, getDesignSystemComponentFromPath } from './routes/appRoutes';
 import { SidebarLayout } from './layouts/SidebarLayout/SidebarLayout';
@@ -8,8 +9,15 @@ import { useAuth } from '@/core/context/AuthContext';
 import { useToast } from '@/core/context/ToastContext';
 import { PushService } from '@/core/api/PushService';
 import { Login, Signup } from '@/domains/Auth';
-import { DesignSystemDemo } from '@/components/DesignSystemDemo/DesignSystemDemo';
 import { PrivacyPolicy } from '@/components/PrivacyPolicy/PrivacyPolicy';
+import { CircularProgress } from '@/ui-components/CircularProgress/CircularProgress';
+
+// 큰 컴포넌트들을 lazy loading으로 최적화
+const DesignSystemDemo = lazy(() =>
+  import('@/components/DesignSystemDemo/DesignSystemDemo').then((module) => ({
+    default: module.DesignSystemDemo,
+  })),
+);
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Button } from '@/ui-components/Button/Button';
@@ -168,7 +176,11 @@ export function App() {
     // 워크스페이스 온보딩 체크 (특정 경로는 제외)
     const { user } = useAuth();
     const hasWorkspaces = user?.workspaces && user.workspaces.length > 0;
-    const allowedPathsWithoutWorkspace = ['/workspace', '/profile', '/design-system', '/legal/privacy-policy'];
+    // 경로 체크 최적화: startsWith 체크는 배열 순회가 필요하므로 유지
+    const allowedPathsWithoutWorkspace = useMemo(
+      () => ['/workspace', '/profile', '/design-system', '/legal/privacy-policy'],
+      [],
+    );
     const isAllowedPath = allowedPathsWithoutWorkspace.some((path) => currentRoute.startsWith(path));
 
     if (!hasWorkspaces && !isAllowedPath) {
@@ -197,7 +209,11 @@ export function App() {
     // 디자인 시스템 경로 처리
     if (currentRoute.startsWith('/design-system')) {
       const focusSection = getDesignSystemComponentFromPath(currentRoute);
-      return <DesignSystemDemo focusSection={focusSection || undefined} />;
+      return (
+        <Suspense fallback={<CircularProgress />}>
+          <DesignSystemDemo focusSection={focusSection || undefined} />
+        </Suspense>
+      );
     }
 
     // 개인정보처리방침

@@ -94,8 +94,8 @@ export function Workspace() {
       showSuccess('워크스페이스가 생성되었습니다.');
       setShowCreateWorkspace(false);
       setNewWorkspaceName('');
-      fetchWorkspaces();
-      refreshUser();
+      // 병렬 실행으로 성능 개선
+      await Promise.all([fetchWorkspaces(), refreshUser()]);
     } catch (err) {
       showError('생성 실패');
     }

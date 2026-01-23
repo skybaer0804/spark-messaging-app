@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { currentWorkspaceId } from '@/stores/chatRoomsStore';
+import { getLocalStorage, removeLocalStorage } from '@/core/utils/storageCache';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -13,7 +14,8 @@ const api = axios.create({
 // Request interceptor to add JWT token and Workspace ID
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    // 캐시된 localStorage 사용으로 성능 최적화
+    const token = getLocalStorage('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -39,7 +41,8 @@ api.interceptors.response.use(
 
     // 401 Unauthorized 처리 (토큰 만료 등)
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
+      // 캐시와 localStorage 모두 제거
+      removeLocalStorage('token');
       // 이미 로그인 페이지가 아니라면 알림 표시
       if (!window.location.pathname.includes('/auth')) {
         window.dispatchEvent(new CustomEvent('api-error', { detail: '세션이 만료되었습니다. 다시 로그인해주세요.' }));

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'preact/hooks';
+import { useState, useEffect, useRef, useMemo } from 'preact/hooks';
 import { memo } from 'preact/compat';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { List } from '@/ui-components/List/List';
@@ -42,8 +42,13 @@ function MentionPickerComponent({ members, roomMembers, search, onSelect, onClos
   const allItems = [...filteredSpecial, ...filteredMembers];
 
   // 방에 있는지 확인하는 헬퍼 함수
+  // Set으로 최적화: O(n) some() 대신 O(1) Set.has() 사용
+  const roomMemberIds = useMemo(() => {
+    return new Set(roomMembers.map(rm => rm._id));
+  }, [roomMembers]);
+
   const isInRoom = (userId: string) => {
-    return roomMembers.some(rm => rm._id === userId);
+    return roomMemberIds.has(userId);
   };
 
   useEffect(() => {

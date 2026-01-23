@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { lazy, Suspense } from 'preact/compat';
 import {
   IconBell,
   IconGavel,
@@ -12,8 +13,20 @@ import {
 } from '@tabler/icons-preact';
 import { ChatApp } from '@/domains/Chat';
 import { NotificationApp } from '@/domains/Notification';
-import { VideoMeeting } from '@/domains/VideoMeeting';
-import { DesignSystemDemo } from '@/components/DesignSystemDemo/DesignSystemDemo';
+import { CircularProgress } from '@/ui-components/CircularProgress/CircularProgress';
+
+// 큰 컴포넌트들을 lazy loading으로 최적화
+const VideoMeeting = lazy(() =>
+  import('@/domains/VideoMeeting').then((module) => ({
+    default: module.VideoMeeting,
+  })),
+);
+
+const DesignSystemDemo = lazy(() =>
+  import('@/components/DesignSystemDemo/DesignSystemDemo').then((module) => ({
+    default: module.DesignSystemDemo,
+  })),
+);
 import { HomePage } from '@/components/HomePage/HomePage';
 import { AuthPage } from '@/components/Auth/AuthPage';
 import { Profile } from '@/components/Profile/Profile';
@@ -142,7 +155,11 @@ export const appRoutes: AppRouteNode[] = [
     path: '/video-meeting',
     icon: <IconVideo size={24} />,
     title: 'Video Meeting',
-    element: <VideoMeeting />,
+    element: (
+      <Suspense fallback={<CircularProgress />}>
+        <VideoMeeting />
+      </Suspense>
+    ),
   },
   {
     id: 'settings',
@@ -186,7 +203,11 @@ export const appRoutes: AppRouteNode[] = [
     path: '/design-system',
     icon: <IconPalette size={24} />,
     title: 'Design System Demo',
-    element: <DesignSystemDemo />,
+    element: (
+      <Suspense fallback={<CircularProgress />}>
+        <DesignSystemDemo />
+      </Suspense>
+    ),
     secondMenu: true,
     children: [
       {

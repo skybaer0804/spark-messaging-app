@@ -3,6 +3,7 @@ import { useContext, useState, useEffect } from 'preact/hooks';
 import { authApi } from '@/core/api/ApiService';
 import sparkMessagingClient from '@/config/sparkMessaging';
 import { useToast } from './ToastContext';
+import { getLocalStorage, setLocalStorage, removeLocalStorage } from '@/core/utils/storageCache';
 
 export interface User {
   id: string;
@@ -34,7 +35,7 @@ export function AuthProvider({ children }: { children: any }) {
   const [loading, setLoading] = useState(true);
   const { showSuccess, showError } = useToast();
 
-  const getToken = () => localStorage.getItem('token');
+  const getToken = () => getLocalStorage('token');
 
   useEffect(() => {
     const initAuth = async () => {
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: { children: any }) {
           setUser(userData);
         } catch (err) {
           console.error('Failed to get user:', err);
-          localStorage.removeItem('token');
+          removeLocalStorage('token');
           setUser(null);
         }
       }
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: { children: any }) {
     try {
       const response = await authApi.login(credentials);
       const { token, user: userData } = response.data;
-      localStorage.setItem('token', token);
+      setLocalStorage('token', token);
 
       // v2.2.0: 워크스페이스 정보가 있으면 전역 스토어에 즉시 반영
       if (userData.workspaces && userData.workspaces.length > 0) {
@@ -92,7 +93,7 @@ export function AuthProvider({ children }: { children: any }) {
     try {
       const response = await authApi.register(userData);
       const { token, user: newUser } = response.data;
-      localStorage.setItem('token', token);
+      setLocalStorage('token', token);
       setUser(newUser);
       showSuccess('회원가입이 완료되었습니다');
       return response.data;
@@ -121,7 +122,7 @@ export function AuthProvider({ children }: { children: any }) {
     } catch (error) {
       console.error('Logout API failed:', error);
     } finally {
-      localStorage.removeItem('token');
+      removeLocalStorage('token');
       setUser(null);
       showSuccess('로그아웃되었습니다');
     }

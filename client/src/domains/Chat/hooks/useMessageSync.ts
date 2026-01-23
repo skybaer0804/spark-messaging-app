@@ -9,8 +9,17 @@ export function useMessageSync() {
 
   const syncMessages = useCallback(async (roomId: string, currentMessages: Message[]) => {
     if (currentMessages.length > 0) {
-      const maxSeq = Math.max(...currentMessages.map((m) => m.sequenceNumber).filter((s) => s >= 0));
-      lastSequenceRef.current = maxSeq;
+      // 단일 루프로 최적화: map().filter() 체인을 하나로 통합
+      let maxSeq = -1;
+      for (const msg of currentMessages) {
+        const seq = msg.sequenceNumber;
+        if (seq >= 0 && seq > maxSeq) {
+          maxSeq = seq;
+        }
+      }
+      if (maxSeq >= 0) {
+        lastSequenceRef.current = maxSeq;
+      }
     }
 
     try {

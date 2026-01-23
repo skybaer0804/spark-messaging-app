@@ -144,14 +144,21 @@ export const DirectoryView = ({
   const [searchTerm, setSearchTerm] = useState('');
 
   // 검색어에 따른 필터링된 목록 (public과 private 모두 표시)
+  // 단일 루프로 최적화: filter().filter() 체인을 하나로 통합
   const filteredChannels = useMemo(() => {
-    return roomList
-      .filter((r) => r.type === 'public' || r.type === 'private')
-      .filter(
-        (r) =>
-          (r.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (r.description && r.description.toLowerCase().includes(searchTerm.toLowerCase())),
-      );
+    if (!searchTerm.trim()) {
+      return roomList.filter((r) => r.type === 'public' || r.type === 'private');
+    }
+    const lowerQuery = searchTerm.toLowerCase();
+    const filtered: typeof roomList = [];
+    for (const r of roomList) {
+      if ((r.type === 'public' || r.type === 'private') &&
+          ((r.name || '').toLowerCase().includes(lowerQuery) ||
+           (r.description && r.description.toLowerCase().includes(lowerQuery)))) {
+        filtered.push(r);
+      }
+    }
+    return filtered;
   }, [roomList, searchTerm]);
 
   const filteredTeams = useMemo(() => {
