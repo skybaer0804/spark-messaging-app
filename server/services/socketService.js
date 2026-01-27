@@ -157,15 +157,30 @@ class SocketService {
   }
 
   /**
-   * 메시지 업데이트 브로드캐스트 (썸네일/프리뷰 생성 완료 시)
+   * 메시지 처리 진행률 브로드캐스트
    * @param {string} roomId - 채팅방 ID
-   * @param {Object} updateData - 업데이트 데이터
+   * @param {Object} progressData - 진행률 데이터 { messageId, progress }
    */
+  async sendMessageProgress(roomId, progressData) {
+    if (!this.client) return;
+
+    try {
+      console.log(`📡 [Socket] 진행률 전송 시도: Room=${roomId}, Msg=${progressData.messageId}, Progress=${progressData.progress}%`);
+      await this.client.sendRoomMessage(roomId, 'MESSAGE_PROGRESS', {
+        ...progressData,
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      console.error('Failed to send message progress:', error);
+    }
+  }
+
   async sendMessageUpdate(roomId, updateData) {
     if (!this.client) return;
 
     try {
-      await this.client.sendRoomMessage(roomId, 'message-updated', {
+      console.log(`📡 [Socket] 완료 업데이트 전송 시도: Room=${roomId}, Msg=${updateData.messageId}`);
+      await this.client.sendRoomMessage(roomId, 'MESSAGE_UPDATED', {
         ...updateData,
         timestamp: Date.now(),
       });

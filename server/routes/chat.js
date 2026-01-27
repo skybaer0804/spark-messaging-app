@@ -8,6 +8,7 @@ const {
   joinRoomByInvite,
   sendMessage,
   getMessages,
+  getMessageById,
   uploadFile,
   setActiveRoom,
   syncMessages,
@@ -30,6 +31,7 @@ router.post('/invite/:slug', workspaceAuth, joinRoomByInvite);
 router.post('/leave/:roomId', leaveRoom);
 router.post('/messages', workspaceAuth, sendMessage);
 router.get('/messages/:roomId', getMessages);
+router.get('/message/:messageId', getMessageById);
 router.get('/sync/:roomId', syncMessages);
 router.post('/read/:roomId', markAsRead);
 router.post('/active-room', setActiveRoom);

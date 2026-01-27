@@ -136,7 +136,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     // Barrel file imports 최적화: @tabler/icons-preact의 개별 아이콘 import 최적화
-    include: ['@tabler/icons-preact'],
+    include: ['@tabler/icons-preact', 'three'],
     // Tree-shaking을 위한 esbuild 옵션
     esbuildOptions: {
       treeShaking: true,
@@ -155,6 +155,7 @@ export default defineConfig({
           
           // Third-party 라이브러리 분리
           if (id.includes('@tabler/icons-preact')) return 'tabler-icons';
+          if (id.includes('three')) return 'vendor-three';
           if (id.includes('axios')) return 'vendor-axios';
           if (id.includes('preact-router')) return 'vendor-router';
           if (id.includes('@preact/signals')) return 'vendor-signals';

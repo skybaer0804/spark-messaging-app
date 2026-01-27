@@ -24,6 +24,8 @@ export interface Message {
   readBy: string[];
   timestamp: Date;
   fileData?: FileData;
+  processingStatus?: 'processing' | 'completed' | 'failed';
+  processingProgress?: number; // 추가: 진행률 (0-100)
   isDeleted?: boolean;
   deletedBy?: 'sender' | 'all';
 }

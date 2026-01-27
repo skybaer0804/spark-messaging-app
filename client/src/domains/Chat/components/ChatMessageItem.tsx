@@ -10,6 +10,8 @@ import { Box } from '@/ui-components/Layout/Box';
 import { IconButton } from '@/ui-components/Button/IconButton';
 import { IconDownload, IconCheck, IconClock, IconAlertCircle, IconPhotoOff } from '@tabler/icons-preact';
 import { MarkdownRenderer } from './MarkdownRenderer/MarkdownRenderer';
+import { ModelViewer } from './ModelViewer/ModelViewer';
+import { ModelModal } from './ModelModal/ModelModal';
 import './Chat.scss';
 
 interface ChatMessageItemProps {
@@ -21,12 +23,18 @@ interface ChatMessageItemProps {
 }
 
 function ChatMessageItemComponent({ message, currentUser, onImageClick, unreadCount }: ChatMessageItemProps) {
+  // 렌더링 추적용 로그
+  if (message.type === '3d') {
+    console.log(`🖼️ [UI] 3D 메시지 렌더링: ID=${message._id}, Status=${message.processingStatus}, Progress=${message.processingProgress}%, HasThumb=${!!message.fileData?.thumbnail}`);
+  }
+
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [videoError, setVideoError] = useState(false);
   const [videoLoading, setVideoLoading] = useState(true);
   const [audioError, setAudioError] = useState(false);
   const [_audioLoading, setAudioLoading] = useState(true); // setAudioLoading만 사용됨
+  const [showModelModal, setShowModelModal] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   
@@ -50,9 +58,14 @@ function ChatMessageItemComponent({ message, currentUser, onImageClick, unreadCo
     }
   }, [message.fileData?.url, message.fileData?.data, message.fileData?.fileType]);
   
-  // 안전한 senderId 비교 로직
+  // 안전한 senderId 및 이름 추출 로직
   const senderIdStr =
     typeof message.senderId === 'object' ? (message.senderId as any)?._id?.toString() : message.senderId?.toString();
+  const senderName = 
+    message.senderName || 
+    (typeof message.senderId === 'object' ? (message.senderId as any)?.username : null) ||
+    (senderIdStr ? `User_${senderIdStr.substring(0, 6)}` : 'Unknown');
+
   const currentUserIdStr = (currentUser as any)?.id?.toString() || currentUser?._id?.toString();
 
   const isOwnMessage =
@@ -115,8 +128,7 @@ function ChatMessageItemComponent({ message, currentUser, onImageClick, unreadCo
         <Flex align="center" gap="sm" style={{ marginBottom: '4px' }}>
           {!isOwnMessage && (
             <Typography variant="caption" color="text-secondary">
-              {message.senderName ||
-                (typeof message.senderId === 'string' ? message.senderId.substring(0, 6) : 'Unknown')}
+              {senderName}
             </Typography>
           )}
           <Typography variant="caption" color="text-tertiary">
@@ -449,57 +461,127 @@ function ChatMessageItemComponent({ message, currentUser, onImageClick, unreadCo
                   )}
                 </Box>
               ) : message.fileData.fileType === '3d' ? (
-                // 3D 모델 파일 (다운로드만, 추후 three.js 뷰어 추가 예정)
-                <Flex 
-                  align="center" 
-                  gap="sm" 
-                  style={{ 
-                    padding: 'var(--space-gap-sm)',
-                    borderRadius: 'var(--shape-radius-md)',
-                    backgroundColor: 'var(--color-surface-level-2)',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-surface-level-3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-surface-level-2)';
-                  }}
-                  onClick={handleDownload}
-                >
-                  <Box style={{ fontSize: '2rem' }}>🎲</Box>
-                  <Box style={{ flex: 1, minWidth: 0 }}>
-                    <Typography 
-                      variant="body-medium" 
-                      style={{ 
-                        fontWeight: 500,
+                // 3D 모델 파일 (썸네일이 있으면 프리뷰 표시, 없으면 상태에 따라 처리)
+                message.fileData.thumbnail ? (
+                  // 썸네일이 있는 경우: 3D 프리뷰 표시
+                  <Box style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
+                    <Box
+                      style={{
+                        cursor: 'pointer',
+                        borderRadius: 'var(--shape-radius-md)',
                         overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                      }}
+                      onClick={() => setShowModelModal(true)}
+                    >
+                      <ModelViewer
+                        key={message.fileData.thumbnail} // URL 변경 시 컴포넌트 강제 재시작
+                        modelUrl={message.fileData.thumbnail}
+                        width={150}
+                        height={150}
+                        interactive={false}
+                        autoRotate={true}
+                      />
+                    </Box>
+                    <IconButton
+                      size="small"
+                      onClick={handleDownload}
+                      style={{
+                        position: 'absolute',
+                        top: 'var(--space-gap-xs)',
+                        right: 'var(--space-gap-xs)',
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        color: 'var(--primitive-gray-0)',
                       }}
                     >
-                      {message.fileData.fileName}
-                    </Typography>
-                    <Typography variant="caption" color="text-secondary">
-                      {formatFileSize(message.fileData.size)}
-                      {message.fileData.mimeType && (
-                        <span style={{ marginLeft: 'var(--space-gap-xs)' }}>
-                          • 3D 모델
-                        </span>
-                      )}
-                    </Typography>
+                      <IconDownload size={16} />
+                    </IconButton>
+                    {/* 파일명 표시 (선택사항) */}
+                    <Box style={{ marginTop: 'var(--space-gap-xs)' }}>
+                      <Typography variant="caption" color="text-secondary" style={{ display: 'block' }}>
+                        {message.fileData.fileName}
+                      </Typography>
+                      <Typography variant="caption" color="text-tertiary">
+                        {formatFileSize(message.fileData.size)} • 3D 모델
+                      </Typography>
+                    </Box>
                   </Box>
-                  <IconButton 
-                    size="small" 
-                    onClick={handleDownload}
+                ) : message.processingStatus === 'processing' ? (
+                  // 처리 중인 경우: 로딩 상태 및 진행률 표시
+                  <Box
                     style={{
-                      flexShrink: 0,
+                      width: '150px',
+                      height: '150px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'var(--color-surface-level-2)',
+                      borderRadius: 'var(--shape-radius-md)',
+                      gap: 'var(--space-gap-sm)',
+                      border: '1px dashed var(--color-border-default)',
+                      padding: 'var(--space-gap-md)',
                     }}
                   >
-                    <IconDownload size={18} />
-                  </IconButton>
-                </Flex>
+                    <Typography variant="caption" color="text-secondary" style={{ fontWeight: 'bold' }}>
+                      3D 처리 중...
+                    </Typography>
+                    <Typography variant="caption" color="text-tertiary" style={{ fontSize: '10px', textAlign: 'center' }}>
+                      {message.fileData?.fileName}
+                    </Typography>
+                  </Box>
+                ) : (
+                  // 처리 실패했거나 썸네일이 없는 경우: 파일 정보만 표시
+                  <Flex 
+                    align="center" 
+                    gap="sm" 
+                    style={{ 
+                      padding: 'var(--space-gap-sm)',
+                      borderRadius: 'var(--shape-radius-md)',
+                      backgroundColor: 'var(--color-surface-level-2)',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--color-surface-level-3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--color-surface-level-2)';
+                    }}
+                    onClick={handleDownload}
+                  >
+                    <Box style={{ fontSize: '2rem' }}>🎲</Box>
+                    <Box style={{ flex: 1, minWidth: 0 }}>
+                      <Typography 
+                        variant="body-medium" 
+                        style={{ 
+                          fontWeight: 500,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {message.fileData.fileName}
+                      </Typography>
+                      <Typography variant="caption" color="text-secondary">
+                        {formatFileSize(message.fileData.size)}
+                        {message.fileData.mimeType && (
+                          <span style={{ marginLeft: 'var(--space-gap-xs)' }}>
+                            • 3D 모델 {message.processingStatus === 'failed' ? '(처리 실패)' : ''}
+                          </span>
+                        )}
+                      </Typography>
+                    </Box>
+                    <IconButton 
+                      size="small" 
+                      onClick={handleDownload}
+                      style={{
+                        flexShrink: 0,
+                      }}
+                    >
+                      <IconDownload size={18} />
+                    </IconButton>
+                  </Flex>
+                )
               ) : (
                 // 문서 등 기타 파일 (다운로드만)
                 <Flex 
@@ -563,6 +645,16 @@ function ChatMessageItemComponent({ message, currentUser, onImageClick, unreadCo
           )}
         </Paper>
       </Flex>
+
+      {/* 3D 모델 모달 */}
+      {showModelModal && message.fileData?.thumbnail && message.fileData?.url && (
+        <ModelModal
+          modelUrl={message.fileData.thumbnail}
+          originalUrl={message.fileData.url}
+          fileName={message.fileData.fileName || '3D 모델'}
+          onClose={() => setShowModelModal(false)}
+        />
+      )}
     </Flex>
   );
 }
@@ -572,6 +664,9 @@ export const ChatMessageItem = memo(ChatMessageItemComponent, (prevProps, nextPr
   return (
     prevProps.message._id === nextProps.message._id &&
     prevProps.message.status === nextProps.message.status &&
+    prevProps.message.processingStatus === nextProps.message.processingStatus &&
+    prevProps.message.processingProgress === nextProps.message.processingProgress &&
+    prevProps.message.fileData?.thumbnail === nextProps.message.fileData?.thumbnail &&
     prevProps.unreadCount === nextProps.unreadCount &&
     prevProps.classNamePrefix === nextProps.classNamePrefix
   );

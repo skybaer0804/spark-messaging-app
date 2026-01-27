@@ -14,6 +14,34 @@ export function useChatRoom() {
   const { messages, setMessages, sendOptimisticMessage, updateMessageStatus } = useOptimisticUpdate();
   const { syncMessages } = useMessageSync();
 
+  // 서버에서 내려온 Message(document)를 프론트 Message 타입으로 변환
+  const formatServerMessage = useCallback((msg: any): Message => {
+    const senderObj = typeof msg.senderId === 'object' ? msg.senderId : null;
+
+    let fileData: any = undefined;
+    if (msg.fileUrl || msg.thumbnailUrl) {
+      fileData = {
+        fileName: msg.fileName || 'unknown',
+        fileType: msg.type || 'file',
+        mimeType: msg.mimeType || 'application/octet-stream',
+        size: msg.fileSize || 0,
+        url: msg.fileUrl,
+        thumbnail: msg.thumbnailUrl,
+        data: msg.thumbnailUrl || msg.fileUrl,
+      };
+    }
+
+    return {
+      ...msg,
+      senderId: senderObj ? senderObj._id : msg.senderId,
+      senderName: msg.senderName || (senderObj ? senderObj.username : 'Unknown'),
+      timestamp: new Date(msg.timestamp),
+      status: msg.status || 'sent',
+      processingStatus: msg.processingStatus || (msg.thumbnailUrl ? 'completed' : 'processing'),
+      fileData,
+    };
+  }, []);
+
   const handleRoomSelect = useCallback(
     async (room: ChatRoom) => {
       try {
@@ -21,32 +49,7 @@ export function useChatRoom() {
         const history = await chatService.getMessages(room._id);
 
         // v2.2.0: 서버 데이터 모델에 맞춰 포맷팅 (Populate된 senderId 처리)
-        const formatted = history.map((msg: any) => {
-          const senderObj = typeof msg.senderId === 'object' ? msg.senderId : null;
-          
-          // 파일 데이터 변환 (fileUrl, thumbnailUrl → fileData)
-          let fileData: any = undefined;
-          if (msg.fileUrl || msg.thumbnailUrl) {
-            fileData = {
-              fileName: msg.fileName || 'unknown',
-              fileType: msg.type || 'file',
-              mimeType: msg.mimeType || 'application/octet-stream',
-              size: msg.fileSize || 0,
-              url: msg.fileUrl, // 원본 파일 URL
-              thumbnail: msg.thumbnailUrl, // 썸네일 URL (이미지인 경우)
-              data: msg.thumbnailUrl || msg.fileUrl, // 표시용 (썸네일 우선, 없으면 원본)
-            };
-          }
-          
-          return {
-            ...msg,
-            senderId: senderObj ? senderObj._id : msg.senderId,
-            senderName: msg.senderName || (senderObj ? senderObj.username : 'Unknown'),
-            timestamp: new Date(msg.timestamp),
-            status: 'sent',
-            fileData, // 파일 데이터 추가
-          };
-        });
+        const formatted = history.map((msg: any) => formatServerMessage(msg));
 
         setMessages(formatted);
         setCurrentRoom(room);
@@ -98,7 +101,7 @@ export function useChatRoom() {
     }
   }, [isConnected, currentRoom]);
 
-  // 실시간 메시지 수신 리스너
+  // 실시간 메시지 수신 및 업데이트 통합 리스너
   useEffect(() => {
     const unsub = chatService.onRoomMessage((newMsg) => {
       // v2.2.0: 내가 현재 이 방을 보고 있다면 즉시 읽음 처리 요청
@@ -106,19 +109,90 @@ export function useChatRoom() {
         chatService.markAsRead(currentRoom._id);
       }
 
-      // 중복 메시지 방지: tempId 또는 _id로 중복 체크
+      const type = newMsg.type as string;
+
+      // 1. 메시지 업데이트 또는 진행률 이벤트인 경우
+      if (type === 'MESSAGE_UPDATED' || type === 'message-updated' || 
+          type === 'MESSAGE_PROGRESS' || type === 'message-progress') {
+        
+        console.log(`🌀 [Hook] 3D 이벤트 처리 시작: type=${type}, id=${newMsg._id}`);
+
+        // 완료 이벤트는 서버 최종본으로 단건 재조회하여 DB 상태와 완전히 동기화
+        if (type === 'MESSAGE_UPDATED' || type === 'message-updated') {
+          const messageId = newMsg._id?.toString();
+          if (messageId) {
+            chatService.getMessageById(messageId).then((serverMsg: any) => {
+              const formattedMsg = formatServerMessage(serverMsg);
+              setMessages((prev: Message[]) =>
+                prev.map((m: Message) => (m._id.toString() === messageId ? { ...m, ...formattedMsg } : m)),
+              );
+            }).catch((e) => {
+              console.error('❌ [Hook] 메시지 단건 재조회 실패:', e);
+            });
+          }
+          return;
+        }
+        
+        setMessages((prev: Message[]) => {
+          const exists = prev.some(m => m._id.toString() === newMsg._id.toString() || (newMsg.tempId && m.tempId === newMsg.tempId));
+          if (!exists) {
+            console.warn(`❌ [Hook] 업데이트할 메시지를 찾을 수 없음: ${newMsg._id}`);
+          }
+
+          return prev.map((m: Message) => {
+            const isMatch = m._id.toString() === newMsg._id.toString() || 
+                           (newMsg.tempId && m.tempId === newMsg.tempId);
+            
+            if (isMatch) {
+              console.log(`✅ [Hook] 메시지 매칭 성공, 상태 업데이트 적용: ${m._id}`);
+              
+              // v2.4.0: 타입 오염 방지 - 기존 메시지(m)를 기반으로 필요한 필드만 신규 메시지(newMsg)에서 가져옴
+              const updatedFileData = newMsg.fileData ? {
+                ...m.fileData,
+                ...newMsg.fileData,
+                thumbnail: newMsg.fileData.thumbnail || m.fileData?.thumbnail
+              } : m.fileData;
+
+              return {
+                ...m,
+                fileData: updatedFileData,
+                processingProgress: newMsg.processingProgress ?? m.processingProgress,
+                processingStatus: newMsg.processingStatus || m.processingStatus,
+                status: newMsg.status || m.status,
+                readBy: (newMsg.readBy && newMsg.readBy.length > 0) ? newMsg.readBy : m.readBy,
+              };
+            }
+            return m;
+          });
+        });
+        return;
+      }
+
+      // 2. 신규 메시지 추가 또는 기존 메시지 업데이트
       setMessages((prev: Message[]) => {
         // tempId로 중복 체크 (낙관적 업데이트된 메시지)
         if (newMsg.tempId && prev.some((m: Message) => m.tempId === newMsg.tempId)) {
-          return prev;
+          // 기존 낙관적 메시지를 실제 서버 데이터로 교체
+          return prev.map((m: Message) => 
+            m.tempId === newMsg.tempId ? { ...m, ...newMsg, status: 'sent' } : m
+          );
         }
         
         // _id로 중복 체크 (서버에서 온 메시지)
         if (newMsg._id && prev.some((m: Message) => m._id === newMsg._id)) {
-          return prev;
+          return prev.map((m: Message) => {
+            if (m._id === newMsg._id) {
+              return {
+                ...m,
+                ...newMsg,
+                fileData: newMsg.fileData || m.fileData,
+              };
+            }
+            return m;
+          });
         }
         
-        // sequenceNumber로도 중복 체크 (추가 안전장치)
+        // sequenceNumber로도 중복 체크
         if (newMsg.sequenceNumber && prev.some((m: Message) => 
           m.sequenceNumber === newMsg.sequenceNumber && 
           m.roomId === newMsg.roomId
@@ -130,7 +204,7 @@ export function useChatRoom() {
       });
     });
     return unsub;
-  }, [chatService, setMessages, currentRoom]);
+  }, [chatService, setMessages, currentRoom?._id, formatServerMessage]);
 
   // v2.4.0: 방 전환 또는 컴포넌트 언마운트 시 서버의 Active Room 상태 해제
   useEffect(() => {

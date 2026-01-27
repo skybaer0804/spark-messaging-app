@@ -724,6 +724,7 @@ exports.uploadFile = async (req, res) => {
         // 로컬 모드에서는 filePath를 사용
         const jobData = {
           messageId: newMessage._id.toString(),
+          roomId: roomId.toString(), // 추가
           fileType: detectedFileType,
           fileUrl: fileUrl, // S3/로컬 모두 URL 제공
           filePath: file.path || null, // 로컬 스토리지인 경우만
@@ -764,6 +765,7 @@ exports.uploadFile = async (req, res) => {
       fileSize: newMessage.fileSize,
       mimeType: newMessage.mimeType, // MIME 타입 추가 (동영상/오디오 재생에 필요)
       type: type, // 메시지 타입 (image, video, audio, file)
+      processingStatus: newMessage.processingStatus, // 처리 상태 추가
       senderId,
       senderName: sender ? sender.username : 'Unknown',
       sequenceNumber,
@@ -1107,6 +1109,33 @@ exports.getMessages = async (req, res) => {
     res.json(messages.reverse());
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch messages', error: error.message });
+  }
+};
+
+// 메시지 단건 조회 (썸네일 생성 완료 후 실시간 동기화용)
+exports.getMessageById = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.user.id;
+
+    const message = await Message.findById(messageId).populate('senderId', 'username profileImage status');
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    // 권한 체크: 요청자가 해당 방 멤버인지 확인
+    const room = await ChatRoom.findById(message.roomId).select('members');
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+    const isMember = room.members.some((m) => m.toString() === userId.toString());
+    if (!isMember) {
+      return res.status(403).json({ message: 'You are not a member of this room' });
+    }
+
+    res.json(message);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch message', error: error.message });
   }
 };
 

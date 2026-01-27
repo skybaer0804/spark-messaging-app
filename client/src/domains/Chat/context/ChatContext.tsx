@@ -140,7 +140,7 @@ export function ChatProvider({ children }: { children: any }) {
     }
 
     const connectionService = connectionServiceRef.current;
-    const roomService = roomServiceRef.current;
+    // const roomService = roomServiceRef.current; // Removed unused variable
 
     const unsubConnected = connectionService.onConnected(() => {
       setIsConnected(true);
@@ -163,59 +163,48 @@ export function ChatProvider({ children }: { children: any }) {
       setIsConnected(false);
     });
 
-    // v2.4.0: 방 목록 전체 새로고침 리스너 최적화
-    const unsubRoomMessage = roomService.onMessage((msg: any) => {
-      // 메시지 타입이 일반 채팅('text', 'file', 'image')인 경우 refreshRoomList를 호출하지 않음
-      // 이미 'ROOM_LIST_UPDATED' 소켓 이벤트가 마지막 메시지와 unreadCount를 완성된 형태로 보내주기 때문
-      if (msg && (msg.type === 'text' || msg.type === 'file' || msg.type === 'image')) {
-        console.log('[ChatContext] Ignoring redundant refresh for message type:', msg.type);
-        return;
+    // v2.4.0: 전역 소켓 메시지 리스너 통합 (리스너 덮어쓰기 방지)
+    const unsubGlobalMessages = connectionServiceRef.current['client'].onMessage((msg: any) => {
+      // 0. 방 목록 새로고침
+      // v2.4.0: 성능 최적화 - 채팅 메시지 및 진행률 관련 이벤트는 방 목록을 새로고침하지 않음
+      // 이미 ROOM_LIST_UPDATED 또는 개별 메시지 이벤트를 통해 상태가 관리되기 때문
+      const skipRefreshTypes = [
+        'text', 'file', 'image', '3d', 'video', 'audio', 
+        'MESSAGE_PROGRESS', 'MESSAGE_UPDATED', 
+        'message-progress', 'message-updated'
+      ];
+      if (msg && !skipRefreshTypes.includes(msg.type)) {
+        refreshRoomList();
       }
-      refreshRoomList();
-    });
 
-    // v2.2.0: 방 목록 업데이트 알림 수신
-    const unsubRoomListUpdate = connectionServiceRef.current['client'].onMessage((msg: any) => {
-      // 서버에서 보내는 이벤트 타입이 'ROOM_LIST_UPDATED'인지 확인
+      // 1. 방 목록 업데이트 알림 수신
       if (msg.type === 'ROOM_LIST_UPDATED') {
-        const updateData = msg.data || msg.content || {}; // content 필드도 확인
+        const updateData = msg.data || msg.content || {};
+        
+        // 데이터가 실제로 변경되었을 때만 처리 (최소한의 필터링)
+        if (!updateData._id) return;
 
-        console.log('[ChatContext] Received ROOM_LIST_UPDATED:', updateData);
-
-        // v2.4.0: 대상 유저 필터링 (내 정보만 처리하여 깜빡임 및 이름 바뀜 방지)
         const currentUserId = user?.id || (user as any)?._id;
-        if (updateData.targetUserId && updateData.targetUserId !== currentUserId) {
-          console.log('[ChatContext] Skipping update for other user:', updateData.targetUserId);
-          return;
-        }
+        if (updateData.targetUserId && updateData.targetUserId !== currentUserId) return;
 
-        // v2.3.0: 서버 주도 상태 (Server-Side Authority)
-        // 백엔드에서 완성된 room 객체를 보내주므로, 프론트엔드는 이를 그대로 반영함
-        if (updateData._id) {
-          const roomId = updateData._id;
-          const currentRooms = chatRoomList.value;
+        console.log('[ChatContext] Updating Room List for:', updateData._id);
 
-          // [v2.4.0] 방 제거 알림 처리
+        const roomId = updateData._id;
+        const currentRooms = chatRoomList.value;
+
+        if (roomId) {
           if (updateData.isRemoved) {
-            console.log('[ChatContext] Removing room from list:', roomId);
-            const updatedRooms = currentRooms.filter((r: any) => r._id !== roomId);
-            chatRoomList.value = [...updatedRooms] as any;
+            chatRoomList.value = currentRooms.filter((r: any) => r._id !== roomId) as any;
             return;
           }
 
-          // 방이 이미 목록에 있으면 업데이트, 없으면 추가 (새 방 생성 등)
           const roomExists = currentRooms.some((r: any) => r._id === roomId);
           let updatedRooms;
 
           if (roomExists) {
             updatedRooms = currentRooms.map((room: any) => {
               if (room._id === roomId) {
-                // v2.4.0: 서버 데이터 반영 시 unreadCount 보존 및 확실한 업데이트
                 const newUnreadCount = updateData.unreadCount !== undefined ? updateData.unreadCount : room.unreadCount;
-                console.log(
-                  `[ChatContext] Updating room ${roomId} unreadCount: ${room.unreadCount} -> ${newUnreadCount}`,
-                );
-
                 return {
                   ...room,
                   ...updateData,
@@ -226,28 +215,20 @@ export function ChatProvider({ children }: { children: any }) {
               return room;
             });
           } else {
-            // 새 방인 경우 목록에 추가
             updatedRooms = [updateData, ...currentRooms];
           }
 
-          // 리스트 상단으로 이동 (Sorting)
           updatedRooms.sort(
             (a: any, b: any) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime(),
           );
-
-          updateRoomList(updatedRooms as any, true); // v2.4.0: 소켓 업데이트임을 명시
-        } else if (updateData.roomId && !updateData._id) {
-          // v2.2.0 호환성 유지: roomId만 오고 _id가 없는 경우 (예: 방에서 나간 본인 알림 등)
-          // 사실 v2.3.0에서는 _id가 오도록 수정함
-          refreshRoomList();
+          updateRoomList(updatedRooms as any, true);
         } else {
-          // 데이터가 없으면 전체 새로고침
           refreshRoomList();
         }
       }
+
+      // 2. 메시지 읽음 확인 처리
       if (msg.type === 'MESSAGE_READ') {
-        // 읽음 처리 시 메시지 목록의 readBy를 업데이트하기 위해 이벤트를 전파하거나 직접 처리
-        // 여기서는 간단히 현재 열려있는 방이라면 메시지 목록을 갱신하도록 처리
         const { roomId, userId } = msg.data || {};
         const currentMessages = messagesSignal.value;
         if (currentMessages.length > 0 && currentMessages[0].roomId === roomId) {
@@ -259,53 +240,33 @@ export function ChatProvider({ children }: { children: any }) {
           });
         }
       }
-    });
 
-    // v2.2.0: 실시간 유저 상태 변경 감지
-    const unsubStatusChange = connectionServiceRef.current['client'].onMessage((msg: any) => {
+      // 3. 유저 상태 변경 감지
       if (msg.type === 'USER_STATUS_CHANGED') {
-        const { userId, status } = msg.content;
-        setUserList((prev) => prev.map((user) => (user._id === userId ? { ...user, status } : user)));
+        const { userId, status } = msg.content || msg.data || {};
+        if (userId) {
+          setUserList((prev) => prev.map((u) => (u._id === userId ? { ...u, status } : u)));
+        }
       }
     });
 
     // Initial load
     const init = async () => {
       setIsLoading(true);
-
-      // v2.2.0: 유저 정보에 이미 워크스페이스가 있다면 초기값으로 설정
       if (user && user.workspaces && user.workspaces.length > 0 && !currentWorkspaceId.value) {
         currentWorkspaceId.value = user.workspaces[0];
       }
-
       await Promise.all([refreshRoomList(), refreshUserList(), refreshWorkspaceList()]);
 
-      // v2.3.0: 로그인 시 미수신 전체 공지사항 동기화
       try {
         const response = await notificationApi.syncNotifications();
         const pendingNotifications = response.data;
         if (pendingNotifications && pendingNotifications.length > 0) {
-          // v2.3.0: 너무 많은 알림이 한꺼번에 뜨지 않도록 최적화
           if (pendingNotifications.length > 3) {
-            window.dispatchEvent(
-              new CustomEvent('api-info', {
-                detail: {
-                  message: `[공지] ${pendingNotifications.length}개의 새로운 공지사항이 있습니다.`,
-                  actionUrl: '/notifications', // 공지사항 목록 페이지가 있다면 이동
-                },
-              }),
-            );
+            window.dispatchEvent(new CustomEvent('api-info', { detail: { message: `[공지] ${pendingNotifications.length}개의 새로운 공지사항이 있습니다.` } }));
           } else {
             pendingNotifications.forEach((notif: any) => {
-              // 앱 내 토스트 알림으로 표시 (metadata 포함)
-              window.dispatchEvent(
-                new CustomEvent('api-info', {
-                  detail: {
-                    message: `[공지] ${notif.title}\n${notif.content}`,
-                    actionUrl: notif.actionUrl,
-                  },
-                }),
-              );
+              window.dispatchEvent(new CustomEvent('api-info', { detail: { message: `[공지] ${notif.title}\n${notif.content}` } }));
             });
           }
         }
@@ -327,9 +288,7 @@ export function ChatProvider({ children }: { children: any }) {
       unsubConnected();
       unsubStateChange();
       unsubError();
-      unsubRoomMessage();
-      unsubStatusChange();
-      unsubRoomListUpdate();
+      unsubGlobalMessages();
     };
   }, [user?.id, refreshRoomList, refreshUserList, refreshWorkspaceList]);
 

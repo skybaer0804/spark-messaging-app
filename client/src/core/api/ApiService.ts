@@ -99,6 +99,7 @@ export const chatApi = {
   joinRoomByInvite: (slug: string) => api.post(`/chat/invite/${slug}`),
   leaveRoom: (roomId: string) => api.post(`/chat/leave/${roomId}`),
   getMessages: (roomId: string) => api.get(`/chat/messages/${roomId}`),
+  getMessageById: (messageId: string) => api.get(`/chat/message/${messageId}`),
   sendMessage: (data: { roomId: string; content: string; type?: string; tempId?: string }) =>
     api.post('/chat/messages', data),
   syncMessages: (roomId: string, fromSequence: number) => api.get(`/chat/sync/${roomId}?fromSequence=${fromSequence}`),

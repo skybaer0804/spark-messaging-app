@@ -1,6 +1,7 @@
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const https = require('https');
 const http = require('http');
 const FileProcessingQueue = require('../services/queue/FileProcessingQueue');
@@ -25,9 +26,9 @@ class FileProcessingWorker {
   setupProcessor() {
     // 파일 처리 작업 프로세서
     this.queue.process('process-file', async (job) => {
-      const { messageId, fileType, fileUrl, filePath, fileBuffer, filename, mimeType } = job.data;
+      const { messageId, roomId, fileType, fileUrl, filePath, fileBuffer, filename, mimeType } = job.data;
 
-      console.log(`🔄 파일 처리 시작: ${fileType} - ${filename} (Job ${job.id})`);
+      console.log(`🔄 파일 처리 시작: ${fileType} - ${filename} (Job ${job.id}, Room ${roomId})`);
 
       try {
         let result = {};
@@ -48,7 +49,7 @@ class FileProcessingWorker {
             break;
           case 'model3d':
           case '3d':
-            result = await this.processModel3D(job, filePath, fileBuffer, fileUrl, filename);
+            result = await this.processModel3D(job, filePath, fileBuffer, fileUrl, filename, roomId);
             break;
           default:
             throw new Error(`지원하지 않는 파일 타입: ${fileType}`);
@@ -71,6 +72,20 @@ class FileProcessingWorker {
         throw error;
       }
     });
+  }
+
+  /**
+   * 진행률 전송 헬퍼
+   */
+  async reportProgress(job, messageId, roomId, progress) {
+    job.progress(progress);
+    if (roomId) {
+      console.log(`📊 [진행률] Message ${messageId}: ${progress}% (Room: ${roomId})`);
+      await socketService.sendMessageProgress(roomId, {
+        messageId,
+        progress
+      });
+    }
   }
 
   /**
@@ -196,19 +211,246 @@ class FileProcessingWorker {
   }
 
   /**
-   * 3D 모델 처리 (추후 프리뷰 생성 등 구현 예정)
+   * 3D 모델 처리 (GLB 썸네일 생성)
+   * .stl, .obj, .ply 파일만 프리뷰 생성 (.dxd는 제외)
    */
-  async processModel3D(job, filePath, fileBuffer, fileUrl, filename) {
-    job.progress(10);
+  async processModel3D(job, filePath, fileBuffer, fileUrl, filename, roomId) {
+    const messageId = job.data.messageId;
+    await this.reportProgress(job, messageId, roomId, 10);
+    console.log(`🎯 [3D 처리 시작] ${filename}`);
 
-    // TODO: Three.js 등을 사용한 프리뷰 이미지 생성
-    // 현재는 기본 정보만 반환
+    try {
+      // .dxd 파일은 프리뷰 생성하지 않음 (업로드/다운로드는 지원)
+      const ext = path.extname(filename).toLowerCase();
+      if (ext === '.dxd') {
+        console.log(`⏭️  .dxd 파일은 프리뷰를 생성하지 않습니다: ${filename}`);
+        return {
+          processingStatus: 'completed',
+          // thumbnailUrl 없음 = 프리뷰 없음
+        };
+      }
 
-    job.progress(100);
+      // 지원하는 형식 확인 (.stl, .obj, .ply만)
+      const supportedFormats = ['.stl', '.obj', '.ply'];
+      if (!supportedFormats.includes(ext)) {
+        console.log(`⏭️  지원하지 않는 3D 파일 형식: ${ext} (${filename})`);
+        return {
+          processingStatus: 'completed',
+        };
+      }
 
-    return {
-      processingStatus: 'completed',
-    };
+      // 1. 원본 파일 로드
+      console.log(`📂 [1단계] 원본 파일 로드 시작: ${filename}`);
+      let originalBuffer;
+      if (fileBuffer) {
+        originalBuffer = fileBuffer;
+        console.log(`✅ [1단계] 버퍼에서 로드 완료: ${originalBuffer.length} bytes`);
+      } else if (filePath && fs.existsSync(filePath)) {
+        // 로컬 모드: 파일 경로에서 읽기
+        originalBuffer = fs.readFileSync(filePath);
+        console.log(`✅ [1단계] 로컬 파일에서 로드 완료: ${originalBuffer.length} bytes`);
+      } else if (fileUrl) {
+        // S3 모드: URL에서 다운로드
+        await this.reportProgress(job, messageId, roomId, 20);
+        console.log(`📥 [1단계] S3에서 다운로드 시작: ${fileUrl}`);
+        originalBuffer = await this.downloadFileFromUrl(fileUrl);
+        console.log(`✅ [1단계] S3 다운로드 완료: ${originalBuffer.length} bytes`);
+      } else {
+        throw new Error('3D 모델 파일을 찾을 수 없습니다.');
+      }
+
+      await this.reportProgress(job, messageId, roomId, 30);
+
+      // 2. 환경변수에서 스케일 값 가져오기 (기본값: 0.1)
+      const scale = parseFloat(process.env.MODEL3D_THUMBNAIL_SCALE || '0.1');
+      console.log(`📏 [설정] 스케일: ${scale}`);
+
+      // 3. 임시 파일 경로 생성
+      const tempDir = os.tmpdir();
+      const tempInputPath = path.join(tempDir, `input_${Date.now()}_${Math.random().toString(36).substring(7)}${ext}`);
+      const tempOutputPath = path.join(tempDir, `output_${Date.now()}_${Math.random().toString(36).substring(7)}.glb`);
+      console.log(`📁 [임시 파일] 입력: ${tempInputPath}`);
+      console.log(`📁 [임시 파일] 출력: ${tempOutputPath}`);
+
+      try {
+        // 원본 파일을 임시 경로에 저장
+        console.log(`💾 [2단계] 임시 파일 저장 시작`);
+        fs.writeFileSync(tempInputPath, originalBuffer);
+        console.log(`✅ [2단계] 임시 파일 저장 완료`);
+
+        await this.reportProgress(job, messageId, roomId, 40);
+
+        // 4. Assimp로 STL/OBJ/PLY → GLB 변환 (assimpjs 사용)
+        console.log(`🔄 [3단계] Assimp 변환 시작 (assimpjs 사용)`);
+        
+        let ajs;
+        try {
+          // assimpjs는 Promise를 반환하므로 await 필요
+          ajs = await require('assimpjs')();
+          console.log(`✅ assimpjs 모듈 로드 성공 (WASM 기반)`);
+        } catch (requireError) {
+          console.error(`❌ assimpjs 모듈 로드 실패:`, requireError);
+          throw new Error(`assimpjs 모듈을 로드할 수 없습니다: ${requireError.message}`);
+        }
+
+        try {
+          console.log(`📤 assimpjs 변환 실행`);
+          
+          // assimpjs API: FileList를 생성하고 파일 추가
+          const fileList = new ajs.FileList();
+          fileList.AddFile(
+            path.basename(tempInputPath),
+            new Uint8Array(originalBuffer)
+          );
+          
+          // ConvertFileList 호출 (fileList, 출력 형식)
+          // assimpjs에서 gltf2(JSON)를 명시하여 구조적 안정성 확보
+          console.log(`📤 assimpjs 변환 실행 (format: gltf2)`);
+          const result = ajs.ConvertFileList(fileList, 'gltf2');
+          
+          // 변환 성공 여부 확인
+          if (!result.IsSuccess() || result.FileCount() === 0) {
+            const errorCode = result.GetErrorCode();
+            throw new Error(`assimpjs 변환 실패: ${errorCode}`);
+          }
+          
+          console.log(`📦 변환된 파일 수: ${result.FileCount()}`);
+          let gltfJson = null;
+          const resources = {};
+
+          for (let i = 0; i < result.FileCount(); i++) {
+            const resFile = result.GetFile(i);
+            const fileName = resFile.GetPath();
+            const fileContent = resFile.GetContent(); // Uint8Array
+            
+            console.log(`   - 파일 ${i}: ${fileName} (${fileContent.length} bytes)`);
+            
+            if (fileName.toLowerCase().endsWith('.gltf')) {
+              gltfJson = JSON.parse(new TextDecoder().decode(fileContent));
+            } else {
+              // bin 파일이나 이미지 파일들을 리소스로 저장
+              resources[fileName] = Buffer.from(fileContent);
+            }
+          }
+
+          if (!gltfJson) {
+            throw new Error('변환 결과 중 glTF JSON 파일을 찾을 수 없습니다.');
+          }
+
+          await this.reportProgress(job, messageId, roomId, 60);
+
+          // 5. gltf-pipeline로 glTF(JSON) → GLB 변환 및 Draco 압축
+          console.log(`🗜️  [4단계] glTF -> GLB 변환 및 압축 시작`);
+          
+          let gltfPipeline;
+          try {
+            gltfPipeline = require('gltf-pipeline');
+          } catch (requireError) {
+            console.error(`❌ gltf-pipeline 모듈 로드 실패:`, requireError);
+            throw new Error(`gltf-pipeline 모듈을 로드할 수 없습니다: ${requireError.message}`);
+          }
+
+          const DRACO_THRESHOLD = 5 * 1024 * 1024; // 5MB (유저 요청에 따라 5MB로 복구)
+          // 실제 gltfJson 구조의 크기를 가늠하기 어려우므로 원본 크기 기준으로 압축 여부 결정
+          const shouldCompress = originalBuffer.length > DRACO_THRESHOLD;
+
+          const options = {
+            resourceDirectory: tempDir,
+            separate: false,
+            dracoOptions: shouldCompress ? { 
+              compressionLevel: 7,
+              quantizePositionBits: 14,
+            } : undefined,
+            fixUnusedElements: true,
+            optimizeForCesium: false
+          };
+
+          // gltf-pipeline은 resources를 직접 넘기는 API가 제한적이므로 
+          // 내부 파일들을 임시 디렉토리에 써주어야 gltfToGlb가 찾을 수 있음
+          for (const [name, buffer] of Object.entries(resources)) {
+            fs.writeFileSync(path.join(tempDir, name), buffer);
+          }
+
+          const conversionResult = await gltfPipeline.gltfToGlb(gltfJson, options);
+          let finalGlbBuffer = conversionResult.glb;
+
+          // 5-1. 최종 생성된 바이너리 검증
+          try {
+            const validator = require('gltf-validator');
+            console.log(`🔍 [4-1단계] 최종 GLB 검증 시작`);
+            const report = await validator.validateBytes(new Uint8Array(finalGlbBuffer));
+            
+            if (report.issues.numErrors > 0) {
+              console.warn(`⚠️  최종 GLB 검증 결과 오류 발견 (${report.issues.numErrors}개)`);
+              if (shouldCompress) {
+                console.warn(`🔄 Draco 압축 없이 재시도...`);
+                const fallbackResult = await gltfPipeline.gltfToGlb(gltfJson, { 
+                  resourceDirectory: tempDir,
+                  fixUnusedElements: true 
+                });
+                finalGlbBuffer = fallbackResult.glb;
+              }
+            } else {
+              console.log(`✅ [4-1단계] 최종 GLB 검증 통과 (v${report.info.version})`);
+            }
+          } catch (validatorError) {
+            console.warn(`⚠️  최종 검증 도중 에러 발생: ${validatorError.message}`);
+          }
+
+          // 리소스 임시 파일 삭제
+          for (const name of Object.keys(resources)) {
+            const resourcePath = path.join(tempDir, name);
+            if (fs.existsSync(resourcePath)) fs.unlinkSync(resourcePath);
+          }
+
+          await this.reportProgress(job, messageId, roomId, 80);
+
+          // 6. 썸네일 저장
+          console.log(`💾 [5단계] 썸네일 저장 시작`);
+          const thumbnailFilename = `thumb_${path.parse(filename).name}.glb`;
+          
+          const thumbnailResult = await StorageService.saveThumbnail(
+            finalGlbBuffer,
+            thumbnailFilename
+          );
+          console.log(`✅ [5단계] 썸네일 저장 완료: ${thumbnailResult.url}`);
+
+          await this.reportProgress(job, messageId, roomId, 100);
+
+          return {
+            thumbnailUrl: thumbnailResult.url,
+            processingStatus: 'completed',
+          };
+        } catch (convertError) {
+          console.error(`❌ [3단계/4단계] 변환 프로세스 실패:`, convertError);
+          throw convertError;
+        }
+      } finally {
+        // 임시 파일 정리
+        try {
+          if (fs.existsSync(tempInputPath)) {
+            fs.unlinkSync(tempInputPath);
+            console.log(`🗑️  임시 입력 파일 삭제: ${tempInputPath}`);
+          }
+          if (fs.existsSync(tempOutputPath)) {
+            fs.unlinkSync(tempOutputPath);
+            console.log(`🗑️  임시 출력 파일 삭제: ${tempOutputPath}`);
+          }
+        } catch (cleanupError) {
+          console.warn('⚠️  임시 파일 정리 실패:', cleanupError);
+        }
+      }
+    } catch (error) {
+      console.error(`❌ [3D 모델 처리 실패] ${filename}:`, error);
+      console.error(`   에러 메시지:`, error.message);
+      console.error(`   에러 스택:`, error.stack);
+      // 에러 발생 시 원본 파일 정보만 반환 (썸네일 없음)
+      return {
+        processingStatus: 'failed',
+        error: error.message,
+        // thumbnailUrl 없음 = 프리뷰 없음, 원본 파일 정보만 표시
+      };
+    }
   }
 
   /**

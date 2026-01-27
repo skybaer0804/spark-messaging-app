@@ -54,14 +54,20 @@ export class ChatService {
   public onRoomMessage(callback: RoomMessageCallback): () => void {
     const unsubscribe = this.client.onRoomMessage((msg: RoomMessageData) => {
       this.logDebug('Received Room Message:', msg);
+      console.log(`🔌 [SDK] 소켓 메시지 수신: type=${msg.type}, room=${msg.room}`);
 
       // 현재 Room의 메시지만 처리
       if (msg.room !== this.currentRoomRef) {
-        this.logDebug(`Room message ignored (Mismatch: ${msg.room} !== ${this.currentRoomRef})`);
+        console.warn(`⚠️ [SDK] 다른 방 메시지 무시: ${msg.room} !== ${this.currentRoomRef}`);
         return;
       }
 
-      // v2.4.0: 시스템 이벤트 메시지는 채팅에 표시하지 않도록 필터링
+      const payload = msg.content as any;
+      const contentData = payload.content || payload;
+      
+      console.log('📦 [SDK] 파싱된 데이터:', contentData);
+      
+      // 시스템 이벤트 타입 필터링 (순수 데이터만 있는 경우 제외)
       const systemEventTypes = [
         'user-joined',
         'user-left',
@@ -78,12 +84,7 @@ export class ChatService {
         return;
       }
 
-      // v2.2.0: 메시지 포맷팅 (서버에서 보낸 필드 반영)
-      // 서버에서 socketService.sendRoomMessage를 통해 { content, senderId, timestamp } 구조로 한 번 더 감싸서 보냄
-      const payload = msg.content as any;
-      const contentData = payload.content || {};
-
-      // 파일 데이터 변환 (fileUrl, thumbnailUrl → fileData)
+      // 2. 파일 데이터 변환 (fileUrl, thumbnailUrl → fileData)
       let fileData: any = undefined;
       if (contentData.fileUrl || contentData.thumbnailUrl) {
         // 메시지 타입 결정 (contentData.type 우선, 없으면 msg.type 사용)
@@ -92,19 +93,17 @@ export class ChatService {
         // MIME 타입 결정
         let mimeType = contentData.mimeType || 'application/octet-stream';
         if (!contentData.mimeType && messageType) {
-          // MIME 타입이 없으면 메시지 타입으로 추론
           if (messageType === 'video') mimeType = 'video/mp4';
           else if (messageType === 'audio') mimeType = 'audio/mpeg';
           else if (messageType === 'image') mimeType = 'image/jpeg';
-          else if (messageType === '3d') mimeType = 'application/octet-stream'; // 3D 파일은 바이너리
+          else if (messageType === '3d') mimeType = 'application/octet-stream';
         }
         
-        // data 필드 결정 (동영상/오디오/3D는 원본 URL 사용, 이미지는 썸네일 우선)
         let dataUrl = contentData.fileUrl;
         if (messageType === 'image' && contentData.thumbnailUrl) {
-          dataUrl = contentData.thumbnailUrl; // 이미지는 썸네일 우선
+          dataUrl = contentData.thumbnailUrl;
         } else {
-          dataUrl = contentData.fileUrl; // 동영상/오디오/3D는 원본 URL
+          dataUrl = contentData.fileUrl;
         }
         
         fileData = {
@@ -112,14 +111,14 @@ export class ChatService {
           fileType: messageType || 'file',
           mimeType: mimeType,
           size: contentData.fileSize || 0,
-          url: contentData.fileUrl, // 원본 파일 URL (다운로드/재생용)
-          thumbnail: contentData.thumbnailUrl, // 썸네일 URL (이미지인 경우)
-          data: dataUrl, // 표시용 URL (동영상/오디오는 원본, 이미지는 썸네일)
+          url: contentData.fileUrl,
+          thumbnail: contentData.thumbnailUrl,
+          data: dataUrl,
         };
       }
 
       const message: Message = {
-        _id: contentData._id || `${msg.timestamp}-${Math.random()}`,
+        _id: contentData._id || contentData.messageId || `${msg.timestamp}-${Math.random()}`,
         roomId: msg.room,
         senderId: contentData.senderId || payload.senderId || msg.senderId,
         senderName: contentData.senderName,
@@ -132,10 +131,12 @@ export class ChatService {
         type: (msg.type as MessageType) || 'text',
         sequenceNumber: contentData.sequenceNumber || 0,
         tempId: contentData.tempId,
-        readBy: contentData.readBy || [], // [v2.4.0] 서버에서 받은 readBy 반영
+        readBy: contentData.readBy || [],
         timestamp: new Date(msg.timestamp || Date.now()),
         status: 'sent',
-        fileData, // 파일 데이터 추가
+        processingStatus: contentData.processingStatus || 'completed',
+        processingProgress: contentData.progress ?? contentData.processingProgress ?? (contentData.thumbnailUrl ? 100 : undefined),
+        fileData,
       };
 
       callback(message);
@@ -161,6 +162,11 @@ export class ChatService {
 
   public async getMessages(roomId: string) {
     const response = await chatApi.getMessages(roomId);
+    return response.data;
+  }
+
+  public async getMessageById(messageId: string) {
+    const response = await chatApi.getMessageById(messageId);
     return response.data;
   }
 
