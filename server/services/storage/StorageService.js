@@ -48,6 +48,16 @@ class StorageService {
   }
 
   /**
+   * 3D 변환 모델 저장
+   * @param {Buffer} renderBuffer - GLB 바이너리
+   * @param {String} filename - 파일명
+   * @returns {Promise<Object>} - { filename, url }
+   */
+  async saveRender(renderBuffer, filename) {
+    return this.strategy.saveRender(renderBuffer, filename);
+  }
+
+  /**
    * 파일 삭제
    * @param {String} fileUrl - 파일 URL
    * @returns {Promise<Boolean>} - 삭제 성공 여부

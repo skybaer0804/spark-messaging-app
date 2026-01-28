@@ -112,6 +112,48 @@ class S3StorageService {
   }
 
   /**
+   * 3D 변환 모델 저장
+   * @param {Buffer} renderBuffer - GLB 바이너리
+   * @param {String} filename - 파일명
+   * @returns {Promise<Object>} - { filename, url, s3Key }
+   */
+  async saveRender(renderBuffer, filename) {
+    try {
+      // S3 Key 구성
+      const key = `${this.folderPrefix}/${this.config.renderDir || 'render'}/${filename}`;
+
+      // S3 업로드 파라미터
+      const params = {
+        Bucket: this.bucket,
+        Key: key,
+        Body: renderBuffer,
+        ContentType: 'model/gltf-binary',
+        Metadata: {
+          type: 'render',
+          uploadedAt: new Date().toISOString(),
+        },
+      };
+
+      console.log(`📤 Uploading render model to S3: ${key}`);
+
+      // S3 업로드
+      const result = await this.s3.upload(params).promise();
+
+      console.log(`✅ S3 render model upload successful: ${filename}`);
+      console.log(`📍 URL: ${result.Location}`);
+
+      return {
+        filename: filename,
+        url: result.Location,
+        s3Key: key,
+      };
+    } catch (error) {
+      console.error('❌ S3StorageService.saveRender error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 파일 삭제
    * @param {String} fileUrl - S3 파일 URL
    * @returns {Promise<Boolean>} - 삭제 성공 여부

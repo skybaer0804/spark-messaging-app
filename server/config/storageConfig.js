@@ -16,6 +16,7 @@ const storageConfig = {
     // 디렉토리 이름
     originalDir: 'original',
     thumbnailDir: 'thumbnails',
+    renderDir: 'render',
     
     // 클라이언트 접근 URL (정적 서빙)
     serveUrl: process.env.FILE_SERVE_URL || 'http://localhost:5000/files',

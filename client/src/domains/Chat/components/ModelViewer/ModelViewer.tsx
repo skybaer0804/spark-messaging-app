@@ -13,6 +13,7 @@ interface ModelViewerProps {
   interactive?: boolean;
   autoRotate?: boolean;
   onLoad?: () => void;
+  onSnapshot?: (base64: string) => void; // 추가: 스냅샷 생성 콜백
   onError?: (error: Error) => void;
   className?: string;
 }
@@ -24,6 +25,7 @@ export function ModelViewer({
   interactive = true,
   autoRotate = false,
   onLoad,
+  onSnapshot,
   onError,
   className,
 }: ModelViewerProps) {
@@ -50,7 +52,11 @@ export function ModelViewer({
     camera.position.set(0, 0, 100);
 
     // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true, 
+      alpha: true,
+      preserveDrawingBuffer: true // 추가: 스냅샷 캡처를 위해 필요
+    });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 성능 최적화
     containerRef.current.appendChild(renderer.domElement);
@@ -153,6 +159,17 @@ export function ModelViewer({
             scene.add(model);
             setLoading(false);
             onLoad?.();
+
+            // 스냅샷 생성 (렌더링 직후)
+            if (onSnapshot) {
+              setTimeout(() => {
+                if (rendererRef.current && sceneRef.current) {
+                  rendererRef.current.render(sceneRef.current, camera);
+                  const base64 = rendererRef.current.domElement.toDataURL('image/png');
+                  onSnapshot(base64);
+                }
+              }, 500); // 모델이 완전히 그려질 시간을 잠깐 줌
+            }
           },
           (err: any) => {
             window.clearTimeout(timeoutId);

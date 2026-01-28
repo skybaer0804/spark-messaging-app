@@ -16,6 +16,7 @@ const {
   leaveRoom,
   getRoomNotificationSettings,
   updateRoomNotificationSettings,
+  uploadThumbnail, // 추가
 } = require('../controllers/chatController');
 const auth = require('../middleware/auth');
 const workspaceAuth = require('../middleware/workspaceAuth');
@@ -38,7 +39,9 @@ router.post('/active-room', setActiveRoom);
 router.get('/rooms/:roomId/notification-settings', getRoomNotificationSettings);
 router.put('/rooms/:roomId/notification-settings', updateRoomNotificationSettings);
 
-// 파일 업로드 라우트 추가 (파일 업로드 시에도 workspaceId 확인 권장되지만 일단 인증만)
+// 파일 업로드 라우트
 router.post('/upload', upload.single('file'), validateFileSize, uploadFile);
+// 썸네일 업로드 라우트 추가
+router.post('/upload-thumbnail', upload.single('thumbnail'), uploadThumbnail);
 
 module.exports = router;

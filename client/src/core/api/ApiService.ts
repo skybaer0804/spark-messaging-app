@@ -114,6 +114,12 @@ export const chatApi = {
   getRoomNotificationSettings: (roomId: string) => api.get(`/chat/rooms/${roomId}/notification-settings`),
   updateRoomNotificationSettings: (roomId: string, settings: { notificationMode: 'default' | 'none' | 'mention' }) =>
     api.put(`/chat/rooms/${roomId}/notification-settings`, settings),
+  uploadThumbnail: (formData: FormData) =>
+    api.post('/chat/upload-thumbnail', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }),
 };
 
 export const workspaceApi = {

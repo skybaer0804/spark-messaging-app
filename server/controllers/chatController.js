@@ -573,6 +573,66 @@ exports.leaveRoom = async (req, res) => {
   }
 };
 
+/**
+ * 썸네일 업로드 및 메시지 업데이트
+ * 클라이언트에서 3D 렌더링 후 스냅샷을 찍어 전송할 때 사용
+ */
+exports.uploadThumbnail = async (req, res) => {
+  try {
+    const { messageId, roomId } = req.body;
+    const file = req.file;
+
+    if (!file || !messageId) {
+      return res.status(400).json({ message: 'Missing thumbnail file or messageId' });
+    }
+
+    const StorageService = require('../services/storage/StorageService');
+    const sharp = require('sharp');
+
+    // 1. 이미지 리사이징 (한 번 더 확인) 및 WebP 변환
+    const thumbnailBuffer = await sharp(file.path)
+      .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
+      .toFormat('webp')
+      .toBuffer();
+
+    // 2. 썸네일 저장
+    const filename = `thumb_${messageId}_${Date.now()}.webp`;
+    const storageResult = await StorageService.saveThumbnail(thumbnailBuffer, filename);
+
+    // 3. DB 업데이트
+    const updatedMessage = await Message.findByIdAndUpdate(
+      messageId,
+      { $set: { thumbnailUrl: storageResult.url } },
+      { new: true }
+    );
+
+    if (!updatedMessage) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    // 4. 소켓으로 업데이트 브로드캐스트
+    await socketService.sendMessageUpdate(roomId, {
+      messageId,
+      thumbnailUrl: storageResult.url,
+      processingStatus: 'completed'
+    });
+
+    // 5. 임시 파일 삭제 (multer diskStorage 사용 시)
+    const fs = require('fs');
+    if (file.path && fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+
+    res.json({
+      success: true,
+      thumbnailUrl: storageResult.url
+    });
+  } catch (error) {
+    console.error('UploadThumbnail error:', error);
+    res.status(500).json({ message: 'Failed to upload thumbnail', error: error.message });
+  }
+};
+
 // 파일 업로드 처리
 exports.uploadFile = async (req, res) => {
   // 타임아웃 설정 (파일 타입별)
@@ -702,6 +762,7 @@ exports.uploadFile = async (req, res) => {
       type,
       fileUrl: fileUrl, // HTTP URL로 저장
       thumbnailUrl: thumbnailUrl,
+      renderUrl: null, // 초기값 null
       fileName: fileName, // UTF-8로 디코딩된 파일명
       fileSize: file.size,
       mimeType: file.mimetype,
@@ -761,6 +822,7 @@ exports.uploadFile = async (req, res) => {
       content: newMessage.content,
       fileUrl: newMessage.fileUrl,
       thumbnailUrl: newMessage.thumbnailUrl,
+      renderUrl: newMessage.renderUrl,
       fileName: newMessage.fileName, // UTF-8로 디코딩된 파일명 (DB에서 가져옴)
       fileSize: newMessage.fileSize,
       mimeType: newMessage.mimeType, // MIME 타입 추가 (동영상/오디오 재생에 필요)

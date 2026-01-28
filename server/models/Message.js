@@ -21,7 +21,8 @@ const messageSchema = new mongoose.Schema({
   },
 
   fileUrl: { type: String },
-  thumbnailUrl: { type: String }, // 썸네일/프리뷰 URL
+  thumbnailUrl: { type: String }, // 썸네일/프리뷰 이미지 URL
+  renderUrl: { type: String }, // 3D 렌더링용 GLB URL 추가
   fileName: { type: String },
   fileSize: { type: Number }, // 파일 크기 (bytes)
   mimeType: { type: String }, // MIME 타입

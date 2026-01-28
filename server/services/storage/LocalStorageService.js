@@ -84,6 +84,44 @@ class LocalStorageService {
   }
 
   /**
+   * 3D 변환 모델 저장
+   * @param {Buffer} renderBuffer - GLB 바이너리
+   * @param {String} filename - 파일명
+   * @returns {Promise<Object>} - { filename, url, localPath }
+   */
+  async saveRender(renderBuffer, filename) {
+    try {
+      const renderDir = path.join(
+        this.baseUploadPath,
+        this.config.renderDir
+      );
+
+      // 디렉토리 생성
+      await fs.mkdir(renderDir, { recursive: true });
+
+      const renderPath = path.join(renderDir, filename);
+
+      // 파일 저장
+      await fs.writeFile(renderPath, renderBuffer);
+
+      // 클라이언트 접근 URL 생성
+      const renderUrl = `${this.config.serveUrl}/${this.config.renderDir}/${filename}`;
+
+      console.log(`✅ Render model saved: ${filename}`);
+      console.log(`📍 URL: ${renderUrl}`);
+
+      return {
+        filename: filename,
+        url: renderUrl,
+        localPath: renderPath,
+      };
+    } catch (error) {
+      console.error('❌ LocalStorageService.saveRender error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 파일 삭제
    * @param {String} fileUrl - 파일 URL
    * @returns {Promise<Boolean>} - 삭제 성공 여부

@@ -19,7 +19,7 @@ export function useChatRoom() {
     const senderObj = typeof msg.senderId === 'object' ? msg.senderId : null;
 
     let fileData: any = undefined;
-    if (msg.fileUrl || msg.thumbnailUrl) {
+    if (msg.fileUrl || msg.thumbnailUrl || msg.renderUrl) {
       fileData = {
         fileName: msg.fileName || 'unknown',
         fileType: msg.type || 'file',
@@ -27,7 +27,8 @@ export function useChatRoom() {
         size: msg.fileSize || 0,
         url: msg.fileUrl,
         thumbnail: msg.thumbnailUrl,
-        data: msg.thumbnailUrl || msg.fileUrl,
+        renderUrl: msg.renderUrl, // 추가: 3D 렌더링용 GLB URL
+        data: msg.thumbnailUrl || msg.renderUrl || msg.fileUrl, // 프리뷰 데이터 우선순위
       };
     }
 
@@ -147,15 +148,20 @@ export function useChatRoom() {
               console.log(`✅ [Hook] 메시지 매칭 성공, 상태 업데이트 적용: ${m._id}`);
               
               // v2.4.0: 타입 오염 방지 - 기존 메시지(m)를 기반으로 필요한 필드만 신규 메시지(newMsg)에서 가져옴
-              const updatedFileData = newMsg.fileData ? {
+              // 서버에서 온 데이터(newMsg)는 최상위에 필드들이 있을 수 있음
+              const updatedFileData = {
                 ...m.fileData,
-                ...newMsg.fileData,
-                thumbnail: newMsg.fileData.thumbnail || m.fileData?.thumbnail
-              } : m.fileData;
+                ...(newMsg.fileData || {}),
+                thumbnail: newMsg.thumbnailUrl || newMsg.fileData?.thumbnail || m.fileData?.thumbnail,
+                renderUrl: newMsg.renderUrl || newMsg.fileData?.renderUrl || m.fileData?.renderUrl,
+                url: newMsg.fileUrl || newMsg.fileData?.url || m.fileData?.url
+              } as any;
 
               return {
                 ...m,
+                ...newMsg, // 전체 필드 업데이트 허용 (status, processingStatus 등)
                 fileData: updatedFileData,
+                renderUrl: newMsg.renderUrl || m.renderUrl,
                 processingProgress: newMsg.processingProgress ?? m.processingProgress,
                 processingStatus: newMsg.processingStatus || m.processingStatus,
                 status: newMsg.status || m.status,

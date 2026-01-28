@@ -405,20 +405,20 @@ class FileProcessingWorker {
 
           await this.reportProgress(job, messageId, roomId, 80);
 
-          // 6. 썸네일 저장
-          console.log(`💾 [5단계] 썸네일 저장 시작`);
-          const thumbnailFilename = `thumb_${path.parse(filename).name}.glb`;
+          // 6. 3D 변환 모델 저장 (render 폴더)
+          console.log(`💾 [5단계] 변환 모델 저장 시작`);
+          const renderFilename = `render_${path.parse(filename).name}.glb`;
           
-          const thumbnailResult = await StorageService.saveThumbnail(
+          const renderResult = await StorageService.saveRender(
             finalGlbBuffer,
-            thumbnailFilename
+            renderFilename
           );
-          console.log(`✅ [5단계] 썸네일 저장 완료: ${thumbnailResult.url}`);
+          console.log(`✅ [5단계] 변환 모델 저장 완료: ${renderResult.url}`);
 
           await this.reportProgress(job, messageId, roomId, 100);
 
           return {
-            thumbnailUrl: thumbnailResult.url,
+            renderUrl: renderResult.url, // 변환된 GLB는 renderUrl에 저장
             processingStatus: 'completed',
           };
         } catch (convertError) {
