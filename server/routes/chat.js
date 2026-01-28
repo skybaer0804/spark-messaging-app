@@ -17,6 +17,9 @@ const {
   getRoomNotificationSettings,
   updateRoomNotificationSettings,
   uploadThumbnail, // 추가
+  forwardMessage,
+  getThreadList,
+  getThreadMessages,
 } = require('../controllers/chatController');
 const auth = require('../middleware/auth');
 const workspaceAuth = require('../middleware/workspaceAuth');
@@ -31,7 +34,10 @@ router.delete('/rooms/:roomId', workspaceAuth, deleteRoom);
 router.post('/invite/:slug', workspaceAuth, joinRoomByInvite);
 router.post('/leave/:roomId', leaveRoom);
 router.post('/messages', workspaceAuth, sendMessage);
+router.post('/messages/forward', workspaceAuth, forwardMessage);
 router.get('/messages/:roomId', getMessages);
+router.get('/threads/:roomId', getThreadList);
+router.get('/threads/messages/:messageId', getThreadMessages);
 router.get('/message/:messageId', getMessageById);
 router.get('/sync/:roomId', syncMessages);
 router.post('/read/:roomId', markAsRead);

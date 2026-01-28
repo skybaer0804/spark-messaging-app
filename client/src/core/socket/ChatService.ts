@@ -133,6 +133,12 @@ export class ChatService {
         timestamp: new Date(msg.timestamp || Date.now()),
         status: 'sent',
         fileData,
+        parentMessageId: contentData.parentMessageId,
+        replyCount: contentData.replyCount,
+        lastReplyAt: contentData.lastReplyAt ? new Date(contentData.lastReplyAt) : undefined,
+        threadSequenceNumber: contentData.threadSequenceNumber,
+        isForwarded: contentData.isForwarded,
+        originSenderName: contentData.originSenderName,
       };
 
       callback(message);
@@ -141,12 +147,13 @@ export class ChatService {
     return unsubscribe;
   }
 
-  public async sendMessage(roomId: string, content: string, type: MessageType = 'text', tempId?: string): Promise<any> {
+  public async sendMessage(roomId: string, content: string, type: MessageType = 'text', tempId?: string, parentMessageId?: string | null): Promise<any> {
     const response = await chatApi.sendMessage({
       roomId,
       content,
       type,
       tempId,
+      parentMessageId,
     });
     return response.data;
   }

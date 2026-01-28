@@ -16,6 +16,8 @@ interface ChatMessagesProps {
   messagesRef?: any;
   messagesEndRef?: any;
   onImageClick?: (url: string, fileName: string) => void;
+  onThreadClick?: (message: Message) => void;
+  onForwardClick?: (message: Message) => void;
   emptyMessage?: string;
   classNamePrefix?: string;
 }
@@ -27,6 +29,8 @@ function ChatMessagesComponent({
   messagesRef: externalMessagesRef,
   messagesEndRef: externalMessagesEndRef,
   onImageClick,
+  onThreadClick,
+  onForwardClick,
   emptyMessage,
   classNamePrefix = 'chat',
 }: ChatMessagesProps) {
@@ -82,7 +86,7 @@ function ChatMessagesComponent({
         </Box>
       ) : (
         <Stack spacing="md" style={{ flex: 1, minHeight: 0 }}>
-          {groupMessagesByDate(messages).map((item, index) => {
+          {groupMessagesByDate(messages).map((item, index, array) => {
             if (item.type === 'divider') {
               return (
                 <DateDivider
@@ -93,22 +97,43 @@ function ChatMessagesComponent({
               );
             }
 
+            // 메시지 그룹화 로직 (이전 메시지와 동일 사용자 & 동일 시간(분) 체크)
+            const currentMsg = item.message!;
+            const prevItem = index > 0 ? array[index - 1] : null;
+            const prevMsg = prevItem?.type === 'message' ? prevItem.message : null;
+            
+            let isGrouped = false;
+            if (prevMsg) {
+              const isSameSender = 
+                (prevMsg.senderId?.toString() === currentMsg.senderId?.toString());
+              
+              const isSameMinute = 
+                new Date(prevMsg.timestamp).getMinutes() === new Date(currentMsg.timestamp).getMinutes() &&
+                new Date(prevMsg.timestamp).getHours() === new Date(currentMsg.timestamp).getHours() &&
+                new Date(prevMsg.timestamp).toDateString() === new Date(currentMsg.timestamp).toDateString();
+              
+              isGrouped = isSameSender && isSameMinute;
+            }
+
             // 안읽음 카운트 계산 (currentRoom이 있을 때만)
             let unreadCount: number | undefined = undefined;
-            if (currentRoom && item.message) {
+            if (currentRoom && currentMsg) {
               const totalMembers = currentRoom.members?.length || 0;
-              const readCount = item.message.readBy?.length || 0;
+              const readCount = currentMsg.readBy?.length || 0;
               unreadCount = totalMembers - readCount;
             }
 
             return (
               <ChatMessageItem
-                key={item.message?._id || `temp-${index}`}
-                message={item.message!}
+                key={currentMsg._id || `temp-${index}`}
+                message={currentMsg}
                 currentUser={currentUser}
                 onImageClick={onImageClick}
+                onThreadClick={onThreadClick}
+                onForwardClick={onForwardClick}
                 unreadCount={unreadCount && unreadCount > 0 ? unreadCount : undefined}
                 classNamePrefix={classNamePrefix}
+                isGrouped={isGrouped}
               />
             );
           })}
@@ -126,11 +151,12 @@ export const ChatMessages = memo(ChatMessagesComponent, (prevProps, nextProps) =
   if (prevProps.messages.length !== nextProps.messages.length) {
     return false;
   }
-  // 메시지 ID 비교로 변경 감지
-  const prevIds = prevProps.messages.map((m) => m._id).join(',');
-  const nextIds = nextProps.messages.map((m) => m._id).join(',');
+  // 메시지 ID와 답글 수, 마지막 답글 시간, 상태 등을 포함하여 비교하여 내용 변경 시 리렌더링 허용
+  const prevData = prevProps.messages.map((m) => `${m._id}-${m.replyCount || 0}-${m.lastReplyAt?.getTime() || 0}-${m.status}`).join(',');
+  const nextData = nextProps.messages.map((m) => `${m._id}-${m.replyCount || 0}-${m.lastReplyAt?.getTime() || 0}-${m.status}`).join(',');
+  
   return (
-    prevIds === nextIds &&
+    prevData === nextData &&
     prevProps.classNamePrefix === nextProps.classNamePrefix &&
     prevProps.currentUser === nextProps.currentUser
   );

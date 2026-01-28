@@ -652,7 +652,7 @@ exports.uploadFile = async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const { roomId } = req.body;
+    const { roomId, parentMessageId } = req.body;
     const senderId = req.user.id;
     const file = req.file;
 
@@ -715,7 +715,7 @@ exports.uploadFile = async (req, res) => {
     // 1. 시퀀스 번호 원자적 증가 및 방 정보 업데이트
     const room = await ChatRoom.findByIdAndUpdate(roomId, { $inc: { lastSequenceNumber: 1 } }, { new: true }).populate(
       'members',
-      'username',
+      'username profileImage status statusText',
     );
 
     if (!room) {
@@ -723,6 +723,23 @@ exports.uploadFile = async (req, res) => {
     }
 
     const sequenceNumber = room.lastSequenceNumber;
+    let threadSequenceNumber = null;
+
+    // [스레드 전용] 부모 메시지가 있는 경우 처리
+    if (parentMessageId) {
+      const parentMessage = await Message.findByIdAndUpdate(
+        parentMessageId,
+        { 
+          $inc: { replyCount: 1, lastThreadSequenceNumber: 1 },
+          $set: { lastReplyAt: new Date() }
+        },
+        { new: true }
+      );
+
+      if (parentMessage) {
+        threadSequenceNumber = parentMessage.lastThreadSequenceNumber;
+      }
+    }
 
     // 파일명 처리 (fileFilter에서 이미 디코딩되었지만, 안전을 위해 다시 확인)
     let fileName = file.originalname;
@@ -742,7 +759,7 @@ exports.uploadFile = async (req, res) => {
     }
     
     // 2. DB에 메시지 저장
-    const newMessage = new Message({
+    const newMessageData = {
       roomId,
       senderId,
       content: `File: ${fileName}`,
@@ -756,7 +773,14 @@ exports.uploadFile = async (req, res) => {
       sequenceNumber,
       readBy: [senderId], // [v2.4.0] 보낸 사람은 자동으로 읽음 처리
       processingStatus: thumbnailUrl ? 'completed' : 'processing', // 처리 상태
-    });
+    };
+
+    if (parentMessageId) {
+      newMessageData.parentMessageId = parentMessageId;
+      newMessageData.threadSequenceNumber = threadSequenceNumber;
+    }
+
+    const newMessage = new Message(newMessageData);
     await newMessage.save();
 
     // ========================================
@@ -819,6 +843,8 @@ exports.uploadFile = async (req, res) => {
       sequenceNumber,
       readBy: newMessage.readBy,
       timestamp: newMessage.timestamp,
+      parentMessageId: newMessage.parentMessageId,
+      threadSequenceNumber: newMessage.threadSequenceNumber,
     };
 
     await socketService.sendRoomMessage(roomId, type, messageData, senderId);
@@ -866,13 +892,13 @@ exports.uploadFile = async (req, res) => {
 // 메시지 전송 (DB 저장 후 소켓 브로드캐스트 및 푸시 알림)
 exports.sendMessage = async (req, res) => {
   try {
-    const { roomId, content, type, tempId } = req.body;
+    const { roomId, content, type, tempId, parentMessageId } = req.body;
     const senderId = req.user.id;
 
     // 1. 시퀀스 번호 원자적 증가 및 방 정보 업데이트
     const room = await ChatRoom.findByIdAndUpdate(roomId, { $inc: { lastSequenceNumber: 1 } }, { new: true }).populate(
       'members',
-      'username',
+      'username profileImage status statusText',
     );
 
     if (!room) {
@@ -880,12 +906,32 @@ exports.sendMessage = async (req, res) => {
     }
 
     const sequenceNumber = room.lastSequenceNumber;
+    let threadSequenceNumber = null;
 
-    // 2. 멘션 파싱
+    // [스레드 전용] 부모 메시지가 있는 경우 처리
+    if (parentMessageId) {
+      const parentMessage = await Message.findByIdAndUpdate(
+        parentMessageId,
+        { 
+          $inc: { replyCount: 1, lastThreadSequenceNumber: 1 },
+          $set: { lastReplyAt: new Date() }
+        },
+        { new: true }
+      );
+
+      if (parentMessage) {
+        threadSequenceNumber = parentMessage.lastThreadSequenceNumber;
+      }
+    }
+
+    // 3. 멘션 파싱
     const { mentions, mentionAll, mentionHere } = parseMentions(content, room.members);
 
-    // 3. DB에 메시지 저장
-    const newMessage = new Message({
+    // [v2.4.1] sender 정보를 먼저 추출하여 저장 시 사용
+    const sender = room.members.find((m) => m._id.toString() === senderId);
+
+    // 4. DB에 메시지 저장
+    const newMessageData = {
       roomId,
       senderId,
       content,
@@ -896,7 +942,14 @@ exports.sendMessage = async (req, res) => {
       mentions,
       mentionAll,
       mentionHere,
-    });
+    };
+
+    if (parentMessageId) {
+      newMessageData.parentMessageId = parentMessageId;
+      newMessageData.threadSequenceNumber = threadSequenceNumber;
+    }
+
+    const newMessage = new Message(newMessageData);
     await newMessage.save();
 
     // 3. 채팅방 마지막 메시지 업데이트 및 송신자 읽음 처리 (lastReadSequenceNumber 갱신)
@@ -908,16 +961,15 @@ exports.sendMessage = async (req, res) => {
       { lastReadSequenceNumber: sequenceNumber, unreadCount: 0 },
     );
 
-    // 4. 모든 참여자에게 방 목록 업데이트 알림 (안읽음 카운트 포함)
+    // 5. 모든 참여자에게 방 목록 업데이트 알림 (안읽음 카운트 포함)
     const allMemberIds = room.members.map((m) => m._id.toString());
-    const sender = room.members.find((m) => m._id.toString() === senderId);
 
     const messageData = {
       _id: newMessage._id,
       roomId,
       content,
       senderId,
-      senderName: sender ? sender.username : 'Unknown',
+      senderName: sender ? sender.username : 'Unknown', // 실시간 이름 전달
       sequenceNumber,
       tempId,
       readBy: newMessage.readBy,
@@ -925,6 +977,8 @@ exports.sendMessage = async (req, res) => {
       mentionAll: newMessage.mentionAll,
       mentionHere: newMessage.mentionHere,
       timestamp: newMessage.timestamp,
+      parentMessageId: newMessage.parentMessageId,
+      threadSequenceNumber: newMessage.threadSequenceNumber,
     };
 
     for (const userId of allMemberIds) {
@@ -1141,7 +1195,7 @@ exports.getMessages = async (req, res) => {
     const { roomId } = req.params;
     const { limit = 50, beforeSequence } = req.query;
 
-    const query = { roomId };
+    const query = { roomId, parentMessageId: null };
     if (beforeSequence) {
       query.sequenceNumber = { $lt: parseInt(beforeSequence) };
     }
@@ -1194,5 +1248,139 @@ exports.setActiveRoom = async (req, res) => {
     res.json({ message: 'Active room updated' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to update active room', error: error.message });
+  }
+};
+
+// 메시지 전달 (Forward) - 복사 방식
+exports.forwardMessage = async (req, res) => {
+  try {
+    const { targetRoomId, originalMessageId } = req.body;
+    const senderId = req.user.id;
+
+    // 1. 원본 메시지 조회
+    const originalMessage = await Message.findById(originalMessageId);
+    if (!originalMessage) {
+      return res.status(404).json({ message: 'Original message not found' });
+    }
+
+    // 2. 대상 방 정보 및 시퀀스 업데이트
+    const room = await ChatRoom.findByIdAndUpdate(
+      targetRoomId,
+      { $inc: { lastSequenceNumber: 1 } },
+      { new: true }
+    ).populate('members', 'username');
+
+    if (!room) {
+      return res.status(404).json({ message: 'Target room not found' });
+    }
+
+    const sequenceNumber = room.lastSequenceNumber;
+
+    // 3. 새 메시지로 복사 (전달 표시 추가)
+    const sender = await User.findById(senderId);
+    const originalSender = await User.findById(originalMessage.senderId);
+
+    const newMessageData = {
+      roomId: targetRoomId,
+      senderId,
+      content: originalMessage.content,
+      type: originalMessage.type,
+      fileUrl: originalMessage.fileUrl,
+      thumbnailUrl: originalMessage.thumbnailUrl,
+      renderUrl: originalMessage.renderUrl,
+      fileName: originalMessage.fileName,
+      fileSize: originalMessage.fileSize,
+      mimeType: originalMessage.mimeType,
+      sequenceNumber,
+      readBy: [senderId],
+      isForwarded: true,
+      originSenderName: originalSender ? originalSender.username : 'Unknown',
+    };
+
+    const newMessage = new Message(newMessageData);
+    await newMessage.save();
+
+    // 4. 방 정보 업데이트
+    room.lastMessage = newMessage._id;
+    await room.save();
+
+    await UserChatRoom.findOneAndUpdate(
+      { userId: senderId, roomId: targetRoomId },
+      { lastReadSequenceNumber: sequenceNumber, unreadCount: 0 }
+    );
+
+    const messageData = {
+      ...newMessage.toObject(),
+      senderName: sender ? sender.username : 'Unknown',
+    };
+
+    // 5. 소켓 브로드캐스트
+    await socketService.sendRoomMessage(targetRoomId, newMessage.type, messageData, senderId);
+
+    // 6. 모든 참여자에게 방 목록 업데이트 알림
+    const allMemberIds = room.members.map((m) => m._id.toString());
+    for (const userId of allMemberIds) {
+      if (userId === senderId) continue;
+
+      const userChatRoom = await UserChatRoom.findOne({ userId, roomId: targetRoomId });
+      if (!userChatRoom) continue;
+
+      const roomObj = room.toObject();
+      const unreadCount = Math.max(0, sequenceNumber - (userChatRoom.lastReadSequenceNumber || 0));
+
+      if (roomObj.type === 'direct') {
+        const otherMember = roomObj.members.find((m) => m._id.toString() !== userId);
+        roomObj.displayName = otherMember ? otherMember.username : 'Unknown';
+      } else {
+        roomObj.displayName = roomObj.name;
+      }
+
+      socketService.notifyRoomListUpdated(userId, {
+        ...roomObj,
+        targetUserId: userId,
+        unreadCount,
+        lastMessage: messageData,
+      });
+    }
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.error('Error forwarding message:', error);
+    res.status(500).json({ message: 'Failed to forward message', error: error.message });
+  }
+};
+
+// 특정 방의 스레드 목록 조회 (부모 메시지들)
+exports.getThreadList = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { limit = 50 } = req.query;
+
+    const parentMessages = await Message.find({
+      roomId,
+      replyCount: { $gt: 0 }
+    })
+    .sort({ lastReplyAt: -1 })
+    .limit(parseInt(limit))
+    .populate('senderId', 'username profileImage');
+
+    res.json(parentMessages);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch thread list', error: error.message });
+  }
+};
+
+// 특정 메시지의 스레드 답글 조회
+exports.getThreadMessages = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    
+    const messages = await Message.find({ parentMessageId: messageId })
+      .sort({ threadSequenceNumber: 1 })
+      .populate('senderId', 'username profileImage');
+
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch thread messages', error: error.message });
   }
 };

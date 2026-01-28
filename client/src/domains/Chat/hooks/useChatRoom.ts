@@ -39,6 +39,12 @@ export function useChatRoom() {
       timestamp: new Date(msg.timestamp),
       status: msg.status || 'sent',
       fileData,
+      parentMessageId: msg.parentMessageId,
+      replyCount: msg.replyCount,
+      lastReplyAt: msg.lastReplyAt ? new Date(msg.lastReplyAt) : undefined,
+      threadSequenceNumber: msg.threadSequenceNumber,
+      isForwarded: msg.isForwarded,
+      originSenderName: msg.originSenderName,
     };
   }, []);
 
@@ -55,6 +61,9 @@ export function useChatRoom() {
         setCurrentRoom(room);
         await chatService.setCurrentRoom(room._id);
         
+        // v2.4.2: 방 선택 시 서버에 즉시 읽음 처리 신호 전송 (사이드바 카운트 동기화)
+        await chatService.markAsRead(room._id);
+        
         // v2.2.0: 방 선택 시 해당 방의 안읽음 카운트 로컬에서 초기화
         chatRoomList.value = chatRoomList.value.map((r: any) => 
           r._id === room._id ? { ...r, unreadCount: 0 } : r
@@ -63,7 +72,7 @@ export function useChatRoom() {
         console.error('Failed to select room:', error);
       }
     },
-    [chatService, roomService, setMessages],
+    [chatService, roomService, setMessages, formatServerMessage],
   );
 
   const sendMessage = useCallback(
@@ -104,6 +113,9 @@ export function useChatRoom() {
   // 실시간 메시지 수신 및 업데이트 통합 리스너
   useEffect(() => {
     const unsub = chatService.onRoomMessage((newMsg) => {
+      // 메시지 포맷팅 적용 (senderName 보장)
+      const formattedNewMsg = formatServerMessage(newMsg);
+      
       // v2.2.0: 내가 현재 이 방을 보고 있다면 즉시 읽음 처리 요청
       if (currentRoom && newMsg.roomId === currentRoom._id) {
         chatService.markAsRead(currentRoom._id);
@@ -138,7 +150,6 @@ export function useChatRoom() {
             
             if (isMatch) {
               // v2.4.0: 타입 오염 방지 - 기존 메시지(m)를 기반으로 필요한 필드만 신규 메시지(newMsg)에서 가져옴
-              // 서버에서 온 데이터(newMsg)는 최상위에 필드들이 있을 수 있음
               const updatedFileData = {
                 ...m.fileData,
                 ...(newMsg.fileData || {}),
@@ -149,11 +160,9 @@ export function useChatRoom() {
 
               return {
                 ...m,
-                ...newMsg, // 전체 필드 업데이트 허용 (status 등)
+                ...formattedNewMsg, // 포맷팅된 데이터 적용
                 fileData: updatedFileData,
-                renderUrl: newMsg.renderUrl || m.renderUrl,
                 status: newMsg.status || m.status,
-                readBy: (newMsg.readBy && newMsg.readBy.length > 0) ? newMsg.readBy : m.readBy,
               };
             }
             return m;
@@ -164,26 +173,40 @@ export function useChatRoom() {
 
       // 2. 신규 메시지 추가 또는 기존 메시지 업데이트
       setMessages((prev: Message[]) => {
+        // [스레드 답글 처리] 만약 답글인 경우
+        if (newMsg.parentMessageId) {
+          const parentIdStr = newMsg.parentMessageId.toString();
+          const hasParent = prev.some(m => m._id.toString() === parentIdStr);
+          
+          if (hasParent) {
+            return prev.map((m: Message) => {
+              if (m._id.toString() === parentIdStr) {
+                // 부모 메시지의 새로운 객체를 생성하여 리렌더링 보장
+                // 중복 카운팅 방지: sequenceNumber가 이미 처리된 답글인지 체크할 수 없으므로 일단 갱신
+                return {
+                  ...m,
+                  replyCount: (m.replyCount || 0) + 1,
+                  lastReplyAt: new Date(newMsg.timestamp),
+                };
+              }
+              return m;
+            });
+          }
+          return prev;
+        }
+
         // tempId로 중복 체크 (낙관적 업데이트된 메시지)
         if (newMsg.tempId && prev.some((m: Message) => m.tempId === newMsg.tempId)) {
-          // 기존 낙관적 메시지를 실제 서버 데이터로 교체
           return prev.map((m: Message) => 
-            m.tempId === newMsg.tempId ? { ...m, ...newMsg, status: 'sent' } : m
+            m.tempId === newMsg.tempId ? { ...m, ...formattedNewMsg, status: 'sent' } : m
           );
         }
         
         // _id로 중복 체크 (서버에서 온 메시지)
         if (newMsg._id && prev.some((m: Message) => m._id === newMsg._id)) {
-          return prev.map((m: Message) => {
-            if (m._id === newMsg._id) {
-              return {
-                ...m,
-                ...newMsg,
-                fileData: newMsg.fileData || m.fileData,
-              };
-            }
-            return m;
-          });
+          return prev.map((m: Message) => 
+            m._id === newMsg._id ? { ...m, ...formattedNewMsg } : m
+          );
         }
         
         // sequenceNumber로도 중복 체크
@@ -194,7 +217,7 @@ export function useChatRoom() {
           return prev;
         }
         
-        return [...prev, newMsg].sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+        return [...prev, formattedNewMsg].sort((a, b) => a.sequenceNumber - b.sequenceNumber);
       });
     });
     return unsub;

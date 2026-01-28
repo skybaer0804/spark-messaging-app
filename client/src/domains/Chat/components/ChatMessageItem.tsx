@@ -5,6 +5,8 @@ import { downloadFile, downloadFileFromUrl } from '@/core/utils/fileUtils';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Flex } from '@/ui-components/Layout/Flex';
+import { Box } from '@/ui-components/Layout/Box';
+import { Avatar } from '@/ui-components/Avatar/Avatar';
 import { chatApi } from '@/core/api/ApiService';
 import { ModelModal } from './ModelModal/ModelModal';
 
@@ -17,21 +19,35 @@ import { VideoMessage } from './MessageTypes/VideoMessage';
 import { AudioMessage } from './MessageTypes/AudioMessage';
 
 import { messagesSignal } from '../hooks/useOptimisticUpdate'; // 추가
-import { IconCheck, IconClock, IconAlertCircle } from '@tabler/icons-preact';
+import { IconCheck, IconClock, IconAlertCircle, IconShare, IconMessageCircle2 } from '@tabler/icons-preact';
 import './Chat.scss';
 
 interface ChatMessageItemProps {
   message: Message;
   currentUser?: ChatUser | null;
   onImageClick?: (url: string, fileName: string) => void;
+  onThreadClick?: (message: Message) => void;
+  onForwardClick?: (message: Message) => void;
   unreadCount?: number;
   classNamePrefix?: string;
+  isGrouped?: boolean;
+  hideToolbar?: boolean;
 }
 
-function ChatMessageItemComponent({ message, currentUser, onImageClick, unreadCount }: ChatMessageItemProps) {
+function ChatMessageItemComponent({ 
+  message, 
+  currentUser, 
+  onImageClick, 
+  onThreadClick,
+  onForwardClick,
+  unreadCount,
+  isGrouped = false,
+  hideToolbar = false
+}: ChatMessageItemProps) {
   const [showModelModal, setShowModelModal] = useState(false);
   const [isSnapshotUploading, setIsSnapshotUploading] = useState(false);
   const [localThumbnail, setLocalPreview] = useState<string | null>(null); // 로컬 프리뷰 상태 추가
+  const [isHovered, setIsHovered] = useState(false);
 
   // 1. 안전한 senderId 및 이름 추출 로직 (v2.4.3 보호)
   const senderIdStr =
@@ -129,32 +145,149 @@ function ChatMessageItemComponent({ message, currentUser, onImageClick, unreadCo
   };
 
   return (
-    <Flex direction="column" align={isOwnMessage ? 'flex-end' : 'flex-start'} style={{ width: '100%', marginBottom: '8px' }}>
-      <Flex direction="column" align={isOwnMessage ? 'flex-end' : 'flex-start'} style={{ maxWidth: '80%' }}>
-        <Flex align="center" gap="sm" style={{ marginBottom: '4px' }}>
-          {!isOwnMessage && <Typography variant="caption" color="text-secondary">{senderName}</Typography>}
-          <Typography variant="caption" color="text-tertiary">{formatTimestamp(message.timestamp)}</Typography>
-          {renderStatus()}
-        </Flex>
-        
-        <Paper
-          elevation={1}
-          padding="sm"
-          className={isOwnMessage ? 'chat-message--own' : ''}
-          style={{
-            borderRadius: isOwnMessage ? '12px 0 12px 12px' : '0 12px 12px 12px',
-            position: 'relative',
-            // 3D/이미지 등 미디어 타입은 배경색 없이 표시할 수도 있으나 요청에 따라 노란색 유지
-          }}
-        >
-          {unreadCount !== undefined && unreadCount > 0 && (
-            <Typography variant="caption" style={{ position: 'absolute', [isOwnMessage ? 'left' : 'right']: '-24px', bottom: '2px', color: 'var(--primitive-yellow-600)', fontWeight: 'bold' }}>
-              {unreadCount}
-            </Typography>
+    <Flex 
+      direction="row" 
+      align="flex-start" 
+      gap="md"
+      style={{ 
+        width: '100%', 
+        padding: isGrouped ? '2px 20px' : '8px 20px', 
+        position: 'relative',
+        transition: 'background-color 0.2s ease',
+        flexDirection: isOwnMessage ? 'row-reverse' : 'row'
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* 상대방 프로필 아바타 */}
+      {!isOwnMessage && (
+        <Box style={{ width: '32px', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+          {!isGrouped ? (
+            <Avatar 
+              src={typeof message.senderId === 'object' ? (message.senderId as any)?.profileImage : undefined} 
+              size="sm"
+              variant="circular"
+              style={{ marginTop: '4px', border: '1px solid rgba(0,0,0,0.05)' }}
+            >
+              {senderName.substring(0, 1).toUpperCase()}
+            </Avatar>
+          ) : (
+            // 그룹화된 경우 시간 표시 (마우스 호버 시 보여주면 좋음, 일단 공간 확보)
+            <Box style={{ width: '32px' }} />
           )}
-          {renderContent()}
-        </Paper>
+        </Box>
+      )}
+
+      <Flex 
+        direction="column" 
+        align={isOwnMessage ? 'flex-end' : 'flex-start'} 
+        style={{ maxWidth: '85%', position: 'relative', flex: 1 }}
+      >
+        {!isGrouped && (
+          <Flex align="baseline" gap="xs" style={{ marginBottom: '2px', flexDirection: isOwnMessage ? 'row-reverse' : 'row' }}>
+            <Typography style={{ fontWeight: '800', fontSize: '15px', color: '#1d1c1d' }}>{senderName}</Typography>
+            <Typography variant="caption" color="text-tertiary" style={{ fontSize: '12px', marginLeft: isOwnMessage ? '0' : '4px', marginRight: isOwnMessage ? '4px' : '0' }}>
+              {formatTimestamp(message.timestamp)}
+            </Typography>
+            {renderStatus()}
+            {message.isForwarded && (
+              <Typography variant="caption" color="text-tertiary" style={{ fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '2px', fontSize: '11px' }}>
+                <IconShare size={10} /> 전달됨: {message.originSenderName}
+              </Typography>
+            )}
+          </Flex>
+        )}
+        
+        <Box style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: isOwnMessage ? 'flex-end' : 'flex-start' }}>
+          <Box style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Paper
+              elevation={isOwnMessage ? 1 : 0}
+              padding="sm"
+              className={isOwnMessage ? 'chat-message--own' : ''}
+              style={{
+                borderRadius: isOwnMessage ? '12px 0 12px 12px' : '0 12px 12px 12px',
+                position: 'relative',
+                backgroundColor: isOwnMessage ? '#FEE500' : '#f8f8f8',
+                border: isOwnMessage ? 'none' : '1px solid #efefef',
+                boxShadow: 'none'
+              }}
+            >
+              {unreadCount !== undefined && unreadCount > 0 && (
+                <Typography variant="caption" style={{ position: 'absolute', [isOwnMessage ? 'left' : 'right']: '-24px', bottom: '2px', color: 'var(--primitive-yellow-600)', fontWeight: 'bold' }}>
+                  {unreadCount}
+                </Typography>
+              )}
+              {renderContent()}
+            </Paper>
+
+            {/* 메시지 툴바 (Hover 시 노출) */}
+            {isHovered && !hideToolbar && (
+              <Flex 
+                gap="xs" 
+                style={{ 
+                  position: 'absolute', 
+                  top: '50%', 
+                  transform: 'translateY(-50%)',
+                  [isOwnMessage ? 'right' : 'left']: '100%',
+                  [isOwnMessage ? 'marginRight' : 'marginLeft']: '8px',
+                  backgroundColor: 'white',
+                  border: '1px solid var(--color-border-default)',
+                  borderRadius: '8px',
+                  padding: '4px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  zIndex: 10,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                <Box 
+                  className="chat-message__toolbar-icon" 
+                  onClick={() => onThreadClick?.(message)}
+                  title="스레드에서 답장"
+                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '4px' }}
+                >
+                  <IconMessageCircle2 size={18} />
+                </Box>
+                <Box 
+                  className="chat-message__toolbar-icon" 
+                  onClick={() => onForwardClick?.(message)}
+                  title="메시지 전달"
+                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '4px' }}
+                >
+                  <IconShare size={18} />
+                </Box>
+              </Flex>
+            )}
+          </Box>
+        </Box>
+
+        {/* 스레드 요약 정보 (답글이 있는 경우) */}
+        {message.replyCount !== undefined && message.replyCount > 0 && (
+          <Flex 
+            align="center" 
+            gap="xs" 
+            onClick={() => onThreadClick?.(message)}
+            style={{ 
+              marginTop: '4px', 
+              cursor: 'pointer', 
+              padding: '4px 8px', 
+              borderRadius: '6px',
+              backgroundColor: 'var(--color-background-subtle)',
+              border: '1px solid var(--color-border-subtle)'
+            }}
+          >
+            <IconMessageCircle2 size={14} style={{ color: 'var(--color-primary-main)' }} />
+            <Typography variant="caption" color="primary" style={{ fontWeight: 'bold' }}>
+              {message.replyCount} 답글
+            </Typography>
+            <Typography variant="caption" color="text-tertiary">
+              {message.lastReplyAt ? formatTimestamp(message.lastReplyAt) : ''}
+            </Typography>
+          </Flex>
+        )}
       </Flex>
+
+      {/* 내 메시지일 때 좌측 정렬을 위한 빈 공간 확보 (flex-reverse 때문) */}
+      {isOwnMessage && <Box style={{ width: '32px' }} />}
 
       {showModelModal && (message.fileData?.renderUrl || message.renderUrl || message.fileData?.url) && (
         <ModelModal
@@ -177,6 +310,9 @@ export const ChatMessageItem = memo(ChatMessageItemComponent, (prevProps, nextPr
     prevProps.message.fileData?.url === nextProps.message.fileData?.url &&
     prevProps.message.fileData?.renderUrl === nextProps.message.fileData?.renderUrl &&
     prevProps.message.renderUrl === nextProps.message.renderUrl &&
-    prevProps.unreadCount === nextProps.unreadCount
+    prevProps.message.replyCount === nextProps.message.replyCount &&
+    prevProps.message.lastReplyAt?.getTime() === nextProps.message.lastReplyAt?.getTime() &&
+    prevProps.unreadCount === nextProps.unreadCount &&
+    prevProps.isGrouped === nextProps.isGrouped
   );
 });

@@ -18,6 +18,9 @@ import { ChatInput } from './components/ChatInput';
 import { ChatMessages } from './components/ChatMessages';
 import { ChatSetting } from './components/ChatSetting/ChatSetting';
 import { ImageModal } from './components/ImageModal';
+import { ChatThreadPanel } from './components/ChatThreadPanel';
+import { ForwardModal } from './components/ForwardModal';
+import type { Message } from './types';
 import './ChatApp.scss';
 
 function ChatAppContent() {
@@ -127,25 +130,26 @@ function ChatAppContent() {
   }, [handleRoomSelectRaw, isConnected, pendingJoinRoom, roomList]);
 
   const messagesRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null); // v2.2.0: 하단 앵커용
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imageModal, setImageModal] = useState<{ url: string; fileName: string } | null>(null);
-  const [rightPanel, setRightPanel] = useState<'none' | 'members' | 'settings'>('none');
+  const [rightPanel, setRightPanel] = useState<'none' | 'members' | 'settings' | 'thread'>('none');
+  const [selectedThreadMessage, setSelectedThreadMessage] = useState<Message | null>(null);
+  const [forwardModalMessage, setForwardModalMessage] = useState<Message | null>(null);
   const { user: currentUser } = useAuth();
 
   // Auto-scroll to bottom (Anchor-based)
   useEffect(() => {
     const scrollToBottom = () => {
       if (messagesEndRef.current) {
-        // scrollIntoView는 브라우저가 제공하는 더 안전하고 부드러운 스크롤 방식입니다.
         messagesEndRef.current.scrollIntoView({
-          behavior: 'auto', // 즉시 이동
+          behavior: 'auto',
           block: 'end',
         });
       }
     };
 
-    // 렌더링 주기를 고려하여 즉시 및 지연 실행
     scrollToBottom();
     const timer1 = setTimeout(scrollToBottom, 30);
     const timer2 = setTimeout(scrollToBottom, 100);
@@ -188,6 +192,15 @@ function ChatAppContent() {
     setImageModal({ url: imageUrl, fileName });
   };
 
+  const handleThreadClick = (message: Message) => {
+    setSelectedThreadMessage(message);
+    setRightPanel('thread');
+  };
+
+  const handleForwardClick = (message: Message) => {
+    setForwardModalMessage(message);
+  };
+
   const handleCloseImageModal = () => {
     setImageModal(null);
   };
@@ -208,7 +221,20 @@ function ChatAppContent() {
   const showMainContent = !isMobile || view === 'chat';
 
   return (
-    <Box style={{ display: 'flex', height: '100%', minHeight: 0 }} className="chat-app__container">
+    <Box style={{ display: 'flex', height: '100%', minHeight: 0, position: 'relative' }} className="chat-app__container">
+      {/* Forward Modal - Rendered at top level */}
+      {forwardModalMessage && (
+        <ForwardModal
+          message={forwardModalMessage}
+          roomList={roomList}
+          onClose={() => setForwardModalMessage(null)}
+          onSuccess={() => {
+            setForwardModalMessage(null);
+            showSuccess('메시지가 전달되었습니다.');
+          }}
+        />
+      )}
+
       {/* Sidebar Area */}
       {showSidebar && (
         <Box
@@ -254,54 +280,69 @@ function ChatAppContent() {
                 currentRoom={currentRoom}
                 showUserList={rightPanel === 'members'}
                 showSettings={rightPanel === 'settings'}
+                showThreads={rightPanel === 'thread'}
                 setShowUserList={(show: boolean) => setRightPanel(show ? 'members' : 'none')}
                 setShowSettings={(show: boolean) => setRightPanel(show ? 'settings' : 'none')}
+                setShowThreads={(show: boolean) => setRightPanel(show ? 'thread' : 'none')}
                 toggleDebug={toggleDebug}
                 debugEnabled={debugEnabled}
               />
 
               <Box style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
-                {/* Messages Area */}
-                <ChatMessages
-                  messages={messages}
-                  currentUser={currentUser as any}
-                  currentRoom={currentRoom}
-                  messagesRef={messagesRef}
-                  messagesEndRef={messagesEndRef}
-                  onImageClick={handleImageClick}
-                />
+                {/* 메인 채팅 영역 (메시지 + 입력창) */}
+                <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <ChatMessages
+                    messages={messages}
+                    currentUser={currentUser as any}
+                    currentRoom={currentRoom}
+                    messagesRef={messagesRef}
+                    messagesEndRef={messagesEndRef}
+                    onImageClick={handleImageClick}
+                    onThreadClick={handleThreadClick}
+                    onForwardClick={handleForwardClick}
+                  />
+
+                  {/* Input Area */}
+                  <ChatInput
+                    input={input}
+                    setInput={setInput}
+                    members={userList}
+                    roomMembers={currentRoom.members}
+                    selectedFiles={selectedFiles}
+                    uploadingFile={uploadingFile}
+                    uploadProgress={uploadProgress}
+                    isConnected={isConnected}
+                    placeholder={
+                      !isConnected
+                        ? 'Connecting...'
+                        : `Message #${
+                            currentRoom.displayName ||
+                            getDirectChatName(currentRoom, currentUser?.id || (currentUser as any)?._id)
+                          }`
+                    }
+                    showFileUpload={true}
+                    onSendMessage={sendMessage}
+                    onSendFile={handleFileSend}
+                    onFileSelect={handleFileSelect}
+                    onFileRemove={handleFileRemove}
+                    onKeyPress={handleKeyPress}
+                    classNamePrefix="chat-app"
+                  />
+                </Box>
 
                 {/* Right Sidebar */}
                 {rightPanel === 'members' && <ChatMemberPanel members={currentRoom.members} />}
                 {rightPanel === 'settings' && <ChatSetting roomId={currentRoom._id} currentRoom={currentRoom} />}
+                {rightPanel === 'thread' && (
+                  <ChatThreadPanel 
+                    roomId={currentRoom._id} 
+                    currentRoom={currentRoom}
+                    currentUser={currentUser as any}
+                    onClose={() => setRightPanel('none')}
+                    initialSelectedMessage={selectedThreadMessage}
+                  />
+                )}
               </Box>
-
-              {/* Input Area */}
-              <ChatInput
-                input={input}
-                setInput={setInput}
-                members={userList}
-                roomMembers={currentRoom.members}
-                selectedFiles={selectedFiles}
-                uploadingFile={uploadingFile}
-                uploadProgress={uploadProgress}
-                isConnected={isConnected}
-                placeholder={
-                  !isConnected
-                    ? 'Connecting...'
-                    : `Message #${
-                        currentRoom.displayName ||
-                        getDirectChatName(currentRoom, currentUser?.id || (currentUser as any)?._id)
-                      }`
-                }
-                showFileUpload={true}
-                onSendMessage={sendMessage}
-                onSendFile={handleFileSend}
-                onFileSelect={handleFileSelect}
-                onFileRemove={handleFileRemove}
-                onKeyPress={handleKeyPress}
-                classNamePrefix="chat-app"
-              />
             </>
           ) : (
             <ChatEmptyState />

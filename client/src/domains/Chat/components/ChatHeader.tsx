@@ -4,7 +4,7 @@ import { Flex } from '@/ui-components/Layout/Flex';
 import { Stack } from '@/ui-components/Layout/Stack';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
-import { IconArrowLeft, IconHash, IconLock, IconVideo, IconUsers, IconSettings, IconBug, IconBugOff } from '@tabler/icons-preact';
+import { IconArrowLeft, IconHash, IconLock, IconVideo, IconUsers, IconSettings, IconBug, IconBugOff, IconMessageCircle2 } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
 import { getDirectChatName } from '../utils/chatUtils';
@@ -16,8 +16,10 @@ interface ChatHeaderProps {
   currentRoom: ChatRoom;
   showUserList: boolean;
   showSettings: boolean;
+  showThreads: boolean;
   setShowUserList: (val: boolean) => void;
   setShowSettings: (val: boolean) => void;
+  setShowThreads: (val: boolean) => void;
   toggleDebug: () => void;
   debugEnabled: boolean;
 }
@@ -27,8 +29,11 @@ export const ChatHeader = ({
   goToHome,
   currentRoom,
   showUserList,
+  showSettings,
+  showThreads,
   setShowUserList,
   setShowSettings,
+  setShowThreads,
   toggleDebug,
   debugEnabled,
 }: ChatHeaderProps) => {
@@ -76,10 +81,26 @@ export const ChatHeader = ({
         </IconButton>
         <IconButton
           onClick={() => {
+            if (showThreads) {
+              setShowThreads(false);
+            } else {
+              setShowUserList(false);
+              setShowSettings(false);
+              setShowThreads(true);
+            }
+          }}
+          color={showThreads ? 'primary' : 'secondary'}
+          title="스레드"
+        >
+          <IconMessageCircle2 size={20} />
+        </IconButton>
+        <IconButton
+          onClick={() => {
             if (showUserList) {
               setShowUserList(false);
             } else {
               setShowSettings(false);
+              setShowThreads(false);
               setShowUserList(true);
             }
           }}
@@ -90,15 +111,15 @@ export const ChatHeader = ({
         </IconButton>
         <IconButton
           onClick={() => {
-            const isSettingsOpen = !showUserList && (window as any).__chatSettingsOpen;
-            if (isSettingsOpen) {
+            if (showSettings) {
               setShowSettings(false);
             } else {
               setShowUserList(false);
+              setShowThreads(false);
               setShowSettings(true);
             }
           }}
-          color="secondary"
+          color={showSettings ? 'primary' : 'secondary'}
           title="설정"
         >
           <IconSettings size={20} />

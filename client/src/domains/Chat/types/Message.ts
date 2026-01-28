@@ -28,4 +28,14 @@ export interface Message {
   renderUrl?: string; // 추가: 3D 렌더링용 GLB URL (최상위)
   isDeleted?: boolean;
   deletedBy?: 'sender' | 'all';
+
+  // --- 스레드 및 공유 기능 추가 ---
+  parentMessageId?: string | null;
+  replyCount?: number;
+  lastReplyAt?: Date;
+  threadSequenceNumber?: number;
+  lastThreadSequenceNumber?: number;
+  isForwarded?: boolean;
+  originSenderName?: string;
+  // ------------------------------
 }
