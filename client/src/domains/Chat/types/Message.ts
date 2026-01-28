@@ -26,8 +26,6 @@ export interface Message {
   timestamp: Date;
   fileData?: FileData;
   renderUrl?: string; // 추가: 3D 렌더링용 GLB URL (최상위)
-  processingStatus?: 'processing' | 'completed' | 'failed';
-  processingProgress?: number; // 추가: 진행률 (0-100)
   isDeleted?: boolean;
   deletedBy?: 'sender' | 'all';
 }

@@ -1,4 +1,5 @@
 import { JSX } from 'preact';
+import { forwardRef } from 'preact/compat';
 
 export interface BoxProps extends JSX.HTMLAttributes<HTMLDivElement> {
   padding?: string; // e.g., 'md', 'lg' mapping to tokens or raw values
@@ -7,13 +8,13 @@ export interface BoxProps extends JSX.HTMLAttributes<HTMLDivElement> {
   color?: string;
   border?: string;
   borderRadius?: string;
-  width?: string;
-  height?: string;
+  width?: string | number;
+  height?: string | number;
   display?: string;
   className?: string;
 }
 
-export function Box({
+export const Box = forwardRef<HTMLDivElement, BoxProps>(({
   padding,
   margin,
   background,
@@ -27,7 +28,7 @@ export function Box({
   style,
   children,
   ...props
-}: BoxProps) {
+}, ref) => {
   const computedStyle = {
     ...(padding && { padding: `var(--space-padding-${padding}, ${padding})` }),
     ...(margin && { margin: `var(--space-gap-${margin}, ${margin})` }),
@@ -42,8 +43,8 @@ export function Box({
   };
 
   return (
-    <div className={`box ${className}`} style={computedStyle} {...props}>
+    <div ref={ref} className={`box ${className}`} style={computedStyle} {...props}>
       {children}
     </div>
   );
-}
+});

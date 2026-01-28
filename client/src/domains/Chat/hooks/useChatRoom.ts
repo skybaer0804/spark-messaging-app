@@ -38,7 +38,6 @@ export function useChatRoom() {
       senderName: msg.senderName || (senderObj ? senderObj.username : 'Unknown'),
       timestamp: new Date(msg.timestamp),
       status: msg.status || 'sent',
-      processingStatus: msg.processingStatus || (msg.thumbnailUrl ? 'completed' : 'processing'),
       fileData,
     };
   }, []);
@@ -152,18 +151,16 @@ export function useChatRoom() {
               const updatedFileData = {
                 ...m.fileData,
                 ...(newMsg.fileData || {}),
-                thumbnail: newMsg.thumbnailUrl || newMsg.fileData?.thumbnail || m.fileData?.thumbnail,
-                renderUrl: newMsg.renderUrl || newMsg.fileData?.renderUrl || m.fileData?.renderUrl,
-                url: newMsg.fileUrl || newMsg.fileData?.url || m.fileData?.url
+                thumbnail: (newMsg as any).thumbnailUrl || newMsg.fileData?.thumbnail || m.fileData?.thumbnail,
+                renderUrl: (newMsg as any).renderUrl || newMsg.fileData?.renderUrl || m.fileData?.renderUrl,
+                url: (newMsg as any).fileUrl || newMsg.fileData?.url || m.fileData?.url
               } as any;
 
               return {
                 ...m,
-                ...newMsg, // 전체 필드 업데이트 허용 (status, processingStatus 등)
+                ...newMsg, // 전체 필드 업데이트 허용 (status 등)
                 fileData: updatedFileData,
                 renderUrl: newMsg.renderUrl || m.renderUrl,
-                processingProgress: newMsg.processingProgress ?? m.processingProgress,
-                processingStatus: newMsg.processingStatus || m.processingStatus,
                 status: newMsg.status || m.status,
                 readBy: (newMsg.readBy && newMsg.readBy.length > 0) ? newMsg.readBy : m.readBy,
               };

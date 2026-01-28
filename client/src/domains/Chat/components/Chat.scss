@@ -54,26 +54,33 @@
 }
 
 // 3D 프리뷰 점진적 로딩 (점점점) 애니메이션
-.dots-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  height: 20px;
-  
-  span {
-    width: 6px;
-    height: 6px;
-    background-color: var(--color-text-tertiary);
-    border-radius: 50%;
-    animation: dots-bounce 1.4s infinite ease-in-out both;
-    
-    &:nth-child(1) { animation-delay: -0.32s; }
-    &:nth-child(2) { animation-delay: -0.16s; }
-  }
-}
+// DotsLoading 컴포넌트에서 정의함
 
-@keyframes dots-bounce {
-  0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
-  40% { transform: scale(1.0); opacity: 1; }
+// 카카오톡 스타일 내 메시지
+.chat-message--own {
+  background-color: #FEE500 !important;
+  color: #000000 !important;
+  border: none !important;
+
+  .markdown-renderer {
+    color: #000000 !important;
+    
+    p, span, div, li, h1, h2, h3, h4, h5, h6, strong, em {
+      color: #000000 !important;
+    }
+
+    code {
+      background-color: rgba(0, 0, 0, 0.1) !important;
+      color: #d63384 !important;
+    }
+  }
+
+  .typography {
+    color: #000000 !important;
+  }
+  
+  // 3D 모델 파일 등 내부 텍스트도 검은색으로
+  .text-secondary, .text-tertiary {
+    color: rgba(0, 0, 0, 0.6) !important;
+  }
 }

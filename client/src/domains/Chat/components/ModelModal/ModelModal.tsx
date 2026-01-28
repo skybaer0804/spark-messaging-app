@@ -10,10 +10,11 @@ interface ModelModalProps {
   originalUrl: string;
   fileName: string;
   onClose: () => void;
+  handleSnapshot?: (base64: string) => void;
   classNamePrefix?: string;
 }
 
-function ModelModalComponent({ modelUrl, originalUrl, fileName, onClose }: ModelModalProps) {
+function ModelModalComponent({ modelUrl, originalUrl, fileName, onClose, handleSnapshot }: ModelModalProps) {
   const handleDownload = async (e: Event) => {
     e.stopPropagation();
     await downloadFileFromUrl(originalUrl, fileName);
@@ -93,6 +94,7 @@ function ModelModalComponent({ modelUrl, originalUrl, fileName, onClose }: Model
             height={600}
             interactive={true}
             autoRotate={true}
+            onSnapshot={handleSnapshot}
           />
         </Box>
       </Box>

@@ -134,8 +134,6 @@ export class ChatService {
         readBy: contentData.readBy || [],
         timestamp: new Date(msg.timestamp || Date.now()),
         status: 'sent',
-        processingStatus: contentData.processingStatus || 'completed',
-        processingProgress: contentData.progress ?? contentData.processingProgress ?? (contentData.thumbnailUrl ? 100 : undefined),
         fileData,
       };
 

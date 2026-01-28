@@ -216,7 +216,6 @@ class FileProcessingWorker {
    */
   async processModel3D(job, filePath, fileBuffer, fileUrl, filename, roomId) {
     const messageId = job.data.messageId;
-    await this.reportProgress(job, messageId, roomId, 10);
     console.log(`🎯 [3D 처리 시작] ${filename}`);
 
     try {
@@ -225,8 +224,7 @@ class FileProcessingWorker {
       if (ext === '.dxd') {
         console.log(`⏭️  .dxd 파일은 프리뷰를 생성하지 않습니다: ${filename}`);
         return {
-          processingStatus: 'completed',
-          // thumbnailUrl 없음 = 프리뷰 없음
+          // processingStatus 제외
         };
       }
 
@@ -235,7 +233,7 @@ class FileProcessingWorker {
       if (!supportedFormats.includes(ext)) {
         console.log(`⏭️  지원하지 않는 3D 파일 형식: ${ext} (${filename})`);
         return {
-          processingStatus: 'completed',
+          // processingStatus 제외
         };
       }
 
@@ -251,15 +249,12 @@ class FileProcessingWorker {
         console.log(`✅ [1단계] 로컬 파일에서 로드 완료: ${originalBuffer.length} bytes`);
       } else if (fileUrl) {
         // S3 모드: URL에서 다운로드
-        await this.reportProgress(job, messageId, roomId, 20);
         console.log(`📥 [1단계] S3에서 다운로드 시작: ${fileUrl}`);
         originalBuffer = await this.downloadFileFromUrl(fileUrl);
         console.log(`✅ [1단계] S3 다운로드 완료: ${originalBuffer.length} bytes`);
       } else {
         throw new Error('3D 모델 파일을 찾을 수 없습니다.');
       }
-
-      await this.reportProgress(job, messageId, roomId, 30);
 
       // 2. 환경변수에서 스케일 값 가져오기 (기본값: 0.1)
       const scale = parseFloat(process.env.MODEL3D_THUMBNAIL_SCALE || '0.1');
@@ -277,8 +272,6 @@ class FileProcessingWorker {
         console.log(`💾 [2단계] 임시 파일 저장 시작`);
         fs.writeFileSync(tempInputPath, originalBuffer);
         console.log(`✅ [2단계] 임시 파일 저장 완료`);
-
-        await this.reportProgress(job, messageId, roomId, 40);
 
         // 4. Assimp로 STL/OBJ/PLY → GLB 변환 (assimpjs 사용)
         console.log(`🔄 [3단계] Assimp 변환 시작 (assimpjs 사용)`);
@@ -336,8 +329,6 @@ class FileProcessingWorker {
           if (!gltfJson) {
             throw new Error('변환 결과 중 glTF JSON 파일을 찾을 수 없습니다.');
           }
-
-          await this.reportProgress(job, messageId, roomId, 60);
 
           // 5. gltf-pipeline로 glTF(JSON) → GLB 변환 및 Draco 압축
           console.log(`🗜️  [4단계] glTF -> GLB 변환 및 압축 시작`);
@@ -403,8 +394,6 @@ class FileProcessingWorker {
             if (fs.existsSync(resourcePath)) fs.unlinkSync(resourcePath);
           }
 
-          await this.reportProgress(job, messageId, roomId, 80);
-
           // 6. 3D 변환 모델 저장 (render 폴더)
           console.log(`💾 [5단계] 변환 모델 저장 시작`);
           const renderFilename = `render_${path.parse(filename).name}.glb`;
@@ -415,11 +404,9 @@ class FileProcessingWorker {
           );
           console.log(`✅ [5단계] 변환 모델 저장 완료: ${renderResult.url}`);
 
-          await this.reportProgress(job, messageId, roomId, 100);
-
           return {
             renderUrl: renderResult.url, // 변환된 GLB는 renderUrl에 저장
-            processingStatus: 'completed',
+            // processingStatus 제외
           };
         } catch (convertError) {
           console.error(`❌ [3단계/4단계] 변환 프로세스 실패:`, convertError);
@@ -446,7 +433,7 @@ class FileProcessingWorker {
       console.error(`   에러 스택:`, error.stack);
       // 에러 발생 시 원본 파일 정보만 반환 (썸네일 없음)
       return {
-        processingStatus: 'failed',
+        // processingStatus 제외
         error: error.message,
         // thumbnailUrl 없음 = 프리뷰 없음, 원본 파일 정보만 표시
       };
