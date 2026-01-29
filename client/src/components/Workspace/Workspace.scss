@@ -1,11 +1,16 @@
 .workspace {
-  padding: var(--primitive-space-6);
-  width: 1000px; // max-width에서 width로 변경하여 고정
-  margin: 0 auto;
-  height: 100%;
-  overflow-y: overlay; // 또는 scroll로 하여 레이아웃 흔들림 방지
-  display: flex;
-  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  background-color: var(--color-background-secondary);
+  background-image: radial-gradient(var(--color-border-default) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  padding: var(--space-padding-xl);
+  overflow-y: auto;
+
+  &__container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
 
   &__header {
     margin-bottom: var(--primitive-space-6);

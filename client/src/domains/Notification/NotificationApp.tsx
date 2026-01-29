@@ -78,7 +78,7 @@ export function NotificationApp() {
           <Box>
             <Typography variant="h3">시스템 알림 관리</Typography>
             <Typography variant="body-medium" color="text-secondary">
-              과거 발송 목록을 확인하고 새로운 공지를 생성합니다.
+              과거 발송 목록을 확인하고 새로운 알림를 생성합니다.
             </Typography>
           </Box>
           <Flex gap="sm">
@@ -87,7 +87,7 @@ export function NotificationApp() {
             </Button>
             <Button variant="primary" onClick={() => setIsDrawerOpen(true)}>
               <IconPlus size={20} />
-              <span>공지 생성</span>
+              <span>알림 생성</span>
             </Button>
           </Flex>
         </Flex>
@@ -141,7 +141,8 @@ export function NotificationApp() {
             <table className="notification-table">
               <thead>
                 <tr>
-                  <th>제목/내용</th>
+                  <th>제목</th>
+                  <th>내용</th>
                   <th>대상</th>
                   <th>발송 시간</th>
                   <th>상태</th>
@@ -155,7 +156,9 @@ export function NotificationApp() {
                       <Typography variant="body-medium" style={{ fontWeight: 600 }}>
                         {notif.title}
                       </Typography>
-                      <Typography variant="caption" color="text-secondary" className="text-truncate">
+                    </td>
+                    <td>
+                      <Typography variant="caption">
                         {notif.content}
                       </Typography>
                     </td>
@@ -179,6 +182,7 @@ export function NotificationApp() {
                         </Button>
                         <Button variant="secondary" size="sm" onClick={() => handleDelete(notif._id)}>
                           <IconTrash size={16} />
+                          <span>삭제</span>
                         </Button>
                       </Flex>
                     </td>

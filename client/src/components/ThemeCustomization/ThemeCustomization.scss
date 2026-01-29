@@ -1,6 +1,10 @@
 @use '/src/styles/tokens/index';
 
 .theme-customization {
+  background-color: var(--color-background-secondary);
+  background-image: radial-gradient(var(--color-border-default) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  
   // 아이콘 색상 설정
   svg {
     color: var(--color-icon-primary);

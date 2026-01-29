@@ -1,9 +1,17 @@
+@use '/src/styles/tokens/index';
 .workspace-detail {
-  padding: 24px;
-  max-width: 900px;
-  margin: 0 auto;
+  width: 100%;
   min-height: 100%;
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-background-secondary);
+  background-image: radial-gradient(var(--color-border-default) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  padding: var(--space-padding-xl);
+  overflow-y: auto;
+
+  &__container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
 
   &__header {
     display: flex;

@@ -17,13 +17,6 @@ import './ThemePage.scss';
 const PRESET_COLORS: { value: PresetColor; label: string }[] = [
   { value: 'default', label: '기본' },
   { value: 'monotone', label: '모노톤' },
-  { value: 'theme1', label: '테마 1' },
-  { value: 'theme2', label: '테마 2' },
-  { value: 'theme3', label: '테마 3' },
-  { value: 'theme4', label: '테마 4' },
-  { value: 'theme5', label: '테마 5' },
-  { value: 'theme6', label: '테마 6' },
-  { value: 'theme7', label: '테마 7' },
 ];
 
 export function ThemePage() {
