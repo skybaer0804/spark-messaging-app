@@ -50,7 +50,15 @@ export function AddLinkModal({ open, onClose, onAdd, initialText = '', initialUr
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
+    // Ctrl+Enter 또는 Meta+Enter로 추가
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleAdd();
+      return;
+    }
+
+    // URL 입력 필드에서 그냥 Enter만 눌러도 추가 (텍스트와 URL이 모두 있을 때)
+    if (e.key === 'Enter' && text.trim() && url.trim()) {
       e.preventDefault();
       handleAdd();
     }
@@ -60,7 +68,7 @@ export function AddLinkModal({ open, onClose, onAdd, initialText = '', initialUr
     <Dialog
       open={open}
       onClose={onClose}
-      title="Add link"
+      title="링크 추가"
       maxWidth="sm"
       actions={
         <Box style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', width: '100%' }}>

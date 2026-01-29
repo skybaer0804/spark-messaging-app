@@ -4,7 +4,7 @@ import { Flex } from '@/ui-components/Layout/Flex';
 import { Stack } from '@/ui-components/Layout/Stack';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
-import { IconArrowLeft, IconHash, IconLock, IconVideo, IconUsers, IconSettings, IconBug, IconBugOff, IconMessageCircle2 } from '@tabler/icons-preact';
+import { IconArrowLeft, IconHash, IconLock, IconVideo, IconUsers, IconSettings, IconMessageCircle2 } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
 import { getDirectChatName } from '../utils/chatUtils';
@@ -20,8 +20,6 @@ interface ChatHeaderProps {
   setShowUserList: (val: boolean) => void;
   setShowSettings: (val: boolean) => void;
   setShowThreads: (val: boolean) => void;
-  toggleDebug: () => void;
-  debugEnabled: boolean;
   className?: string;
 }
 
@@ -35,8 +33,6 @@ export const ChatHeader = ({
   setShowUserList,
   setShowSettings,
   setShowThreads,
-  toggleDebug,
-  debugEnabled,
   className = '',
 }: ChatHeaderProps) => {
   const { user: currentUser } = useAuth();
@@ -52,7 +48,7 @@ export const ChatHeader = ({
     >
       <Stack direction="row" align="center" spacing="md">
         {isMobile && (
-          <IconButton onClick={goToHome}>
+          <IconButton onClick={goToHome} color="secondary">
             <IconArrowLeft />
           </IconButton>
         )}
@@ -76,8 +72,9 @@ export const ChatHeader = ({
         </Box>
         <IconButton
           onClick={() => {
-            showSuccess('화상회의를 시작합니다.');
+            showSuccess('준비 중입니다.');
           }}
+          color="secondary"
           title="화상회의"
         >
           <IconVideo size={20} />
@@ -92,6 +89,7 @@ export const ChatHeader = ({
               setShowThreads(true);
             }
           }}
+          active={showThreads}
           color={showThreads ? 'primary' : 'secondary'}
           title="스레드"
         >
@@ -107,6 +105,7 @@ export const ChatHeader = ({
               setShowUserList(true);
             }
           }}
+          active={showUserList}
           color={showUserList ? 'primary' : 'secondary'}
           title="참여자 목록"
         >
@@ -122,13 +121,11 @@ export const ChatHeader = ({
               setShowSettings(true);
             }
           }}
+          active={showSettings}
           color={showSettings ? 'primary' : 'secondary'}
           title="설정"
         >
           <IconSettings size={20} />
-        </IconButton>
-        <IconButton onClick={toggleDebug} color={debugEnabled ? 'primary' : 'secondary'} title="디버그 모드 토글">
-          {debugEnabled ? <IconBug size={20} /> : <IconBugOff size={20} />}
         </IconButton>
       </Stack>
     </Paper>

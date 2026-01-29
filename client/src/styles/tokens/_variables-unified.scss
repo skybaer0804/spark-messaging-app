@@ -238,6 +238,12 @@
   --color-border-dark: #{semantic-color.$color-border-dark};
   --color-border-focus: #{semantic-color.$color-border-focus};
 
+  // *** Action/State Colors ***
+  --color-action-hover: rgba(0, 0, 0, 0.06);
+  --color-action-selected: rgba(0, 0, 0, 0.12);
+  --color-bg-hover: var(--color-action-hover);
+  --color-bg-active: var(--color-action-selected);
+
   // *** Status Colors ***
   --color-status-success: #{semantic-color.$color-status-success};
   --color-status-warning: #{semantic-color.$color-status-warning};
@@ -784,7 +790,8 @@
   --tabs-tab-font-weight: var(--primitive-font-weight-bold);
   --tabs-tab-text: var(--color-text-secondary);
   --tabs-tab-text-active: var(--color-text-primary);
-  --tabs-tab-hover-bg: var(--color-surface-level-1);
+  --tabs-tab-hover-bg: var(--color-bg-hover);
+  --tabs-tab-active-bg: var(--color-bg-active);
   --tabs-disabled-opacity: 0.5;
   --tabs-focus-ring: 2px solid var(--color-border-focus);
 

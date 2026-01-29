@@ -41,6 +41,7 @@
 
     &--active {
       color: var(--tabs-tab-text-active);
+      background-color: var(--tabs-tab-active-bg, transparent);
     }
   }
 

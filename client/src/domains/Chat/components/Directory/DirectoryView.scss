@@ -39,36 +39,6 @@
     margin-top: 4px;
   }
 
-  &__tabs {
-    background: var(--color-bg-default);
-    padding: 4px;
-    border-radius: 12px;
-    display: inline-flex;
-    gap: 4px;
-    border: 1px solid var(--color-border-subtle);
-    align-self: flex-start;
-  }
-
-  &__tab {
-    border-radius: 8px !important;
-    padding: 8px 20px !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    border: none !important;
-    color: var(--color-text-secondary) !important;
-    background: transparent !important;
-    font-weight: 600 !important;
-
-    &--active {
-      background: var(--color-action-selected, rgba(0, 0, 0, 0.08)) !important;
-      color: var(--color-primary) !important;
-    }
-
-    &:hover:not(&--active) {
-      background: var(--color-action-hover) !important;
-      color: var(--color-text-primary) !important;
-    }
-  }
-
   &__search-wrapper {
     position: relative;
     width: 100%;

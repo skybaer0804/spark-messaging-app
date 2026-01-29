@@ -72,12 +72,26 @@
     }
   }
 
-  &__thread-panel {
+  &__sidebar-panel {
+    width: 320px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--color-border-default);
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-background-secondary) !important;
+    z-index: 5;
+    height: 100%;
+
     &__header {
       background-color: var(--color-surface-overlay) !important;
       opacity: 0.95;
       backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--color-border-default);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      padding: var(--primitive-padding-md);
       
       .paper {
         background-color: transparent !important;
@@ -85,6 +99,16 @@
       }
     }
 
+    &__content {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  &__thread-panel {
+    // Legacy support or specific overrides
     &__list-item {
       padding: 12px 16px;
       cursor: pointer;

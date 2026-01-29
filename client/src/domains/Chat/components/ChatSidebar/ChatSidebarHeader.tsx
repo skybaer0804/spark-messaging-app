@@ -45,7 +45,7 @@ export const ChatSidebarHeader = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { user: currentUser, signOut } = useAuth();
   const { showInfo, showSuccess } = useToast();
-  const { navigate } = useRouterState();
+  const { navigate, pathname } = useRouterState();
 
   const handleUpdateStatus = async (status: string) => {
     try {
@@ -203,6 +203,8 @@ export const ChatSidebarHeader = ({
         <IconButton
           size="small"
           title="채팅 홈"
+          active={pathname === '/chatapp'}
+          color={pathname === '/chatapp' ? 'primary' : 'secondary'}
           onClick={(e) => {
             e.stopPropagation();
             navigate('/chatapp');
@@ -213,6 +215,7 @@ export const ChatSidebarHeader = ({
         <IconButton 
           size="small" 
           title="검색" 
+          color="secondary"
           onClick={() => setIsSearching(true)}
         >
           <IconSearch size={20} />
@@ -220,6 +223,8 @@ export const ChatSidebarHeader = ({
         <IconButton
           size="small"
           title="디렉토리"
+          active={pathname === '/chatapp/directory'}
+          color={pathname === '/chatapp/directory' ? 'primary' : 'secondary'}
           onClick={(e) => {
             e.stopPropagation();
             navigate('/chatapp/directory');
@@ -230,6 +235,7 @@ export const ChatSidebarHeader = ({
         <IconButton
           size="small"
           title="정렬"
+          color="secondary"
           onClick={(e) => {
             e.stopPropagation();
             showInfo('준비 중입니다.');

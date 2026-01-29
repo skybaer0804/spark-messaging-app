@@ -16,8 +16,6 @@ export function useChatApp() {
     workspaceList,
     services,
     refreshRoomList,
-    debugEnabled,
-    toggleDebug,
   } = useChat();
 
   const { currentRoom, messages, isRoomLoading, sendMessage, handleRoomSelect, setCurrentRoom, setMessages } = useChatRoom();
@@ -190,8 +188,6 @@ export function useChatApp() {
     uploadProgress,
     isRoomLoading,
     socketId,
-    debugEnabled,
-    toggleDebug,
     setCurrentRoom,
   };
 }

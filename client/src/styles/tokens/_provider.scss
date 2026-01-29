@@ -62,6 +62,12 @@
     --color-interactive-primary: hsl(210, 70%, 60%); // Brighter Blue for Dark Mode
     --color-interactive-secondary: hsl(210, 12%, 97%); // Light Blue for Dark Mode (배경색 느낌)
   }
+
+  // *** Action/State Colors ***
+  --color-action-hover: rgba(255, 255, 255, 0.12);
+  --color-action-selected: rgba(255, 255, 255, 0.2);
+  --color-bg-hover: var(--color-action-hover);
+  --color-bg-active: var(--color-action-selected);
 }
 
 // ============================================

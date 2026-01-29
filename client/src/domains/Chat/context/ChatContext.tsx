@@ -30,8 +30,6 @@ interface ChatContextType {
   refreshWorkspaceList: () => Promise<void>;
   setCurrentRoom: (room: ChatRoom | null) => void; // 설정 함수 추가
   isLoading: boolean;
-  debugEnabled: boolean;
-  toggleDebug: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -81,7 +79,6 @@ export function ChatProvider({ children }: { children: any }) {
     chatRoomList.value = [...mergedRooms] as any;
     // setRoomList는 useSignalEffect에서 자동으로 처리됨
   };
-  const [debugEnabled, setDebugEnabled] = useState(localStorage.getItem('chat_debug_mode') === 'true');
 
   const connectionServiceRef = useRef<ConnectionService>(new ConnectionService(sparkMessagingClient));
   const chatServiceRef = useRef<ChatService>(new ChatService(sparkMessagingClient));
@@ -123,15 +120,6 @@ export function ChatProvider({ children }: { children: any }) {
     } catch (error) {
       console.error('Failed to load workspaces:', error);
     }
-  }, []);
-
-  const toggleDebug = useCallback(() => {
-    setDebugEnabled((prev) => {
-      const nextValue = !prev;
-      localStorage.setItem('chat_debug_mode', String(nextValue));
-      chatServiceRef.current.setDebugMode(nextValue);
-      return nextValue;
-    });
   }, []);
 
   useEffect(() => {
@@ -317,8 +305,6 @@ export function ChatProvider({ children }: { children: any }) {
       refreshWorkspaceList,
       setCurrentRoom,
       isLoading,
-      debugEnabled,
-      toggleDebug,
     }),
     [
       isConnected,
@@ -331,8 +317,6 @@ export function ChatProvider({ children }: { children: any }) {
       refreshUserList,
       refreshWorkspaceList,
       isLoading,
-      debugEnabled,
-      toggleDebug,
     ],
   );
 

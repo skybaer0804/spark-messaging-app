@@ -16,7 +16,7 @@ import { ChatHeader } from './components/ChatHeader';
 import { ChatMemberPanel } from './components/ChatMemberPanel';
 import { ChatInput } from './components/ChatInput';
 import { ChatMessages } from './components/ChatMessages';
-import { ChatSetting } from './components/ChatSetting/ChatSetting';
+import { ChatSettingPanel } from './components/ChatSettingPanel/ChatSettingPanel';
 import { ImageModal } from './components/ImageModal';
 import { ChatThreadPanel } from './components/ChatThreadPanel';
 import { CircularProgress } from '@/ui-components/CircularProgress';
@@ -48,8 +48,6 @@ function ChatAppContent() {
     uploadingFile,
     uploadProgress,
     isRoomLoading,
-    debugEnabled,
-    toggleDebug,
   } = useChatApp();
 
   const { setCurrentRoom } = useChat();
@@ -295,8 +293,6 @@ function ChatAppContent() {
                 setShowUserList={(show: boolean) => setRightPanel(show ? 'members' : 'none')}
                 setShowSettings={(show: boolean) => setRightPanel(show ? 'settings' : 'none')}
                 setShowThreads={(show: boolean) => setRightPanel(show ? 'thread' : 'none')}
-                toggleDebug={toggleDebug}
-                debugEnabled={debugEnabled}
                 className="chat-app__header"
               />
 
@@ -309,7 +305,8 @@ function ChatAppContent() {
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'center',
-                      background: 'rgba(255, 255, 255, 0.5)',
+                      background: 'var(--color-background-primary)',
+                      opacity: 0.6,
                       zIndex: 10
                     }}>
                       <CircularProgress size="lg" />
@@ -356,8 +353,8 @@ function ChatAppContent() {
                 </Box>
 
                 {/* Right Sidebar */}
-                {rightPanel === 'members' && <ChatMemberPanel members={currentRoom.members} />}
-                {rightPanel === 'settings' && <ChatSetting roomId={currentRoom._id} currentRoom={currentRoom} />}
+                {rightPanel === 'members' && <ChatMemberPanel members={currentRoom.members} onClose={() => setRightPanel('none')} />}
+                {rightPanel === 'settings' && <ChatSettingPanel roomId={currentRoom._id} currentRoom={currentRoom} onClose={() => setRightPanel('none')} />}
                 {rightPanel === 'thread' && (
                   <ChatThreadPanel 
                     roomId={currentRoom._id} 

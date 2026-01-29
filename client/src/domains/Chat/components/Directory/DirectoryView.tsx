@@ -23,6 +23,7 @@ import { useToast } from '@/core/context/ToastContext';
 import { useChat } from '../../context/ChatContext';
 import { Dialog } from '@/ui-components/Dialog/Dialog';
 import { Input } from '@/ui-components/Input/Input';
+import { Tabs, TabsItem } from '@/ui-components/Tabs/Tabs';
 import { DialogChatTeam } from '../DialogChatTeam';
 import { DialogChatGroup } from '../DialogChatGroup';
 import type { ChatRoom, ChatUser } from '../../types';
@@ -407,6 +408,192 @@ export const DirectoryView = ({
     }
   };
 
+  const tabItems: TabsItem[] = [
+    {
+      value: 'channel',
+      label: '채널',
+      content: (
+        <Grid container spacing={2} columns={4}>
+          {filteredChannels.map((room) => {
+            const isOwner = isChannelOwner(room);
+            return (
+              <Grid item key={room._id} xs={4} sm={2} md={1}>
+                <DirectoryItemCard
+                  title={room.name || '채널'}
+                  description={room.description}
+                  icon={<IconHash size={20} />}
+                  color={room.type === 'private' ? '#E73C7E' : '#509EE3'}
+                  onClick={() => handleChannelClick(room)}
+                  badge={room.type === 'private' ? 'Private' : room.isPrivate ? 'Private' : 'Public'}
+                  actions={
+                    isOwner ? (
+                      <>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditChannel(room);
+                          }}
+                          style={{ padding: '4px 8px' }}
+                        >
+                          <IconEdit size={14} />
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteChannel(room);
+                          }}
+                          style={{ padding: '4px 8px', color: '#ef4444' }}
+                        >
+                          <IconTrash size={14} />
+                        </Button>
+                      </>
+                    ) : null
+                  }
+                />
+              </Grid>
+            );
+          })}
+          {filteredChannels.length === 0 && (
+            <Grid item xs={4}>
+              <Flex direction="column" align="center" justify="center" style={{ padding: '64px', width: '100%' }}>
+                <Typography variant="h4" color="text-secondary">
+                  검색 결과가 없습니다.
+                </Typography>
+              </Flex>
+            </Grid>
+          )}
+        </Grid>
+      ),
+    },
+    {
+      value: 'team',
+      label: '팀',
+      content: (
+        <>
+          {isLoadingTeams ? (
+            <Flex align="center" justify="center" style={{ padding: '64px' }}>
+              <Typography variant="body-medium">팀 목록을 불러오는 중...</Typography>
+            </Flex>
+          ) : (
+            <Grid container spacing={2} columns={4}>
+              {filteredTeams.map((team) => {
+                const isOwner = isTeamOwner(team);
+                return (
+                  <Grid item key={team._id} xs={4} sm={2} md={1}>
+                    <DirectoryItemCard
+                      title={team.teamName}
+                      description={team.teamDesc}
+                      icon={<IconUsers size={20} />}
+                      color="#E73C7E"
+                      onClick={() => handleTeamSelect(team)}
+                      badge={`${team.members?.length || 0} Members`}
+                      actions={
+                        isOwner ? (
+                          <>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditTeam(team);
+                              }}
+                              style={{ padding: '4px 8px' }}
+                            >
+                              <IconEdit size={14} />
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTeam(team);
+                              }}
+                              style={{ padding: '4px 8px', color: '#ef4444' }}
+                            >
+                              <IconTrash size={14} />
+                            </Button>
+                          </>
+                        ) : null
+                      }
+                    />
+                  </Grid>
+                );
+              })}
+              {filteredTeams.length === 0 && (
+                <Grid item xs={4}>
+                  <Flex direction="column" align="center" justify="center" style={{ padding: '64px', width: '100%' }}>
+                    <Typography variant="h4" color="text-secondary">
+                      {searchTerm ? '검색 결과가 없습니다.' : '생성된 팀이 없습니다.'}
+                    </Typography>
+                    {!searchTerm && (
+                      <Typography variant="body-medium" color="text-secondary">
+                        새로운 프로젝트 팀을 만들어보세요.
+                      </Typography>
+                    )}
+                  </Flex>
+                </Grid>
+              )}
+            </Grid>
+          )}
+        </>
+      ),
+    },
+    {
+      value: 'user',
+      label: '사용자',
+      content: (
+        <Grid container spacing={2} columns={4}>
+          {filteredUsers.map((userItem) => (
+            <Grid item key={userItem._id} xs={4} sm={2} md={1}>
+              <DirectoryItemCard
+                isUser
+                title={userItem.username}
+                initials={userItem.username.substring(0, 1).toUpperCase()}
+                userImage={
+                  userItem.avatar ||
+                  userItem.profileImage ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(userItem.username)}&background=random`
+                }
+                userStatus={userItem.status || 'offline'}
+                color="#23D5AB"
+                onClick={() => startDirectChat(userItem._id)}
+                actions={
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="directory-card__action-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startDirectChat(userItem._id);
+                    }}
+                  >
+                    <IconMessageCircle size={14} />
+                    <span className="directory-card__action-text" style={{ marginLeft: '4px' }}>
+                      메시지
+                    </span>
+                  </Button>
+                }
+              />
+            </Grid>
+          ))}
+          {filteredUsers.length === 0 && (
+            <Grid item xs={4}>
+              <Flex direction="column" align="center" justify="center" style={{ padding: '64px', width: '100%' }}>
+                <Typography variant="h4" color="text-secondary">
+                  검색 결과가 없습니다.
+                </Typography>
+              </Flex>
+            </Grid>
+          )}
+        </Grid>
+      ),
+    },
+  ];
+
   return (
     <Box className="directory-view">
       <header className="directory-view__header">
@@ -419,27 +606,6 @@ export const DirectoryView = ({
           </Typography>
 
           <div className="directory-view__controls">
-            <div className="directory-view__tabs">
-              <Button
-                className={`directory-view__tab ${directoryTab === 'channel' ? 'directory-view__tab--active' : ''}`}
-                onClick={() => setDirectoryTab('channel')}
-              >
-                채널
-              </Button>
-              <Button
-                className={`directory-view__tab ${directoryTab === 'team' ? 'directory-view__tab--active' : ''}`}
-                onClick={() => setDirectoryTab('team')}
-              >
-                팀
-              </Button>
-              <Button
-                className={`directory-view__tab ${directoryTab === 'user' ? 'directory-view__tab--active' : ''}`}
-                onClick={() => setDirectoryTab('user')}
-              >
-                사용자
-              </Button>
-            </div>
-
             <div className="directory-view__search-wrapper">
               <IconSearch className="directory-view__search-icon" size={20} />
               <input
@@ -455,179 +621,12 @@ export const DirectoryView = ({
       </header>
 
       <Box className="directory-view__content">
-        {directoryTab === 'channel' && (
-          <Grid container spacing={2} columns={4}>
-            {filteredChannels.map((room) => {
-              const isOwner = isChannelOwner(room);
-              return (
-                <Grid item key={room._id} xs={4} sm={2} md={1}>
-                  <DirectoryItemCard
-                    title={room.name || '채널'}
-                    description={room.description}
-                    icon={<IconHash size={20} />}
-                    color={room.type === 'private' ? '#E73C7E' : '#509EE3'}
-                    onClick={() => handleChannelClick(room)}
-                    badge={room.type === 'private' ? 'Private' : room.isPrivate ? 'Private' : 'Public'}
-                    actions={
-                      isOwner ? (
-                        <>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditChannel(room);
-                            }}
-                            style={{ padding: '4px 8px' }}
-                          >
-                            <IconEdit size={14} />
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteChannel(room);
-                            }}
-                            style={{ padding: '4px 8px', color: '#ef4444' }}
-                          >
-                            <IconTrash size={14} />
-                          </Button>
-                        </>
-                      ) : null
-                    }
-                  />
-                </Grid>
-              );
-            })}
-            {filteredChannels.length === 0 && (
-              <Grid item xs={4}>
-                <Flex direction="column" align="center" justify="center" style={{ padding: '64px', width: '100%' }}>
-                  <Typography variant="h4" color="text-secondary">
-                    검색 결과가 없습니다.
-                  </Typography>
-                </Flex>
-              </Grid>
-            )}
-          </Grid>
-        )}
-
-        {directoryTab === 'team' && (
-          <>
-            {isLoadingTeams ? (
-              <Flex align="center" justify="center" style={{ padding: '64px' }}>
-                <Typography variant="body-medium">팀 목록을 불러오는 중...</Typography>
-              </Flex>
-            ) : (
-              <Grid container spacing={2} columns={4}>
-                {filteredTeams.map((team) => {
-                  const isOwner = isTeamOwner(team);
-                  return (
-                    <Grid item key={team._id} xs={4} sm={2} md={1}>
-                      <DirectoryItemCard
-                        title={team.teamName}
-                        description={team.teamDesc}
-                        icon={<IconUsers size={20} />}
-                        color="#E73C7E"
-                        onClick={() => handleTeamSelect(team)}
-                        badge={`${team.members?.length || 0} Members`}
-                        actions={
-                          isOwner ? (
-                            <>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditTeam(team);
-                                }}
-                                style={{ padding: '4px 8px' }}
-                              >
-                                <IconEdit size={14} />
-                              </Button>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteTeam(team);
-                                }}
-                                style={{ padding: '4px 8px', color: '#ef4444' }}
-                              >
-                                <IconTrash size={14} />
-                              </Button>
-                            </>
-                          ) : null
-                        }
-                      />
-                    </Grid>
-                  );
-                })}
-                {filteredTeams.length === 0 && (
-                  <Grid item xs={4}>
-                    <Flex direction="column" align="center" justify="center" style={{ padding: '64px', width: '100%' }}>
-                      <Typography variant="h4" color="text-secondary">
-                        {searchTerm ? '검색 결과가 없습니다.' : '생성된 팀이 없습니다.'}
-                      </Typography>
-                      {!searchTerm && (
-                        <Typography variant="body-medium" color="text-secondary">
-                          새로운 프로젝트 팀을 만들어보세요.
-                        </Typography>
-                      )}
-                    </Flex>
-                  </Grid>
-                )}
-              </Grid>
-            )}
-          </>
-        )}
-
-        {directoryTab === 'user' && (
-          <Grid container spacing={2} columns={4}>
-            {filteredUsers.map((userItem) => (
-              <Grid item key={userItem._id} xs={4} sm={2} md={1}>
-                <DirectoryItemCard
-                  isUser
-                  title={userItem.username}
-                  initials={userItem.username.substring(0, 1).toUpperCase()}
-                  userImage={
-                    userItem.avatar ||
-                    userItem.profileImage ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(userItem.username)}&background=random`
-                  }
-                  userStatus={userItem.status || 'offline'}
-                  color="#23D5AB"
-                  onClick={() => startDirectChat(userItem._id)}
-                  actions={
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="directory-card__action-button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startDirectChat(userItem._id);
-                      }}
-                    >
-                      <IconMessageCircle size={14} />
-                      <span className="directory-card__action-text" style={{ marginLeft: '4px' }}>
-                        메시지
-                      </span>
-                    </Button>
-                  }
-                />
-              </Grid>
-            ))}
-            {filteredUsers.length === 0 && (
-              <Grid item xs={4}>
-                <Flex direction="column" align="center" justify="center" style={{ padding: '64px', width: '100%' }}>
-                  <Typography variant="h4" color="text-secondary">
-                    검색 결과가 없습니다.
-                  </Typography>
-                </Flex>
-              </Grid>
-            )}
-          </Grid>
-        )}
+        <Tabs
+          items={tabItems}
+          value={directoryTab}
+          onChange={(val) => setDirectoryTab(val as any)}
+          variant="standard"
+        />
       </Box>
 
       {/* 팀 수정 다이얼로그 */}

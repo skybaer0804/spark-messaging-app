@@ -4,16 +4,19 @@ import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Button } from '@/ui-components/Button/Button';
 import { Select } from '@/ui-components/Select/Select';
+import { IconButton } from '@/ui-components/Button/IconButton';
+import { IconX } from '@tabler/icons-preact';
 import { useChatNotificationSettings, type NotificationMode } from './hooks/useChatNotificationSettings';
 import type { ChatRoom } from '../../types';
-import './ChatSetting.scss';
+import './ChatSettingPanel.scss';
 
-interface ChatSettingProps {
+interface ChatSettingPanelProps {
   roomId: string | null;
   currentRoom: ChatRoom | null;
+  onClose: () => void;
 }
 
-export const ChatSetting = ({ roomId }: ChatSettingProps) => {
+export const ChatSettingPanel = ({ roomId, onClose }: ChatSettingPanelProps) => {
   const { settings, loading, saving, updateSettings, resetSettings } = useChatNotificationSettings(roomId);
 
   const handleModeChange = async (e: Event) => {
@@ -36,12 +39,16 @@ export const ChatSetting = ({ roomId }: ChatSettingProps) => {
     <Paper
       elevation={0}
       square
-      className="chat-setting__panel"
+      padding="none"
+      className="chat-app__sidebar-panel"
     >
-      <Box padding="md" style={{ borderBottom: '1px solid var(--color-border-default)' }}>
+      <Box className="chat-app__sidebar-panel__header">
         <Typography variant="h4">알림 환경 설정</Typography>
+        <IconButton onClick={onClose} size="small">
+          <IconX size={18} />
+        </IconButton>
       </Box>
-      <Box style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+      <Box className="chat-app__sidebar-panel__content" style={{ padding: '16px' }}>
         {loading ? (
           <Box padding="lg" style={{ textAlign: 'center' }}>
             <Typography variant="body-medium" color="text-secondary">

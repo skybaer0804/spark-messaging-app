@@ -34,18 +34,9 @@ export const ChatThreadPanel = ({
       elevation={0}
       square
       padding="none"
-      style={{
-        width: '320px',
-        flexShrink: 0,
-        borderLeft: '1px solid var(--color-border-default)',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: 'var(--color-bg-secondary)',
-        zIndex: 5,
-        height: '100%'
-      }}
+      className="chat-app__sidebar-panel"
     >
-      <Box className="chat-app__thread-panel__header" padding="md" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+      <Box className="chat-app__sidebar-panel__header">
         <Box style={{ display: 'flex', align: 'center', gap: '8px' }}>
           {selectedMessage && (
             <IconButton onClick={() => setSelectedMessage(null)} size="small">
@@ -61,7 +52,7 @@ export const ChatThreadPanel = ({
         </IconButton>
       </Box>
 
-      <Box style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <Box className="chat-app__sidebar-panel__content">
         {selectedMessage ? (
           <ThreadDetail 
             parentMessage={selectedMessage} 

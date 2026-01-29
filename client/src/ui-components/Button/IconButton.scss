@@ -28,7 +28,15 @@
   }
 
   &:hover {
-    background-color: rgba(0, 0, 0, 0.04);
+    background-color: var(--color-bg-hover);
+  }
+
+  &--active {
+    background-color: var(--color-bg-active);
+    
+    &:hover {
+      background-color: var(--color-bg-active);
+    }
   }
 
   // Sizes
