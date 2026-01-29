@@ -20,7 +20,7 @@ export function useChatApp() {
     toggleDebug,
   } = useChat();
 
-  const { currentRoom, messages, sendMessage, handleRoomSelect, setCurrentRoom, setMessages } = useChatRoom();
+  const { currentRoom, messages, isRoomLoading, sendMessage, handleRoomSelect, setCurrentRoom, setMessages } = useChatRoom();
 
   const [input, setInput] = useState('');
   const [roomIdInput, setRoomIdInput] = useState('chat');
@@ -188,6 +188,7 @@ export function useChatApp() {
     sendFile: handleFileSend,
     uploadingFile,
     uploadProgress,
+    isRoomLoading,
     socketId,
     debugEnabled,
     toggleDebug,

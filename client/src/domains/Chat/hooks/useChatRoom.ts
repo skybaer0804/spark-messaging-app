@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type { ChatRoom, Message } from '../types';
 import { useChat } from '../context/ChatContext';
 import { useOptimisticUpdate } from './useOptimisticUpdate';
@@ -13,6 +13,10 @@ export function useChatRoom(enableListener: boolean = true) {
 
   const { messages, setMessages, sendOptimisticMessage, updateMessageStatus } = useOptimisticUpdate();
   const { syncMessages } = useMessageSync();
+
+  // v2.5.1: 방 전환 시 로딩 상태 및 Race Condition 방어
+  const [isRoomLoading, setIsRoomLoading] = useState(false);
+  const latestRoomIdRef = useRef<string | null>(null);
 
   // 서버에서 내려온 Message(document)를 프론트 Message 타입으로 변환
   const formatServerMessage = useCallback((msg: any): Message => {
@@ -50,9 +54,18 @@ export function useChatRoom(enableListener: boolean = true) {
 
   const handleRoomSelect = useCallback(
     async (room: ChatRoom) => {
+      // [v2.5.1] 이미 해당 방을 로딩 중이거나 선택된 방이라면 무시
+      if (latestRoomIdRef.current === room._id && isRoomLoading) return;
+
       try {
+        latestRoomIdRef.current = room._id;
+        setIsRoomLoading(true);
+
         await roomService.joinRoom(room._id);
         const history = await chatService.getMessages(room._id);
+
+        // [v2.5.1] 비동기 작업 중에 다른 방으로 요청이 바뀌었다면 상태 업데이트 중단
+        if (latestRoomIdRef.current !== room._id) return;
 
         // v2.2.0: 서버 데이터 모델에 맞춰 포맷팅 (Populate된 senderId 처리)
         const formatted = history.map((msg: any) => formatServerMessage(msg));
@@ -70,9 +83,14 @@ export function useChatRoom(enableListener: boolean = true) {
         );
       } catch (error) {
         console.error('Failed to select room:', error);
+      } finally {
+        // [v2.5.1] 내 요청이 마지막 요청이었을 때만 로딩 종료
+        if (latestRoomIdRef.current === room._id) {
+          setIsRoomLoading(false);
+        }
       }
     },
-    [chatService, roomService, setMessages, formatServerMessage],
+    [chatService, roomService, setMessages, formatServerMessage, isRoomLoading, setCurrentRoom],
   );
 
   const sendMessage = useCallback(
@@ -256,18 +274,17 @@ export function useChatRoom(enableListener: boolean = true) {
     return unsub;
   }, [chatService, setMessages, currentRoom?._id, formatServerMessage]);
 
-  // v2.4.0: 방 전환 또는 컴포넌트 언마운트 시 서버의 Active Room 상태 해제
+  // v2.4.0: 컴포넌트 언마운트 시에만 서버의 Active Room 상태 해제
   useEffect(() => {
     return () => {
-      if (currentRoom) {
-        chatService.setCurrentRoom(null);
-      }
+      chatService.setCurrentRoom(null);
     };
-  }, [currentRoom?._id, chatService]);
+  }, [chatService]); // currentRoom?._id를 제거하여 방 전환 시 null로 덮어쓰지 않게 함
 
   return {
     currentRoom,
     messages,
+    isRoomLoading,
     sendMessage,
     handleRoomSelect,
     setCurrentRoom,

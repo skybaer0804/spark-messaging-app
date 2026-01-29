@@ -19,6 +19,7 @@ import { ChatMessages } from './components/ChatMessages';
 import { ChatSetting } from './components/ChatSetting/ChatSetting';
 import { ImageModal } from './components/ImageModal';
 import { ChatThreadPanel } from './components/ChatThreadPanel';
+import { CircularProgress } from '@/ui-components/CircularProgress';
 import { DialogForward } from './components/DialogForward';
 import type { Message } from './types';
 import { MobileHeader } from '@/components/Mobile/MobileHeader';
@@ -46,6 +47,7 @@ function ChatAppContent() {
     sendFile,
     uploadingFile,
     uploadProgress,
+    isRoomLoading,
     debugEnabled,
     toggleDebug,
   } = useChatApp();
@@ -154,12 +156,14 @@ function ChatAppContent() {
     scrollToBottom();
     const timer1 = setTimeout(scrollToBottom, 30);
     const timer2 = setTimeout(scrollToBottom, 100);
+    const timer3 = setTimeout(scrollToBottom, 300); // 로딩 해제 직후 렌더링 지연 대비
 
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
+      clearTimeout(timer3);
     };
-  }, [messages.length, currentRoom?._id]);
+  }, [messages.length, currentRoom?._id, isRoomLoading]);
 
   const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -298,17 +302,30 @@ function ChatAppContent() {
 
               <Box style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }} className="chat-app__content-area">
                 {/* 메인 채팅 영역 (메시지 + 입력창) */}
-                <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                  <ChatMessages
-                    messages={messages}
-                    currentUser={currentUser as any}
-                    currentRoom={currentRoom}
-                    messagesRef={messagesRef}
-                    messagesEndRef={messagesEndRef}
-                    onImageClick={handleImageClick}
-                    onThreadClick={handleThreadClick}
-                    onForwardClick={handleForwardClick}
-                  />
+                <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative' }}>
+                  {isRoomLoading ? (
+                    <Box style={{ 
+                      flex: 1, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      background: 'rgba(255, 255, 255, 0.5)',
+                      zIndex: 10
+                    }}>
+                      <CircularProgress size="lg" />
+                    </Box>
+                  ) : (
+                    <ChatMessages
+                      messages={messages}
+                      currentUser={currentUser as any}
+                      currentRoom={currentRoom}
+                      messagesRef={messagesRef}
+                      messagesEndRef={messagesEndRef}
+                      onImageClick={handleImageClick}
+                      onThreadClick={handleThreadClick}
+                      onForwardClick={handleForwardClick}
+                    />
+                  )}
 
                   {/* Input Area */}
                   <ChatInput
