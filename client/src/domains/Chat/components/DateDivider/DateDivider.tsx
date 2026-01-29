@@ -1,21 +1,24 @@
 import { Box } from '@/ui-components/Layout/Box';
+import { Flex } from '@/ui-components/Layout/Flex';
+import { Paper } from '@/ui-components/Paper/Paper';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { formatDate } from '@/core/utils/messageUtils';
 import './DateDivider.scss';
 
 interface DateDividerProps {
   date: Date | number;
-  classNamePrefix?: string;
 }
 
-export function DateDivider({ date, classNamePrefix = 'chat' }: DateDividerProps) {
-  const dateString = formatDate(date);
-
+export function DateDivider({ date }: DateDividerProps) {
   return (
-    <Box className={`${classNamePrefix}__date-divider`}>
-      <Typography variant="caption" className={`${classNamePrefix}__date-divider-text`}>
-        {dateString}
-      </Typography>
-    </Box>
+    <Flex align="center" gap="sm" className="chat-app__divider">
+      <Box className="chat-app__divider-line" />
+      <Paper elevation={0} padding="xs" className="chat-app__divider-badge">
+        <Typography variant="caption">
+          {formatDate(date)}
+        </Typography>
+      </Paper>
+      <Box className="chat-app__divider-line" />
+    </Flex>
   );
 }

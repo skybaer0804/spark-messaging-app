@@ -102,7 +102,7 @@ export const ThreadDetail = ({ parentMessage, currentUser }: ThreadDetailProps) 
       <Box style={{ flex: 1, overflowY: 'auto' }}>
         {/* Parent Message */}
         <Box style={{ borderBottom: '1px solid var(--color-border-subtle)'}}>
-          <ChatMessageItem message={parentMessage} currentUser={currentUser} hideToolbar={true} />
+          <ChatMessageItem message={parentMessage} currentUser={currentUser} hideToolbar={true} isParentInThread={true} />
         </Box>
 
         {/* Replies List */}

@@ -40,6 +40,7 @@ export const ChatCreateMenu = ({
     <>
       <IconButton
         size="small"
+        title="새로 만들기"
         onClick={(e) => {
           e.stopPropagation();
           setShowCreateMenu(!showCreateMenu);

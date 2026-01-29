@@ -48,6 +48,7 @@ function ChatInputComponent({
   onFileSelect,
   onFileRemove,
   onKeyPress,
+  classNamePrefix,
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -105,8 +106,10 @@ function ChatInputComponent({
     return () => clearInterval(interval);
   }, [input]);
 
+  const baseClass = classNamePrefix || 'chat-input';
+
   return (
-    <Paper square elevation={4} padding="md" style={{ flexShrink: 0 }}>
+    <Paper elevation={4} padding="md" style={{ flexShrink: 0 }} className={`${baseClass}__input-paper`}>
       <Stack spacing="sm">
         <FilePreview
           files={selectedFiles}
@@ -137,8 +140,9 @@ function ChatInputComponent({
               target.style.height = 'auto';
               const scrollHeight = target.scrollHeight;
               const lineHeight = parseFloat(getComputedStyle(target).lineHeight) || 24;
-              const minHeight = lineHeight * 2 + 24;
-              const maxHeight = lineHeight * 5 + 24;
+              const verticalPadding = 64; // 16(top) + 48(bottom) padding
+              const minHeight = lineHeight * 2 + verticalPadding; // 2 rows + padding = 112px
+              const maxHeight = lineHeight * 5 + verticalPadding;
               const targetHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
               target.style.height = `${targetHeight}px`;
               // 한글 입력 시 포커스 유지 로직 최적화
@@ -182,7 +186,7 @@ function ChatInputComponent({
             disabled={!isConnected}
             fullWidth
             rows={2}
-            style={{ paddingBottom: '48px', borderRadius: '8px 8px 0 0' }} // 툴바 공간 확보 및 상단 모서리만 둥글게
+            style={{ paddingBottom: '48px', borderRadius: '8px 8px 0 0', minHeight: '112px' }} // 점프 방지를 위해 minHeight 112px 설정
           />
           {/* 파일 입력 (숨김) */}
           {showFileUpload && (

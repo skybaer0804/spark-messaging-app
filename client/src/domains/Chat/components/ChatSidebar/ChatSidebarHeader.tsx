@@ -202,6 +202,7 @@ export const ChatSidebarHeader = ({
       <div className="chat-app__sidebar-actions">
         <IconButton
           size="small"
+          title="채팅 홈"
           onClick={(e) => {
             e.stopPropagation();
             navigate('/chatapp');
@@ -209,7 +210,11 @@ export const ChatSidebarHeader = ({
         >
           <IconHome size={20} />
         </IconButton>
-        <IconButton size="small" onClick={() => setIsSearching(true)}>
+        <IconButton 
+          size="small" 
+          title="검색" 
+          onClick={() => setIsSearching(true)}
+        >
           <IconSearch size={20} />
         </IconButton>
         <IconButton
@@ -224,6 +229,7 @@ export const ChatSidebarHeader = ({
         </IconButton>
         <IconButton
           size="small"
+          title="정렬"
           onClick={(e) => {
             e.stopPropagation();
             showInfo('준비 중입니다.');

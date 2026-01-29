@@ -19,7 +19,7 @@ import { ChatMessages } from './components/ChatMessages';
 import { ChatSetting } from './components/ChatSetting/ChatSetting';
 import { ImageModal } from './components/ImageModal';
 import { ChatThreadPanel } from './components/ChatThreadPanel';
-import { ForwardModal } from './components/ForwardModal';
+import { DialogForward } from './components/DialogForward';
 import type { Message } from './types';
 import { MobileHeader } from '@/components/Mobile/MobileHeader';
 import './ChatApp.scss';
@@ -225,9 +225,11 @@ function ChatAppContent() {
     <Box style={{ display: 'flex', height: '100%', minHeight: 0, position: 'relative' }} className="chat-app__container">
       {/* Forward Modal - Rendered at top level */}
       {forwardModalMessage && (
-        <ForwardModal
+        <DialogForward
+          open={!!forwardModalMessage}  
           message={forwardModalMessage}
           roomList={roomList}
+          userList={userList}
           onClose={() => setForwardModalMessage(null)}
           onSuccess={() => {
             setForwardModalMessage(null);
@@ -259,7 +261,6 @@ function ChatAppContent() {
         <Box
           style={{
             flex: 1,
-            backgroundColor: 'var(--color-background-default)',
             height: '100%',
             minHeight: 0,
             overflow: 'hidden',
@@ -292,9 +293,10 @@ function ChatAppContent() {
                 setShowThreads={(show: boolean) => setRightPanel(show ? 'thread' : 'none')}
                 toggleDebug={toggleDebug}
                 debugEnabled={debugEnabled}
+                className="chat-app__header"
               />
 
-              <Box style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
+              <Box style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }} className="chat-app__content-area">
                 {/* 메인 채팅 영역 (메시지 + 입력창) */}
                 <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                   <ChatMessages
@@ -332,7 +334,7 @@ function ChatAppContent() {
                     onFileSelect={handleFileSelect}
                     onFileRemove={handleFileRemove}
                     onKeyPress={handleKeyPress}
-                    classNamePrefix="chat-app"
+                    classNamePrefix="chat-input"
                   />
                 </Box>
 

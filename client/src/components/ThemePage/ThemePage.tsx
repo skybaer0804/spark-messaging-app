@@ -200,7 +200,7 @@ export function ThemePage() {
           </Grid>
 
           {/* Right Column: Account & Reset */}
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={8}>
              <Stack spacing="lg">
               <Paper elevation={1} padding="lg">
                  <Stack spacing="md">

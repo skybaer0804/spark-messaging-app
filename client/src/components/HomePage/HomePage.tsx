@@ -52,7 +52,7 @@ export function HomePage() {
           <Stack spacing="sm">
             <Flex align="center" gap="xs" className="home-page__badge">
               <IconRocket size={16} />
-              <Typography variant="body-small">Spark Messaging v0.4.3</Typography>
+              <Typography variant="body-small">Spark Messaging v0.5.3</Typography>
             </Flex>
             <Typography variant="h1" className="home-page__welcome">
               반가워요, <span className="highlight">{user?.username || '사용자'}</span>님!

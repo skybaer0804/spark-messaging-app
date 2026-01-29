@@ -1,6 +1,7 @@
 @use '/src/styles/tokens/index';
 
 .theme-page {
+  animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
   &__back-btn {
     color: var(--color-icon-primary) !important;
   }
@@ -18,5 +19,14 @@
     &:hover {
       box-shadow: 0 0 0 1px var(--color-border-hover);
     }
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

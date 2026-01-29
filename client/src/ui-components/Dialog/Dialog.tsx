@@ -1,7 +1,7 @@
 import { JSX } from 'preact';
 import { useEffect, useMemo, useRef } from 'preact/hooks';
+import { createPortal } from 'preact/compat';
 import { IconX } from '@tabler/icons-preact';
-import { useTheme } from '@/core/context/ThemeProvider';
 import { IconButton } from '../Button/IconButton';
 import './Dialog.scss';
 
@@ -42,7 +42,6 @@ export function Dialog({
   className = '',
   ...props
 }: DialogProps) {
-  const { theme, contrast } = useTheme();
   const idPrefix = useMemo(() => `dialog-${Math.random().toString(36).slice(2, 9)}`, []);
   const titleId = ariaLabelledby ?? (title ? `${idPrefix}-title` : undefined);
   const contentId = ariaDescribedby ?? `${idPrefix}-content`;
@@ -116,8 +115,8 @@ export function Dialog({
     }
   };
 
-  return (
-    <div className="dialog-root" data-theme={theme} data-contrast={contrast}>
+  return createPortal(
+    <div className="dialog-root">
       <div
         className="dialog-root__backdrop"
         onClick={(e) => {
@@ -159,6 +158,7 @@ export function Dialog({
 
         {actions && <div className="dialog__actions">{actions}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

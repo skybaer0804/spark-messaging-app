@@ -18,8 +18,10 @@ import { FileMessage } from './MessageTypes/FileMessage';
 import { VideoMessage } from './MessageTypes/VideoMessage';
 import { AudioMessage } from './MessageTypes/AudioMessage';
 
-import { messagesSignal } from '../hooks/useOptimisticUpdate'; // 추가
-import { IconCheck, IconClock, IconAlertCircle, IconShare, IconMessageCircle2 } from '@tabler/icons-preact';
+import { IconCheck, IconClock, IconAlertCircle, IconShare } from '@tabler/icons-preact';
+import { messagesSignal } from '../hooks/useOptimisticUpdate';
+import { ChatMessageItemToolbar } from './ChatMessageItemToolbar';
+import { ChatMessageItemThread } from './ChatMessageItemThread';
 import './Chat.scss';
 
 interface ChatMessageItemProps {
@@ -32,6 +34,7 @@ interface ChatMessageItemProps {
   classNamePrefix?: string;
   isGrouped?: boolean;
   hideToolbar?: boolean;
+  isParentInThread?: boolean;
 }
 
 function ChatMessageItemComponent({ 
@@ -42,7 +45,8 @@ function ChatMessageItemComponent({
   onForwardClick,
   unreadCount,
   isGrouped = false,
-  hideToolbar = false
+  hideToolbar = false,
+  isParentInThread = false
 }: ChatMessageItemProps) {
   const [showModelModal, setShowModelModal] = useState(false);
   const [isSnapshotUploading, setIsSnapshotUploading] = useState(false);
@@ -138,41 +142,32 @@ function ChatMessageItemComponent({
     if (!isOwnMessage) return null;
     switch (message.status) {
       case 'sending': return <IconClock size={12} style={{ opacity: 0.6 }} />;
-      case 'sent': return <IconCheck size={12} style={{ color: isOwnMessage ? '#000' : 'var(--color-status-success)' }} />;
+      case 'sent': return <IconCheck size={12} style={{ color: isOwnMessage ? 'inherit' : 'var(--color-status-success)' }} />;
       case 'failed': return <IconAlertCircle size={12} style={{ color: 'var(--color-status-error)' }} />;
       default: return null;
     }
   };
 
   return (
-    <Flex 
-      direction="row" 
-      align="flex-start" 
-      gap="md"
-      style={{ 
-        width: '100%', 
-        padding: isGrouped ? '2px 20px' : '8px 20px', 
-        position: 'relative',
-        transition: 'background-color 0.2s ease',
-        flexDirection: isOwnMessage ? 'row-reverse' : 'row'
-      }}
+    <Box 
+      className={`chat-app__message-item ${isGrouped ? 'chat-app__message-item--grouped' : 'chat-app__message-item--not-grouped'} ${isOwnMessage ? 'chat-app__message-item--own' : 'chat-app__message-item--other'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* 상대방 프로필 아바타 */}
       {!isOwnMessage && (
-        <Box style={{ width: '32px', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+        <Box className="chat-app__message-item-avatar-container">
           {!isGrouped ? (
             <Avatar 
               src={typeof message.senderId === 'object' ? (message.senderId as any)?.profileImage : undefined} 
               size="sm"
               variant="circular"
-              style={{ marginTop: '4px', border: '1px solid rgba(0,0,0,0.05)' }}
+              className="chat-app__message-avatar"
             >
-              {senderName.substring(0, 1).toUpperCase()}
+              <Typography>{senderName.substring(0, 1).toUpperCase()}</Typography>
             </Avatar>
           ) : (
-            // 그룹화된 경우 시간 표시 (마우스 호버 시 보여주면 좋음, 일단 공간 확보)
+            // 그룹화된 경우 공간 확보
             <Box style={{ width: '32px' }} />
           )}
         </Box>
@@ -181,12 +176,12 @@ function ChatMessageItemComponent({
       <Flex 
         direction="column" 
         align={isOwnMessage ? 'flex-end' : 'flex-start'} 
-        style={{ maxWidth: '85%', position: 'relative', flex: 1 }}
+        className="chat-app__message-item-content-wrapper"
       >
         {!isGrouped && (
-          <Flex align="baseline" gap="xs" style={{ marginBottom: '2px', flexDirection: isOwnMessage ? 'row-reverse' : 'row' }}>
-            <Typography style={{ fontWeight: '800', fontSize: '15px', color: '#1d1c1d' }}>{senderName}</Typography>
-            <Typography variant="caption" color="text-tertiary" style={{ fontSize: '12px', marginLeft: isOwnMessage ? '0' : '4px', marginRight: isOwnMessage ? '4px' : '0' }}>
+          <Box className={`chat-app__message-item-info ${isOwnMessage ? 'chat-app__message-item-info--own' : 'chat-app__message-item-info--other'}`}>
+            <Typography variant="body-medium" style={{ fontWeight: 'normal', fontSize: '15px' }}>{senderName}</Typography>
+            <Typography variant="caption" color="text-tertiary" style={{ fontSize: '12px' }}>
               {formatTimestamp(message.timestamp)}
             </Typography>
             {renderStatus()}
@@ -195,7 +190,12 @@ function ChatMessageItemComponent({
                 <IconShare size={10} /> 전달됨: {message.originSenderName}
               </Typography>
             )}
-          </Flex>
+            {isParentInThread && (
+              <Typography variant="caption" color="primary" style={{ fontWeight: 'bold', fontSize: '11px', marginLeft: '4px' }}>
+                원본 메시지
+              </Typography>
+            )}
+          </Box>
         )}
         
         <Box style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: isOwnMessage ? 'flex-end' : 'flex-start' }}>
@@ -203,13 +203,10 @@ function ChatMessageItemComponent({
             <Paper
               elevation={isOwnMessage ? 1 : 0}
               padding="sm"
-              className={isOwnMessage ? 'chat-message--own' : ''}
+              className={`chat-app__message-bubble ${isOwnMessage ? 'chat-app__message-bubble--own' : 'chat-app__message-bubble--other'}`}
               style={{
                 borderRadius: isOwnMessage ? '12px 0 12px 12px' : '0 12px 12px 12px',
                 position: 'relative',
-                backgroundColor: isOwnMessage ? '#FEE500' : '#f8f8f8',
-                border: isOwnMessage ? 'none' : '1px solid #efefef',
-                boxShadow: 'none'
               }}
             >
               {unreadCount !== undefined && unreadCount > 0 && (
@@ -222,67 +219,22 @@ function ChatMessageItemComponent({
 
             {/* 메시지 툴바 (Hover 시 노출) */}
             {isHovered && !hideToolbar && (
-              <Flex 
-                gap="xs" 
-                style={{ 
-                  position: 'absolute', 
-                  top: '50%', 
-                  transform: 'translateY(-50%)',
-                  [isOwnMessage ? 'right' : 'left']: '100%',
-                  [isOwnMessage ? 'marginRight' : 'marginLeft']: '8px',
-                  backgroundColor: 'white',
-                  border: '1px solid var(--color-border-default)',
-                  borderRadius: '8px',
-                  padding: '4px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                  zIndex: 10,
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                <Box 
-                  className="chat-message__toolbar-icon" 
-                  onClick={() => onThreadClick?.(message)}
-                  title="스레드에서 답장"
-                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '4px' }}
-                >
-                  <IconMessageCircle2 size={18} />
-                </Box>
-                <Box 
-                  className="chat-message__toolbar-icon" 
-                  onClick={() => onForwardClick?.(message)}
-                  title="메시지 전달"
-                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px', borderRadius: '4px' }}
-                >
-                  <IconShare size={18} />
-                </Box>
-              </Flex>
+              <ChatMessageItemToolbar 
+                message={message}
+                isOwnMessage={isOwnMessage}
+                onThreadClick={onThreadClick}
+                onForwardClick={onForwardClick}
+              />
             )}
           </Box>
         </Box>
 
-        {/* 스레드 요약 정보 (답글이 있는 경우) */}
-        {message.replyCount !== undefined && message.replyCount > 0 && (
-          <Flex 
-            align="center" 
-            gap="xs" 
-            onClick={() => onThreadClick?.(message)}
-            style={{ 
-              marginTop: '4px', 
-              cursor: 'pointer', 
-              padding: '4px 8px', 
-              borderRadius: '6px',
-              backgroundColor: 'var(--color-background-subtle)',
-              border: '1px solid var(--color-border-subtle)'
-            }}
-          >
-            <IconMessageCircle2 size={14} style={{ color: 'var(--color-primary-main)' }} />
-            <Typography variant="caption" color="primary" style={{ fontWeight: 'bold' }}>
-              {message.replyCount} 답글
-            </Typography>
-            <Typography variant="caption" color="text-tertiary">
-              {message.lastReplyAt ? formatTimestamp(message.lastReplyAt) : ''}
-            </Typography>
-          </Flex>
+        {/* 스레드 요약 정보 (답글이 있는 경우, 원본 메시지가 아닐 때만 노출) */}
+        {!isParentInThread && (
+          <ChatMessageItemThread 
+            message={message} 
+            onClick={onThreadClick} 
+          />
         )}
       </Flex>
 
@@ -298,7 +250,7 @@ function ChatMessageItemComponent({
           handleSnapshot={handleSnapshot}
         />
       )}
-    </Flex>
+    </Box>
   );
 }
 

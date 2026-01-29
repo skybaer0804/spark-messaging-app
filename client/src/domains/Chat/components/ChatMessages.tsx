@@ -42,45 +42,23 @@ function ChatMessagesComponent({
   const messagesRef = externalMessagesRef || internalMessagesRef;
   const messagesEndRef = externalMessagesEndRef || internalMessagesEndRef;
 
-  // 자체 스크롤 관리 (외부 ref가 없을 때만)
+  // 스크롤 관리 및 스타일 결정
+  const isChatAppStyle = externalMessagesRef !== undefined;
+  
   useEffect(() => {
     if (!externalMessagesRef && messagesRef.current) {
       messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     }
   }, [messages.length, externalMessagesRef]);
 
-  // 스타일 결정: ChatApp 스타일 vs Chat 스타일
-  const isChatAppStyle = externalMessagesRef !== undefined;
-  const containerStyle = isChatAppStyle
-    ? {
-        flex: 1,
-        minHeight: 0,
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        padding: '20px',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#ffffff',
-      }
-    : {
-        flex: 1,
-        minHeight: 0,
-        overflowY: 'auto',
-        padding: 'var(--space-padding-card-md)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--space-gap-sm)',
-      };
-
   return (
     <Box
-      className={isChatAppStyle ? undefined : `${baseClass}__messages-list`}
-      style={containerStyle}
+      className={isChatAppStyle ? 'chat-app__messages-container' : `${baseClass}__messages-list`}
       ref={messagesRef}
     >
       {messages.length === 0 ? (
-        <Box style={{ textAlign: 'center', padding: 'var(--space-padding-card-lg)' }}>
-          <Typography variant="body-small" color="text-tertiary">
+        <Box className="chat-app__messages-container-empty">
+          <Typography variant="body-small">
             {emptyMessage || '메시지가 없습니다.'}
           </Typography>
         </Box>
@@ -92,7 +70,6 @@ function ChatMessagesComponent({
                 <DateDivider
                   key={`divider-${item.date?.getTime() || index}`}
                   date={item.date!}
-                  classNamePrefix={classNamePrefix}
                 />
               );
             }
@@ -138,7 +115,7 @@ function ChatMessagesComponent({
             );
           })}
           {/* v2.2.0: 하단 앵커 요소 (외부 ref가 있을 때만) */}
-          {externalMessagesEndRef && <div ref={messagesEndRef} style={{ height: '1px', width: '100%' }} />}
+          {externalMessagesEndRef && <div ref={messagesEndRef} className="chat-app__messages-container-anchor" />}
         </Stack>
       )}
     </Box>

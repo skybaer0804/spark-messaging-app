@@ -84,8 +84,14 @@ export const Sidebar = memo(() => {
       <div className="lnb__container">
         {/* 2.2.0: 홈 아이콘 (상단 배치) */}
         <div className="lnb__header">
-          <div className="lnb__logo" onClick={() => navigate('/')} title="Home">
-            <IconSparkles size={28} />
+          <div
+            className={`lnb__workspace-item ${pathname === '/' ? 'lnb__workspace-item--active' : ''}`}
+            onClick={() => navigate('/')}
+            title="Home"
+          >
+            <div className="lnb__logo">
+              <IconSparkles size={28} />
+            </div>
           </div>
         </div>
 
@@ -136,7 +142,7 @@ export const Sidebar = memo(() => {
               src={user?.profileImage}
               variant="circular"
               size="lg"
-              className="lnb__workspace-icon"
+              className="lnb__workspace-icon lnb__workspace-icon--profile"
               style={{ backgroundColor: 'var(--color-interactive-primary)' }}
             >
               {user?.username?.substring(0, 1).toUpperCase() || <IconUser size={24} />}
@@ -148,7 +154,7 @@ export const Sidebar = memo(() => {
             title="Theme & Settings"
             style={{ marginTop: '12px' }}
           >
-            <div className="lnb__workspace-icon" style={{ backgroundColor: 'transparent', color: 'var(--color-text-secondary)' }}>
+            <div className="lnb__workspace-icon lnb__workspace-icon--theme">
               <IconPalette size={24} />
             </div>
           </div>

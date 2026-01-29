@@ -22,6 +22,7 @@ interface ChatHeaderProps {
   setShowThreads: (val: boolean) => void;
   toggleDebug: () => void;
   debugEnabled: boolean;
+  className?: string;
 }
 
 export const ChatHeader = ({
@@ -36,6 +37,7 @@ export const ChatHeader = ({
   setShowThreads,
   toggleDebug,
   debugEnabled,
+  className = '',
 }: ChatHeaderProps) => {
   const { user: currentUser } = useAuth();
   const { showSuccess } = useToast();
@@ -45,6 +47,7 @@ export const ChatHeader = ({
       square
       elevation={1}
       padding="sm"
+      className={className}
       style={{ zIndex: 10, flexShrink: 0, borderBottom: '1px solid var(--color-border-default)' }}
     >
       <Stack direction="row" align="center" spacing="md">
@@ -60,7 +63,7 @@ export const ChatHeader = ({
             ) : (
               <IconHash size={20} />
             )}
-            <Typography variant="h3" style={{ fontWeight: 800 }}>
+            <Typography variant="h4">
               {currentRoom.displayName ||
                 getDirectChatName(currentRoom, currentUser?.id || (currentUser as any)?._id)}
             </Typography>

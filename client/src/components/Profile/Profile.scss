@@ -6,6 +6,7 @@
   padding: var(--spacing-xl) var(--spacing-md);
   min-height: 100%;
   background-color: var(--color-bg-tertiary);
+  animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 
   &__card {
     width: 100%;
@@ -70,4 +71,13 @@
 [id*='panel-info'],
 [id*='panel-workspaces'] {
   padding: 0 !important;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

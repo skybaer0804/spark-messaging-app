@@ -28,24 +28,20 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    cursor: pointer;
-    border-radius: 50%;
+    color: #b5bac1; // Slightly dimmer color (matching nav items)
     transition: all 0.2s;
+    border-radius: 50%;
 
-    &:hover {
-      background-color: var(--color-interactive-primary);
-      border-radius: 16px;
+    svg {
+      transition: transform 0.2s;
     }
+  }
 
-    &--small {
-      color: var(--color-text-tertiary);
-      opacity: 0.6;
-      &:hover {
-        background: none;
-        opacity: 1;
-      }
-    }
+  .lnb__workspace-item:hover .lnb__logo,
+  .lnb__workspace-item--active .lnb__logo {
+    background-color: var(--color-interactive-primary);
+    color: #fff;
+    border-radius: 16px;
   }
 
   &__divider {
@@ -102,15 +98,27 @@
     color: #fff;
     font-weight: bold;
     font-size: 18px;
-    transition: border-radius 0.2s, transform 0.2s;
+    transition: border-radius 0.2s, transform 0.2s, background-color 0.2s;
+    background-color: var(--color-interactive-primary);
 
     &:hover {
       border-radius: 16px;
+    }
+
+    &--theme {
+      &:hover {
+        background-color: var(--color-interactive-primary);
+      }
     }
   }
 
   .lnb__workspace-item--active .lnb__workspace-icon {
     border-radius: 16px;
+
+    &--theme {
+      background-color: var(--color-interactive-primary);
+      color: #fff;
+    }
   }
 
   &__add-workspace {

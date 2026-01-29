@@ -45,7 +45,7 @@ export const ChatThreadPanel = ({
         height: '100%'
       }}
     >
-      <Box padding="md" style={{ borderBottom: '1px solid var(--color-border-default)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+      <Box className="chat-app__thread-panel__header" padding="md" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
         <Box style={{ display: 'flex', align: 'center', gap: '8px' }}>
           {selectedMessage && (
             <IconButton onClick={() => setSelectedMessage(null)} size="small">

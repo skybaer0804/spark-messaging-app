@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
-import { IconButton } from '@/ui-components/Button/IconButton';
 import { Box } from '@/ui-components/Layout/Box';
 import { Typography } from '@/ui-components/Typography/Typography';
-import { Paper } from '@/ui-components/Paper/Paper';
 import { List, ListItem, ListItemText, ListItemAvatar } from '@/ui-components/List/List';
 import { Avatar } from '@/ui-components/Avatar/Avatar';
 import { Flex } from '@/ui-components/Layout/Flex';
@@ -10,7 +8,7 @@ import { chatApi } from '@/core/api/ApiService';
 import { formatTimestamp } from '@/core/utils/messageUtils';
 import { useChat } from '../context/ChatContext';
 import type { Message } from '../types';
-import { IconMessageCircle2, IconArrowLeft } from '@tabler/icons-preact';
+import { IconMessageCircle2 } from '@tabler/icons-preact';
 
 interface ThreadListProps {
   roomId: string;
@@ -66,13 +64,13 @@ export const ThreadList = ({ roomId, onThreadSelect }: ThreadListProps) => {
   }, [roomId, chatService]);
 
   if (isLoading) {
-    return <Box padding="md"><Typography variant="body2">불러오는 중...</Typography></Box>;
+    return <Box padding="md"><Typography variant="body-medium">불러오는 중...</Typography></Box>;
   }
 
   if (parentMessages.length === 0) {
     return (
       <Box padding="xl" style={{ textAlign: 'center' }}>
-        <Typography variant="body2" color="text-tertiary">스레드가 없습니다.</Typography>
+        <Typography variant="body-medium" color="text-tertiary">스레드가 없습니다.</Typography>
       </Box>
     );
   }
@@ -84,11 +82,7 @@ export const ThreadList = ({ roomId, onThreadSelect }: ThreadListProps) => {
           <ListItem 
             key={msg._id} 
             onClick={() => onThreadSelect(msg)}
-            style={{ 
-              cursor: 'pointer', 
-              borderBottom: '1px solid var(--color-border-subtle)',
-              padding: '12px 16px'
-            }}
+            className="chat-app__thread-panel__list-item"
           >
             <ListItemAvatar>
               <Avatar src={(msg.senderId as any)?.profileImage || (msg.senderId as any)?.avatar}>
@@ -98,7 +92,7 @@ export const ThreadList = ({ roomId, onThreadSelect }: ThreadListProps) => {
             <ListItemText 
               primary={
                 <Flex justify="space-between" align="center">
-                  <Typography variant="subtitle2" style={{ fontWeight: 'bold' }}>
+                  <Typography variant="body-medium" style={{ fontWeight: 'bold' }}>
                     {(msg.senderId as any)?.username || msg.senderName || 'Unknown'}
                   </Typography>
                   <Typography variant="caption" color="text-tertiary">
@@ -109,7 +103,7 @@ export const ThreadList = ({ roomId, onThreadSelect }: ThreadListProps) => {
               secondary={
                 <Box>
                   <Typography 
-                    variant="body2" 
+                    variant="body-medium" 
                     style={{ 
                       overflow: 'hidden', 
                       textOverflow: 'ellipsis', 

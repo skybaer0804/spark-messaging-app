@@ -101,14 +101,22 @@ export function ThemeCustomization({ open, onClose }: ThemeCustomizationProps) {
 
         {/* 계정 설정 (로그아웃) */}
         {isAuthenticated && (
-          <Paper elevation={2} padding="md">
+          <Paper elevation={2} padding="lg">
             <Stack spacing="md">
-              <Typography variant="body-large">계정 설정</Typography>
+              <Typography variant="body-large">
+                계정 설정
+              </Typography>
               <Divider />
-              <Button variant="secondary" fullWidth onClick={handleLogout} className="theme-customization__logout-btn">
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={handleLogout}
+                className="theme-customization__logout-btn"
+                size="lg"
+              >
                 <Flex align="center" justify="center" gap="sm">
-                  <IconLogout size={18} />
-                  <Typography variant="body-small">로그아웃</Typography>
+                  <IconLogout size={20} />
+                  <Typography variant="body-medium">로그아웃</Typography>
                 </Flex>
               </Button>
             </Stack>
@@ -187,9 +195,11 @@ export function ThemeCustomization({ open, onClose }: ThemeCustomizationProps) {
         </Paper>
 
         {/* 초기화 */}
-        <Button variant="secondary" fullWidth onClick={resetToDefaults}>
-          <Typography variant="body-small">기본값으로 복원</Typography>
-        </Button>
+        <div className="theme-customization__reset-section">
+          <Button variant="secondary" fullWidth onClick={resetToDefaults} size="lg">
+            <Typography variant="body-medium">기본값으로 복원</Typography>
+          </Button>
+        </div>
       </Stack>
     </Drawer>
   );
