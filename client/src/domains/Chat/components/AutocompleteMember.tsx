@@ -1,9 +1,7 @@
 import { useMemo } from 'preact/hooks';
 import { Autocomplete, AutocompleteOption } from '@/ui-components/Autocomplete/Autocomplete';
-import { Chip } from '@/ui-components/Chip/Chip';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
-import { Flex } from '@/ui-components/Layout/Flex';
 import { Stack } from '@/ui-components/Layout/Stack';
+import { ProfileItem } from './ProfileItem/ProfileItem';
 import type { ChatUser } from '../types';
 
 export interface AutocompleteMemberProps {
@@ -79,17 +77,18 @@ export function AutocompleteMember({
     const user = option.value;
 
     return (
-      <Flex align="center" gap="sm" style={{ width: '100%' }}>
-        <Avatar src={user.profileImage || user.avatar} size="sm">
-          {user.username.substring(0, 1)}
-        </Avatar>
-        <Flex direction="column" style={{ flex: 1, minWidth: 0 }}>
-          <span>{user.username}</span>
-          {user.email && (
-            <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>{user.email}</span>
-          )}
-        </Flex>
-      </Flex>
+      <ProfileItem
+        name={user.username}
+        desc={user.email}
+        avatar={user.profileImage || user.avatar}
+        status={user.status}
+        styleOption={{
+          mode: 'list',
+          statusPosition: 'name-left',
+          noHover: true,
+        }}
+        style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+      />
     );
   };
 
@@ -101,20 +100,15 @@ export function AutocompleteMember({
     return (
       <>
         {values.map((user, index) => (
-          <Chip
+          <ProfileItem
             key={user._id}
-            label={user.username}
+            name={user.username}
+            avatar={user.profileImage || user.avatar}
+            styleOption={{ mode: 'chip' }}
             onDelete={() => {
               const newUsers = selectedUsers.filter((u) => u._id !== user._id);
               onUsersChange(newUsers);
             }}
-            variant="primary"
-            size="sm"
-            avatar={
-              <Avatar src={user.profileImage || user.avatar} size="sm">
-                {user.username.substring(0, 1)}
-              </Avatar>
-            }
             {...getItemProps(index)}
           />
         ))}

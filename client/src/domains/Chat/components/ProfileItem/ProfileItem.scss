@@ -13,21 +13,36 @@
   background-color: transparent;
 
   &:hover {
-    background-color: var(--color-bg-subtle, rgba(0, 0, 0, 0.03));
+    background-color: var(--color-surface-level-1);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
     [data-theme='dark'] & {
-      background-color: rgba(255, 255, 255, 0.05);
+      background-color: var(--color-surface-level-1);
     }
   }
 
   &--active {
-    background-color: var(--color-bg-subtle, rgba(0, 0, 0, 0.05)) !important;
+    background-color: var(--color-surface-level-1) !important;
     border: 1px solid var(--app-color);
     
     [data-theme='dark'] & {
-      background-color: rgba(255, 255, 255, 0.1) !important;
+      background-color: var(--color-surface-level-1) !important;
+    }
+  }
+
+  &--no-hover {
+    cursor: default;
+    
+    &:hover {
+      background-color: transparent !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    &.profile-item--active {
+      background-color: transparent !important;
+      border-color: transparent !important;
     }
   }
 
@@ -54,6 +69,56 @@
   &--grouped {
     margin-top: -4px;
     cursor: default;
+  }
+
+  &--chip {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 4px 0 4px;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 6px;
+    gap: 6px;
+    margin: 2px;
+    cursor: default;
+    flex-shrink: 0;
+
+    .profile-item__name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      max-width: 120px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .profile-item__type-icon {
+      margin-right: -2px;
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
+
+    .profile-item__delete-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      padding: 2px;
+      cursor: pointer;
+      color: var(--color-text-tertiary);
+      border-radius: 40%;
+      transition: all 0.2s;
+
+      &:hover {
+        background-color: var(--color-action-hover);
+        color: var(--color-status-error);
+      }
+    }
   }
 
   &__avatar-container {
@@ -147,6 +212,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     font-weight: 500;
+    flex: 1;
   }
 
   &__desc {

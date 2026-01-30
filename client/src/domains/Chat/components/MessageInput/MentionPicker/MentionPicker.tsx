@@ -2,9 +2,8 @@ import { useState, useEffect, useRef, useMemo } from 'preact/hooks';
 import { memo } from 'preact/compat';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { List } from '@/ui-components/List/List';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
 import { Typography } from '@/ui-components/Typography/Typography';
-import { Flex } from '@/ui-components/Layout/Flex';
+import { ProfileItem } from '../../ProfileItem/ProfileItem';
 import { ChatUser } from '../../../types';
 import { useMentionPicker } from './hooks/useMentionPicker';
 import './MentionPicker.scss';
@@ -98,71 +97,52 @@ function MentionPickerComponent({ members, roomMembers, search, onSelect, onClos
       className="mention-picker"
       style={{
         position: 'fixed',
-        top: `${position.top}px`,
+        top: position.top !== undefined ? `${position.top}px` : 'auto',
+        bottom: position.bottom !== undefined ? `${position.bottom}px` : 'auto',
         left: `${position.left}px`,
+        width: `${position.width}px`,
         zIndex: 1100,
         visibility: position.isReady ? 'visible' : 'hidden',
       }}
     >
-      <Paper elevation={8} className="mention-picker__paper">
-        <Typography variant="caption" className="mention-picker__title" style={{ display: 'block', borderBottom: '1px solid var(--color-border-default)', padding: 'var(--space-gap-xs)' }}>
+      <Paper elevation={8} padding="none" className="mention-picker__paper">
+        <Typography variant="caption" className="mention-picker__title" style={{ display: 'block', borderBottom: '1px solid var(--color-border-default)', background: 'transparent' }}>
           사람들
         </Typography>
-        <List className="mention-picker__list">
+        <List disablePadding className="mention-picker__list">
           {allItems.map((item, index) => {
             const isSelected = index === selectedIndex;
             const isSpecial = item._id === 'all' || item._id === 'here';
             
             return (
-              <div
+              <ProfileItem
                 key={item._id}
-                className={`mention-item ${isSelected ? 'selected' : ''} chat-app__sidebar-item ${isSelected ? 'chat-app__sidebar-item--focused' : ''}`}
+                className="mention-item"
+                name={item.username}
+                desc={isSpecial ? (item as any).description : `${(item as ChatUser).status || 'offline'} • ${(item as ChatUser).role || 'Member'}`}
+                avatar={isSpecial ? undefined : (item as ChatUser).profileImage || (item as ChatUser).avatar}
+                status={isSpecial ? undefined : (item as ChatUser).status || 'offline'}
+                type={isSpecial ? 'discussion' : 'direct'}
+                isActive={isSelected}
                 onClick={() => onSelect(isSpecial ? item._id as any : item as ChatUser)}
-                style={{
-                  cursor: 'pointer',
-                  margin: '0',
-                  padding: '8px 12px',
-                  borderRadius: '0',
-                  borderBottom: index < allItems.length - 1 ? '1px solid var(--color-bg-subtle)' : 'none'
-                }}
-              >
-                <Flex align="center" gap="sm" justify="space-between" style={{ width: '100%' }}>
-                  <Flex align="center" gap="md">
-                    <div className="avatar">
-                      {isSpecial ? (
-                        <Avatar size="sm" variant="rounded" style={{ backgroundColor: '#64748b', color: '#fff' }}>
-                          {item.username.substring(0, 1).toUpperCase()}
-                        </Avatar>
-                      ) : (
-                        <>
-                          <Avatar 
-                            src={(item as ChatUser).profileImage || (item as ChatUser).avatar} 
-                            variant="rounded"
-                            size="sm" 
-                            style={{ backgroundColor: '#23D5AB' }}
-                          >
-                            {item.username.substring(0, 1).toUpperCase()}
-                          </Avatar>
-                          <div className={`avatar-status avatar-status--${(item as ChatUser).status || 'offline'}`} />
-                        </>
-                      )}
-                    </div>
-                    <div className="chat-app__sidebar-item-content">
-                      <div className="chat-app__sidebar-item-name" style={{ color: 'var(--text-primary)', fontWeight: isSelected ? 700 : 500 }}>
-                        {item.username}
-                      </div>
-                      <div className="chat-app__sidebar-item-sub" style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>
-                        {isSpecial ? (item as { _id: 'all' | 'here'; username: string; description: string }).description : `${(item as ChatUser).status || 'offline'} • ${(item as ChatUser).role || 'Member'}`}
-                      </div>
-                    </div>
-                  </Flex>
-                  {!isSpecial && !isInRoom(item._id) && (
-                    <Typography variant="caption" color="error" style={{ marginLeft: 'auto', fontWeight: 600 }}>
+                styleOption={{
+                  showDesc: true,
+                  statusPosition: 'name-left',
+                  noHover: false,
+                  nameSuffix: !isSpecial && !isInRoom(item._id) && (
+                    <Typography variant="caption" color="error">
                       채널에 없음
                     </Typography>
-                  )}
-                </Flex>
-              </div>
+                  )
+                }}
+                style={{
+                  cursor: 'pointer',
+                  borderRadius: '0',
+                  margin: '0',
+                  width: '100%',
+                  borderBottom: index < allItems.length - 1 ? '1px solid var(--color-bg-subtle)' : 'none'
+                }}
+              />
             );
           })}
         </List>

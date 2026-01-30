@@ -1,10 +1,7 @@
 import { useMemo } from 'preact/hooks';
 import { Autocomplete, AutocompleteOption } from '@/ui-components/Autocomplete/Autocomplete';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
-import { Flex } from '@/ui-components/Layout/Flex';
 import { Stack } from '@/ui-components/Layout/Stack';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { IconHash, IconLock, IconHierarchy, IconUser } from '@tabler/icons-preact';
+import { ProfileItem } from './ProfileItem/ProfileItem';
 import type { ChatRoom, ChatUser } from '../types';
 
 export interface AutocompleteAllProps {
@@ -90,59 +87,54 @@ export function AutocompleteAll({
     }) || null;
   };
 
-  // 아이콘 및 아바타 렌더링
+  // 옵션 렌더링
   const renderOption = (option: AutocompleteOption<CombinedItem>) => {
     const item = option.value;
     const isRoom = item.__type === 'room';
     const isUser = item.__type === 'user';
 
-    let icon = <IconUser size={18} />;
     let existingDMRoom: ChatRoom | null = null;
-
-    if (isRoom) {
-      const room = item as ChatRoom;
-      switch (room.type) {
-        case 'public': icon = <IconHash size={18} />; break;
-        case 'private': icon = <IconLock size={18} />; break;
-        case 'team': icon = <IconHierarchy size={18} />; break;
-      }
-    } else if (isUser) {
-      // 사용자의 경우 기존 DM 룸이 있는지 확인
+    if (isUser) {
       existingDMRoom = findDirectRoomWithUser((item as ChatUser)._id);
     }
 
+    const name = isRoom 
+      ? (item as ChatRoom).name || (item as ChatRoom).displayName 
+      : (item as ChatUser).username;
+    
+    const desc = isRoom 
+      ? `유형: ${(item as ChatRoom).type}` 
+      : existingDMRoom 
+        ? `DM: ${existingDMRoom.displayName || existingDMRoom.name || '다이렉트 메시지'}` 
+        : ((item as ChatUser).email || '다이렉트 메시지 생성');
+
     return (
-      <Flex align="center" gap="sm" style={{ width: '100%' }}>
-        <Avatar src={isRoom ? (item as ChatRoom).displayAvatar || undefined : (item as ChatUser).profileImage || (item as ChatUser).avatar || undefined} size="sm">
-          {icon}
-        </Avatar>
-        <Flex direction="column" style={{ flex: 1, minWidth: 0 }}>
-          <Flex align="center" gap="xs">
-            <Typography variant="body-medium" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {isRoom ? (item as ChatRoom).name || (item as ChatRoom).displayName : (item as ChatUser).username}
-            </Typography>
-            {isUser && !existingDMRoom && (
-              <span style={{ 
-                fontSize: '10px', 
-                padding: '2px 6px', 
-                borderRadius: '4px', 
-                backgroundColor: 'var(--color-primary-main)', 
-                color: 'white',
-                fontWeight: 'bold'
-              }}>
-                생성
-              </span>
-            )}
-          </Flex>
-          <Typography variant="caption" color="text-secondary" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {isRoom 
-              ? `유형: ${(item as ChatRoom).type}` 
-              : existingDMRoom 
-                ? `DM: ${existingDMRoom.displayName || existingDMRoom.name || '다이렉트 메시지'}` 
-                : ((item as ChatUser).email || '다이렉트 메시지 생성')}
-          </Typography>
-        </Flex>
-      </Flex>
+      <ProfileItem
+        name={name || '이름 없음'}
+        desc={desc}
+        type={isRoom ? (item as ChatRoom).type : 'direct'}
+        avatar={isRoom ? (item as ChatRoom).displayAvatar || undefined : (item as ChatUser).profileImage || (item as ChatUser).avatar || undefined}
+        status={isUser ? (item as ChatUser).status : undefined}
+        styleOption={{
+          mode: 'list',
+          statusPosition: isUser ? 'name-left' : 'none',
+          noHover: true,
+          nameSuffix: isUser && !existingDMRoom ? (
+            <span style={{ 
+              fontSize: '10px', 
+              padding: '2px 6px', 
+              borderRadius: '4px', 
+              backgroundColor: 'var(--color-interactive-primary)', 
+              color: 'white',
+              fontWeight: 'bold',
+              marginLeft: '4px'
+            }}>
+              생성
+            </span>
+          ) : undefined
+        }}
+        style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+      />
     );
   };
 

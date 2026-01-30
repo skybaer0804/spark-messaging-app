@@ -2,17 +2,19 @@ import { useState, useEffect } from 'preact/hooks';
 import type { RefObject } from 'preact';
 
 interface Position {
-  top: number;
+  top?: number;
+  bottom?: number;
   left: number;
+  width: number;
   isReady: boolean;
 }
 
 export function useMentionPicker(anchorRef: RefObject<HTMLElement>, isOpen: boolean) {
-  const [position, setPosition] = useState<Position>({ top: 0, left: 0, isReady: false });
+  const [position, setPosition] = useState<Position>({ left: 0, width: 0, isReady: false });
   
   useEffect(() => {
     if (!isOpen) {
-      setPosition({ top: 0, left: 0, isReady: false });
+      setPosition({ left: 0, width: 0, isReady: false });
       return;
     }
     
@@ -28,30 +30,31 @@ export function useMentionPicker(anchorRef: RefObject<HTMLElement>, isOpen: bool
       if (!container) return;
       
       const rect = container.getBoundingClientRect();
-      // const viewportHeight = window.innerHeight; // 사용되지 않음
       const viewportWidth = window.innerWidth;
-      const pickerHeight = 300; // 예상 높이
-      const pickerWidth = 500; // 예상 너비
+      const viewportHeight = window.innerHeight;
+      const width = rect.width;
       
-      // 입력창 바로 위에 표시 (bottom-up)
-      let top = rect.top - pickerHeight - 8;
+      // 기본값: 입력창 바로 위에 표시 (bottom-up)
+      let bottom: number | undefined = viewportHeight - rect.top + 8;
+      let top: number | undefined = undefined;
       let left = rect.left;
       
-      // 화면 위로 넘어가면 아래쪽에 표시
-      if (top < 0) {
+      // 공간이 부족하면 아래쪽에 표시
+      if (rect.top < 400) { // 400px 정도의 여유 공간이 없으면
         top = rect.bottom + 8;
+        bottom = undefined;
       }
       
       // 오른쪽으로 넘어가면 조정
-      if (left + pickerWidth > viewportWidth) {
-        left = viewportWidth - pickerWidth - 16;
+      if (left + width > viewportWidth) {
+        left = viewportWidth - width - 16;
       }
       
       if (left < 0) {
         left = 16;
       }
       
-      setPosition({ top, left, isReady: true });
+      setPosition({ top, bottom, left, width, isReady: true });
     };
     
     updatePosition();

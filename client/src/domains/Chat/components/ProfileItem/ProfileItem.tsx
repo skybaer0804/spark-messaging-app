@@ -6,6 +6,7 @@ import {
   IconLock,
   IconMessageCircle,
   IconHierarchy,
+  IconX,
 } from '@tabler/icons-preact';
 import './ProfileItem.scss';
 
@@ -18,15 +19,17 @@ interface ProfileItemProps {
   isActive?: boolean;
   unreadCount?: number;
   onClick?: () => void;
+  onDelete?: (e: MouseEvent) => void;
   onContextMenu?: (e: MouseEvent) => void;
   className?: string;
   style?: any;
   styleOption?: {
     showDesc?: boolean;
     statusPosition?: 'icon' | 'name-left' | 'name-right';
-    mode?: 'list' | 'chat';
+    mode?: 'list' | 'chat' | 'chip';
     isGrouped?: boolean;
     nameSuffix?: any;
+    noHover?: boolean;
   };
 }
 
@@ -39,6 +42,7 @@ export const ProfileItem = memo(({
   isActive,
   unreadCount,
   onClick,
+  onDelete,
   onContextMenu,
   className = '',
   style,
@@ -54,6 +58,7 @@ export const ProfileItem = memo(({
     mode = 'list',
     isGrouped = false,
     nameSuffix,
+    noHover = false,
   } = styleOption;
 
   const getBgColor = () => {
@@ -96,9 +101,36 @@ export const ProfileItem = memo(({
     );
   };
 
+  if (mode === 'chip') {
+    return (
+      <div
+        className={`profile-item profile-item--chip ${noHover ? 'profile-item--no-hover' : ''} ${className}`}
+        onClick={onClick}
+        style={{ '--app-color': getBgColor(), ...style } as any}
+      >
+        <Avatar src={avatar} variant="rounded" size="xs" style={{ backgroundColor: getBgColor(), width: '20px', height: '20px', fontSize: '10px' }}>
+          {firstLetter}
+        </Avatar>
+        {renderTypeIcon()}
+        <span className="profile-item__name">{name}</span>
+        {onDelete && (
+          <div 
+            className="profile-item__delete-btn" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(e as any);
+            }}
+          >
+            <IconX size={14} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`profile-item profile-item--${mode} ${isGrouped ? 'profile-item--grouped' : ''} ${isActive ? 'profile-item--active' : ''} ${className}`}
+      className={`profile-item profile-item--${mode} ${isGrouped ? 'profile-item--grouped' : ''} ${noHover ? 'profile-item--no-hover' : ''} ${isActive ? 'profile-item--active' : ''} ${className}`}
       onClick={onClick}
       onContextMenu={onContextMenu}
       style={{ '--app-color': getBgColor(), ...style } as any}

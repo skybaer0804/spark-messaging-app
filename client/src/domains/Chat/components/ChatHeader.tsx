@@ -41,9 +41,14 @@ export const ChatHeader = ({
     <Paper
       square
       elevation={1}
-      padding="sm"
+      padding="none"
       className={className}
-      style={{ zIndex: 10, flexShrink: 0, borderBottom: '1px solid var(--color-border-default)' }}
+      style={{ 
+        zIndex: 10, 
+        flexShrink: 0, 
+        borderBottom: '1px solid var(--color-border-default)',
+        padding: '4px 12px'
+      }}
     >
       <Stack direction="row" align="center" spacing="md">
         {isMobile && (
@@ -64,8 +69,9 @@ export const ChatHeader = ({
             styleOption={{
               showDesc: true,
               statusPosition: 'name-left',
+              noHover: true,
             }}
-            style={{ margin: 0, padding: '4px' }}
+            style={{ margin: 0, padding: 0 }}
           />
         </Box>
         <IconButton
