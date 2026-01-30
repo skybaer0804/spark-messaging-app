@@ -21,10 +21,10 @@ import {
   IconMessageCircle,
   IconBell,
   IconShieldLock,
-  IconChevronRight,
   IconLogout,
 } from '@tabler/icons-preact';
 import { PushService } from '@/core/api/PushService';
+import { WorkSpaceItem } from '../Workspace/WorkSpaceItem';
 import './Profile.scss';
 
 export function Profile() {
@@ -253,47 +253,15 @@ export function Profile() {
       <Flex direction="column" gap="sm">
         {workspaces.length > 0 ? (
           workspaces.map((ws) => (
-            <Box
+            <WorkSpaceItem
               key={ws._id}
+              id={ws._id}
+              name={ws.name}
+              description={ws.description}
+              color={ws.color}
+              initials={ws.initials}
               onClick={() => navigate(`/workspace/${ws._id}`)}
-              style={{
-                padding: '12px',
-                backgroundColor: 'var(--color-bg-secondary)',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s',
-              }}
-              className="profile__workspace-item"
-            >
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '6px',
-                  backgroundColor: ws.color || 'var(--color-interactive-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  fontWeight: 'bold',
-                  fontSize: '14px',
-                }}
-              >
-                {ws.initials || ws.name.substring(0, 1).toUpperCase()}
-              </div>
-              <Box style={{ flex: 1 }}>
-                <Typography variant="body-medium" style={{ fontWeight: 600 }}>
-                  {ws.name}
-                </Typography>
-                <Typography variant="caption" color="text-secondary">
-                  {ws.description || '워크스페이스 설명이 없습니다.'}
-                </Typography>
-              </Box>
-              <IconChevronRight size={18} color="var(--color-text-tertiary)" />
-            </Box>
+            />
           ))
         ) : (
           <Box style={{ padding: '24px', textAlign: 'center' }}>

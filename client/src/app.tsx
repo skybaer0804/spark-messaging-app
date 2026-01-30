@@ -10,7 +10,7 @@ import { useToast } from '@/core/context/ToastContext';
 import { PushService } from '@/core/api/PushService';
 import { Login, Signup } from '@/domains/Auth';
 import { PrivacyPolicy } from '@/components/PrivacyPolicy/PrivacyPolicy';
-import { CircularProgress } from '@/ui-components/CircularProgress/CircularProgress';
+import { Loading } from '@/ui-components/Loading/Loading';
 
 // 큰 컴포넌트들을 lazy loading으로 최적화
 const DesignSystemDemo = lazy(() =>
@@ -163,7 +163,7 @@ export function App() {
 
   // 경로에 따라 컴포넌트 렌더링
   const renderContent = () => {
-    if (loading) return <div>Loading...</div>;
+    if (loading) return <Loading fullScreen />;
 
     // 비로그인 상태에서 허용되는 경로
     if (!isAuthenticated) {
@@ -210,7 +210,7 @@ export function App() {
     if (currentRoute.startsWith('/design-system')) {
       const focusSection = getDesignSystemComponentFromPath(currentRoute);
       return (
-        <Suspense fallback={<CircularProgress />}>
+        <Suspense fallback={<Loading fullScreen />}>
           <DesignSystemDemo focusSection={focusSection || undefined} />
         </Suspense>
       );

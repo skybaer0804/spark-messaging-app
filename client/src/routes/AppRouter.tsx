@@ -7,8 +7,8 @@ import { PrivacyPolicy } from '@/components/PrivacyPolicy/PrivacyPolicy';
 import { Login, Signup } from '@/domains/Auth';
 import { GuestJoin } from '@/domains/VideoMeeting/components/GuestJoin/GuestJoin';
 import { useAuth } from '@/core/hooks/useAuth';
+import { Loading } from '@/ui-components/Loading/Loading';
 import { useEffect } from 'preact/hooks';
-import { CircularProgress } from '@/ui-components/CircularProgress/CircularProgress';
 
 // 큰 컴포넌트를 lazy loading으로 최적화
 const DesignSystemDemo = lazy(() =>
@@ -40,7 +40,7 @@ function ProtectedRoute({ children, ...rest }: any) {
     }
   }, [isAuthenticated, loading]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Loading fullScreen />;
 
   // 게스트 입장의 경우 인증되지 않아도 children 렌더링 허용
   const pathname = window.location.pathname;
@@ -91,13 +91,13 @@ export function AppRouter() {
       })}
 
       <ProtectedRoute path="/design-system">
-        <Suspense fallback={<CircularProgress />}>
+        <Suspense fallback={<Loading fullScreen />}>
           <DesignSystemDemo />
         </Suspense>
       </ProtectedRoute>
       <ProtectedRoute path="/design-system/:ui">
         {(props: any) => (
-          <Suspense fallback={<CircularProgress />}>
+          <Suspense fallback={<Loading fullScreen />}>
             <DesignSystemDemo focusSection={props.ui} />
           </Suspense>
         )}

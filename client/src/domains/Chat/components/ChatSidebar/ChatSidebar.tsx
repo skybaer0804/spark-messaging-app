@@ -18,6 +18,7 @@ import {
   IconChevronRight,
   IconDotsVertical,
 } from '@tabler/icons-preact';
+import { ProfileItem } from '../ProfileItem/ProfileItem';
 import { ChatSidebarHeader } from './ChatSidebarHeader';
 
 export const ChatSidebar = memo(() => {
@@ -87,89 +88,42 @@ export const ChatSidebar = memo(() => {
     const statusText = room.displayStatusText;
 
     return (
-      <div
+      <ProfileItem
         key={room._id}
-        className={`chat-app__sidebar-item ${isActive ? 'chat-app__sidebar-item--active' : ''} ${
-          isFocused ? 'chat-app__sidebar-item--focused' : ''
-        }`}
+        name={roomName}
+        desc={room.type === 'direct' ? statusText : room.description || room.displayStatusText}
+        type={room.type}
+        avatar={displayAvatar}
+        status={displayStatus}
+        isActive={isActive || isFocused}
+        unreadCount={room.unreadCount}
         onClick={() => {
           handleRoomSelect(room._id, room);
           setIsSearching(false);
           setSearchQuery('');
         }}
-        onContextMenu={(e) => handleContextMenu(e, room._id)}
-      >
-        <div className="avatar">
-          {room.type === 'direct' ? (
-            <>
-              <Avatar src={displayAvatar} variant="rounded" size="sm" style={{ backgroundColor: '#23D5AB' }}>
-                {roomName?.substring(0, 1).toUpperCase()}
-              </Avatar>
-              <div className={`avatar-status avatar-status--${displayStatus || 'offline'}`} />
-            </>
-          ) : (
-            <Avatar
-              variant="rounded"
-              size="sm"
-              style={{ backgroundColor: room.type === 'team' ? '#e11d48' : '#64748b' }}
-            >
-              {room.type === 'team' ? roomName?.substring(0, 1).toUpperCase() : getRoomIcon(room)}
-            </Avatar>
-          )}
-        </div>
-        <div className="chat-app__sidebar-item-content">
-          <div className="chat-app__sidebar-item-name">{room.unreadCount ? <strong>{roomName}</strong> : roomName}</div>
-          {room.type === 'direct' && statusText && (
-            <div className="chat-app__sidebar-item-status-text">{statusText}</div>
-          )}
-        </div>
-        <Flex align="center" gap="xs" style={{ marginLeft: 'auto', flexShrink: 0 }}>
-          {room.unreadCount ? <div className="chat-app__sidebar-item-badge">{room.unreadCount}</div> : null}
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleContextMenu(e as any, room._id);
-            }}
-            className="chat-app__sidebar-item-more"
-          >
-            <IconDotsVertical size={18} />
-          </IconButton>
-        </Flex>
-      </div>
+        onContextMenu={(e) => handleContextMenu(e as any, room._id)}
+      />
     );
   };
 
   const renderUserItem = (user: any) => {
     const isFocused = searchFocusIndex >= 0 && allSearchResults[searchFocusIndex]?.data?._id === user._id;
     return (
-      <div
+      <ProfileItem
         key={user._id}
-        className={`chat-app__sidebar-item ${isFocused ? 'chat-app__sidebar-item--focused' : ''}`}
+        name={user.username}
+        desc={`${user.status || 'offline'} • ${user.role || 'Member'}`}
+        type="direct"
+        avatar={user.profileImage || user.avatar}
+        status={user.status}
+        isActive={isFocused}
         onClick={() => {
           startDirectChat(user._id);
           setIsSearching(false);
           setSearchQuery('');
         }}
-      >
-        <div className="avatar">
-          <Avatar
-            src={user.profileImage || user.avatar}
-            variant="rounded"
-            size="sm"
-            style={{ backgroundColor: '#23D5AB' }}
-          >
-            {user.username.substring(0, 1).toUpperCase()}
-          </Avatar>
-          <div className={`avatar-status avatar-status--${user.status || 'offline'}`} />
-        </div>
-        <div className="chat-app__sidebar-item-content">
-          <div className="chat-app__sidebar-item-name">{user.username}</div>
-          <div className="chat-app__sidebar-item-sub">
-            {user.status || 'offline'} • {user.role || 'Member'}
-          </div>
-        </div>
-      </div>
+      />
     );
   };
 

@@ -19,7 +19,7 @@ import { ChatMessages } from './components/ChatMessages';
 import { ChatSettingPanel } from './components/ChatSettingPanel/ChatSettingPanel';
 import { ImageModal } from './components/ImageModal';
 import { ChatThreadPanel } from './components/ChatThreadPanel';
-import { CircularProgress } from '@/ui-components/CircularProgress';
+import { Loading } from '@/ui-components/Loading/Loading';
 import { DialogForward } from './components/DialogForward';
 import type { Message } from './types';
 import { MobileHeader } from '@/components/Mobile/MobileHeader';
@@ -306,10 +306,10 @@ function ChatAppContent() {
                       alignItems: 'center', 
                       justifyContent: 'center',
                       background: 'var(--color-background-primary)',
-                      opacity: 0.6,
+                      opacity: 0.8,
                       zIndex: 10
                     }}>
-                      <CircularProgress size="lg" />
+                      <Loading size="large" />
                     </Box>
                   ) : (
                     <ChatMessages

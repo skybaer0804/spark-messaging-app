@@ -6,7 +6,6 @@ import { Paper } from '@/ui-components/Paper/Paper';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Box } from '@/ui-components/Layout/Box';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
 import { chatApi } from '@/core/api/ApiService';
 import { ModelModal } from './ModelModal/ModelModal';
 
@@ -22,6 +21,7 @@ import { IconCheck, IconClock, IconAlertCircle, IconShare } from '@tabler/icons-
 import { messagesSignal } from '../hooks/useOptimisticUpdate';
 import { ChatMessageItemToolbar } from './ChatMessageItemToolbar';
 import { ChatMessageItemThread } from './ChatMessageItemThread';
+import { ProfileItem } from './ProfileItem/ProfileItem';
 import './Chat.scss';
 
 interface ChatMessageItemProps {
@@ -148,57 +148,73 @@ function ChatMessageItemComponent({
     }
   };
 
+  const renderInfoSuffix = () => (
+    <Flex align="center" gap="xs">
+      <Typography variant="caption" color="text-tertiary" style={{ fontSize: '12px' }}>
+        {formatTimestamp(message.timestamp)}
+      </Typography>
+      {renderStatus()}
+      {message.isForwarded && (
+        <Typography variant="caption" color="text-tertiary" style={{ fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '2px', fontSize: '11px' }}>
+          <IconShare size={10} /> 전달됨: {message.originSenderName}
+        </Typography>
+      )}
+      {isParentInThread && (
+        <Typography variant="caption" color="primary" style={{ fontWeight: 'bold', fontSize: '11px', marginLeft: '4px' }}>
+          원본 메시지
+        </Typography>
+      )}
+    </Flex>
+  );
+
   return (
     <Box 
       className={`chat-app__message-item ${isGrouped ? 'chat-app__message-item--grouped' : 'chat-app__message-item--not-grouped'} ${isOwnMessage ? 'chat-app__message-item--own' : 'chat-app__message-item--other'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        width: '100%',
+        alignItems: isOwnMessage ? 'flex-end' : 'flex-start'
+      }}
     >
-      {/* 상대방 프로필 아바타 */}
       {!isOwnMessage && (
-        <Box className="chat-app__message-item-avatar-container">
-          {!isGrouped ? (
-            <Avatar 
-              src={typeof message.senderId === 'object' ? (message.senderId as any)?.profileImage : undefined} 
-              size="sm"
-              variant="circular"
-              className="chat-app__message-avatar"
-            >
-              <Typography>{senderName.substring(0, 1).toUpperCase()}</Typography>
-            </Avatar>
-          ) : (
-            // 그룹화된 경우 공간 확보
-            <Box style={{ width: '32px' }} />
-          )}
-        </Box>
+        <ProfileItem
+          name={senderName}
+          avatar={typeof message.senderId === 'object' ? (message.senderId as any)?.profileImage : undefined}
+          type="direct"
+          styleOption={{
+            mode: 'chat',
+            isGrouped: isGrouped,
+            showDesc: false,
+            statusPosition: 'name-left',
+            nameSuffix: renderInfoSuffix()
+          }}
+        />
       )}
 
       <Flex 
         direction="column" 
         align={isOwnMessage ? 'flex-end' : 'flex-start'} 
         className="chat-app__message-item-content-wrapper"
+        style={{ width: '100%' }}
       >
-        {!isGrouped && (
-          <Box className={`chat-app__message-item-info ${isOwnMessage ? 'chat-app__message-item-info--own' : 'chat-app__message-item-info--other'}`}>
+        {isOwnMessage && !isGrouped && (
+          <Box className="chat-app__message-item-info chat-app__message-item-info--own">
             <Typography variant="body-medium" style={{ fontWeight: 'normal', fontSize: '15px' }}>{senderName}</Typography>
-            <Typography variant="caption" color="text-tertiary" style={{ fontSize: '12px' }}>
-              {formatTimestamp(message.timestamp)}
-            </Typography>
-            {renderStatus()}
-            {message.isForwarded && (
-              <Typography variant="caption" color="text-tertiary" style={{ fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '2px', fontSize: '11px' }}>
-                <IconShare size={10} /> 전달됨: {message.originSenderName}
-              </Typography>
-            )}
-            {isParentInThread && (
-              <Typography variant="caption" color="primary" style={{ fontWeight: 'bold', fontSize: '11px', marginLeft: '4px' }}>
-                원본 메시지
-              </Typography>
-            )}
+            {renderInfoSuffix()}
           </Box>
         )}
         
-        <Box style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: isOwnMessage ? 'flex-end' : 'flex-start' }}>
+        <Box style={{ 
+          position: 'relative', 
+          width: '100%', 
+          display: 'flex', 
+          justifyContent: isOwnMessage ? 'flex-end' : 'flex-start', 
+          paddingLeft: !isOwnMessage ? '44px' : '0',
+          paddingRight: isOwnMessage ? '4px' : '0' 
+        }}>
           <Box style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             <Paper
               elevation={isOwnMessage ? 1 : 0}
@@ -231,15 +247,17 @@ function ChatMessageItemComponent({
 
         {/* 스레드 요약 정보 (답글이 있는 경우, 원본 메시지가 아닐 때만 노출) */}
         {!isParentInThread && (
-          <ChatMessageItemThread 
-            message={message} 
-            onClick={onThreadClick} 
-          />
+          <Box style={{ paddingLeft: !isOwnMessage ? '44px' : '0' }}>
+            <ChatMessageItemThread 
+              message={message} 
+              onClick={onThreadClick} 
+            />
+          </Box>
         )}
       </Flex>
 
       {/* 내 메시지일 때 좌측 정렬을 위한 빈 공간 확보 (flex-reverse 때문) */}
-      {isOwnMessage && <Box style={{ width: '32px' }} />}
+      {isOwnMessage && <Box style={{ height: isGrouped ? '0' : '1px' }} />}
 
       {showModelModal && (message.fileData?.renderUrl || message.renderUrl || message.fileData?.url) && (
         <ModelModal

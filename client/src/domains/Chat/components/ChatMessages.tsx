@@ -63,7 +63,7 @@ function ChatMessagesComponent({
           </Typography>
         </Box>
       ) : (
-        <Stack spacing="md" style={{ flex: 1, minHeight: 0 }}>
+        <Stack spacing="none" style={{ flex: 1, minHeight: 0 }}>
           {groupMessagesByDate(messages).map((item, index, array) => {
             if (item.type === 'divider') {
               return (

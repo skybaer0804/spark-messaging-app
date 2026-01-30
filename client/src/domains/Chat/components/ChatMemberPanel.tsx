@@ -3,8 +3,8 @@ import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { IconButton } from '@/ui-components/Button/IconButton';
 import { IconX } from '@tabler/icons-preact';
-import { List, ListItem, ListItemText, ListItemAvatar } from '@/ui-components/List/List';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
+import { List } from '@/ui-components/List/List';
+import { ProfileItem } from './ProfileItem/ProfileItem';
 import type { ChatUser } from '../types';
 
 interface ChatMemberPanelProps {
@@ -27,25 +27,21 @@ export const ChatMemberPanel = ({ members = [], onClose }: ChatMemberPanelProps)
         </IconButton>
       </Box>
       <Box className="chat-app__sidebar-panel__content">
-        <List>
+        <List style={{ padding: '8px 0' }}>
           {members.map((member) => (
-            <ListItem key={member._id}>
-              <ListItemAvatar>
-                <Avatar
-                  src={member.avatar}
-                  variant="circular"
-                  size="sm"
-                  style={{
-                    border: `2px solid ${
-                      member.status === 'online' ? 'var(--color-success-main)' : 'var(--color-text-tertiary)'
-                    }`,
-                  }}
-                >
-                  {member.username.substring(0, 1).toUpperCase()}
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={member.username} secondary={member.status === 'online' ? 'Online' : 'Offline'} />
-            </ListItem>
+            <ProfileItem
+              key={member._id}
+              name={member.username}
+              desc={member.statusText || member.role || 'Member'}
+              type="direct"
+              avatar={member.avatar || member.profileImage}
+              status={member.status}
+              styleOption={{
+                showDesc: true,
+                statusPosition: 'name-left',
+              }}
+              style={{ margin: '2px 8px' }}
+            />
           ))}
         </List>
       </Box>

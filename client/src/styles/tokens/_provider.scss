@@ -45,8 +45,9 @@
   --color-surface-overlay: #1f2329; // Dropdown backgrounds
 
   // *** Sidebar *** (Chat-specific sidebar backgrounds)
-  --color-bg-sidebar: #2c333d;
-  --color-bg-workspace-sidebar: #1e1f22;
+  --color-bg-sidebar: #1e2329;
+  --color-text-sidebar: #f0f4f8;
+  --color-bg-workspace-sidebar: #14171a;
 
   // *** Icon Colors *** - 기본 프리셋(없거나 'default')일 때만 기본값 사용
   &:not([data-preset-color]),

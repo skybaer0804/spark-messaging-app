@@ -144,7 +144,7 @@
     background-color: transparent;
 
     .stack {
-      gap: 16px !important; // spacing="md"
+      gap: 4px !important;
       flex: 1;
       min-height: 0;
     }
@@ -200,11 +200,11 @@
     gap: 12px; // Match gap="md"
     
     &--grouped {
-      padding: 2px 10px;
+      padding: 1px 10px;
     }
     
     &--not-grouped {
-      padding: 8px 10px;
+      padding: 4px 10px;
     }
     
     &--own {
@@ -225,11 +225,12 @@
     &-content-wrapper {
       max-width: 85%;
       position: relative;
-      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
     
     &-info {
-      margin-bottom: 2px;
+      margin-bottom: 0px;
       display: flex;
       align-items: baseline;
       gap: 4px; // Match gap="xs"
@@ -346,14 +347,15 @@
 
   &__sidebar {
     background-color: var(--color-bg-sidebar) !important;
-    color: #ffffff;
+    color: var(--color-text-sidebar);
+    border-right: 1px solid var(--color-border-default);
     animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 
     .icon-button {
       color: var(--color-icon-secondary);
       &:hover {
-        color: #ffffff;
-        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--color-icon-primary);
+        background-color: var(--color-action-hover);
       }
     }
 
@@ -369,6 +371,8 @@
             min-height: 32px !important;
             padding: 6px 12px !important;
             font-size: 14px;
+            background-color: var(--color-bg-secondary) !important;
+            color: var(--color-text-primary) !important;
           }
         }
       }
@@ -379,13 +383,13 @@
       justify-content: flex-end;
       gap: 4px;
       padding: 12px 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid var(--color-border-default);
 
       .icon-button {
-        color: rgba(255, 255, 255, 0.7);
+        color: var(--color-icon-secondary);
         &:hover {
-          color: #ffffff;
-          background-color: rgba(255, 255, 255, 0.1);
+          color: var(--color-icon-primary);
+          background-color: var(--color-action-hover);
         }
       }
     }
@@ -396,12 +400,12 @@
       align-items: center;
       cursor: pointer;
       user-select: none;
-      color: rgba(255, 255, 255, 0.6);
+      color: var(--color-text-secondary);
       font-size: 13px;
       font-weight: 600;
 
       &:hover {
-        color: #ffffff;
+        color: var(--color-text-primary);
       }
 
       .icon {
@@ -422,16 +426,16 @@
       position: relative;
 
       &:hover {
-        background-color: rgba(255, 255, 255, 0.05);
+        background-color: var(--color-action-hover);
       }
 
       &--active {
-        background-color: rgba(255, 255, 255, 0.15) !important;
+        background-color: var(--color-action-selected) !important;
       }
 
       &--focused {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        outline: 1px solid rgba(255, 255, 255, 0.3);
+        background-color: var(--color-action-selected) !important;
+        outline: 1px solid var(--color-border-default);
       }
 
       .avatar {
@@ -443,7 +447,7 @@
           width: 10px;
           height: 10px;
           border-radius: 50%;
-          border: 2px solid #2c333d;
+          border: 2px solid var(--color-bg-sidebar);
 
           &--online {
             background-color: #2bac76;
@@ -471,7 +475,7 @@
           width: 10px;
           height: 10px;
           border-radius: 50%;
-          border: 2px solid #2c333d;
+          border: 2px solid var(--color-bg-sidebar);
 
           &--online {
             background-color: #2bac76;
@@ -495,7 +499,7 @@
 
       &-name {
         font-size: 13px;
-        color: rgba(255, 255, 255, 0.9);
+        color: var(--color-text-primary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -503,7 +507,7 @@
 
       &-status-text {
         font-size: 11px;
-        color: rgba(255, 255, 255, 0.6);
+        color: var(--color-text-secondary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -511,7 +515,7 @@
       }
 
       &-icon {
-        color: rgba(255, 255, 255, 0.5);
+        color: var(--color-icon-secondary);
         display: flex;
         align-items: center;
       }
@@ -519,14 +523,14 @@
       &-more {
         opacity: 0;
         transition: opacity 0.2s;
-        color: rgba(255, 255, 255, 0.5) !important;
+        color: var(--color-icon-secondary) !important;
         padding: 4px !important;
         margin-left: auto;
         flex-shrink: 0;
 
         &:hover {
-          color: #ffffff !important;
-          background-color: rgba(255, 255, 255, 0.1) !important;
+          color: var(--color-text-primary) !important;
+          background-color: var(--color-action-hover) !important;
         }
       }
 

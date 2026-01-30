@@ -10,7 +10,7 @@ import {
   IconVideo,
   IconSettings,
 } from '@tabler/icons-preact';
-import { CircularProgress } from '@/ui-components/CircularProgress/CircularProgress';
+import { Loading } from '@/ui-components/Loading/Loading';
 
 // 큰 컴포넌트들을 lazy loading으로 최적화
 const VideoMeeting = lazy(() =>
@@ -152,7 +152,7 @@ export const appRoutes: AppRouteNode[] = [
     icon: <IconMessageCircle size={24} />,
     title: 'Chat',
     element: (
-      <Suspense fallback={<CircularProgress />}>
+      <Suspense fallback={<Loading fullScreen />}>
         <ChatApp />
       </Suspense>
     ),
@@ -164,7 +164,7 @@ export const appRoutes: AppRouteNode[] = [
     icon: <IconBell size={24} />,
     title: 'Notification',
     element: (
-      <Suspense fallback={<CircularProgress />}>
+      <Suspense fallback={<Loading fullScreen />}>
         <NotificationApp />
       </Suspense>
     ),
@@ -176,7 +176,7 @@ export const appRoutes: AppRouteNode[] = [
     icon: <IconVideo size={24} />,
     title: 'Video Meeting',
     element: (
-      <Suspense fallback={<CircularProgress />}>
+      <Suspense fallback={<Loading fullScreen />}>
         <VideoMeeting />
       </Suspense>
     ),
@@ -188,7 +188,7 @@ export const appRoutes: AppRouteNode[] = [
     icon: <IconSettings size={24} />,
     title: 'Settings',
     element: (
-      <Suspense fallback={<CircularProgress />}>
+      <Suspense fallback={<Loading fullScreen />}>
         <ThemePage />
       </Suspense>
     ),
@@ -224,7 +224,7 @@ export const appRoutes: AppRouteNode[] = [
     icon: <IconPalette size={24} />,
     title: 'Design System Demo',
     element: (
-      <Suspense fallback={<CircularProgress />}>
+      <Suspense fallback={<Loading fullScreen />}>
         <DesignSystemDemo />
       </Suspense>
     ),

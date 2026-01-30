@@ -1,13 +1,12 @@
 import { IconButton } from '@/ui-components/Button/IconButton';
 import { Box } from '@/ui-components/Layout/Box';
-import { Flex } from '@/ui-components/Layout/Flex';
 import { Stack } from '@/ui-components/Layout/Stack';
-import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
-import { IconArrowLeft, IconHash, IconLock, IconVideo, IconUsers, IconSettings, IconMessageCircle2 } from '@tabler/icons-preact';
+import { IconArrowLeft, IconVideo, IconUsers, IconSettings, IconMessageCircle2 } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
 import { getDirectChatName } from '../utils/chatUtils';
+import { ProfileItem } from './ProfileItem/ProfileItem';
 import type { ChatRoom } from '../types';
 
 interface ChatHeaderProps {
@@ -52,23 +51,22 @@ export const ChatHeader = ({
             <IconArrowLeft />
           </IconButton>
         )}
-        <Box style={{ flex: 1 }}>
-          <Flex align="center" gap="sm">
-            {currentRoom.type === 'private' || currentRoom.isPrivate ? (
-              <IconLock size={20} />
-            ) : (
-              <IconHash size={20} />
-            )}
-            <Typography variant="h4">
-              {currentRoom.displayName ||
-                getDirectChatName(currentRoom, currentUser?.id || (currentUser as any)?._id)}
-            </Typography>
-          </Flex>
-          {currentRoom.description && (
-            <Typography variant="caption" color="text-secondary" style={{ marginLeft: '24px' }}>
-              {currentRoom.description}
-            </Typography>
-          )}
+        <Box style={{ flex: 1, minWidth: 0 }}>
+          <ProfileItem
+            name={
+              currentRoom.displayName ||
+              getDirectChatName(currentRoom, currentUser?.id || (currentUser as any)?._id)
+            }
+            desc={currentRoom.description || undefined}
+            type={currentRoom.type as any}
+            avatar={currentRoom.displayAvatar || undefined}
+            status={currentRoom.displayStatus}
+            styleOption={{
+              showDesc: true,
+              statusPosition: 'name-left',
+            }}
+            style={{ margin: 0, padding: '4px' }}
+          />
         </Box>
         <IconButton
           onClick={() => {

@@ -266,8 +266,9 @@
   --color-surface-overlay: var(--color-background-primary); // Default to primary background
 
   // *** Sidebars ***
-  --color-bg-sidebar: #2c333d; // Default dark navy for chat sidebar
-  --color-bg-workspace-sidebar: #1e1f22; // Default darker sidebar
+  --color-bg-sidebar: #f8fafc; // Light mode sidebar bg
+  --color-text-sidebar: var(--color-text-primary);
+  --color-bg-workspace-sidebar: #f1f5f9;
 
   // --- Semantic Space Tokens ---
   // *** Layout Gap ***
