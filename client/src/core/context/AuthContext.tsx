@@ -40,27 +40,29 @@ export function AuthProvider({ children }: { children: any }) {
   useEffect(() => {
     const initAuth = async () => {
       const token = getToken();
-      if (token) {
-        try {
-          const response = await authApi.getMe();
-          const userData = response.data;
-
-          // v2.2.0: 초기 로드 시 워크스페이스 정보 반영
-          if (userData.workspaces && userData.workspaces.length > 0) {
-            const { currentWorkspaceId } = await import('@/stores/chatRoomsStore');
-            if (!currentWorkspaceId.value) {
-              currentWorkspaceId.value = userData.workspaces[0];
-            }
-          }
-
-          setUser(userData);
-        } catch (err) {
-          console.error('Failed to get user:', err);
-          removeLocalStorage('token');
-          setUser(null);
-        }
+      if (!token) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const response = await authApi.getMe();
+        const userData = response.data;
+
+        if (userData.workspaces && userData.workspaces.length > 0) {
+          const { currentWorkspaceId } = await import('@/stores/chatRoomsStore');
+          if (!currentWorkspaceId.value) {
+            currentWorkspaceId.value = userData.workspaces[0];
+          }
+        }
+        setUser(userData);
+      } catch (err) {
+        console.error('Failed to get user:', err);
+        removeLocalStorage('token');
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
     initAuth();
