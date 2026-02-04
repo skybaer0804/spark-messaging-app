@@ -54,5 +54,10 @@
 2. **서비스 워커 예외 처리**: `vite.config.ts`의 `navigateFallbackDenylist`에 `/^\/.well-known/` 정규식을 추가하여, TWA 인증 파일 요청 시 서비스 워커가 개입하지 않고 서버로 직접 요청하도록 수정함.
 3. **Runtime Error 수정**: `ChatMessageItem.tsx`에서 `lastReplyAt`을 비교할 때 `new Date()`로 변환 후 안전하게 비교하도록 수정하여 `TypeError` 방지.
 4. **Meta Tag 업데이트**: `index.html`에 `mobile-web-app-capable` 메타 태그 추가.
-5. **안전장치 추가**: `GlobalErrorBoundary`를 도입하여 치명적인 에러 발생 시 하얀 화면 대신 에러 로그와 새로고침 버튼을 표시하도록 변경. `AuthContext`에 초기화 로딩 UI 추가.
-6. **재배포 필요**: 위 변경 사항들을 포함하여 재배포 후 확인 필요.
+6. **취약한 에러 핸들링 (Reverted)**: 런타임 에러 복구를 위해 Global Error Boundary 도입을 시도했으나, Preact signals와의 충돌로 추정되는 PC 환경 크래시(`vendor-signals-CPectLUK.js`)가 발생하여 해당 변경사항들을 모두 원복함.
+
+### 조치 사항
+1. **코드 수정 (Reverted)**: 사용자 피드백에 따라 `sparkMessaging.ts` 및 `vite.config.ts`의 환경 변수 관련 수정 사항은 원복함.
+2. **서비스 워커 예외 처리**: `vite.config.ts`의 `navigateFallbackDenylist`에 `/^\/.well-known/` 정규식을 추가하여, TWA 인증 파일 요청 시 서비스 워커가 개입하지 않고 서버로 직접 요청하도록 수정함. (이것만 유효)
+3. **Runtime Error 수정 (Reverted)**: `ChatMessageItem.tsx` 수정 시도했으나 전체 원복 요청으로 인해 Rollback됨. 추후 다시 적용 필요.
+4. **전체 원복 (2026-02-04)**: `GlobalErrorBoundary`, Auth Loading, meta tag 등 최근 적용한 변경사항 전체를 원복하여 PC 접속 상태 복구. Mobile White Screen 이슈는 원점 재검토 필요.
