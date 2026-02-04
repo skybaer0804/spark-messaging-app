@@ -47,10 +47,12 @@
 ### 추가 발견된 원인 (2026-02-04)
 4. **서비스 워커의 TWA 인증 파일 간섭**: PWA 서비스 워커가 `/.well-known/assetlinks.json` 요청을 페이지 내비게이션으로 오인하여 `index.html`을 반환하는 문제가 확인됨. 이로 인해 최초 접속 시 TWA 인증이 실패하고, 강력 새로고침을 해야만 정상적인 JSON이 보임.
 5. **Runtime Error (White Screen 원인)**: `ChatMessageItem.tsx`에서 `lastReplyAt` 값이 Date 객체가 아닌 ISO 문자열로 넘어오는데 `.getTime()` 함수를 직접 호출하여 `TypeError`가 발생함. 이 오류로 인해 앱 렌더링이 중단되어 모바일에서 하얀 화면(White Screen)이 발생했을 가능성이 매우 높음.
+6. **취약한 에러 핸들링**: 기존에는 런타임 에러 발생 시 앱이 전체가 멈추고 하얀 화면만 나왔음. AuthContext 초기화 중에도 로딩 화면이 없어 사용자가 멈춘 것으로 오인할 수 있었음.
 
 ### 조치 사항
 1. **코드 수정 (Reverted)**: 사용자 피드백에 따라 `sparkMessaging.ts` 및 `vite.config.ts`의 환경 변수 관련 수정 사항은 원복함. (PC 접속이 되는 것으로 보아 환경 변수 문제가 아님을 확인)
 2. **서비스 워커 예외 처리**: `vite.config.ts`의 `navigateFallbackDenylist`에 `/^\/.well-known/` 정규식을 추가하여, TWA 인증 파일 요청 시 서비스 워커가 개입하지 않고 서버로 직접 요청하도록 수정함.
 3. **Runtime Error 수정**: `ChatMessageItem.tsx`에서 `lastReplyAt`을 비교할 때 `new Date()`로 변환 후 안전하게 비교하도록 수정하여 `TypeError` 방지.
 4. **Meta Tag 업데이트**: `index.html`에 `mobile-web-app-capable` 메타 태그 추가.
-5. **재배포 필요**: 위 변경 사항들을 포함하여 재배포 후 확인 필요.
+5. **안전장치 추가**: `GlobalErrorBoundary`를 도입하여 치명적인 에러 발생 시 하얀 화면 대신 에러 로그와 새로고침 버튼을 표시하도록 변경. `AuthContext`에 초기화 로딩 UI 추가.
+6. **재배포 필요**: 위 변경 사항들을 포함하여 재배포 후 확인 필요.

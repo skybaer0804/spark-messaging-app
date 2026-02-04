@@ -163,20 +163,18 @@ export default defineConfig({
           if (id.includes('preact-router')) return 'vendor-router';
           if (id.includes('@preact/signals')) return 'vendor-signals';
           
-          // node_modules의 나머지 vendor 코드
-          if (id.includes('node_modules')) return 'vendor';
         },
-        chunkSizeWarningLimit: 200, // 200KB 경고
       },
     },
+    chunkSizeWarningLimit: 200, // 200KB 경고
     // 압축 최적화 (esbuild 사용 - terser보다 빠름)
     minify: 'esbuild',
     // CSS 코드 스플리팅 활성화
     cssCodeSplit: true,
-    // esbuild 옵션: 프로덕션에서 console 제거
-    esbuild: {
-      drop: ['console', 'debugger'],
-    },
+  },
+  // esbuild 옵션: 프로덕션에서 console 제거
+  esbuild: {
+    drop: ['console', 'debugger'],
   },
   css: {
     preprocessorOptions: {

@@ -25,13 +25,17 @@ if ('requestIdleCallback' in window) {
   setTimeout(registerServiceWorker, 1000);
 }
 
+import { GlobalErrorBoundary } from '@/core/components/GlobalErrorBoundary';
+
 render(
-  <ToastProvider>
-    <ThemeProvider>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </ThemeProvider>
-  </ToastProvider>,
+  <GlobalErrorBoundary>
+    <ToastProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ThemeProvider>
+    </ToastProvider>
+  </GlobalErrorBoundary>,
   document.getElementById('app')!,
 );

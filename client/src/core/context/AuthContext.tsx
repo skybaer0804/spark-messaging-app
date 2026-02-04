@@ -136,7 +136,22 @@ export function AuthProvider({ children }: { children: any }) {
 
   return (
     <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, updateUser, isAuthenticated }}>
-      {!loading && children}
+      {loading ? (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          backgroundColor: '#1a1a2e',
+          color: 'white'
+        }}>
+          <div style={{ marginBottom: '1rem' }}>Spark 앱 초기화 중...</div>
+          <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>잠시만 기다려주세요.</div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }
