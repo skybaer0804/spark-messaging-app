@@ -9,6 +9,7 @@ lerna-debug.log*
 
 node_modules
 dist
+dev-dist
 dist-ssr
 *.local
 
@@ -24,7 +25,10 @@ dist-ssr
 *.sw?
 
 # Environment variables
-.env
+.env*
+*.env*
+!*.sample
+!*.example
 .env.local
 .env.production.local
 .env.development.local
