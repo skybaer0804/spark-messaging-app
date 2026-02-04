@@ -1,0 +1,151 @@
+@use 'sass:math';
+@use '/src/styles/tokens/index';
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-interactive-primary);
+
+  &--fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-bg-default);
+    z-index: var(--z-index-modal);
+  }
+
+  &__container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  &__rocket-wrapper {
+    position: relative;
+    transform: rotate(45deg); // 대각선 방향으로 날아가는 느낌
+    animation: rocket-float 2s infinite ease-in-out;
+  }
+
+  &__rocket {
+    z-index: 2;
+    filter: drop-shadow(0 0 8px rgba(var(--color-interactive-primary-rgb), 0.4));
+    animation: rocket-shake 0.1s infinite alternate;
+  }
+
+  &__exhaust {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  &__flame {
+    width: 8px;
+    height: 20px;
+    background: linear-gradient(to bottom, #ff9d00, #ff4d00);
+    border-radius: 50% 50% 20% 20%;
+    filter: blur(1px);
+    animation: flame-pulse 0.2s infinite alternate;
+  }
+
+  &__particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+  }
+
+  &__particle {
+    position: absolute;
+    background-color: var(--color-border-default);
+    border-radius: 99px;
+    opacity: 0.3;
+
+    @for $i from 0 through 5 {
+      &--#{$i} {
+        width: #{math.random(20) + 10}px;
+        height: 2px;
+        top: #{math.random(100)}%;
+        left: 120%;
+        animation: particle-zoom #{math.random(10) * 0.1 + 0.5}s infinite linear;
+        animation-delay: #{$i * 0.2}s;
+      }
+    }
+  }
+
+  &__text {
+    margin-top: 24px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    letter-spacing: 0.05em;
+    animation: text-pulse 1.5s infinite ease-in-out;
+  }
+}
+
+@keyframes rocket-float {
+  0%,
+  100% {
+    transform: rotate(45deg) translate(0, 0);
+  }
+  50% {
+    transform: rotate(45deg) translate(5px, -5px);
+  }
+}
+
+@keyframes rocket-shake {
+  from {
+    transform: translate(-1px, 0);
+  }
+  to {
+    transform: translate(1px, 0.5px);
+  }
+}
+
+@keyframes flame-pulse {
+  from {
+    height: 15px;
+    opacity: 0.8;
+    transform: scaleX(1);
+  }
+  to {
+    height: 25px;
+    opacity: 1;
+    transform: scaleX(1.2);
+  }
+}
+
+@keyframes particle-zoom {
+  from {
+    transform: translateX(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  to {
+    transform: translateX(-300px) rotate(-45deg);
+    opacity: 0;
+  }
+}
+
+@keyframes text-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}

@@ -1,0 +1,83 @@
+@use '/src/styles/tokens/index';
+
+.profile {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+  min-height: 100%;
+  background-color: var(--color-bg-tertiary);
+  animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  &__card {
+    width: 100%;
+    max-width: 600px;
+    height: fit-content;
+    padding: var(--space-padding-lg);
+    border-radius: var(--primitive-radius-none);
+    box-shadow: none;
+    background-color: transparent;
+    border: none; // 카드 보더 제거
+
+    .card {
+      border: none !important;
+    }
+  }
+
+  &__header {
+    // border-bottom 제거됨
+    padding-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__avatar {
+    background-color: var(--color-interactive-primary);
+    color: var(--primitive-gray-0);
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-padding-sm);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-secondary);
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: var(--color-bg-tertiary);
+    }
+  }
+
+  &__value {
+    padding: var(--spacing-xs) 0;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+
+  &__logout-container {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border-default);
+  }
+
+  // 탭 패널 패딩 제거 (MUI 또는 커스텀 Tabs 클래스 대응)
+  :global(.tabs-h0pi2t3-panel-info) {
+    padding: 0 !important;
+  }
+}
+
+// 탭 컴포넌트 내부 패널들에 대한 일반적인 패딩 제거 처리
+[id*='panel-info'],
+[id*='panel-workspaces'] {
+  padding: 0 !important;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

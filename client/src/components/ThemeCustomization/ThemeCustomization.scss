@@ -1,0 +1,139 @@
+@use '/src/styles/tokens/index';
+
+.theme-customization {
+  background-color: var(--color-background-secondary);
+  background-image: radial-gradient(var(--color-border-default) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  
+  // 아이콘 색상 설정
+  svg {
+    color: var(--color-icon-primary);
+    stroke: var(--color-icon-primary);
+  }
+
+  // Drawer 최상단(루트)에 padding 적용
+  &__drawer {
+    // Drawer 내부 스타일 커스텀
+    .drawer__header {
+      background-color: var(--color-background-primary);
+    }
+
+    .drawer__content {
+      background-color: var(--color-background-secondary);
+    }
+
+    // Drawer 헤더(타이틀/닫기 아이콘) 스타일 조정
+    .drawer__title {
+      font-size: var(--typo-body-large-size);
+      line-height: var(--typo-body-large-line-height);
+      font-weight: var(--primitive-font-weight-bold);
+    }
+
+    .drawer__header svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  &__preset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-gap-sm);
+  }
+
+  &__preset-button {
+    padding: var(--space-padding-button-sm);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--primitive-radius-md);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--color-background-secondary);
+      border-color: var(--color-interactive-primary);
+    }
+
+    &--active {
+      background: var(--color-interactive-primary);
+      border-color: var(--color-interactive-primary);
+      color: var(--primitive-gray-0);
+
+      .typography {
+        color: var(--primitive-gray-0);
+      }
+    }
+
+    // 비활성 버튼의 텍스트 색상 명시
+    .typography {
+      color: var(--color-text-primary);
+    }
+  }
+
+  &__slider-container {
+    padding: var(--space-padding-button-md) 0;
+  }
+
+  &__slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--color-background-secondary);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--color-interactive-primary);
+      cursor: pointer;
+      border: 2px solid var(--color-background-primary);
+      box-shadow: 0 0 0 1px var(--color-border-default);
+    }
+
+    &::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--color-interactive-primary);
+      cursor: pointer;
+      border: 2px solid var(--color-background-primary);
+      box-shadow: 0 0 0 1px var(--color-border-default);
+    }
+
+    &::-webkit-slider-runnable-track {
+      background: var(--color-background-secondary);
+      height: 6px;
+      border-radius: 3px;
+    }
+
+    &::-moz-range-track {
+      background: var(--color-background-secondary);
+      height: 6px;
+      border-radius: 3px;
+    }
+  }
+
+  &__slider-value {
+    font-weight: var(--primitive-font-weight-bold);
+    color: var(--color-interactive-primary);
+  }
+
+  &__preview {
+    padding: var(--space-padding-card-md);
+    background: var(--color-background-secondary);
+    border: 1px solid var(--color-border-default);
+    color: var(--color-text-primary);
+    text-align: center;
+    transition: border-radius 0.2s ease;
+
+    .typography {
+      color: var(--color-text-primary);
+    }
+  }
+}

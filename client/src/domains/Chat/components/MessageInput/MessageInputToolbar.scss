@@ -1,0 +1,71 @@
+@use '/src/styles/tokens/index';
+
+.message-input-toolbar {
+  padding: var(--space-padding-xs, 8px) var(--space-padding-sm, 12px);
+  background-color: var(--color-background-primary);
+  border-top: 1px solid var(--color-border-default);
+  border-radius: 0 0 var(--primitive-radius-md) var(--primitive-radius-md);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  &__button {
+    transition: background-color 0.2s, opacity 0.2s;
+
+    &:hover:not(:disabled) {
+      background-color: var(--color-background-secondary);
+    }
+ 
+    &:active:not(:disabled) {
+      background-color: var(--color-surface-level-1);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  &__divider {
+    width: 1px;
+    height: 24px;
+    background-color: var(--color-border-default);
+    margin: 0 var(--space-gap-xs);
+  }
+
+  &__button {
+    &--send {
+      margin-left: auto; // 전송 버튼을 오른쪽 끝으로
+    }
+  }
+}
+
+// ChatInput 컨테이너 스타일
+.chat-input-container {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--primitive-radius-md);
+  background-color: var(--color-background-primary);
+  overflow: hidden;
+  position: relative;
+
+  // Input 컴포넌트 스타일 오버라이드
+  .input-group {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+
+  .input-container {
+    border: none !important;
+  }
+
+  .input,
+  .input-textarea {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding-bottom: 48px !important; // 툴바 공간 확보
+  }
+}

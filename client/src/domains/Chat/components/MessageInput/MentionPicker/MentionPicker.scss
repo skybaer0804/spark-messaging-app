@@ -1,0 +1,58 @@
+.mention-picker {
+  max-width: calc(100vw - 32px);
+  max-height: 400px;
+  background: var(--bg-surface, #ffffff);
+  border-radius: var(--shape-radius-md, 8px);
+  box-shadow: var(--shadow-lg, 0 4px 20px rgba(0, 0, 0, 0.15));
+  overflow: hidden;
+  border: 1px solid var(--color-border-default, rgba(0, 0, 0, 0.1));
+
+  &__paper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__title {
+    color: var(--color-text-secondary, #666);
+    font-weight: 600;
+    padding: 8px 12px !important;
+  }
+
+  &__list {
+    // overflow-y: auto;
+    flex: 1;
+  }
+}
+
+.mention-item {
+  transition: all 0.2s;
+  border: none !important;
+  
+  &:hover {
+    background-color: var(--color-bg-subtle, #f5f5f5) !important;
+  }
+
+  &.profile-item--active {
+    background-color: var(--color-bg-subtle, #f5f5f5) !important;
+    border: none !important;
+  }
+}
+
+[data-theme='dark'] {
+  .mention-picker {
+    background: var(--bg-surface, #1e1e1e);
+    // border-color: var(--color-border-default, rgba(255, 255, 255, 0.1));
+    
+    &__title {
+      background: transparent;
+    }
+  }
+  
+  .mention-item {
+    &:hover {
+      background-color: var(--color-surface-level-1) !important;
+    }
+  }
+}

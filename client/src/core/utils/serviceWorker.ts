@@ -1,0 +1,54 @@
+/**
+ * Service Worker 등록 및 관리 유틸리티
+ */
+
+export function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    // 개발 모드에서는 수동 등록 스킵 (Vite PWA 또는 PushService에서 관리)
+    if (import.meta.env.DEV) {
+      return;
+    }
+
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((registration) => {
+          // 업데이트 확인
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // 새 버전이 설치되었을 때 사용자에게 알림 (선택사항)
+                }
+              });
+            }
+          });
+        })
+        .catch((error) => {
+          console.error('Service Worker registration failed:', error);
+        });
+    });
+  }
+}
+
+export function unregisterServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then((registration) => {
+      registration.unregister();
+    });
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

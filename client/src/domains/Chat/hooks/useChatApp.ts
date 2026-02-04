@@ -1,0 +1,193 @@
+import { useState, useEffect } from 'preact/hooks';
+import { useToast } from '@/core/context/ToastContext';
+import { useRouterState } from '@/routes/RouterState';
+import { setChatCurrentRoom, currentWorkspaceId } from '@/stores/chatRoomsStore';
+import { useChat } from '../context/ChatContext';
+import { useChatRoom } from './useChatRoom';
+import { ChatRoom } from '../types';
+
+export function useChatApp() {
+  const { navigate } = useRouterState();
+  const {
+    isConnected,
+    socketId,
+    roomList,
+    userList,
+    workspaceList,
+    services,
+    refreshRoomList,
+  } = useChat();
+
+  const { currentRoom, messages, isRoomLoading, sendMessage, handleRoomSelect, setCurrentRoom, setMessages } = useChatRoom();
+
+  const [input, setInput] = useState('');
+  const [roomIdInput, setRoomIdInput] = useState('chat');
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState<string[]>([]);
+  const [uploadingFile, setUploadingFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const { showSuccess, showError } = useToast();
+
+  const { room: roomService, fileTransfer: fileTransferService, chat: chatService } = services;
+
+  useEffect(() => {
+    setChatCurrentRoom(currentRoom?.name || null);
+  }, [currentRoom]);
+
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
+    await sendMessage(input.trim());
+    setInput('');
+  };
+
+  const handleFileSend = async (file: File) => {
+    if (!isConnected || !currentRoom) return;
+
+    // 파일 검증
+    const validation = fileTransferService.validateFile(file);
+    if (!validation.valid) {
+      showError(validation.error || '파일 전송 실패');
+      return;
+    }
+
+    setUploadingFile(file);
+    setUploadProgress(0);
+
+    try {
+      await fileTransferService.sendFile(currentRoom._id, file, (progress: number) => {
+        setUploadProgress(progress);
+      });
+      setUploadingFile(null);
+      setUploadProgress(0);
+      showSuccess('파일 전송 완료');
+    } catch (error: any) {
+      console.error('Failed to send file:', error);
+      setUploadingFile(null);
+      setUploadProgress(0);
+      const errorMessage = error?.response?.data?.error || error?.message || '파일 전송 실패';
+      showError(errorMessage);
+    }
+  };
+
+  const handleCreateRoom = async (type: ChatRoom['type'] = 'direct', extraData: any = {}) => {
+    // direct의 경우 이름이 없어도 멤버가 있으면 생성 가능
+    if (type !== 'direct' && !roomIdInput.trim() && !extraData.name) return;
+    if (!isConnected) return;
+
+    try {
+      const response = await chatService.createRoom({
+        name: extraData.name || (type === 'direct' ? undefined : roomIdInput.trim()),
+        description: extraData.description,
+        members: selectedUserIds.length > 0 ? selectedUserIds : extraData.members || undefined,
+        workspaceId: extraData.workspaceId || currentWorkspaceId.value || '',
+        type,
+        teamId: extraData.teamId,
+        parentId: extraData.parentId,
+        isPrivate: extraData.isPrivate || false,
+      });
+
+      const newRoom = response.data;
+      const isNew = response.status === 201;
+
+      // 이미 목록에 있는 방인지 확인
+      const exists = roomList.some((r) => r._id === newRoom._id);
+
+      // 새 방이거나 목록에 없으면 새로고침
+      if (isNew || !exists) {
+        await refreshRoomList();
+      }
+
+      // 방 선택 및 해당 경로로 이동 (onRoomSelect는 ChatApp 컴포넌트에서 pathname 감지로 처리됨)
+      if (newRoom && newRoom._id) {
+        handleRoomSelect(newRoom);
+      }
+
+      setRoomIdInput('');
+      setSelectedUserIds([]);
+      setSelectedWorkspaceIds([]);
+
+      if (isNew) {
+        const typeMap: Record<string, string> = {
+          direct: '1:1 대화방',
+          public: '채널',
+          private: '비공개 채널',
+          team: '팀',
+          discussion: '토론',
+        };
+        showSuccess(`${typeMap[type] || type}이 생성되었습니다.`);
+      }
+
+      return newRoom;
+    } catch (error) {
+      console.error('Failed to create room:', error);
+      showError('Room 생성 실패');
+    }
+  };
+
+  const toggleUserSelection = (userId: string) => {
+    setSelectedUserIds((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
+  };
+
+  const toggleWorkspaceSelection = (workspaceId: string) => {
+    setSelectedWorkspaceIds((prev) =>
+      prev.includes(workspaceId) ? prev.filter((id) => id !== workspaceId) : [...prev, workspaceId],
+    );
+  };
+
+  const leaveRoom = async (roomId?: string) => {
+    const targetRoomId = roomId || currentRoom?._id;
+    if (!targetRoomId || !isConnected) return;
+
+    try {
+      // [v2.4.0] 현재 보고 있는 방을 나가는 경우라면 즉시 경로 이동 (useEffect 재진입 방지)
+      if (currentRoom?._id === targetRoomId) {
+        navigate('/chatapp');
+      }
+
+      // 1. DB에서 제거 (UserChatRoom 삭제 및 Room 멤버에서 제거)
+      await chatService.leaveRoom(targetRoomId);
+
+      // 2. 소켓 채널 퇴장
+      await roomService.leaveRoom(targetRoomId);
+
+      // 3. 클라이언트 상태 초기화 (현재 보고 있는 방인 경우만)
+      if (currentRoom?._id === targetRoomId) {
+        setCurrentRoom(null);
+        setMessages([]);
+        await chatService.setCurrentRoom(null);
+      }
+
+      showSuccess('채팅방을 나갔습니다.');
+    } catch (error) {
+      console.error('Failed to leave room:', error);
+      showError('Room 나가기 실패');
+    }
+  };
+
+  return {
+    isConnected,
+    messages,
+    input,
+    setInput,
+    roomIdInput,
+    setRoomIdInput,
+    currentRoom,
+    roomList,
+    userList,
+    workspaceList,
+    selectedUserIds,
+    selectedWorkspaceIds,
+    toggleUserSelection,
+    toggleWorkspaceSelection,
+    sendMessage: handleSendMessage,
+    handleRoomSelect,
+    handleCreateRoom,
+    leaveRoom,
+    sendFile: handleFileSend,
+    uploadingFile,
+    uploadProgress,
+    isRoomLoading,
+    socketId,
+    setCurrentRoom,
+  };
+}

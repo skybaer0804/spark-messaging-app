@@ -1,0 +1,257 @@
+import { useState, useEffect } from 'preact/hooks';
+import { IconButton } from '@/ui-components/Button/IconButton';
+import { Box } from '@/ui-components/Layout/Box';
+import { Flex } from '@/ui-components/Layout/Flex';
+import { Typography } from '@/ui-components/Typography/Typography';
+import { List, ListItem, ListItemText } from '@/ui-components/List/List';
+import { Avatar } from '@/ui-components/Avatar/Avatar';
+import { Divider } from '@/ui-components/Divider/Divider';
+import {
+  IconSearch,
+  IconAddressBook,
+  IconCircleFilled,
+  IconCircle,
+  IconUser,
+  IconLogout,
+  IconHome,
+  IconSortDescending,
+} from '@tabler/icons-preact';
+import { useAuth } from '@/core/hooks/useAuth';
+import { authApi } from '@/core/api/ApiService';
+import { useToast } from '@/core/context/ToastContext';
+import { useRouterState } from '@/routes/RouterState';
+
+import { ChatCreateMenu } from './ChatCreateMenu';
+
+interface ChatSidebarHeaderProps {
+  setIsSearching: (val: boolean) => void;
+  userList: any[];
+  selectedUserIds: string[];
+  toggleUserSelection: (userId: string) => void;
+  handleCreateRoom: (type: any, extraData?: any) => void;
+  roomIdInput: string;
+  setRoomIdInput: (val: string) => void;
+}
+
+export const ChatSidebarHeader = ({
+  setIsSearching,
+  userList,
+  selectedUserIds,
+  toggleUserSelection,
+  handleCreateRoom,
+  roomIdInput,
+  setRoomIdInput,
+}: ChatSidebarHeaderProps) => {
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const { user: currentUser, signOut } = useAuth();
+  const { showInfo, showSuccess } = useToast();
+  const { navigate, pathname } = useRouterState();
+
+  const handleUpdateStatus = async (status: string) => {
+    try {
+      await authApi.updateProfile({ status });
+      setShowProfileMenu(false);
+      const statusMap: Record<string, string> = {
+        online: '온라인',
+        away: '자리비움',
+        busy: '바쁨',
+        offline: '오프라인',
+      };
+      showSuccess(`상태가 ${statusMap[status] || status}로 변경되었습니다.`);
+      if (currentUser) {
+        currentUser.status = status as any;
+      }
+    } catch (err) {
+      console.error('Failed to update status:', err);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/auth/login');
+    } catch (err) {
+      console.error('Failed to logout:', err);
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearching(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setIsSearching]);
+
+  useEffect(() => {
+    const handleClick = () => {
+      setShowProfileMenu(false);
+    };
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
+
+  return (
+    <>
+      <div
+        className="chat-app__sidebar-profile"
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowProfileMenu(!showProfileMenu);
+        }}
+        style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center' }}
+      >
+        <div className="avatar">
+          <Avatar src={currentUser?.profileImage} variant="rounded" size="sm" style={{ backgroundColor: '#23D5AB' }}>
+            {currentUser?.username?.substring(0, 1).toUpperCase() || <IconUser size={20} />}
+          </Avatar>
+          <div className={`avatar-status avatar-status--${currentUser?.status || 'online'}`} />
+        </div>
+      </div>
+
+      {/* Profile Menu Dropdown */}
+      {showProfileMenu && (
+        <div className="chat-app__profile-menu" onClick={(e) => e.stopPropagation()}>
+          <div className="chat-app__profile-menu-header">
+            <Flex align="center" gap="md">
+              <div style={{ position: 'relative' }}>
+                <Avatar
+                  src={currentUser?.profileImage}
+                  variant="rounded"
+                  size="md"
+                  style={{ backgroundColor: '#23D5AB' }}
+                >
+                  {currentUser?.username?.substring(0, 1).toUpperCase()}
+                </Avatar>
+                <div
+                  className={`avatar-status avatar-status--${currentUser?.status || 'online'}`}
+                  style={{ border: '2px solid #fff', bottom: '0', right: '0', width: '12px', height: '12px' }}
+                />
+              </div>
+              <Box>
+                <Typography variant="h4" style={{ fontWeight: 'bold' }}>
+                  {currentUser?.username || 'User'}
+                </Typography>
+                <Typography variant="caption" color="text-secondary">
+                  {currentUser?.status === 'online'
+                    ? '온라인'
+                    : currentUser?.status === 'away'
+                    ? '자리비움'
+                    : currentUser?.status === 'busy'
+                    ? '바쁨'
+                    : '오프라인'}
+                </Typography>
+              </Box>
+            </Flex>
+          </div>
+
+          <div className="chat-app__profile-menu-section">
+            <List disablePadding>
+              <ListItem onClick={() => handleUpdateStatus('online')} className="chat-app__profile-menu-item">
+                <IconCircleFilled size={14} style={{ color: '#2bac76', marginRight: '12px' }} />
+                <ListItemText primary="온라인" />
+              </ListItem>
+              <ListItem onClick={() => handleUpdateStatus('away')} className="chat-app__profile-menu-item">
+                <IconCircleFilled size={14} style={{ color: '#f59e0b', marginRight: '12px' }} />
+                <ListItemText primary="자리비움" />
+              </ListItem>
+              <ListItem onClick={() => handleUpdateStatus('busy')} className="chat-app__profile-menu-item">
+                <IconCircleFilled size={14} style={{ color: '#e11d48', marginRight: '12px' }} />
+                <ListItemText primary="바쁨" />
+              </ListItem>
+              <ListItem onClick={() => handleUpdateStatus('offline')} className="chat-app__profile-menu-item">
+                <IconCircle size={14} style={{ color: '#94a3b8', marginRight: '12px' }} />
+                <ListItemText primary="오프라인" />
+              </ListItem>
+            </List>
+          </div>
+
+          <Divider />
+
+          <div className="chat-app__profile-menu-section">
+            <List disablePadding>
+              <ListItem
+                onClick={() => {
+                  navigate('/profile');
+                  setShowProfileMenu(false);
+                }}
+                className="chat-app__profile-menu-item"
+              >
+                <IconUser size={18} style={{ marginRight: '12px', color: '#64748b' }} />
+                <ListItemText primary="프로필" />
+              </ListItem>
+            </List>
+          </div>
+
+          <Divider />
+
+          <div className="chat-app__profile-menu-section">
+            <List disablePadding>
+              <ListItem onClick={handleLogout} className="chat-app__profile-menu-item">
+                <IconLogout size={18} style={{ marginRight: '12px', color: '#64748b' }} />
+                <ListItemText primary="로그아웃" />
+              </ListItem>
+            </List>
+          </div>
+        </div>
+      )}
+
+      <div className="chat-app__sidebar-actions">
+        <IconButton
+          size="small"
+          title="채팅 홈"
+          active={pathname === '/chatapp'}
+          color={pathname === '/chatapp' ? 'primary' : 'secondary'}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate('/chatapp');
+          }}
+        >
+          <IconHome size={20} />
+        </IconButton>
+        <IconButton 
+          size="small" 
+          title="검색" 
+          color="secondary"
+          onClick={() => setIsSearching(true)}
+        >
+          <IconSearch size={20} />
+        </IconButton>
+        <IconButton
+          size="small"
+          title="디렉토리"
+          active={pathname === '/chatapp/directory'}
+          color={pathname === '/chatapp/directory' ? 'primary' : 'secondary'}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate('/chatapp/directory');
+          }}
+        >
+          <IconAddressBook size={20} />
+        </IconButton>
+        <IconButton
+          size="small"
+          title="정렬"
+          color="secondary"
+          onClick={(e) => {
+            e.stopPropagation();
+            showInfo('준비 중입니다.');
+          }}
+        >
+          <IconSortDescending size={20} />
+        </IconButton>
+        <ChatCreateMenu
+          userList={userList}
+          selectedUserIds={selectedUserIds}
+          toggleUserSelection={toggleUserSelection}
+          handleCreateRoom={handleCreateRoom}
+          roomIdInput={roomIdInput}
+          setRoomIdInput={setRoomIdInput}
+        />
+      </div>
+    </>
+  );
+};

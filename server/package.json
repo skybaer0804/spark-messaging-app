@@ -1,0 +1,36 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@skybaer0804/spark-messaging-client": "^1.0.2",
+    "assimpjs": "^0.0.10",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.2",
+    "bull": "^4.16.5",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "gltf-pipeline": "^4.3.0",
+    "gltf-validator": "^2.0.0-dev.3.10",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.0",
+    "multer": "^2.0.2",
+    "node-cron": "^4.2.1",
+    "redis": "^5.10.0",
+    "sharp": "^0.34.5",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

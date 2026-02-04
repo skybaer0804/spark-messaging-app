@@ -1,0 +1,128 @@
+@use '/src/styles/tokens/index';
+
+.video-meeting-core {
+  width: 100%;
+  min-height: 100%;
+  background-color: var(--color-background-secondary);
+  background-image: radial-gradient(var(--color-border-default) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  overflow-y: auto;
+  padding: var(--space-padding-xl) 0;
+
+  &__container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  &__hero {
+    margin-bottom: 48px;
+    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  &__badge {
+    display: inline-flex;
+    padding: 6px 12px;
+    background-color: var(--color-background-primary);
+    border: 1px solid var(--color-border-default);
+    border-radius: 99px;
+    color: var(--color-interactive-primary);
+    margin-bottom: var(--space-gap-sm);
+  }
+
+  &__title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: var(--space-gap-md);
+
+    .highlight {
+      background: linear-gradient(120deg, #23d5ab, #23a6d5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  }
+
+  &__desc {
+    font-size: 1.1rem;
+    max-width: 600px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+
+  &__section {
+    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+    margin-bottom: 48px;
+  }
+
+  &__section-header {
+    margin-bottom: var(--space-gap-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__empty-state {
+    text-align: center;
+    padding: 64px !important;
+    background-color: var(--color-background-primary) !important;
+    border: 1px dashed var(--color-border-default) !important;
+    border-radius: var(--primitive-radius-large) !important;
+  }
+
+  &__meeting-card {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    height: 100%;
+    border: 1px solid transparent !important;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+      border-color: var(--color-interactive-primary) !important;
+    }
+
+    .card-header {
+      padding-bottom: 0;
+    }
+
+    .meeting-type-tag {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background-color: var(--color-background-secondary);
+      color: var(--color-text-secondary);
+    }
+  }
+
+  &__host-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border-muted);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .video-meeting-core {
+    &__title {
+      font-size: 2rem;
+    }
+    
+    &__container {
+      padding: var(--space-padding-lg);
+    }
+  }
+}

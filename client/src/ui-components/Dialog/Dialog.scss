@@ -1,0 +1,89 @@
+@use '/src/styles/tokens/index';
+
+.dialog-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--dialog-z-index);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-padding-card-lg);
+  box-sizing: border-box;
+
+  &__backdrop {
+    position: fixed;
+    inset: 0;
+    background: var(--dialog-backdrop);
+  }
+}
+
+.dialog {
+  position: relative;
+  background: var(--dialog-surface);
+  color: var(--dialog-text);
+  border-radius: var(--dialog-radius);
+  box-shadow: var(--dialog-shadow);
+  width: 100%;
+  max-height: calc(100vh - var(--space-padding-card-lg) * 2);
+  overflow: auto;
+  padding: var(--dialog-padding);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dialog-body-gap);
+
+  &:focus-visible {
+    outline: var(--dialog-focus-ring);
+    outline-offset: 2px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--dialog-header-gap);
+  }
+
+  &__title {
+    font-size: var(--dialog-title-size);
+    font-weight: var(--dialog-title-weight);
+    min-width: 0;
+  }
+
+  &__content {
+    min-width: 0;
+    overflow: visible;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--dialog-actions-gap);
+  }
+
+  &--max-sm {
+    max-width: var(--dialog-max-width-sm);
+  }
+
+  &--max-md {
+    max-width: var(--dialog-max-width-md);
+  }
+
+  &--max-lg {
+    max-width: var(--dialog-max-width-lg);
+  }
+
+  &--max-false {
+    max-width: none;
+  }
+
+  &--full-width {
+    max-width: 100%;
+  }
+}
+
+
+
+
+
+
+
