@@ -44,7 +44,11 @@
 2. **Production 환경 변수 부재**: Koyeb 배포 시 `npm run build`를 실행하지만, 배포용 환경 변수 파일(`client/.env.production`)이 없거나 Koyeb 콘솔에서 환경 변수가 주입되지 않아, `VITE_API_URL`이 개발용 설정인 `http://localhost:5000/api`로 빌드됨.
 3. **결과**: PC 환경(localhost 서버 가동 또는 브라우저 정책 차이)에서는 동작할 수 있으나, 모바일 기기에서는 `localhost`가 기기 자신을 가리키므로 `CONNECTION_REFUSED` 에러가 발생함.
 
+### 추가 발견된 원인 (2026-02-04)
+4. **서비스 워커의 TWA 인증 파일 간섭**: PWA 서비스 워커가 `/.well-known/assetlinks.json` 요청을 페이지 내비게이션으로 오인하여 `index.html`을 반환하는 문제가 확인됨. 이로 인해 최초 접속 시 TWA 인증이 실패하고, 강력 새로고침을 해야만 정상적인 JSON이 보임.
+
 ### 조치 사항
 1. **코드 수정**: `sparkMessaging.ts`의 환경 변수명을 `.env`와 일치시킴 (`VITE_SPARK_SOCKET_URL`, `VITE_SPARK_PROJECT_KEY`).
-2. **환경 설정 추가**: `client/.env.production` 파일을 생성하여 배포 환경에서 사용할 정확한 서버 URL(`https://sparkserver.koyeb.app`)을 명시함.
-3. **재배포 필요**: 위 변경 사항을 포함하여 재배포하면 모바일에서도 정상적으로 서버에 접속 가능할 것임.
+2. **환경 설정 추가**: `vite.config.ts`를 수정하여 `VITE_` 접두사가 없는 Koyeb 환경 변수를 매핑하고, `client/.env.production` 파일을 생성하여 배포 환경 URL을 명시함.
+3. **서비스 워커 예외 처리**: `vite.config.ts`의 `navigateFallbackDenylist`에 `/^\/.well-known/` 정규식을 추가하여, TWA 인증 파일 요청 시 서비스 워커가 개입하지 않고 서버로 직접 요청하도록 수정함.
+4. **재배포 필요**: 위 변경 사항들을 포함하여 재배포 후 확인 필요.
