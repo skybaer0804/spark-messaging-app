@@ -15,6 +15,7 @@
     <meta name="theme-color" content="#1a1a2e" />
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Spark" />
     <link rel="apple-touch-icon" href="/asset/spark_icon_180.png" />
@@ -25,8 +26,16 @@
 
     <title>Spark Messaging Demo</title>
     <style>
-      body { background-color: #1a1a2e; margin: 0; padding: 0; }
-      #app:empty { display: none; }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #1a1a2e; /* Theme background color */
+      }
+      #app:empty {
+        background-color: #1a1a2e;
+        width: 100vw;
+        height: 100vh;
+      }
     </style>
   </head>
   <body>
