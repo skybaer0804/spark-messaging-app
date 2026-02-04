@@ -46,9 +46,11 @@
 
 ### 추가 발견된 원인 (2026-02-04)
 4. **서비스 워커의 TWA 인증 파일 간섭**: PWA 서비스 워커가 `/.well-known/assetlinks.json` 요청을 페이지 내비게이션으로 오인하여 `index.html`을 반환하는 문제가 확인됨. 이로 인해 최초 접속 시 TWA 인증이 실패하고, 강력 새로고침을 해야만 정상적인 JSON이 보임.
+5. **Runtime Error (White Screen 원인)**: `ChatMessageItem.tsx`에서 `lastReplyAt` 값이 Date 객체가 아닌 ISO 문자열로 넘어오는데 `.getTime()` 함수를 직접 호출하여 `TypeError`가 발생함. 이 오류로 인해 앱 렌더링이 중단되어 모바일에서 하얀 화면(White Screen)이 발생했을 가능성이 매우 높음.
 
 ### 조치 사항
-1. **코드 수정**: `sparkMessaging.ts`의 환경 변수명을 `.env`와 일치시킴 (`VITE_SPARK_SOCKET_URL`, `VITE_SPARK_PROJECT_KEY`).
-2. **환경 설정 추가**: `vite.config.ts`를 수정하여 `VITE_` 접두사가 없는 Koyeb 환경 변수를 매핑하고, `client/.env.production` 파일을 생성하여 배포 환경 URL을 명시함.
-3. **서비스 워커 예외 처리**: `vite.config.ts`의 `navigateFallbackDenylist`에 `/^\/.well-known/` 정규식을 추가하여, TWA 인증 파일 요청 시 서비스 워커가 개입하지 않고 서버로 직접 요청하도록 수정함.
-4. **재배포 필요**: 위 변경 사항들을 포함하여 재배포 후 확인 필요.
+1. **코드 수정 (Reverted)**: 사용자 피드백에 따라 `sparkMessaging.ts` 및 `vite.config.ts`의 환경 변수 관련 수정 사항은 원복함. (PC 접속이 되는 것으로 보아 환경 변수 문제가 아님을 확인)
+2. **서비스 워커 예외 처리**: `vite.config.ts`의 `navigateFallbackDenylist`에 `/^\/.well-known/` 정규식을 추가하여, TWA 인증 파일 요청 시 서비스 워커가 개입하지 않고 서버로 직접 요청하도록 수정함.
+3. **Runtime Error 수정**: `ChatMessageItem.tsx`에서 `lastReplyAt`을 비교할 때 `new Date()`로 변환 후 안전하게 비교하도록 수정하여 `TypeError` 방지.
+4. **Meta Tag 업데이트**: `index.html`에 `mobile-web-app-capable` 메타 태그 추가.
+5. **재배포 필요**: 위 변경 사항들을 포함하여 재배포 후 확인 필요.
