@@ -281,7 +281,10 @@ export const ChatMessageItem = memo(ChatMessageItemComponent, (prevProps, nextPr
     prevProps.message.fileData?.renderUrl === nextProps.message.fileData?.renderUrl &&
     prevProps.message.renderUrl === nextProps.message.renderUrl &&
     prevProps.message.replyCount === nextProps.message.replyCount &&
-    prevProps.message.lastReplyAt?.getTime() === nextProps.message.lastReplyAt?.getTime() &&
+    (prevProps.message.lastReplyAt === nextProps.message.lastReplyAt || (
+      !!(prevProps.message.lastReplyAt && nextProps.message.lastReplyAt) &&
+      new Date(prevProps.message.lastReplyAt).getTime() === new Date(nextProps.message.lastReplyAt).getTime()
+    )) &&
     prevProps.unreadCount === nextProps.unreadCount &&
     prevProps.isGrouped === nextProps.isGrouped
   );

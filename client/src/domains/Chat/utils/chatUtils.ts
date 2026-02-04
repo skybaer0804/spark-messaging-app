@@ -47,3 +47,39 @@ export function groupMessagesByDate(messages: Message[]): MessageWithDateDivider
 
   return result;
 }
+
+/**
+ * 서버에서 내려온 메시지 데이터를 클라이언트용 Message 타입으로 포맷팅합니다.
+ */
+export function formatServerMessage(msg: any): Message {
+  const senderObj = typeof msg.senderId === 'object' ? msg.senderId : null;
+
+  let fileData: any = undefined;
+  if (msg.fileUrl || msg.thumbnailUrl || msg.renderUrl) {
+    fileData = {
+      fileName: msg.fileName || 'unknown',
+      fileType: msg.type || 'file',
+      mimeType: msg.mimeType || 'application/octet-stream',
+      size: msg.fileSize || 0,
+      url: msg.fileUrl,
+      thumbnail: msg.thumbnailUrl,
+      renderUrl: msg.renderUrl,
+      data: msg.thumbnailUrl || msg.renderUrl || msg.fileUrl,
+    };
+  }
+
+  return {
+    ...msg,
+    senderId: senderObj ? senderObj._id : msg.senderId,
+    senderName: msg.senderName || (senderObj ? senderObj.username : 'Unknown'),
+    timestamp: new Date(msg.timestamp),
+    status: msg.status || 'sent',
+    fileData,
+    parentMessageId: msg.parentMessageId,
+    replyCount: msg.replyCount,
+    lastReplyAt: msg.lastReplyAt ? new Date(msg.lastReplyAt) : undefined,
+    threadSequenceNumber: msg.threadSequenceNumber,
+    isForwarded: msg.isForwarded,
+    originSenderName: msg.originSenderName,
+  };
+}

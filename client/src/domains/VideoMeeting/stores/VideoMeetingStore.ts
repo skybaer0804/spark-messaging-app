@@ -117,7 +117,7 @@ export class VideoMeetingStore {
         const chatMessage: ChatMessage = {
           id: message._id,
           content: message.content,
-          timestamp: message.timestamp.getTime(),
+          timestamp: new Date(message.timestamp).getTime(),
           type: message.type === 'file' ? 'file-transfer' : 'chat',
           senderId: message.senderId,
           senderName: message.senderName, // v2.4.0: 이름 필드 추가

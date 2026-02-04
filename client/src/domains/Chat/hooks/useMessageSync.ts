@@ -1,6 +1,7 @@
 import { useRef, useCallback } from 'preact/hooks';
 import { Message } from '../types';
 import { useChat } from '../context/ChatContext';
+import { formatServerMessage } from '../utils/chatUtils';
 
 export function useMessageSync() {
   const lastSequenceRef = useRef<number>(0);
@@ -24,9 +25,12 @@ export function useMessageSync() {
 
     try {
       const response = await chatService.syncMessages(roomId, lastSequenceRef.current);
-      const newMessages: Message[] = response.messages;
+      const rawMessages: any[] = response.messages;
 
-      if (newMessages.length === 0) return currentMessages;
+      if (rawMessages.length === 0) return currentMessages;
+
+      // 서버 데이터를 클라이언트용으로 포맷팅 (Date 변환 등)
+      const newMessages = rawMessages.map(msg => formatServerMessage(msg));
 
       // 누락 메시지 병합 및 시퀀스 순 정렬
       const combined = [...currentMessages, ...newMessages];

@@ -129,8 +129,14 @@ export const ChatMessages = memo(ChatMessagesComponent, (prevProps, nextProps) =
     return false;
   }
   // 메시지 ID와 답글 수, 마지막 답글 시간, 상태 등을 포함하여 비교하여 내용 변경 시 리렌더링 허용
-  const prevData = prevProps.messages.map((m) => `${m._id}-${m.replyCount || 0}-${m.lastReplyAt?.getTime() || 0}-${m.status}`).join(',');
-  const nextData = nextProps.messages.map((m) => `${m._id}-${m.replyCount || 0}-${m.lastReplyAt?.getTime() || 0}-${m.status}`).join(',');
+  const prevData = prevProps.messages.map((m) => {
+    const lastReplyTime = m.lastReplyAt ? new Date(m.lastReplyAt).getTime() : 0;
+    return `${m._id}-${m.replyCount || 0}-${lastReplyTime}-${m.status}`;
+  }).join(',');
+  const nextData = nextProps.messages.map((m) => {
+    const lastReplyTime = m.lastReplyAt ? new Date(m.lastReplyAt).getTime() : 0;
+    return `${m._id}-${m.replyCount || 0}-${lastReplyTime}-${m.status}`;
+  }).join(',');
   
   return (
     prevData === nextData &&

@@ -61,3 +61,10 @@
 2. **서비스 워커 예외 처리**: `vite.config.ts`의 `navigateFallbackDenylist`에 `/^\/.well-known/` 정규식을 추가하여, TWA 인증 파일 요청 시 서비스 워커가 개입하지 않고 서버로 직접 요청하도록 수정함. (이것만 유효)
 3. **Runtime Error 수정 (Reverted)**: `ChatMessageItem.tsx` 수정 시도했으나 전체 원복 요청으로 인해 Rollback됨. 추후 다시 적용 필요.
 4. **전체 원복 (2026-02-04)**: `GlobalErrorBoundary`, Auth Loading, meta tag 등 최근 적용한 변경사항 전체를 원복하여 PC 접속 상태 복구. Mobile White Screen 이슈는 원점 재검토 필요.
+
+### 재해결 (2026-02-04)
+1. **ChatMessageItem.tsx & ChatMessages.tsx memo 수정**: `lastReplyAt.getTime()` 호출 시 `lastReplyAt`이 Date 객체가 아닌 string일 경우 발생하는 `TypeError`를 방어하기 위해 `new Date()`로 감싸거나 안전하게 비교하도록 수정.
+2. **useMessageSync.ts 데이터 포맷팅 추가**: `syncMessages`를 통해 가져온 raw 데이터가 `formatServerMessage`를 거치지 않아 Date 필드가 string으로 남아있던 문제를 해결.
+3. **index.html 초기 배경색 추가**: JS 로드 전 하얀 화면이 잠깐 뜨는 것을 방지하기 위해 인라인 스타일로 배경색(`#1a1a2e`) 지정.
+4. **VideoMeetingStore.ts 방어 코드**: `timestamp.getTime()` 호출 전 `new Date()`로 명시적 변환 추가.
+5. **공통 유틸리티 추출**: `useChatRoom.ts`에 있던 `formatServerMessage`를 `chatUtils.ts`로 옮겨 `useMessageSync` 등에서도 재사용 가능하게 함.
