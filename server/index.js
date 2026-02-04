@@ -15,6 +15,24 @@ const { initializeSystem } = require('./utils/initialize');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// CORS 설정
+const origins = process.env.CORS_ORIGINS 
+  ? process.env.CORS_ORIGINS.split(',') 
+  : ['http://localhost:5173', 'https://spark.koyeb.app']; // 기본값 설정
+
+app.use(cors({
+  origin: origins,
+  credentials: false, // 쿠키나 인증 헤더를 사용하는 경우 필수
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'x-workspace-id',
+    'X-Requested-With',
+    'Accept'
+  ]
+}));
+
 // Connect to Databases
 connectDB().then(() => {
   // DB 연결 후 시스템 초기화 실행
