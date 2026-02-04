@@ -55,7 +55,6 @@ try {
 }
 
 // Middleware
-app.use(cors());
 app.use(express.json({ limit: '600mb' }));
 // multipart/form-data는 multer가 처리하므로, urlencoded는 일반 폼 데이터용
 app.use(express.urlencoded({ extended: true, limit: '600mb' })); // 대용량 파일 지원
@@ -107,11 +106,17 @@ app.use('/.well-known', express.static(path.join(clientDistPath, '.well-known'),
 // 2. 나머지 정적 파일 서빙 (JS, CSS, 아이콘 등)
 app.use(express.static(clientDistPath));
 
-// 3. SPA 라우팅 대응: API가 아닌 모든 요청은 index.html로 전달
+// 3. SPA 라우팅 대응: API/파일이 아닌 페이지 내비게이션 요청만 index.html로 전달
 app.get('*', (req, res) => {
-  // API 및 파일 업로드 경로 제외
-  if (!req.path.startsWith('/api') && !req.path.startsWith('/files')) {
+  // API, 업로드 파일, 그리고 확장자가 있는 파일(이미지, JS 등) 요청 제외
+  const isApiOrFile = req.path.startsWith('/api') || req.path.startsWith('/files');
+  const hasExtension = /\.[a-z0-9]+$/i.test(req.path);
+
+  if (!isApiOrFile && !hasExtension) {
     res.sendFile(path.join(clientDistPath, 'index.html'));
+  } else {
+    // 파일이 없는 경우 index.html을 보내지 않고 404 처리 (브라우저 에러 방지)
+    res.status(404).json({ message: 'Not Found' });
   }
 });
 

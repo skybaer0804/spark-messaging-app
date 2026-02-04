@@ -6,7 +6,7 @@ class SocketService {
   }
 
   initialize() {
-    const serverUrl = process.env.SPARK_SERVER_URL;
+    const serverUrl = process.env.SPARK_SOCKET_URL;
     const projectKey = process.env.SPARK_PROJECT_KEY;
 
     if (!serverUrl || !projectKey) {
