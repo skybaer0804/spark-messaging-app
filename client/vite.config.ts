@@ -94,6 +94,8 @@ export default defineConfig({
       workbox: {
         // 커스텀 푸시 핸들러 추가
         importScripts: ['/push-handler.js'],
+        // 소켓 통신(polling)을 서비스 워커 캐싱에서 명시적으로 제외
+        navigateFallbackDenylist: [/^\/socket.io/],
         // 캐싱할 파일 패턴
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // Network First 전략 (API 요청은 네트워크 우선)
