@@ -94,9 +94,25 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Basic Route
-app.get('/', (req, res) => {
-  res.send('Spark Messaging API is running...');
+// Static files for Client (PWA/TWA)
+const clientDistPath = path.join(__dirname, '../client/dist');
+
+// 1. .well-known 폴더 우선 서빙 (TWA 인증용)
+app.use('/.well-known', express.static(path.join(clientDistPath, '.well-known'), {
+  setHeaders: (res) => {
+    res.set('Content-Type', 'application/json'); // assetlinks.json이 JSON으로 인식되도록 강제
+  }
+}));
+
+// 2. 나머지 정적 파일 서빙 (JS, CSS, 아이콘 등)
+app.use(express.static(clientDistPath));
+
+// 3. SPA 라우팅 대응: API가 아닌 모든 요청은 index.html로 전달
+app.get('*', (req, res) => {
+  // API 및 파일 업로드 경로 제외
+  if (!req.path.startsWith('/api') && !req.path.startsWith('/files')) {
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  }
 });
 
 app.listen(PORT, () => {
