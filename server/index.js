@@ -99,12 +99,20 @@ const clientDistPath = path.join(__dirname, '../client/dist');
 // 1. .well-known 폴더 우선 서빙 (TWA 인증용)
 app.use('/.well-known', express.static(path.join(clientDistPath, '.well-known'), {
   setHeaders: (res) => {
-    res.set('Content-Type', 'application/json'); // assetlinks.json이 JSON으로 인식되도록 강제
+    res.set('Content-Type', 'application/json');
+    res.set('X-Content-Type-Options', 'nosniff'); // MIME 타입 엄격 체크 강제
   }
 }));
 
 // 2. 나머지 정적 파일 서빙 (JS, CSS, 아이콘 등)
-app.use(express.static(clientDistPath));
+app.use(express.static(clientDistPath, {
+  maxAge: '1d', // 모바일 캐싱 대응
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.js')) {
+      res.set('Content-Type', 'application/javascript');
+    }
+  }
+}));
 
 // 3. SPA 라우팅 대응: API/파일이 아닌 페이지 내비게이션 요청만 index.html로 전달
 app.get('*', (req, res) => {
