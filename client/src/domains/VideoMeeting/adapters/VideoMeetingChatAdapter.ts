@@ -3,6 +3,7 @@ import type { ChatStore } from '../stores/ChatStore';
 import type { VideoMeetingStore } from '../stores/VideoMeetingStore';
 import { ChatService } from '@/core/socket/ChatService';
 import { FileTransferService } from '@/core/api/FileTransferService';
+import { getLocalStorage } from '@/core/utils/storageCache';
 import type { Signal } from '@preact/signals';
 
 export class VideoMeetingChatAdapter implements ChatAdapter {
@@ -143,7 +144,7 @@ export class VideoMeetingChatAdapter implements ChatAdapter {
 
   // 디버그 모드 관련
   isDebugMode(): boolean {
-    return localStorage.getItem('chat_debug_mode') === 'true';
+    return getLocalStorage('chat_debug_mode') === 'true';
   }
 
   toggleDebug(): void {

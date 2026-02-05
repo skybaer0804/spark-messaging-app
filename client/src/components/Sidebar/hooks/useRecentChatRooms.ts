@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
+import { getLocalStorage, setLocalStorage } from '@/core/utils/storageCache';
 
 const STORAGE_KEY = 'spark-recent-chat-rooms';
 
 const loadRooms = (): string[] => {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = getLocalStorage(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -16,7 +17,7 @@ const loadRooms = (): string[] => {
 
 const saveRooms = (rooms: string[]) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms));
+    setLocalStorage(STORAGE_KEY, JSON.stringify(rooms));
   } catch {
     // ignore
   }

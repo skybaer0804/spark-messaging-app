@@ -1,5 +1,6 @@
 import { createContext, ComponentChildren } from 'preact';
 import { useContext, useEffect, useState, useCallback } from 'preact/hooks';
+import { getLocalStorage, setLocalStorage } from '@/core/utils/storageCache';
 
 export type Theme = 'light' | 'dark';
 export type Contrast = 'standard' | 'high';
@@ -84,7 +85,7 @@ const DEFAULT_CONFIG: ThemeConfig = {
 
 function loadConfigFromStorage(): ThemeConfig {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = getLocalStorage(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
       // 기본값과 병합하여 누락된 키 보완
@@ -105,7 +106,7 @@ function loadConfigFromStorage(): ThemeConfig {
 
 function saveConfigToStorage(config: ThemeConfig): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+    setLocalStorage(STORAGE_KEY, JSON.stringify(config));
   } catch (error) {
     console.error('Failed to save theme config to localStorage:', error);
   }

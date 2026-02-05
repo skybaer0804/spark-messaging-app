@@ -175,7 +175,7 @@ export default defineConfig({
     cssCodeSplit: true,
     // esbuild 옵션: 프로덕션에서 console 제거
     esbuild: {
-      drop: ['console', 'debugger'],
+      // drop: ['console', 'debugger'],
     },
   },
   css: {

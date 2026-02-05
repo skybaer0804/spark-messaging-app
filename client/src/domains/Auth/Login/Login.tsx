@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { getLocalStorage, setLocalStorage, removeLocalStorage } from '@/core/utils/storageCache';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useRouterState } from '@/routes/RouterState';
 import { TextField } from '@/ui-components/TextField/TextField';
@@ -19,7 +20,7 @@ export function Login() {
   const { navigate } = useRouterState();
 
   useEffect(() => {
-    const savedEmail = localStorage.getItem('saved_email');
+    const savedEmail = getLocalStorage('saved_email');
     if (savedEmail) {
       setEmail(savedEmail);
       setRememberMe(true);
@@ -32,9 +33,9 @@ export function Login() {
       await signIn({ email, password });
 
       if (rememberMe) {
-        localStorage.setItem('saved_email', email);
+        setLocalStorage('saved_email', email);
       } else {
-        localStorage.removeItem('saved_email');
+        removeLocalStorage('saved_email');
       }
 
       navigate('/chatapp');
