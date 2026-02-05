@@ -1,8 +1,13 @@
 .auth-layout {
+  height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow-y: auto; // 내용이 길어질 경우 대비
   background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
   background-size: 400% 400%;
   animation: auth-gradient-bg 15s ease infinite;
