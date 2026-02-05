@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { groupMessagesByDate, formatServerMessage } from '../utils/chatUtils';
 import type { ChatRoom, Message } from '../types';
 import { useChat } from '../context/ChatContext';
 import { useOptimisticUpdate } from './useOptimisticUpdate';
@@ -17,40 +18,6 @@ export function useChatRoom(enableListener: boolean = true) {
   // v2.5.1: 방 전환 시 로딩 상태 및 Race Condition 방어
   const [isRoomLoading, setIsRoomLoading] = useState(false);
   const latestRoomIdRef = useRef<string | null>(null);
-
-  // 서버에서 내려온 Message(document)를 프론트 Message 타입으로 변환
-  const formatServerMessage = useCallback((msg: any): Message => {
-    const senderObj = typeof msg.senderId === 'object' ? msg.senderId : null;
-
-    let fileData: any = undefined;
-    if (msg.fileUrl || msg.thumbnailUrl || msg.renderUrl) {
-      fileData = {
-        fileName: msg.fileName || 'unknown',
-        fileType: msg.type || 'file',
-        mimeType: msg.mimeType || 'application/octet-stream',
-        size: msg.fileSize || 0,
-        url: msg.fileUrl,
-        thumbnail: msg.thumbnailUrl,
-        renderUrl: msg.renderUrl, // 추가: 3D 렌더링용 GLB URL
-        data: msg.thumbnailUrl || msg.renderUrl || msg.fileUrl, // 프리뷰 데이터 우선순위
-      };
-    }
-
-    return {
-      ...msg,
-      senderId: senderObj ? senderObj._id : msg.senderId,
-      senderName: msg.senderName || (senderObj ? senderObj.username : 'Unknown'),
-      timestamp: new Date(msg.timestamp),
-      status: msg.status || 'sent',
-      fileData,
-      parentMessageId: msg.parentMessageId,
-      replyCount: msg.replyCount,
-      lastReplyAt: msg.lastReplyAt ? new Date(msg.lastReplyAt) : undefined,
-      threadSequenceNumber: msg.threadSequenceNumber,
-      isForwarded: msg.isForwarded,
-      originSenderName: msg.originSenderName,
-    };
-  }, []);
 
   const handleRoomSelect = useCallback(
     async (room: ChatRoom) => {

@@ -6,6 +6,7 @@ import { Typography } from '@/ui-components/Typography/Typography';
 import { ChatMessageItem } from './ChatMessageItem';
 import { DateDivider } from './DateDivider/DateDivider';
 import { groupMessagesByDate } from '../utils/chatUtils';
+import { getSafeTime } from '@/core/utils/common';
 import type { Message, ChatRoom, ChatUser } from '../types';
 import './Chat.scss';
 
@@ -68,7 +69,7 @@ function ChatMessagesComponent({
             if (item.type === 'divider') {
               return (
                 <DateDivider
-                  key={`divider-${item.date?.getTime() || index}`}
+                  key={`divider-${getSafeTime(item.date) || index}`}
                   date={item.date!}
                 />
               );
@@ -129,8 +130,14 @@ export const ChatMessages = memo(ChatMessagesComponent, (prevProps, nextProps) =
     return false;
   }
   // 메시지 ID와 답글 수, 마지막 답글 시간, 상태 등을 포함하여 비교하여 내용 변경 시 리렌더링 허용
-  const prevData = prevProps.messages.map((m) => `${m._id}-${m.replyCount || 0}-${m.lastReplyAt?.getTime() || 0}-${m.status}`).join(',');
-  const nextData = nextProps.messages.map((m) => `${m._id}-${m.replyCount || 0}-${m.lastReplyAt?.getTime() || 0}-${m.status}`).join(',');
+  const prevData = prevProps.messages.map((m) => {
+    const lastReplyTime = getSafeTime(m.lastReplyAt);
+    return `${m._id}-${m.replyCount || 0}-${lastReplyTime}-${m.status}`;
+  }).join(',');
+  const nextData = nextProps.messages.map((m) => {
+    const lastReplyTime = getSafeTime(m.lastReplyAt);
+    return `${m._id}-${m.replyCount || 0}-${lastReplyTime}-${m.status}`;
+  }).join(',');
   
   return (
     prevData === nextData &&
