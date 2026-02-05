@@ -6,6 +6,7 @@ import { TextField } from '@/ui-components/TextField/TextField';
 import { Button } from '@/ui-components/Button/Button';
 import { Grid } from '@/ui-components/Layout/Grid';
 import { Checkbox } from '@/ui-components/Checkbox/Checkbox';
+import { CircularProgress } from '@/ui-components/CircularProgress/CircularProgress';
 import { AuthLayout } from '../components/AuthLayout/AuthLayout';
 import { IconEye, IconEyeOff, IconMail, IconLock } from '@tabler/icons-preact';
 import './Login.scss';
@@ -102,7 +103,10 @@ export function Login() {
 
           <Grid item xs={12}>
             <Button type="submit" variant="primary" fullWidth disabled={loading} className="login-form__submit">
-              {loading ? '로그인 중...' : '로그인'}
+              <Flex align="center" justify="center" gap="sm">
+                <span>{loading ? '로그인 중...' : '로그인'}</span>
+                {loading && <CircularProgress size={18} color="inherit" />}
+              </Flex>
             </Button>
           </Grid>
 

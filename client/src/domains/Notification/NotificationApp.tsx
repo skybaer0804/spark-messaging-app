@@ -63,12 +63,15 @@ export function NotificationApp() {
 
   if (!isAdmin) {
     return (
-      <Flex direction="column" align="center" justify="center" style={{ height: '100%', padding: '40px' }}>
-        <Typography variant="h2" color="text-error">
-          접근 거부
-        </Typography>
-        <Typography variant="body-medium">관리자만 시스템 알림을 보낼 수 있습니다.</Typography>
-      </Flex>
+      <Box style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {deviceSize === 'mobile' && <MobileHeader />}
+        <Flex direction="column" align="center" justify="center" style={{ flex: 1, padding: '40px' }}>
+          <Typography variant="h2" color="text-error">
+            접근 거부
+          </Typography>
+          <Typography variant="body-medium">관리자만 시스템 알림을 보낼 수 있습니다.</Typography>
+        </Flex>
+      </Box>
     );
   }
 

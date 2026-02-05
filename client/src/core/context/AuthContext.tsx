@@ -83,7 +83,6 @@ export function AuthProvider({ children }: { children: any }) {
       }
 
       setUser(userData);
-      showSuccess('로그인되었습니다');
       return response.data;
     } catch (error: any) {
       showError(error.message || '로그인에 실패했습니다');
@@ -124,7 +123,6 @@ export function AuthProvider({ children }: { children: any }) {
     } finally {
       removeLocalStorage('token');
       setUser(null);
-      showSuccess('로그아웃되었습니다');
     }
   };
 

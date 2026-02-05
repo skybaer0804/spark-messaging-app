@@ -2,7 +2,7 @@ import { IconButton } from '@/ui-components/Button/IconButton';
 import { Box } from '@/ui-components/Layout/Box';
 import { Stack } from '@/ui-components/Layout/Stack';
 import { Paper } from '@/ui-components/Paper/Paper';
-import { IconArrowLeft, IconVideo, IconUsers, IconSettings, IconMessageCircle2 } from '@tabler/icons-preact';
+import { IconArrowLeft, IconUsers, IconSettings, IconMessageCircle2 } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
 import { getDirectChatName } from '../utils/chatUtils';
@@ -75,15 +75,6 @@ export const ChatHeader = ({
             style={{ margin: 0, padding: 0 }}
           />
         </Box>
-        <IconButton
-          onClick={() => {
-            showSuccess('준비 중입니다.');
-          }}
-          color="secondary"
-          title="화상회의"
-        >
-          <IconVideo size={20} />
-        </IconButton>
         <IconButton
           onClick={() => {
             if (showThreads) {

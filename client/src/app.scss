@@ -4,8 +4,8 @@
 .app {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  height: -webkit-fill-available;
+  height: 100vh;
+  height: 100dvh;
   width: 100%;
   background: var(--color-background-primary);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);

@@ -5,14 +5,17 @@ import { Grid } from '@/ui-components/Layout/Grid';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Button } from '@/ui-components/Button/Button';
+import { MobileHeader } from '@/components/Mobile/MobileHeader';
 import { IconMessageCircle, IconBell, IconVideo, IconChevronRight, IconRocket } from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';
 import { useAuth } from '@/core/hooks/useAuth';
+import { useTheme } from '@/core/context/ThemeProvider';
 import './HomePage.scss';
 
 export function HomePage() {
   const { navigate } = useRouterState();
   const { user } = useAuth();
+  const { deviceSize } = useTheme();
 
   const apps = [
     {
@@ -45,8 +48,10 @@ export function HomePage() {
   ];
 
   return (
-    <Box className="home-page">
-      <div className="home-page__container">
+    <Box className="home-page" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0, overflow: 'hidden' }}>
+      {deviceSize === 'mobile' && <MobileHeader />}
+      
+      <div className="home-page__container" style={{ flex: 1, overflowY: 'auto', padding: deviceSize === 'mobile' ? '20px' : 'var(--space-padding-xl)' }}>
         {/* 히어로 섹션 */}
         <section className="home-page__hero">
           <Stack spacing="sm">
