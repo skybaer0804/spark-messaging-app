@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes } from '@/routes/appRoutes';
+import { getLocalStorage, setLocalStorage } from '@/core/utils/storageCache';
 
 const STORAGE_KEY = 'spark-recent-visited-paths';
 
@@ -8,7 +9,7 @@ const normalizePath = (pathname: string) => pathname.split('?')[0].split('#')[0]
 
 const loadPaths = (): string[] => {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = getLocalStorage(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -20,7 +21,7 @@ const loadPaths = (): string[] => {
 
 const savePaths = (paths: string[]) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(paths));
+    setLocalStorage(STORAGE_KEY, JSON.stringify(paths));
   } catch {
     // ignore
   }

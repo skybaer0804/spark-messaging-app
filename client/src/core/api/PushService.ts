@@ -1,4 +1,5 @@
 import { pushApi } from './ApiService';
+import { getLocalStorage, setLocalStorage } from '@/core/utils/storageCache';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
@@ -61,10 +62,10 @@ export class PushService {
       }
 
       // 기기 고유 ID 생성 또는 가져오기
-      let deviceId = localStorage.getItem('spark_device_id');
+      let deviceId = getLocalStorage('spark_device_id');
       if (!deviceId) {
         deviceId = crypto.randomUUID();
-        localStorage.setItem('spark_device_id', deviceId);
+        setLocalStorage('spark_device_id', deviceId);
       }
 
       // 서버에 구독 정보와 deviceId 전송
@@ -88,7 +89,7 @@ export class PushService {
         await subscription.unsubscribe();
       }
 
-      const deviceId = localStorage.getItem('spark_device_id');
+      const deviceId = getLocalStorage('spark_device_id');
       await pushApi.unsubscribe(deviceId);
 
       return true;
@@ -100,7 +101,7 @@ export class PushService {
 
   static async getSubscriptionStatus() {
     try {
-      const deviceId = localStorage.getItem('spark_device_id');
+      const deviceId = getLocalStorage('spark_device_id');
       if (!deviceId) return false;
 
       const res = await pushApi.checkStatus(deviceId);

@@ -10,6 +10,7 @@ import { VideoStore } from './VideoStore';
 import { videoMeetingApi } from '@/core/api/ApiService';
 import { formatMeetingData, FormattedScheduledMeeting } from '../utils/meetingUtils';
 import { getSafeTime } from '@/core/utils/common';
+import { getLocalStorage } from '@/core/utils/storageCache';
 import type { Room, Participant, UserRole, Category, ChatMessage } from '../types';
 
 export interface ScheduledMeeting {
@@ -530,7 +531,7 @@ export class VideoMeetingStore {
 
   public async refreshScheduledMeetings() {
     // 게스트이거나 인증되지 않은 경우 호출하지 않음
-    const token = localStorage.getItem('token');
+    const token = getLocalStorage('token');
     if (!token) return;
 
     try {

@@ -2,6 +2,7 @@ import type SparkMessaging from '@skybaer0804/spark-messaging-client';
 import type { RoomMessageData } from '@skybaer0804/spark-messaging-client';
 import { chatApi } from '@/core/api/ApiService';
 import { Message, MessageType } from '@/domains/Chat/types';
+import { getLocalStorage, setLocalStorage } from '@/core/utils/storageCache';
 
 export type MessageCallback = (message: Message) => void;
 export type RoomMessageCallback = (message: Message) => void;
@@ -16,12 +17,12 @@ export class ChatService {
     this.client = client;
 
     // 로컬 스토리지에서 디버그 모드 설정 확인
-    this.debugMode = localStorage.getItem('chat_debug_mode') === 'true';
+    this.debugMode = getLocalStorage('chat_debug_mode') === 'true';
   }
 
   public setDebugMode(enabled: boolean) {
     this.debugMode = enabled;
-    localStorage.setItem('chat_debug_mode', enabled.toString());
+    setLocalStorage('chat_debug_mode', enabled.toString());
     console.log(`[ChatService] Debug Mode ${enabled ? 'Enabled' : 'Disabled'}`);
   }
 
