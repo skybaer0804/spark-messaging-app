@@ -30,7 +30,7 @@ export function useMentionPicker(anchorRef: RefObject<HTMLElement>, isOpen: bool
       if (!container) return;
       
       const rect = container.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
+      const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
       const viewportHeight = window.innerHeight;
       const width = rect.width;
       

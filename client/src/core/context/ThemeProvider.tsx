@@ -125,7 +125,9 @@ export function ThemeProvider({ children, defaultTheme = 'light', defaultContras
 
   const [deviceSize, setDeviceSize] = useState<'mobile' | 'pc'>(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth <= 768 ? 'mobile' : 'pc';
+      const isMobileWidth = window.matchMedia('(max-width: 768px)').matches;
+      const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+      return (isMobileWidth || (isTouchDevice && window.innerWidth <= 1024)) ? 'mobile' : 'pc';
     }
     return 'pc';
   });
@@ -251,8 +253,11 @@ export function ThemeProvider({ children, defaultTheme = 'light', defaultContras
       const isMobileWidth = widthQuery.matches;
       const isTouchDevice = touchQuery.matches;
       
+      // viewport 너비를 가져올 때 더 정확한 documentElement.clientWidth 사용 권장
+      const currentWidth = document.documentElement.clientWidth || window.innerWidth;
+      
       // 최종 판정: 너비가 작거나, 터치 기기이면서 가로가 너무 넓지 않은 경우
-      setDeviceSize((isMobileWidth || (isTouchDevice && window.innerWidth <= 1024)) ? 'mobile' : 'pc');
+      setDeviceSize((isMobileWidth || (isTouchDevice && currentWidth <= 1024)) ? 'mobile' : 'pc');
     };
 
     // 초기값 설정
