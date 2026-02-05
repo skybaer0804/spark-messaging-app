@@ -109,7 +109,15 @@ function ChatInputComponent({
   const baseClass = classNamePrefix || 'chat-input';
 
   return (
-    <Paper elevation={4} padding="md" style={{ flexShrink: 0 }} className={`${baseClass}__input-paper`}>
+    <Paper 
+      elevation={4} 
+      padding="md" 
+      style={{ 
+        flexShrink: 0,
+        paddingBottom: `calc(var(--space-padding-md) + env(safe-area-inset-bottom, 0px))`
+      }} 
+      className={`${baseClass}__input-paper`}
+    >
       <Stack spacing="sm">
         <FilePreview
           files={selectedFiles}
