@@ -8,6 +8,7 @@ import { RoomService } from '../services/RoomService';
 import { FileTransferService } from '@/core/api/FileTransferService';
 import { useAuth } from '@/core/hooks/useAuth';
 import { authApi, workspaceApi, notificationApi } from '@/core/api/ApiService';
+import { getSafeTime } from '@/core/utils/common';
 import { messagesSignal } from '../hooks/useOptimisticUpdate';
 import { ChatRoom, ChatUser, Workspace } from '../types';
 import { currentWorkspaceId, chatRoomList } from '@/stores/chatRoomsStore';
@@ -205,7 +206,7 @@ export function ChatProvider({ children }: { children: any }) {
           }
 
           updatedRooms.sort(
-            (a: any, b: any) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime(),
+            (a: any, b: any) => getSafeTime(b.updatedAt) - getSafeTime(a.updatedAt),
           );
           updateRoomList(updatedRooms as any, true);
         } else {

@@ -4,6 +4,7 @@ import sparkMessagingClient from '../../../config/sparkMessaging';
 import { ConnectionService } from '@/core/socket/ConnectionService';
 import { NotificationService } from '@/core/socket/NotificationService';
 import { workspaceApi, notificationApi } from '@/core/api/ApiService';
+import { formatNotificationData, FormattedNotification } from '../utils/notificationUtils';
 import type { Workspace } from '../../Chat/types/ChatRoom';
 
 export interface Notification {
@@ -26,7 +27,7 @@ export function useNotificationApp() {
   const [targetId, setTargetId] = useState('');
   const [workspaceList, setWorkspaceList] = useState<Workspace[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<FormattedNotification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -37,7 +38,7 @@ export function useNotificationApp() {
     setIsLoading(true);
     try {
       const res = await notificationApi.getNotifications();
-      setNotifications(res.data);
+      setNotifications(res.data.map(formatNotificationData));
     } catch (err) {
       console.error('Failed to fetch notifications:', err);
       showError('알림 목록을 불러오는데 실패했습니다.');

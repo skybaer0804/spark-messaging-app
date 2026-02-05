@@ -8,6 +8,8 @@ import { ParticipantService } from '../services/ParticipantService';
 import { WebRTCService } from '../services/WebRTCService';
 import { VideoStore } from './VideoStore';
 import { videoMeetingApi } from '@/core/api/ApiService';
+import { formatMeetingData, FormattedScheduledMeeting } from '../utils/meetingUtils';
+import { getSafeTime } from '@/core/utils/common';
 import type { Room, Participant, UserRole, Category, ChatMessage } from '../types';
 
 export interface ScheduledMeeting {
@@ -34,7 +36,7 @@ export class VideoMeetingStore {
   public readonly isConnected: Signal<boolean> = signal(false);
 
   // 예약된 회의 리스트
-  public readonly scheduledMeetings: Signal<ScheduledMeeting[]> = signal([]);
+  public readonly scheduledMeetings: Signal<FormattedScheduledMeeting[]> = signal([]);
   public readonly showScheduleModal: Signal<boolean> = signal(false);
 
   // 사용자 역할
@@ -117,7 +119,7 @@ export class VideoMeetingStore {
         const chatMessage: ChatMessage = {
           id: message._id,
           content: message.content,
-          timestamp: new Date(message.timestamp).getTime(),
+          timestamp: getSafeTime(message.timestamp),
           type: message.type === 'file' ? 'file-transfer' : 'chat',
           senderId: message.senderId,
           senderName: message.senderName, // v2.4.0: 이름 필드 추가
@@ -533,7 +535,7 @@ export class VideoMeetingStore {
 
     try {
       const res = await videoMeetingApi.getMeetings();
-      this.scheduledMeetings.value = res.data;
+      this.scheduledMeetings.value = res.data.map(formatMeetingData);
     } catch (error) {
       console.error('Failed to fetch meetings:', error);
     }
