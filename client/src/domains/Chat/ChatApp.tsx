@@ -1,6 +1,7 @@
 import { useChatApp } from './hooks/useChatApp';
 import { useRef, useEffect, useState, useMemo } from 'preact/hooks';
 import { useChat } from './context/ChatContext';
+import { useTheme } from '@/core/context/ThemeProvider';
 import { Box } from '@/ui-components/Layout/Box';
 import { chatPendingJoinRoom, clearPendingJoinChatRoom } from '@/stores/chatRoomsStore';
 import { useAuth } from '@/core/hooks/useAuth';
@@ -27,6 +28,7 @@ import './ChatApp.scss';
 
 function ChatAppContent() {
   const { pathname, navigate } = useRouterState();
+  const { deviceSize } = useTheme(); // ✅ useTheme으로 올바르게 수정
 
   // 경로 방어 로직: /chatapp 경로가 아닐 경우 렌더링하지 않음
   if (!pathname.startsWith('/chatapp')) {
@@ -209,18 +211,7 @@ function ChatAppContent() {
   };
 
   // 모바일에서는 깊이 구조로 뷰 전환
-  const { deviceSize } = useChat(); // 기존의 로컬 isMobile 대신 전역 deviceSize 사용 검토
-  // 또는 더 확실한 window.innerWidth 기반 상태 유지하되 dvh 적용
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const isMobile = deviceSize === 'mobile';
 
   const showSidebar = !isMobile || view === 'home' || view === 'directory';
   const showMainContent = !isMobile || view === 'chat';
@@ -229,7 +220,7 @@ function ChatAppContent() {
     <Box 
       style={{ 
         display: 'flex', 
-        height: '100dvh', // 100% 대신 dvh 적용
+        height: '100%', // 100dvh 대신 안전한 100%로 복구 (CSS에서 dvh 처리)
         width: '100%',
         minHeight: 0, 
         position: 'relative',

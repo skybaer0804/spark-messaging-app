@@ -27,6 +27,7 @@
     "@preact/preset-vite": "^2.8.2",
     "@types/node": "^20.11.5",
     "@types/three": "^0.182.0",
+    "baseline-browser-mapping": "^2.9.19",
     "rimraf": "^6.0.1",
     "sass": "^1.94.0",
     "sharp": "^0.34.5",

@@ -123,7 +123,12 @@ export function ThemeProvider({ children, defaultTheme = 'light', defaultContras
     };
   });
 
-  const [deviceSize, setDeviceSize] = useState<'mobile' | 'pc'>('pc');
+  const [deviceSize, setDeviceSize] = useState<'mobile' | 'pc'>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 768 ? 'mobile' : 'pc';
+    }
+    return 'pc';
+  });
 
   // Config 업데이트 및 저장
   const updateConfig = useCallback((updates: Partial<ThemeConfig>) => {
@@ -236,17 +241,31 @@ export function ThemeProvider({ children, defaultTheme = 'light', defaultContras
     root.style.setProperty('--primitive-radius-medium', `${config.borderRadius}px`);
   }, [config]);
 
-  // 반응형 기기 감지
+  // 반응형 기기 감지 (matchMedia 사용으로 CSS와 동기화)
   useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
-      setDeviceSize(width <= 768 ? 'mobile' : 'pc');
+    const widthQuery = window.matchMedia('(max-width: 768px)');
+    const touchQuery = window.matchMedia('(pointer: coarse)'); // 터치 기기 여부
+    
+    const handleMediaChange = () => {
+      // 너비가 768px 이하이거나, 터치 기반 기기이면서 너비가 적절한 경우 모바일로 판정
+      const isMobileWidth = widthQuery.matches;
+      const isTouchDevice = touchQuery.matches;
+      
+      // 최종 판정: 너비가 작거나, 터치 기기이면서 가로가 너무 넓지 않은 경우
+      setDeviceSize((isMobileWidth || (isTouchDevice && window.innerWidth <= 1024)) ? 'mobile' : 'pc');
     };
 
-    window.addEventListener('resize', handleResize);
-    handleResize(); // 초기값 설정
+    // 초기값 설정
+    handleMediaChange();
 
-    return () => window.removeEventListener('resize', handleResize);
+    // 리스너 등록
+    widthQuery.addEventListener?.('change', handleMediaChange);
+    touchQuery.addEventListener?.('change', handleMediaChange);
+
+    return () => {
+      widthQuery.removeEventListener?.('change', handleMediaChange);
+      touchQuery.removeEventListener?.('change', handleMediaChange);
+    };
   }, []);
 
   const value: ThemeContextType = {
