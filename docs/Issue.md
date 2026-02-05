@@ -244,3 +244,101 @@ Lines 177-179
 API 서버와 소켓 서버 도메인에 대해 preconnect 설정을 활성화하여 모바일 네트워크에서의 초기 연결 속도를 개선했습니다.
 다음 단계 제언:
 다시 한번 배포 후 테스트 부탁드립니다. 만약 여전히 하얀 화면이 나온다면, vite.config.ts에서 살려둔 로그를 통해 모바일 브라우저에서 어떤 에러가 찍히는지(예: Safari 원격 디버깅 등) 확인이 필요합니다. 현재로서는 앱 실행을 막는 가장 큰 장애물인 localStorage와 Date 타입 에러는 모두 제거된 상태입니다.
+
+-----------------------------
+오. 특정 안드로이드 폰(큰거)은 잘 동작돼.
+지금 모바일 디버깅이 어려운환경이야.
+안드로이드 폰 좀 큰걸로는되는데 작은 폰은 안되고, 작은 아이폰도 안되네
+동작되는게 있으므로 JS 에러는 해결됬다고 판단하는데
+이거 media 문제같은데 어떻게 생각해?
+
+큰 폰(고해상도)에서는 작동하고 작은 폰(저해상도/iPhone)에서 하얀 화면이 나온다는 것은 JS 문법 에러는 해결되었지만, 레이아웃(CSS)이나 뷰포트(Viewport)와 관련된 문제일 가능성이 매우 높습니다.
+사용자님이 언급하신 "Media 문제"는 크게 두 가지 방향으로 추론할 수 있습니다.
+1. CSS Media Query 및 레이아웃 붕괴 (가장 유력)
+작은 화면에서 Grid나 Flex 레이아웃이 겹치거나, 특정 요소의 높이가 0이 되어 콘텐츠가 아예 보이지 않는 경우입니다.
+문제 의심: client/src/index.css나 App.tsx에서 전체 높이를 잡는 방식(100vh)이 모바일 브라우저의 주소창(Address Bar) 때문에 계산 오류를 일으켜 화면이 밀려나거나 하얗게 보일 수 있습니다.
+iOS 특이점: iOS Safari는 100vh 계산 방식이 안드로이드와 달라 화면 하단이 잘리거나 레이아웃이 깨지는 경우가 많습니다.
+2. 반응형 분기점(Breakpoint) 로직 오류
+프로젝트 코드 내에 화면 크기에 따라 컴포넌트를 다르게 렌더링하는 로직이 있을 경우, 작은 화면에서만 특정 컴포넌트가 null을 반환하거나 무한 루프에 빠질 수 있습니다.
+검토 대상: ThemeProvider.tsx의 deviceSize 감지 로직.
+ThemeProvider.tsx
+Lines 241-242
+          const width = window.innerWidth;          setDeviceSize(width <= 768 ? 'mobile' : 'pc');
+작은 폰에서 mobile로 판정될 때, 모바일 전용 레이아웃 컴포넌트 내부에 에러가 있거나 로직이 비어있을 수 있습니다.
+3. 미디어 쿼리 내의 display: none 오남용
+작은 화면에서 사이드바나 헤더를 숨기는 로직이 메인 콘텐츠 영역까지 영향을 주어 화면 전체가 안 보일 수 있습니다.
+🛠 분석을 위해 확인해야 할 파일들
+이 문제를 해결하기 위해 다음 파일들을 집중적으로 리서치하겠습니다.
+client/src/layouts/SidebarLayout/SidebarLayout.tsx: 모바일/PC 레이아웃 전환 로직 확인.
+client/src/ui-components/Layout/Grid.tsx: 그리드 시스템이 작은 화면에서 어떻게 작동하는지 확인.
+client/src/app.scss & client/src/index.css: 전역 높이 및 배경 설정 확인.
+client/src/components/Mobile/MobileHeader.tsx: 모바일 전용 헤더의 렌더링 확인.
+먼저 레이아웃 관련 파일들을 읽어보겠습니다. 특히 작은 화면에서 콘텐츠를 가릴 만한 요소가 있는지 파악하겠습니다.
+<task_management>
+[x] Client 측 localStorage 직접 접근부를 safe wrapper(storageCache)로 교체 [completed]
+[x] 서버 측 StorageService/LocalStorageService 검토 및 설명 [completed]
+[ ] 모바일/작은 화면 레이아웃(CSS/Media Query) 문제 분석 및 수정 [in_progress]
+</task_management>
+먼저 SidebarLayout과 모바일 관련 컴포넌트를 확인해 보겠습니다. 필드 조사를 위해 list_dir로 관련 파일을 찾겠습니다.
+<steps>
+client/src/layouts 폴더 구조 확인
+SidebarLayout 및 모바일 전용 컴포넌트 코드 분석
+CSS 미디어 쿼리(@media) 설정 전수 조사
+</steps>코드_수정_없이_원인_추론>
+큰 폰에서는 작동하고 작은 폰(특히 iPhone 및 소형 안드로이드)에서만 하얀 화면이 나오는 현상을 분석했을 때, 사용자님이 의심하신 "Media 문제"와 연관된 3가지 치명적인 원인을 찾아냈습니다.
+1. crypto.randomUUID() 지원 문제 (가장 유력한 원인)
+현재 PushService.ts에서 사용 중인 crypto.randomUUID()는 비교적 최신 API입니다.
+문제: 작은 폰이나 업데이트가 안 된 아이폰(iOS 15.4 미만)의 브라우저 엔진에서는 이 함수가 undefined입니다.
+결과: 앱 초기화 과정에서 이 부분을 실행하다가 TypeError를 던지며 JS 실행이 중단되고, 그 결과 화면이 하얗게 멈추게 됩니다. 큰 폰(최신 기종)은 이를 지원하기 때문에 정상 작동했던 것입니다.
+2. Viewport 및 Resource Hints (index.html)
+사용자님이 지목하신 9~12번 라인과 관련이 있습니다.
+문제: 모바일 네트워크(특히 3G/LTE) 환경에서 서로 다른 3개의 도메인(koyeb.app, sparkserver..., working-theodora...)에 대한 SSL 핸드셰이크와 연결 설정이 지연되면서 초기 인증 요청이 타임아웃될 수 있습니다.
+문제: viewport 설정에 viewport-fit=cover가 누락되어 아이폰의 노치(Notch)나 하단 홈 바 영역에서 레이아웃 계산 오류가 발생할 수 있습니다.
+3. CSS 하단 영역 침범 및 100vh 문제
+문제: 모바일 브라우저(특히 Safari)에서 100vh는 주소창 높이를 포함하기 때문에, 실제 콘텐츠가 화면 아래로 밀려나거나 레이아웃이 붕괴되어 하얗게 보일 수 있습니다.
+🛠 해결을 위한 수정 제안
+이 문제를 해결하기 위해 소스 코드를 직접 수정하지 않고 설계안을 먼저 말씀드립니다.
+1. PushService.ts: randomUUID 폴백(Fallback) 추가
+crypto.randomUUID가 없는 환경에서도 작동하도록 구식 ID 생성 로직을 추가해야 합니다.
+// Proposed change in PushService.tslet deviceId = getLocalStorage('spark_device_id');if (!deviceId) {  deviceId = (typeof crypto.randomUUID === 'function')     ? crypto.randomUUID()     : Math.random().toString(36).substring(2) + Date.now().toString(36); // Fallback  setLocalStorage('spark_device_id', deviceId);}
+2. index.html: 리소스 힌트 활성화 및 Viewport 개선
+사용자님이 의심하신 부분을 실제 운영 도메인으로 교체하고 메타 태그를 보강합니다.
+index.html
+Lines 9-13
+    <!-- Resource Hints: API 및 소켓 서버 연결 최적화 -->    <link rel="preconnect" href="https://sparkserver.koyeb.app" crossorigin />    <link rel="preconnect" href="https://working-theodora-spark-messasing-fb741e7f.koyeb.app" crossorigin />    <link rel="dns-prefetch" href="https://sparkserver.koyeb.app" />        <!-- Viewport: iOS Safe Area 대응 -->    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+3. vite.config.ts: 빌드 타겟 조정
+작은 폰(구형 기기) 호환성을 위해 JS 빌드 타겟을 조금 낮추는 것이 안전합니다.
+build: {  target: ['es2015', 'safari13'], // 구형 브라우저 대응 강화  // ...}
+의견:
+사용자님이 말씀하신 "Media 문제"가 CSS 미디어 쿼리에 의한 레이아웃 숨김을 의미하신 것이라면, SidebarLayout.scss에서 작은 화면(max-width: 768px)일 때 display: none이 되는 요소들이 메인 콘텐츠(Content)를 가리고 있지는 않은지 추가 확인이 필요합니다.
+하지만 현재로서는 crypto.randomUUID 미지원으로 인한 JS 크래시가 가장 유력해 보입니다. 이 수정 사항들을 적용해 볼까요?
+
+-------------------------
+crypto.randomUUID() 는 문제되지 않아. iOS 15.4 이상도 안되고 있거든.
+vite.config.ts의 구형기기 호환성도 문제되지 않아.
+index.thml의 뷰포트 개선이 도움이 될지 모르겠어.
+증상이 안드로이드 특정 폰도 동일하거든. 오히려 구형 안드로이폰이 동작되고 있으므로 버전 문제는 아닐거야.
+아래 해결방안 방안에 대해서 어떻게 생각해?
+1. 100vh와 모바일 주소창 문제 
+모바일 브라우저(특히 iOS Safari)에서 100vh는 하단 툴바 영역을 포함하여 계산되므로 실제 콘텐츠가 화면 밖으로 밀려나 흰색만 보일 수 있습니다. 
+해결책: 100vh 대신 신규 단위인 100dvh(Dynamic Viewport Height)를 사용하세요. Can I Use: dvh에서 지원 범위를 확인하면 최신 모바일 브라우저에서 안정적으로 작동함을 알 수 있습니다.
+코드 예시: height: 100vh; height: 100dvh; (Fallback 포함) 
+2. flex 또는 grid 내의 최소 높이(min-height) 누락
+콘텐츠가 동적으로 로드될 때 부모 요소의 높이가 0으로 수렴하면서 화면이 비어 보일 수 있습니다.
+확인 사항: App.tsx나 최상위 컨테이너에 min-height: 100% 또는 flex-grow: 1이 제대로 적용되었는지 확인하세요.
+3. 미디어 쿼리(Media Query) 범위 중첩 및 누락
+특정 해상도 구간에서 렌더링할 조건부 컴포넌트가 없거나 display: none이 강제로 먹혀있을 수 있습니다.
+디버깅: Chrome DevTools Remote Debugging을 통해 실제 기기를 연결하여 해당 해상도에서 어떤 스타일이 계산(Computed)되고 있는지 직접 확인하는 것이 가장 빠릅니다.
+
+사용자님이 제시하신 3가지 방안은 현재 증상(큰 폰은 되고 작은 폰만 안 되는 현상)을 설명할 수 있는 가장 논리적이고 실질적인 원인들입니다. 특히 구형 안드로이드가 되고 최신 아이폰이 안 된다는 점에서, 단순 JS 버전 문제보다는 브라우저 엔진(WebKit vs Blink)의 뷰포트 해석 차이와 반응형 로직의 충돌일 가능성이 압도적으로 높습니다.
+제시하신 방안들에 대한 제 분석과 추가 의견입니다.
+1. 100dvh 도입에 대하여 (매우 찬성)
+현재 SidebarLayout.scss, app.scss, index.css 등 곳곳에서 100vh를 사용하고 있습니다.
+iOS Safari의 고질적 문제: 100vh는 하단 툴바를 포함하기 때문에, 콘텐츠가 아래로 밀려나면서 화면 하단에 배치된 중요한 컴포넌트(예: 메시지 입력창, 하단 탭바)가 가려지거나, 전체 레이아웃이 깨져서 배경색만 보이는 현상이 잦습니다.
+해결: 100dvh를 적용하되, 지원하지 않는 브라우저를 위해 100vh를 Fallback으로 먼저 선언하는 방식이 가장 안전합니다.
+2. min-height 및 Flex/Grid 레이아웃 붕괴
+작은 화면에서 deviceSize === 'mobile'로 판정될 때, SidebarLayout.tsx에서 사이드바가 display: none이 되면서 메인 콘텐츠 영역의 높이 계산이 틀어질 수 있습니다.
+관찰: SidebarLayout.scss에서 모바일(max-width: 768px)일 때 사이드바를 숨기지만, 부모인 .sidebar-layout__container가 grid-template-columns: 1fr로 변하면서 자식 요소들의 높이가 명시적이지 않으면 0으로 수렴할 위험이 있습니다.
+3. 반응형 분기점 및 컴포넌트 누락
+사용자님이 언급하신 "작은 화면에서만 안 되는" 핵심 이유는 ThemeProvider.tsx의 width <= 768 조건문 때문일 것입니다.
+추론: 큰 폰은 가로 해상도가 높아 pc 레이아웃으로 렌더링되어 문제가 없지만, 작은 폰은 mobile 레이아웃으로 진입합니다. 이때 BottomTab이나 모바일 전용 UI 내부에서 에러가 발생하거나, 혹은 특정 z-index 설정 때문에 화면 전체가 투명한 레이어에 가려졌을 수 있습니다.

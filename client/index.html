@@ -4,12 +4,13 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/asset/spark_icon_32.png" />
     <link rel="shortcut icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Viewport: iOS Safe Area 대응 및 주소창 방지 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
-    <!-- Resource Hints: API 서버 연결 최적화 -->
-    <!-- 프로덕션 환경에서는 실제 API 도메인으로 교체하세요 -->
-    <!-- 예: <link rel="preconnect" href="https://your-api-domain.com" crossorigin /> -->
-    <!-- <link rel="dns-prefetch" href="https://your-api-domain.com" /> -->
+    <!-- Resource Hints: API 및 소켓 서버 연결 최적화 -->
+    <link rel="preconnect" href="https://sparkserver.koyeb.app" crossorigin />
+    <link rel="preconnect" href="https://working-theodora-spark-messasing-fb741e7f.koyeb.app" crossorigin />
+    <link rel="dns-prefetch" href="https://sparkserver.koyeb.app" />
 
     <!-- Resource Hints: API 및 소켓 서버 연결 최적화 -->
     <link rel="preconnect" href="https://sparkserver.koyeb.app" crossorigin />
@@ -35,11 +36,14 @@
         margin: 0;
         padding: 0;
         background-color: #1a1a2e; /* Theme background color */
+        height: 100vh;
+        height: 100dvh;
       }
       #app:empty {
         background-color: #1a1a2e;
         width: 100vw;
         height: 100vh;
+        height: 100dvh;
       }
     </style>
   </head>

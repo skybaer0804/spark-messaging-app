@@ -209,6 +209,8 @@ function ChatAppContent() {
   };
 
   // 모바일에서는 깊이 구조로 뷰 전환
+  const { deviceSize } = useChat(); // 기존의 로컬 isMobile 대신 전역 deviceSize 사용 검토
+  // 또는 더 확실한 window.innerWidth 기반 상태 유지하되 dvh 적용
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -224,7 +226,17 @@ function ChatAppContent() {
   const showMainContent = !isMobile || view === 'chat';
 
   return (
-    <Box style={{ display: 'flex', height: '100%', minHeight: 0, position: 'relative' }} className="chat-app__container">
+    <Box 
+      style={{ 
+        display: 'flex', 
+        height: '100dvh', // 100% 대신 dvh 적용
+        width: '100%',
+        minHeight: 0, 
+        position: 'relative',
+        overflow: 'hidden' 
+      }} 
+      className="chat-app__container"
+    >
       {/* Forward Modal - Rendered at top level */}
       {forwardModalMessage && (
         <DialogForward
