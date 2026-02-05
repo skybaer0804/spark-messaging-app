@@ -2,11 +2,21 @@
 
 .profile {
   display: flex;
-  justify-content: center;
-  padding: var(--spacing-xl) var(--spacing-md);
-  min-height: 100%;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 0;
+  height: 100%;
   background-color: var(--color-bg-tertiary);
   animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  overflow: hidden;
+
+  &__content-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-xl) var(--spacing-md);
+    display: flex;
+    justify-content: center;
+  }
 
   &__card {
     width: 100%;

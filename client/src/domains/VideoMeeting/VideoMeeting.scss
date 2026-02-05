@@ -2,11 +2,18 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
   overflow: hidden;
+  background-color: var(--color-background-secondary);
+
+  @media (max-width: 768px) {
+    background-color: var(--color-background-primary);
+  }
 
   &__main-content {
     display: flex;
     flex: 1;
+    min-height: 0; // 추가: 중요
     overflow: hidden;
     @media (max-width: 768px) {
       flex-direction: column;

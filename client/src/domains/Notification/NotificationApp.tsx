@@ -1,5 +1,6 @@
 import { useNotificationApp } from './hooks/useNotificationApp';
 import { useTheme } from '@/core/context/ThemeProvider';
+import { MobileHeader } from '@/components/Mobile/MobileHeader';
 import { Button } from '@/ui-components/Button/Button';
 import { Input } from '@/ui-components/Input/Input';
 import { Select } from '@/ui-components/Select/Select';
@@ -72,28 +73,29 @@ export function NotificationApp() {
   }
 
   return (
-    <Paper square elevation={0} className="notification-app">
-      <Box padding="lg" className="notification-app__header">
+    <Paper square elevation={0} padding="none" className="notification-app">
+      {deviceSize === 'mobile' && <MobileHeader />}
+      <Box padding={deviceSize === 'mobile' ? 'sm' : 'lg'} className="notification-app__header">
         <Flex justify="space-between" align="center">
           <Box>
-            <Typography variant="h3">시스템 알림 관리</Typography>
-            <Typography variant="body-medium" color="text-secondary">
+            <Typography variant="h3" style={{ fontSize: deviceSize === 'mobile' ? '1.25rem' : 'inherit' }}>시스템 알림 관리</Typography>
+            <Typography variant="body-medium" color="text-secondary" style={{ display: deviceSize === 'mobile' ? 'none' : 'block' }}>
               과거 발송 목록을 확인하고 새로운 알림를 생성합니다.
             </Typography>
           </Box>
           <Flex gap="sm">
-            <Button variant="secondary" onClick={fetchNotifications} disabled={isLoading}>
+            <Button variant="secondary" onClick={fetchNotifications} disabled={isLoading} style={{ padding: deviceSize === 'mobile' ? '8px' : undefined }}>
               <IconRefresh size={20} className={isLoading ? 'rotate' : ''} />
             </Button>
-            <Button variant="primary" onClick={() => setIsDrawerOpen(true)}>
+            <Button variant="primary" onClick={() => setIsDrawerOpen(true)} style={{ padding: deviceSize === 'mobile' ? '8px' : undefined }}>
               <IconPlus size={20} />
-              <span>알림 생성</span>
+              {deviceSize !== 'mobile' && <span>알림 생성</span>}
             </Button>
           </Flex>
         </Flex>
       </Box>
 
-      <Box padding={deviceSize === 'mobile' ? 'sm' : 'lg'} style={{ flex: 1, overflowY: 'auto' }}>
+      <Box padding={deviceSize === 'mobile' ? 'md' : 'lg'} style={{ flex: 1, overflowY: 'auto' }}>
         <div className="notification-list">
           {notifications.length === 0 ? (
             <Flex direction="column" align="center" justify="center" style={{ padding: '80px 0' }}>

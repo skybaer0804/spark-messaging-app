@@ -2,9 +2,8 @@ import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo } from 'preact/hooks';
 import { memo } from 'preact/compat';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
-import { BottomTab } from '@/components/BottomTab/BottomTab';
+import { MobileSidebar } from '@/components/Mobile/MobileSidebar';
 import { Content } from '@/layouts/Content/Content';
-import { Drawer } from '@/ui-components/Drawer/Drawer';
 import { Grid } from '@/ui-components/Layout/Grid';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { useRouterState } from '@/routes/RouterState';
@@ -23,10 +22,12 @@ const SidebarLayoutInner = memo(({ children }: SidebarLayoutInnerProps) => {
   const { pathname } = useRouterState();
   const { secondMenuPinned } = sidebarConfig;
 
+  const isMobile = deviceSize === 'mobile';
+
   // 모바일 → PC 전환 시 Drawer가 열려있으면 자동 닫기
   useEffect(() => {
-    if (deviceSize === 'pc') closeMobileSidebar();
-  }, [closeMobileSidebar, deviceSize]);
+    if (!isMobile) closeMobileSidebar();
+  }, [closeMobileSidebar, isMobile]);
 
   // 고정된 2차 메뉴 라우트 찾기
   const pinnedSecondMenuRoute: AppRouteNode | undefined = useMemo(() => {
@@ -41,9 +42,33 @@ const SidebarLayoutInner = memo(({ children }: SidebarLayoutInnerProps) => {
     return undefined;
   }, [pathname, secondMenuPinned]);
 
+  // 1. 모바일 레이아웃 (Push 효과 적용)
+  if (isMobile) {
+    return (
+      <div className="sidebar-layout">
+        <aside 
+          className={`sidebar-layout__mobile-sidebar ${isMobileSidebarOpen ? 'sidebar-layout__mobile-sidebar--open' : ''}`}
+        >
+          <MobileSidebar />
+        </aside>
+
+        <div
+          className={`sidebar-layout__container ${isMobileSidebarOpen ? 'sidebar-layout__mobile-push-container--pushed' : ''} sidebar-layout__mobile-push-container`}
+        >
+          <div className="sidebar-layout__content">
+            <Content>{children}</Content>
+            {isMobileSidebarOpen && (
+              <div className="sidebar-layout__mobile-overlay" onClick={closeMobileSidebar} />
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. PC 레이아웃 (기존 안정적인 Grid 구조)
   return (
     <div className="sidebar-layout">
-      {/* 2.2.0: 글로벌 헤더 제거 - 각 도메인 내부에서 필요시 처리 */}
       <Grid
         className={`sidebar-layout__container ${
           secondMenuPinned && pinnedSecondMenuRoute ? 'sidebar-layout--with-second-menu' : ''
@@ -51,12 +76,10 @@ const SidebarLayoutInner = memo(({ children }: SidebarLayoutInnerProps) => {
         columns="var(--sidebar-layout-columns)"
         gap="none"
       >
-        {/* 데스크톱: 고정 사이드바 (Column 1: Workspace/Main Icons) */}
         <aside className="sidebar-layout__sidebar" aria-label="사이드바">
           <Sidebar />
         </aside>
 
-        {/* 고정된 2차 사이드메뉴 (Column 2: Room List or Submenu) */}
         {secondMenuPinned && pinnedSecondMenuRoute && (
           <aside className="sidebar-layout__second-menu" aria-label="2차 사이드메뉴">
             <SecondMenuDrawer
@@ -68,24 +91,9 @@ const SidebarLayoutInner = memo(({ children }: SidebarLayoutInnerProps) => {
           </aside>
         )}
 
-        {/* 메인 콘텐츠 (Column 3: Main App Area) */}
         <div className="sidebar-layout__content">
           <Content>{children}</Content>
-          {/* 모바일 하단 탭바 */}
-          {deviceSize === 'mobile' && <BottomTab />}
         </div>
-
-        {/* 모바일: 오버레이 Drawer */}
-        <Drawer
-          open={deviceSize === 'mobile' && isMobileSidebarOpen}
-          onClose={closeMobileSidebar}
-          anchor="left"
-          title="메뉴"
-          width="var(--sidebar-width)"
-          className="sidebar-layout__mobile-drawer"
-        >
-          <Sidebar />
-        </Drawer>
       </Grid>
     </div>
   );

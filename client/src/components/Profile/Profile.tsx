@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
+import { useTheme } from '@/core/context/ThemeProvider';
+import { MobileHeader } from '@/components/Mobile/MobileHeader';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Card, CardBody } from '@/ui-components/Card/Card';
 import { Flex } from '@/ui-components/Layout/Flex';
@@ -279,74 +281,79 @@ export function Profile() {
     { value: 'workspaces', label: '워크스페이스', content: workspacesContent },
   ];
 
+  const { deviceSize } = useTheme();
+
   return (
     <div className="profile">
-      <Card className="profile__card">
-        <CardBody>
-          <Flex direction="column" gap="lg">
-            <header className="profile__header">
-              <Flex align="center" justify="space-between" width="100%">
-                <Flex align="center" gap="md">
-                  <div style={{ position: 'relative' }}>
-                    <Avatar size="xl" variant="rounded" className="profile__avatar" src={user?.profileImage}>
-                      {formData.username.substring(0, 1)}
-                    </Avatar>
-                    <div
-                      className={`avatar-status avatar-status--${formData.status}`}
-                      style={{
-                        position: 'absolute',
-                        bottom: -2,
-                        right: -2,
-                        width: 16,
-                        height: 16,
-                        border: '2px solid #fff',
-                        borderRadius: '50%',
-                      }}
-                    />
-                  </div>
-                  <Box>
-                    <Typography variant="h2" style={{ fontSize: '1.5rem' }}>
-                      {formData.username}
-                    </Typography>
-                    <Typography variant="body-small" color="text-secondary">
-                      {roleOptions.find((r) => r.value === formData.role)?.label || formData.role}
-                    </Typography>
-                  </Box>
-                </Flex>
-                {!isEditing ? (
-                  <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)}>
-                    <IconEdit size={18} /> 수정
-                  </Button>
-                ) : (
-                  <Flex gap="xs">
-                    <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
-                      취소
-                    </Button>
-                    <Button variant="primary" size="sm" onClick={handleSave} disabled={loading}>
-                      <IconDeviceFloppy size={18} /> 저장
-                    </Button>
+      {deviceSize === 'mobile' && <MobileHeader />}
+      <div className="profile__content-wrapper">
+        <Card className="profile__card">
+          <CardBody>
+            <Flex direction="column" gap="lg">
+              <header className="profile__header">
+                <Flex align="center" justify="space-between" width="100%">
+                  <Flex align="center" gap="md">
+                    <div style={{ position: 'relative' }}>
+                      <Avatar size="xl" variant="rounded" className="profile__avatar" src={user?.profileImage}>
+                        {formData.username.substring(0, 1)}
+                      </Avatar>
+                      <div
+                        className={`avatar-status avatar-status--${formData.status}`}
+                        style={{
+                          position: 'absolute',
+                          bottom: -2,
+                          right: -2,
+                          width: 16,
+                          height: 16,
+                          border: '2px solid #fff',
+                          borderRadius: '50%',
+                        }}
+                      />
+                    </div>
+                    <Box>
+                      <Typography variant="h2" style={{ fontSize: '1.5rem' }}>
+                        {formData.username}
+                      </Typography>
+                      <Typography variant="body-small" color="text-secondary">
+                        {roleOptions.find((r) => r.value === formData.role)?.label || formData.role}
+                      </Typography>
+                    </Box>
                   </Flex>
-                )}
-              </Flex>
-            </header>
+                  {!isEditing ? (
+                    <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)}>
+                      <IconEdit size={18} /> 수정
+                    </Button>
+                  ) : (
+                    <Flex gap="xs">
+                      <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
+                        취소
+                      </Button>
+                      <Button variant="primary" size="sm" onClick={handleSave} disabled={loading}>
+                        <IconDeviceFloppy size={18} /> 저장
+                      </Button>
+                    </Flex>
+                  )}
+                </Flex>
+              </header>
 
-            <Tabs items={tabItems} defaultValue="info" />
+              <Tabs items={tabItems} defaultValue="info" />
 
-            <Box className="profile__logout-container">
-              <Button
-                variant="secondary"
-                fullWidth
-                onClick={async () => {
-                  await signOut();
-                  navigate('/auth/login');
-                }}
-              >
-                <IconLogout size={18} style={{ marginRight: '8px' }} /> 로그아웃
-              </Button>
-            </Box>
-          </Flex>
-        </CardBody>
-      </Card>
+              <Box className="profile__logout-container">
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={async () => {
+                    await signOut();
+                    navigate('/auth/login');
+                  }}
+                >
+                  <IconLogout size={18} style={{ marginRight: '8px' }} /> 로그아웃
+                </Button>
+              </Box>
+            </Flex>
+          </CardBody>
+        </Card>
+      </div>
     </div>
   );
 }

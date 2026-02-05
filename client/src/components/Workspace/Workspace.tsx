@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
+import { useTheme } from '@/core/context/ThemeProvider';
+import { MobileHeader } from '@/components/Mobile/MobileHeader';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Card, CardBody } from '@/ui-components/Card/Card';
 import { Flex } from '@/ui-components/Layout/Flex';
@@ -319,84 +321,89 @@ export function Workspace() {
     },
   ];
 
+  const { deviceSize } = useTheme();
+
   return (
     <div className="workspace">
-      <div className="workspace__container">
-        <header className="workspace__header">
-          <Typography variant="h2">워크스페이스 관리</Typography>
-          <Typography variant="body-medium" color="text-secondary">
-            워크스페이스 설정 및 회사의 조직 구조를 관리합니다.
-          </Typography>
-        </header>
-
-        <Box style={{ marginTop: '24px' }}>
-          <Tabs items={tabItems} value={activeTab} onChange={(val) => setActiveTab(val)} />
-        </Box>
-
-        <Dialog
-          open={showCreateWorkspace}
-          onClose={() => setShowCreateWorkspace(false)}
-          title="새 워크스페이스 생성"
-          actions={
-            <Flex gap="sm">
-              <Button onClick={() => setShowCreateWorkspace(false)}>취소</Button>
-              <Button variant="primary" onClick={handleCreateWorkspace}>
-                생성
-              </Button>
-            </Flex>
-          }
-        >
-          <Box style={{ padding: '8px 0' }}>
-            <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block' }}>
-              워크스페이스 이름
+      {deviceSize === 'mobile' && <MobileHeader />}
+      <div className="workspace__scroll-container">
+        <div className="workspace__container">
+          <header className="workspace__header">
+            <Typography variant="h2">워크스페이스 관리</Typography>
+            <Typography variant="body-medium" color="text-secondary">
+              워크스페이스 설정 및 회사의 조직 구조를 관리합니다.
             </Typography>
-            <Input
-              fullWidth
-              placeholder="예: Spark Enterprise"
-              value={newWorkspaceName}
-              onInput={(e) => setNewWorkspaceName(e.currentTarget.value)}
-            />
-          </Box>
-        </Dialog>
+          </header>
 
-        <Dialog
-          open={showEditWorkspace}
-          onClose={() => setShowEditWorkspace(false)}
-          title="워크스페이스 수정"
-          actions={
-            <Flex gap="sm">
-              <Button onClick={() => setShowEditWorkspace(false)}>취소</Button>
-              <Button variant="primary" onClick={handleUpdateWorkspace}>
-                저장
-              </Button>
-            </Flex>
-          }
-        >
-          <Box style={{ padding: '8px 0' }}>
-            <Flex direction="column" gap="md">
-              <Box>
-                <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block' }}>
-                  워크스페이스 이름
-                </Typography>
-                <Input
-                  fullWidth
-                  value={editWorkspaceData.name}
-                  onInput={(e) => setEditWorkspaceData({ ...editWorkspaceData, name: e.currentTarget.value })}
-                />
-              </Box>
-              <Box>
-                <Checkbox
-                  label="누구나 참여 허용"
-                  checked={editWorkspaceData.allowPublicJoin}
-                  onChange={(checked) => setEditWorkspaceData({ ...editWorkspaceData, allowPublicJoin: checked })}
-                />
-                <Typography variant="caption" color="text-secondary" style={{ display: 'block', marginTop: '4px' }}>
-                  체크하면 다른 사용자가 초대 없이 워크스페이스에 참여할 수 있습니다.
-                </Typography>
-              </Box>
-            </Flex>
+          <Box style={{ marginTop: '24px' }}>
+            <Tabs items={tabItems} value={activeTab} onChange={(val) => setActiveTab(val)} />
           </Box>
-        </Dialog>
+
+          <Dialog
+            open={showCreateWorkspace}
+            onClose={() => setShowCreateWorkspace(false)}
+            title="새 워크스페이스 생성"
+            actions={
+              <Flex gap="sm">
+                <Button onClick={() => setShowCreateWorkspace(false)}>취소</Button>
+                <Button variant="primary" onClick={handleCreateWorkspace}>
+                  생성
+                </Button>
+              </Flex>
+            }
+          >
+            <Box style={{ padding: '8px 0' }}>
+              <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block' }}>
+                워크스페이스 이름
+              </Typography>
+              <Input
+                fullWidth
+                placeholder="예: Spark Enterprise"
+                value={newWorkspaceName}
+                onInput={(e) => setNewWorkspaceName(e.currentTarget.value)}
+              />
+            </Box>
+          </Dialog>
+
+          <Dialog
+            open={showEditWorkspace}
+            onClose={() => setShowEditWorkspace(false)}
+            title="워크스페이스 수정"
+            actions={
+              <Flex gap="sm">
+                <Button onClick={() => setShowEditWorkspace(false)}>취소</Button>
+                <Button variant="primary" onClick={handleUpdateWorkspace}>
+                  저장
+                </Button>
+              </Flex>
+            }
+          >
+            <Box style={{ padding: '8px 0' }}>
+              <Flex direction="column" gap="md">
+                <Box>
+                  <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block' }}>
+                    워크스페이스 이름
+                  </Typography>
+                  <Input
+                    fullWidth
+                    value={editWorkspaceData.name}
+                    onInput={(e) => setEditWorkspaceData({ ...editWorkspaceData, name: e.currentTarget.value })}
+                  />
+                </Box>
+                <Box>
+                  <Checkbox
+                    label="누구나 참여 허용"
+                    checked={editWorkspaceData.allowPublicJoin}
+                    onChange={(checked) => setEditWorkspaceData({ ...editWorkspaceData, allowPublicJoin: checked })}
+                  />
+                  <Typography variant="caption" color="text-secondary" style={{ display: 'block', marginTop: '4px' }}>
+                    체크하면 다른 사용자가 초대 없이 워크스페이스에 참여할 수 있습니다.
+                  </Typography>
+                </Box>
+              </Flex>
+            </Box>
+          </Dialog>
+        </div>
       </div>
     </div>
   );

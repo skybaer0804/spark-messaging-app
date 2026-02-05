@@ -12,8 +12,8 @@
   overflow: hidden;
 
   @media (max-width: 768px) {
-    width: 100% !important; // 모바일에서 전체 너비
-    max-width: 100%;
+    width: 80% !important; // 모바일에서 전체 너비의 80%
+    max-width: 300px;
   }
 
   &--left {
