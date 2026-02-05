@@ -5,6 +5,8 @@
   top: 0;
   width: var(--sidebar-second-menu-width);
   height: 100vh;
+  height: 100dvh;
+  height: -webkit-fill-available;
   background: var(--color-background-primary);
   border-right: 1px solid var(--color-border-default);
   box-shadow: var(--elevation-shadow-2);

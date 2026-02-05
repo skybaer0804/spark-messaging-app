@@ -80,7 +80,7 @@ export function GuestJoin({ hash }: GuestJoinProps) {
     <Box
       className="guest-join"
       style={{
-        height: '100vh',
+        height: '100dvh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
