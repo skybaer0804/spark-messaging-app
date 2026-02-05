@@ -22,6 +22,7 @@ export function MobileHeader() {
         zIndex: 100,
         backgroundColor: 'var(--color-bg-default)',
         borderBottom: '1px solid var(--color-border-default)',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
       }}
     >
       <Flex align="center" justify="space-between" style={{ height: '40px' }}>

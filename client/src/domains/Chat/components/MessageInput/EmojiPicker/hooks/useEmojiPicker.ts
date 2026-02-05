@@ -33,7 +33,7 @@ export function useEmojiPicker(anchorRef: RefObject<HTMLElement>, isOpen: boolea
       
       const rect = container.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
-      const viewportWidth = window.innerWidth;
+      const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
       const pickerHeight = 400;
       const pickerWidth = 350;
       
