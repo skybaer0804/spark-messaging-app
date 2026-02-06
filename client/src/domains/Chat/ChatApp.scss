@@ -2,13 +2,11 @@
 
 .chat-app {
   &__container {
-    height: 100vh;
-    height: 100dvh;
+    height: 100%;
     width: 100%;
     overflow: hidden;
     display: flex;
     background-color: var(--color-bg-default);
-    animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
     @media (max-width: 768px) {
       flex-direction: column;
     }
@@ -69,6 +67,11 @@
     border-radius: 12px !important;
     margin: 16px; // card look
     overflow: hidden;
+
+    @media (max-width: 768px) {
+      margin: 8px 8px 0 8px; // 모바일에서는 여백 축소 및 하단 여백 제거
+      border-radius: 8px 8px 0 0 !important;
+    }
     
     // Paper 컴포넌트 내부 배경 제거
     &.paper {
@@ -86,6 +89,19 @@
     background-color: var(--color-background-secondary) !important;
     z-index: 5;
     height: 100%;
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
+
+    @media (max-width: 768px) {
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-left: none;
+      z-index: 100;
+    }
 
     &__header {
       background-color: var(--color-surface-overlay) !important;
@@ -97,6 +113,14 @@
       align-items: center;
       flex-shrink: 0;
       padding: var(--primitive-padding-md);
+
+      @media (max-width: 768px) {
+        padding: 8px 12px;
+        
+        .typography {
+          font-size: 1rem !important;
+        }
+      }
       
       .paper {
         background-color: transparent !important;

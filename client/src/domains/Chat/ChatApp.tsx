@@ -213,8 +213,8 @@ function ChatAppContent() {
   // 모바일에서는 깊이 구조로 뷰 전환
   const isMobile = deviceSize === 'mobile';
 
-  const showSidebar = !isMobile || view === 'home' || view === 'directory';
-  const showMainContent = !isMobile || view === 'chat';
+  const showSidebar = !isMobile || (view === 'home' && pathname === '/chatapp');
+  const showMainContent = !isMobile || view === 'chat' || view === 'directory';
 
   return (
     <Box 
@@ -248,9 +248,11 @@ function ChatAppContent() {
         <Box
           style={{
             width: isMobile ? '100%' : '300px',
+            height: '100%',
             flexShrink: 0,
             display: 'flex', 
             flexDirection: 'column',
+            minHeight: 0,
           }}
           className="chat-app__sidebar-wrapper"
         >
@@ -276,12 +278,14 @@ function ChatAppContent() {
         >
           {view === 'directory' ? (
             <DirectoryView
+              isMobile={isMobile}
               directoryTab={directoryTab}
               setDirectoryTab={setDirectoryTab}
               roomList={roomList}
               onRoomSelect={onRoomSelect}
               userList={userList}
               startDirectChat={startDirectChat}
+              onBack={() => navigate('/chatapp')}
             />
           ) : view === 'chat' && currentRoom ? (
             <>

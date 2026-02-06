@@ -1,14 +1,27 @@
 @use '/src/styles/tokens/index';
 
+.message-input-toolbar-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
 .message-input-toolbar {
   padding: var(--space-padding-xs, 8px) var(--space-padding-sm, 12px);
   background-color: var(--color-background-primary);
   border-top: 1px solid var(--color-border-default);
   border-radius: 0 0 var(--primitive-radius-md) var(--primitive-radius-md);
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+
+  &__more-panel {
+    background-color: var(--color-background-secondary);
+    border-top: 1px solid var(--color-border-default);
+    padding: 8px;
+    animation: slideUp 0.2s ease-out;
+  }
 
   &__button {
     transition: background-color 0.2s, opacity 0.2s;
@@ -67,5 +80,16 @@
     box-shadow: none !important;
     border-radius: 0 !important;
     padding-bottom: 48px !important; // 툴바 공간 확보
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }

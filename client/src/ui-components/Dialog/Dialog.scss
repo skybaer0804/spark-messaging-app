@@ -24,7 +24,8 @@
   border-radius: var(--dialog-radius);
   box-shadow: var(--dialog-shadow);
   width: 100%;
-  max-height: calc(100vh - var(--space-padding-card-lg) * 2);
+  max-height: calc(100dvh - var(--space-padding-card-lg) * 2);
+  max-height: calc(-webkit-fill-available - var(--space-padding-card-lg) * 2);
   overflow: auto;
   padding: var(--dialog-padding);
   display: flex;

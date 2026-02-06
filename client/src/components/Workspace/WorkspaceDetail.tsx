@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
+import { useTheme } from '@/core/context/ThemeProvider';
+import { MobileHeader } from '@/components/Mobile/MobileHeader';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Card, CardBody } from '@/ui-components/Card/Card';
 import { Flex } from '@/ui-components/Layout/Flex';
@@ -102,10 +104,15 @@ export function WorkspaceDetail({ id }: WorkspaceDetailProps) {
     showSuccess(`${label}가 클립보드에 복사되었습니다.`);
   };
 
+  const { deviceSize } = useTheme();
+
   if (loading) {
     return (
-      <Box className="workspace-detail" style={{ padding: '40px', textAlign: 'center' }}>
-        <Typography>로딩 중...</Typography>
+      <Box className="workspace-detail" style={{ height: '100%' }}>
+        {deviceSize === 'mobile' && <MobileHeader />}
+        <Box style={{ padding: '40px', textAlign: 'center' }}>
+          <Typography>로딩 중...</Typography>
+        </Box>
       </Box>
     );
   }
@@ -116,6 +123,7 @@ export function WorkspaceDetail({ id }: WorkspaceDetailProps) {
 
   return (
     <div className="workspace-detail">
+      {deviceSize === 'mobile' && <MobileHeader />}
       <div className="workspace-detail__container">
         <header className="workspace-detail__header">
           <Flex align="center" gap="md">

@@ -96,7 +96,7 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
         });
         
         await refreshRoomList();
-        showSuccess('채널이 생성되었습니다.');
+        showSuccess('채널이 었습니다.');
       }
 
       // 성공 시 초기화 및 닫기

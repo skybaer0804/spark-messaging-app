@@ -2,12 +2,19 @@
 
 .video-meeting-core {
   width: 100%;
-  min-height: 100%;
+  flex: 1; // 추가
+  min-height: 0; // 추가
   background-color: var(--color-background-secondary);
   background-image: radial-gradient(var(--color-border-default) 0.5px, transparent 0.5px);
   background-size: 24px 24px;
   overflow-y: auto;
-  padding: var(--space-padding-xl) 0;
+  display: flex; // 추가
+  flex-direction: column; // 추가
+  padding: var(--space-padding-lg) 0;
+
+  @media (max-width: 768px) {
+    padding: 0;
+  }
 
   &__container {
     max-width: 100%;
@@ -122,7 +129,7 @@
     }
     
     &__container {
-      padding: var(--space-padding-lg);
+      padding: var(--space-padding-md);
     }
   }
 }

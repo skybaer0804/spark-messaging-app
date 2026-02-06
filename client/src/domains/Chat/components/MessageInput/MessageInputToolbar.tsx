@@ -1,4 +1,6 @@
+import { useState, useCallback } from 'preact/hooks';
 import { memo } from 'preact/compat';
+import { useTheme } from '@/core/context/ThemeProvider';
 import { IconButton } from '@/ui-components/Button/IconButton';
 import { Flex } from '@/ui-components/Layout/Flex';
 import {
@@ -7,13 +9,14 @@ import {
   IconItalic,
   IconStrikethrough,
   IconCode,
-  IconSourceCode ,
+  IconSourceCode,
   IconLink,
   IconMathFunction,
   IconMicrophone,
   IconVideo,
   IconPaperclip,
   IconSend,
+  IconDots,
 } from '@tabler/icons-preact';
 import type { FormatType } from '../../types/markdown.types';
 import './MessageInputToolbar.scss';
@@ -49,6 +52,10 @@ function MessageInputToolbarComponent({
   showFileUpload = true,
   canSend = false,
 }: MessageInputToolbarProps) {
+  const { deviceSize } = useTheme();
+  const isMobile = deviceSize === 'mobile';
+  const [showMore, setShowMore] = useState(false);
+
   const formatButtons: Array<{ type: FormatType; icon: any; label: string; shortcut?: string }> = [
     { type: 'bold', icon: IconBold, label: '굵게', shortcut: 'Ctrl+B' },
     { type: 'italic', icon: IconItalic, label: '기울임', shortcut: 'Ctrl+I' },
@@ -58,40 +65,25 @@ function MessageInputToolbarComponent({
     { type: 'link', icon: IconLink, label: '링크', shortcut: 'Ctrl+L' },
   ];
 
-  return (
-    <Flex gap="xs" align="center" className="message-input-toolbar">
-      {/* 이모지 버튼 */}
-      <IconButton
-        ref={(el: HTMLButtonElement | null) => onEmojiButtonRef?.(el)}
-        onClick={onEmojiClick}
-        disabled={disabled}
-        color="secondary"
-        size="small"
-        title="이모지"
-        className="message-input-toolbar__button"
-      >
-        <IconMoodSmile size={18} />
-      </IconButton>
+  const handleFormat = useCallback(
+    (type: FormatType) => {
+      onSaveSelection?.();
+      setTimeout(() => {
+        onFormat(type);
+      }, 0);
+    },
+    [onFormat, onSaveSelection],
+  );
 
-      {/* 구분선 */}
-      <div className="message-input-toolbar__divider" />
-
-      {/* 포맷팅 버튼들 */}
+  const renderFormattingButtons = () => (
+    <>
       {formatButtons.map(({ type, icon: Icon, label, shortcut }) => (
         <IconButton
           key={type}
-          onMouseDown={(e) => {
-            // 드래그 상태에서 버튼 클릭 시 선택 해제 방지
-            e.preventDefault();
-            // 선택 영역 저장 (클릭 전에)
-            onSaveSelection?.();
-          }}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={(e) => {
             e.preventDefault();
-            // 약간의 지연 후 포맷팅 적용 (선택 영역이 저장되도록)
-            setTimeout(() => {
-              onFormat(type);
-            }, 0);
+            handleFormat(type);
           }}
           disabled={disabled}
           color="secondary"
@@ -103,10 +95,8 @@ function MessageInputToolbarComponent({
         </IconButton>
       ))}
 
-      {/* 구분선 */}
       <div className="message-input-toolbar__divider" />
 
-      {/* 함수/공식 버튼 (향후 구현) */}
       <IconButton
         onClick={() => {}}
         disabled={true}
@@ -118,10 +108,8 @@ function MessageInputToolbarComponent({
         <IconMathFunction size={18} />
       </IconButton>
 
-      {/* 구분선 */}
       <div className="message-input-toolbar__divider" />
 
-      {/* 음성 메시지 버튼 (아이콘만) */}
       <IconButton
         onClick={onVoiceClick}
         disabled={disabled}
@@ -133,7 +121,6 @@ function MessageInputToolbarComponent({
         <IconMicrophone size={18} />
       </IconButton>
 
-      {/* 화상 메시지 버튼 (아이콘만) */}
       <IconButton
         onClick={onVideoClick}
         disabled={disabled}
@@ -144,36 +131,93 @@ function MessageInputToolbarComponent({
       >
         <IconVideo size={18} />
       </IconButton>
+    </>
+  );
 
-      {/* 구분선 */}
-      <div className="message-input-toolbar__divider" />
+  return (
+    <div className="message-input-toolbar-container">
+      {isMobile && showMore && (
+        <div className="message-input-toolbar__more-panel">
+          <Flex gap="xs" align="center" wrap="wrap">
+            {renderFormattingButtons()}
+          </Flex>
+        </div>
+      )}
 
-      {/* 파일 첨부 버튼 */}
-      {showFileUpload && (
+      <Flex gap="xs" align="center" className="message-input-toolbar">
+        {/* 왼쪽 아이콘 그룹 (이모지, 파일첨부, 더보기) */}
         <IconButton
-          onClick={onFileClick}
+          ref={(el: HTMLButtonElement | null) => onEmojiButtonRef?.(el)}
+          onClick={onEmojiClick}
           disabled={disabled}
           color="secondary"
           size="small"
-          title="파일 첨부"
+          title="이모지"
           className="message-input-toolbar__button"
         >
-          <IconPaperclip size={18} />
+          <IconMoodSmile size={18} />
         </IconButton>
-      )}
 
-      {/* 전송 버튼 */}
-      <IconButton
-        onClick={onSendClick}
-        disabled={disabled || !canSend}
-        color="primary"
-        size="small"
-        title="전송"
-        className="message-input-toolbar__button message-input-toolbar__button--send"
-      >
-        <IconSend size={18} />
-      </IconButton>
-    </Flex>
+        {isMobile && showFileUpload && (
+          <IconButton
+            onClick={onFileClick}
+            disabled={disabled}
+            color="secondary"
+            size="small"
+            title="파일 첨부"
+            className="message-input-toolbar__button"
+          >
+            <IconPaperclip size={18} />
+          </IconButton>
+        )}
+
+        {isMobile && (
+          <IconButton
+            onClick={() => setShowMore(!showMore)}
+            disabled={disabled}
+            color={showMore ? 'primary' : 'secondary'}
+            size="small"
+            title="더보기"
+            className="message-input-toolbar__button"
+          >
+            <IconDots size={18} />
+          </IconButton>
+        )}
+
+        {!isMobile && <div className="message-input-toolbar__divider" />}
+
+        {/* 데스크톱에서는 모든 버튼 노출 */}
+        {!isMobile && renderFormattingButtons()}
+
+        <div className="message-input-toolbar__divider" style={{ marginLeft: 'auto' }} />
+
+        {/* 데스크톱 파일 첨부 버튼 */}
+        {!isMobile && showFileUpload && (
+          <IconButton
+            onClick={onFileClick}
+            disabled={disabled}
+            color="secondary"
+            size="small"
+            title="파일 첨부"
+            className="message-input-toolbar__button"
+          >
+            <IconPaperclip size={18} />
+          </IconButton>
+        )}
+
+        {/* 전송 버튼 */}
+        <IconButton
+          onClick={onSendClick}
+          disabled={disabled || !canSend}
+          color="primary"
+          size="small"
+          title="전송"
+          className="message-input-toolbar__button message-input-toolbar__button--send"
+        >
+          <IconSend size={18} />
+        </IconButton>
+      </Flex>
+    </div>
   );
 }
 

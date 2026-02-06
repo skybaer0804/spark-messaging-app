@@ -1,8 +1,6 @@
 .auth-layout {
-  height: 100vh;
-  height: 100dvh;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  min-height: -webkit-fill-available;
   width: 100%;
   display: flex;
   align-items: center;
@@ -11,7 +9,9 @@
   background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
   background-size: 400% 400%;
   animation: auth-gradient-bg 15s ease infinite;
-  padding: var(--space-padding-xl);
+  padding: var(--space-padding-lg);
+  padding-top: calc(var(--space-padding-lg) + var(--safe-area-inset-top));
+  padding-bottom: calc(var(--space-padding-lg) + var(--safe-area-inset-bottom));
 
   &__container {
     width: 100%;

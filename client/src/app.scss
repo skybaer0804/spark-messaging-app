@@ -4,8 +4,9 @@
 .app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
+  height: 100vh; /* 기본값 */
+  height: -webkit-fill-available; /* iOS 구버전 대응 */
+  height: 100dvh; /* 최신 브라우저 표준 대응 (강력 추천) */
   width: 100%;
   background: var(--color-background-primary);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);

@@ -7,6 +7,7 @@ import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Avatar } from '@/ui-components/Avatar/Avatar';
 import { Button } from '@/ui-components/Button/Button';
+import { IconButton } from '@/ui-components/Button/IconButton';
 import {
   IconHash,
   IconUsers,
@@ -15,6 +16,7 @@ import {
   IconMessageCircle,
   IconSearch,
   IconCopy,
+  IconChevronLeft,
 } from '@tabler/icons-preact';
 import { teamApi, chatApi } from '@/core/api/ApiService';
 import { currentWorkspaceId } from '@/stores/chatRoomsStore';
@@ -40,12 +42,14 @@ interface Team {
 }
 
 interface DirectoryViewProps {
+  isMobile?: boolean;
   directoryTab: 'channel' | 'team' | 'user';
   setDirectoryTab: (tab: 'channel' | 'team' | 'user') => void;
   roomList: ChatRoom[];
   onRoomSelect: (roomId: string) => void;
   userList: ChatUser[];
   startDirectChat: (userId: string) => void;
+  onBack?: () => void;
 }
 
 const DirectoryItemCard = ({
@@ -127,12 +131,14 @@ const DirectoryItemCard = ({
 );
 
 export const DirectoryView = ({
+  isMobile,
   directoryTab,
   setDirectoryTab,
   roomList,
   onRoomSelect,
   userList,
   startDirectChat,
+  onBack,
 }: DirectoryViewProps) => {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -595,15 +601,25 @@ export const DirectoryView = ({
   ];
 
   return (
-    <Box className="directory-view">
+    <Box className={`directory-view ${isMobile ? 'directory-view--mobile' : ''}`}>
       <header className="directory-view__header">
-        <Stack spacing="sm">
-          <Typography variant="h1" className="directory-view__title">
-            디렉토리
-          </Typography>
-          <Typography variant="body-large" className="directory-view__subtitle">
-            워크스페이스의 채널, 팀, 그리고 동료들을 한눈에 확인하고 빠르게 소통을 시작하세요.
-          </Typography>
+        <Stack spacing={isMobile ? 'xs' : 'sm'}>
+          <Flex align="center" gap="sm">
+            {isMobile && onBack && (
+              <IconButton onClick={onBack} size="small" color="secondary" style={{ marginLeft: '-8px' }}>
+                <IconChevronLeft size={24} />
+              </IconButton>
+            )}
+            <Typography variant="h1" className="directory-view__title">
+              디렉토리
+            </Typography>
+          </Flex>
+          
+          {!isMobile && (
+            <Typography variant="body-large" className="directory-view__subtitle">
+              워크스페이스의 채널, 팀, 그리고 동료들을 한눈에 확인하고 빠르게 소통을 시작하세요.
+            </Typography>
+          )}
 
           <div className="directory-view__controls">
             <div className="directory-view__search-wrapper">

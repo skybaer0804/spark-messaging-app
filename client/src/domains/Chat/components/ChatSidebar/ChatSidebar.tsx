@@ -7,16 +7,10 @@ import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { List, ListItem } from '@/ui-components/List/List';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
 import {
   IconX,
-  IconHash,
-  IconLock,
-  IconMessageCircle,
-  IconHierarchy,
   IconChevronDown,
   IconChevronRight,
-  IconDotsVertical,
 } from '@tabler/icons-preact';
 import { ProfileItem } from '../ProfileItem/ProfileItem';
 import { ChatSidebarHeader } from './ChatSidebarHeader';
@@ -61,23 +55,6 @@ export const ChatSidebar = memo(() => {
       }, 0);
     }
   }, [isSearching]);
-
-  const getRoomIcon = (room: any) => {
-    switch (room.type) {
-      case 'direct':
-        return null;
-      case 'public':
-        return <IconHash size={18} />;
-      case 'private':
-        return <IconLock size={18} />;
-      case 'team':
-        return <IconHierarchy size={18} />;
-      case 'discussion':
-        return <IconMessageCircle size={18} />;
-      default:
-        return <IconHash size={18} />;
-    }
-  };
 
   const renderRoomItem = (room: any) => {
     const isActive = currentRoom?._id === room._id;
@@ -199,7 +176,7 @@ export const ChatSidebar = memo(() => {
         </Flex>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
         {isSearching && filteredUserList.length > 0 && (
           <div>
             <div className="chat-app__sidebar-section-header">사용자</div>

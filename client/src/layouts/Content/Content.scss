@@ -20,7 +20,7 @@
     flex-direction: column;
 
     @media (max-width: 768px) {
-      padding-bottom: 60px; // BottomTab height
+      padding-bottom: 0;
     }
   }
 }

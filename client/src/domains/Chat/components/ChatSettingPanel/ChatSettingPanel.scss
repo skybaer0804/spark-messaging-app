@@ -8,5 +8,7 @@
     flex-direction: column;
     background-color: var(--color-bg-secondary);
     height: 100%;
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
   }
 }

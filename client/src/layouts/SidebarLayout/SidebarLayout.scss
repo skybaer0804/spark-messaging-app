@@ -3,11 +3,17 @@
 .sidebar-layout {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
+  // height: 100%;
+  height: 100vh; /* 기본값 */
+  height: -webkit-fill-available; /* iOS 구버전 대응 */
+  height: 100dvh; /* 최신 브라우저 표준 대응 (강력 추천) */
   width: 100%;
   background-color: var(--color-background-primary);
   overflow: hidden;
+
+  @media (min-width: 769px) {
+    padding-bottom: 0;
+  }
 
   // 2.2.0: 글로벌 헤더 제거됨
 
@@ -55,12 +61,60 @@
     }
   }
 
+  --sidebar-width: 260px;
+  --mobile-sidebar-width: 280px;
+
+  &__mobile-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--mobile-sidebar-width);
+    z-index: 1100;
+    background-color: var(--color-background-primary);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    
+    /* iOS PWA safe area 대응 */
+    height: 100%;
+
+    &--open {
+      transform: translateX(0);
+    }
+  }
+
+  &__mobile-push-container {
+    transition: transform 0.3s ease-in-out;
+    height: 100%;
+    width: 100%;
+    position: relative;
+
+    &--pushed {
+      transform: translateX(var(--mobile-sidebar-width));
+    }
+  }
+
+  &__mobile-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1050;
+    animation: fadeIn 0.3s ease-out;
+  }
+
   @media (max-width: 768px) {
+    padding-bottom: 0;
+
     .sidebar-layout__container {
       --sidebar-layout-columns: 1fr;
-      display: flex; // 모바일에서는 그리드 대신 플렉스로 전환하여 단순화
-      flex-direction: column;
+      display: block; // grid나 flex 대신 블록으로
       height: 100%;
+      overflow: hidden;
+      position: relative;
     }
 
     &__sidebar {

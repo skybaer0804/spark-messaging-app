@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef } from 'preact/hooks';
+import { useTheme } from '@/core/context/ThemeProvider';
+import { MobileHeader } from '@/components/Mobile/MobileHeader';
 import { VideoConference } from './VideoConference/VideoConference';
 import { VideoMeetingVideoConferenceAdapter } from './VideoConference/adapters/VideoConferenceAdapter';
 import { Chat } from '@/domains/Chat';
@@ -131,8 +133,11 @@ export function VideoMeeting() {
     }
   }, []);
 
+  const { deviceSize } = useTheme();
+
   return (
     <div className="video-meeting" ref={containerRef}>
+      {deviceSize === 'mobile' && <MobileHeader />}
       {/* 화상회의 핵심 로직 (룸 리스트, 룸 생성, 참가 요청 등) */}
       <VideoMeetingCore store={videoMeetingStore} />
 

@@ -10,7 +10,8 @@
   box-shadow: var(--elevation-shadow-3);
   border: 1px solid var(--color-border-default);
   min-width: 320px;
-  max-width: 500px;
+  max-width: calc(100vw - 32px);
+  width: auto;
   animation: toastSlideIn 0.3s ease-out;
   position: relative;
   z-index: 10000;

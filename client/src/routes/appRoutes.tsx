@@ -256,22 +256,22 @@ export function findRouteTitleByPath(pathname: string) {
 
   // 홈 페이지
   if (normalized === '/') {
-    return 'Home';
+    return '홈';
   }
 
   for (const r of appRoutes) {
     if (r.path === '/') {
-      if (normalized === '/') return r.title;
+      if (normalized === '/') return r.label;
       continue;
     }
-    if (normalized.startsWith(r.path)) return r.title;
+    if (normalized.startsWith(r.path)) return r.label;
     if (r.children) {
       const hit = r.children.find((c) => normalized.startsWith(c.path));
-      if (hit) return hit.title;
+      if (hit) return hit.label;
     }
   }
 
-  return 'Spark Messaging Demo';
+  return 'Spark Messaging';
 }
 
 export function getDesignSystemComponentFromPath(pathname: string) {
