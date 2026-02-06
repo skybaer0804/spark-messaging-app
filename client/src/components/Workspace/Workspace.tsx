@@ -93,7 +93,6 @@ export function Workspace() {
     if (!newWorkspaceName.trim()) return;
     try {
       await workspaceApi.createWorkspace({ name: newWorkspaceName });
-      showSuccess('워크스페이스가 생성되었습니다.');
       setShowCreateWorkspace(false);
       setNewWorkspaceName('');
       // 병렬 실행으로 성능 개선

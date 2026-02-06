@@ -20,7 +20,10 @@ body {
   background-color: var(--color-background-primary, #1a1a2e);
   color: #333;
   /* iOS에서 실제 가용 화면 높이를 채우기 위한 설정 */
-  min-height: -webkit-fill-available;
+  /* min-height: -webkit-fill-available; */
+  height: 100vh; /* 기본값 */
+  height: -webkit-fill-available; /* iOS 구버전 대응 */
+  height: 100dvh; /* 최신 브라우저 표준 대응 (강력 추천) */
 }
 
 #app {
@@ -28,7 +31,7 @@ body {
   height: 100dvh; */
   height: 100vh; /* 기본값 */
   height: -webkit-fill-available; /* iOS 구버전 대응 */
-  height: 100svh; /* 최신 브라우저 표준 대응 (강력 추천) */
+  height: 100dvh; /* 최신 브라우저 표준 대응 (강력 추천) */
   width: 100%;
   display: flex;
   flex-direction: column;

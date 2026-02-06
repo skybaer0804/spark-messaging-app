@@ -74,7 +74,6 @@ export const DialogChatDiscussion = ({
         workspaceId: currentWorkspaceId.value || undefined,
       });
 
-      showSuccess('토론이 생성되었습니다.');
       onDiscussionCreated?.();
       handleClose();
     } catch (error: any) {
