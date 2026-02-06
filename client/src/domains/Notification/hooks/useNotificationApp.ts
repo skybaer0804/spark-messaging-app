@@ -92,7 +92,7 @@ export function useNotificationApp() {
       setMessage('');
       setScheduledAt('');
       setIsDrawerOpen(false);
-      showSuccess('알림이 생성되었습니다.');
+      // showSuccess('알림이 생성되었습니다.');
       fetchNotifications();
     } catch (error) {
       console.error('Notification creation failed:', error);
