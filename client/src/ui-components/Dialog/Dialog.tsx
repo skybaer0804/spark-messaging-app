@@ -1,8 +1,9 @@
 import { JSX } from 'preact';
 import { useEffect, useMemo, useRef } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
-import { IconX } from '@tabler/icons-preact';
+import { IconX, IconChevronLeft } from '@tabler/icons-preact';
 import { IconButton } from '../Button/IconButton';
+import { useTheme } from '@/core/context/ThemeProvider';
 import './Dialog.scss';
 
 export interface DialogProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'title'> {
@@ -42,6 +43,8 @@ export function Dialog({
   className = '',
   ...props
 }: DialogProps) {
+  const { deviceSize } = useTheme();
+  const isMobile = deviceSize === 'mobile';
   const idPrefix = useMemo(() => `dialog-${Math.random().toString(36).slice(2, 9)}`, []);
   const titleId = ariaLabelledby ?? (title ? `${idPrefix}-title` : undefined);
   const contentId = ariaDescribedby ?? `${idPrefix}-content`;
@@ -70,6 +73,8 @@ export function Dialog({
   }, [open]);
 
   if (!open) return null;
+
+  const isMobileOverlay = className.includes('dialog--mobile-overlay');
 
   const classes = [
     'dialog',
@@ -146,7 +151,7 @@ export function Dialog({
             )}
             {!hideCloseButton && (
               <IconButton size="small" color="default" onClick={(e) => onClose(e)} title="닫기">
-                <IconX size={20} />
+                {isMobile && isMobileOverlay ? <IconChevronLeft size={24} /> : <IconX size={20} />}
               </IconButton>
             )}
           </div>

@@ -5,9 +5,10 @@ import { Paper } from '@/ui-components/Paper/Paper';
 import { Button } from '@/ui-components/Button/Button';
 import { Select } from '@/ui-components/Select/Select';
 import { IconButton } from '@/ui-components/Button/IconButton';
-import { IconX } from '@tabler/icons-preact';
+import { IconChevronLeft, IconX } from '@tabler/icons-preact';
 import { useChatNotificationSettings, type NotificationMode } from './hooks/useChatNotificationSettings';
 import type { ChatRoom } from '../../types';
+import { useTheme } from '@/core/context/ThemeProvider';
 import './ChatSettingPanel.scss';
 
 interface ChatSettingPanelProps {
@@ -17,6 +18,8 @@ interface ChatSettingPanelProps {
 }
 
 export const ChatSettingPanel = ({ roomId, onClose }: ChatSettingPanelProps) => {
+  const { deviceSize } = useTheme();
+  const isMobile = deviceSize === 'mobile';
   const { settings, loading, saving, updateSettings, resetSettings } = useChatNotificationSettings(roomId);
 
   const handleModeChange = async (e: Event) => {
@@ -43,10 +46,19 @@ export const ChatSettingPanel = ({ roomId, onClose }: ChatSettingPanelProps) => 
       className="chat-app__sidebar-panel"
     >
       <Box className="chat-app__sidebar-panel__header">
-        <Typography variant="h4">알림 환경 설정</Typography>
-        <IconButton onClick={onClose} size="small">
-          <IconX size={18} />
-        </IconButton>
+        <Box style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+          {isMobile && (
+            <IconButton onClick={onClose} size="small" style={{ marginLeft: '-8px' }}>
+              <IconChevronLeft size={24} />
+            </IconButton>
+          )}
+          <Typography variant="h4" style={{ flex: 1 }}>알림 환경 설정</Typography>
+        </Box>
+        {!isMobile && (
+          <IconButton onClick={onClose} size="small">
+            <IconX size={18} />
+          </IconButton>
+        )}
       </Box>
       <Box className="chat-app__sidebar-panel__content" style={{ padding: '16px' }}>
         {loading ? (

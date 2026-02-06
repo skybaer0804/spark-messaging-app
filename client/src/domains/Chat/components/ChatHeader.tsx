@@ -2,7 +2,7 @@ import { IconButton } from '@/ui-components/Button/IconButton';
 import { Box } from '@/ui-components/Layout/Box';
 import { Stack } from '@/ui-components/Layout/Stack';
 import { Paper } from '@/ui-components/Paper/Paper';
-import { IconArrowLeft, IconUsers, IconSettings, IconMessageCircle2 } from '@tabler/icons-preact';
+import { IconChevronLeft, IconUsers, IconSettings, IconMessageCircle2 } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
 import { getDirectChatName } from '../utils/chatUtils';
@@ -53,7 +53,7 @@ export const ChatHeader = ({
       <Stack direction="row" align="center" spacing="md">
         {isMobile && (
           <IconButton onClick={goToHome} color="secondary">
-            <IconArrowLeft />
+            <IconChevronLeft />
           </IconButton>
         )}
         <Box style={{ flex: 1, minWidth: 0 }}>

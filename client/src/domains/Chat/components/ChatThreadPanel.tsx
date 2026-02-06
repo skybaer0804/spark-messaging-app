@@ -3,10 +3,11 @@ import { Box } from '@/ui-components/Layout/Box';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { IconButton } from '@/ui-components/Button/IconButton';
-import { IconArrowLeft, IconX } from '@tabler/icons-preact';
+import { IconChevronLeft, IconX } from '@tabler/icons-preact';
 import { ThreadList } from './ThreadList';
 import { ThreadDetail } from './ThreadDetail';
 import type { Message, ChatRoom, ChatUser } from '../types';
+import { useTheme } from '@/core/context/ThemeProvider';
 
 interface ChatThreadPanelProps {
   roomId: string;
@@ -22,12 +23,22 @@ export const ChatThreadPanel = ({
   onClose,
   initialSelectedMessage = null
 }: ChatThreadPanelProps) => {
+  const { deviceSize } = useTheme();
+  const isMobile = deviceSize === 'mobile';
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(initialSelectedMessage);
 
   // v2.4.2: 외부에서 initialSelectedMessage가 변경될 때 내부 상태 동기화
   useEffect(() => {
     setSelectedMessage(initialSelectedMessage);
   }, [initialSelectedMessage]);
+
+  const handleBack = () => {
+    if (selectedMessage) {
+      setSelectedMessage(null);
+    } else {
+      onClose();
+    }
+  };
 
   return (
     <Paper
@@ -37,19 +48,21 @@ export const ChatThreadPanel = ({
       className="chat-app__sidebar-panel"
     >
       <Box className="chat-app__sidebar-panel__header">
-        <Box style={{ display: 'flex', align: 'center', gap: '8px' }}>
-          {selectedMessage && (
-            <IconButton onClick={() => setSelectedMessage(null)} size="small">
-              <IconArrowLeft size={18} />
+        <Box style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+          {(selectedMessage || isMobile) && (
+            <IconButton onClick={handleBack} size="small" style={{ marginLeft: isMobile ? '-8px' : '0' }}>
+              <IconChevronLeft size={isMobile ? 24 : 18} />
             </IconButton>
           )}
-          <Typography variant="h4">
+          <Typography variant="h4" style={{ flex: 1 }}>
             {selectedMessage ? '스레드 상세' : '스레드'}
           </Typography>
         </Box>
-        <IconButton onClick={onClose} size="small">
-          <IconX size={18} />
-        </IconButton>
+        {!isMobile && (
+          <IconButton onClick={onClose} size="small">
+            <IconX size={18} />
+          </IconButton>
+        )}
       </Box>
 
       <Box className="chat-app__sidebar-panel__content">
