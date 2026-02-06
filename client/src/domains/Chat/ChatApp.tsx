@@ -248,9 +248,11 @@ function ChatAppContent() {
         <Box
           style={{
             width: isMobile ? '100%' : '300px',
+            height: '100%',
             flexShrink: 0,
             display: 'flex', 
             flexDirection: 'column',
+            minHeight: 0,
           }}
           className="chat-app__sidebar-wrapper"
         >

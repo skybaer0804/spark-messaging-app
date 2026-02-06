@@ -28,10 +28,9 @@ export function MobileHeader() {
         zIndex: 100,
         backgroundColor: 'var(--color-bg-default)',
         borderBottom: '1px solid var(--color-border-default)',
-        paddingTop: 'env(safe-area-inset-top, 0px)',
       }}
     >
-      <Flex align="center" gap="xs" style={{ height: '40px' }}>
+      <Flex align="center" gap="xs">
         <IconButton onClick={openMobileSidebar} color="default">
           <IconMenu2 size={24} />
         </IconButton>
