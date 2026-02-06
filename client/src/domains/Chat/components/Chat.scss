@@ -84,3 +84,75 @@
     color: rgba(0, 0, 0, 0.6) !important;
   }
 }
+
+// 텍스트 메시지 높이 제한 및 전체보기
+.text-message-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.text-message {
+  position: relative;
+  width: 100%;
+
+  &--truncated {
+    display: -webkit-box;
+    -webkit-line-clamp: 10;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    // line-height * 10 = 1.5 * 10 = 15em
+    max-height: 15em; 
+  }
+}
+
+.text-message__view-all {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 8px 0 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  color: inherit;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.7;
+  }
+
+  .chat-message--own & {
+    border-top-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+// 모바일 오버레이 스타일 (Dialog.tsx의 .dialog 클래스 확장)
+.dialog--mobile-overlay {
+  @media (max-width: 768px) {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100dvh !important;
+    max-width: 100% !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+
+    .dialog__content {
+      flex: 1 !important;
+      overflow-y: auto !important;
+      // padding: 20px !important;
+    }
+
+    .dialog__header {
+      // padding: 16px 20px !important;
+      border-bottom: 1px solid var(--color-border-default);
+    }
+  }
+}
