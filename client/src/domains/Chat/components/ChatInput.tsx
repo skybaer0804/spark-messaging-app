@@ -114,7 +114,8 @@ function ChatInputComponent({
       padding="md" 
       style={{ 
         flexShrink: 0,
-        paddingBottom: `calc(var(--space-padding-md) + env(safe-area-inset-bottom, 0px))`
+        // paddingBottom: `calc(var(--space-padding-md) + env(safe-area-inset-bottom, 0px))`
+        paddingBottom: 0
       }} 
       className={`${baseClass}__input-paper`}
     >

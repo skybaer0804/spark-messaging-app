@@ -10,8 +10,9 @@
   background-size: 400% 400%;
   animation: auth-gradient-bg 15s ease infinite;
   padding: var(--space-padding-lg);
-  padding-bottom: calc(var(--space-padding-lg) + env(safe-area-inset-bottom, 0px));
   padding-top: calc(var(--space-padding-lg) + env(safe-area-inset-top, 0px));
+  // padding-bottom: calc(var(--space-padding-lg) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: 0;
 
   &__container {
     width: 100%;

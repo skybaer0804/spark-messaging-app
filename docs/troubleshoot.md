@@ -38,7 +38,8 @@ PC 브라우저에서는 정상 작동하지만, 특정 모바일 기기에서 �
 - **문제**: 홈 화면 설치(PWA) 시 상단 헤더가 상태 표시줄(Status Bar)과 겹치거나, 하단 입력창이 홈 인디케이터에 가려짐.
 - **해결책**:
     - `index.html`에 `viewport-fit=cover` 설정 추가.
-    - CSS/인라인 스타일에 `env(safe-area-inset-top)` 및 `env(safe-area-inset-bottom)`를 사용하여 기기별 물리적 여백을 확보합니다.
+    <!-- - CSS/인라인 스타일에 `env(safe-area-inset-top)` 및 `env(safe-area-inset-bottom)`를 사용하여 기기별 물리적 여백을 확보합니다. -->
+    이건 때에 따라 다름. 보통 버텀은 안하고 상단만함.
 
 ---
 
@@ -48,7 +49,7 @@ PC 브라우저에서는 정상 작동하지만, 특정 모바일 기기에서 �
 2. [ ] **보안 저장소**: `localStorage` 접근부를 `try-catch`로 보호했는가?
 3. [ ] **뷰포트 설정**: `index.html` 메타 태그에 `viewport-fit=cover`가 포함되었는가?
 4. [ ] **안정적 높이**: `100vh` 대신 `100%`와 `-webkit-fill-available`을 사용했는가?
-5. [ ] **Safe Area**: 헤더와 푸터에 `env(safe-area-inset-*)` 여백을 적용했는가?
+<!-- 5. [ ] **Safe Area**: 헤더와 푸터에 `env(safe-area-inset-*)` 여백을 적용했는가? -->
 6. [ ] **디버깅**: `vite.config.ts`에서 `console` 로그 제거 옵션이 테스트 중에 꺼져 있는가?
 
 ## 4. 관련 파일 참고

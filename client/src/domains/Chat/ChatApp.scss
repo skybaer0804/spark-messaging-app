@@ -89,6 +89,8 @@
     background-color: var(--color-background-secondary) !important;
     z-index: 5;
     height: 100%;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: 0;
 
     @media (max-width: 768px) {
       width: 100%;

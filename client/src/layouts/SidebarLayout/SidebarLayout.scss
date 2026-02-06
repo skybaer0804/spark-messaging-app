@@ -3,7 +3,10 @@
 .sidebar-layout {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  // height: 100%;
+  height: 100vh; /* 기본값 */
+  height: -webkit-fill-available; /* iOS 구버전 대응 */
+  height: 100svh; /* 최신 브라우저 표준 대응 (강력 추천) */
   width: 100%;
   background-color: var(--color-background-primary);
   overflow: hidden;
