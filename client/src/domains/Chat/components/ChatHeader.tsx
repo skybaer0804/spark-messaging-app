@@ -35,7 +35,6 @@ export const ChatHeader = ({
   className = '',
 }: ChatHeaderProps) => {
   const { user: currentUser } = useAuth();
-  const { showSuccess } = useToast();
 
   return (
     <Paper
@@ -48,8 +47,7 @@ export const ChatHeader = ({
         flexShrink: 0, 
         borderBottom: '1px solid var(--color-border-default)',
         padding: '4px 12px',
-        // paddingTop: isMobile ? 'calc(env(safe-area-inset-top, 0px) + 4px)' : '4px'
-        paddingTop: isMobile ? 'env(safe-area-inset-top, 0px)' : '4px'
+        paddingTop: isMobile ? 'var(--safe-area-inset-top)' : '4px'
       }}
     >
       <Stack direction="row" align="center" spacing="md">

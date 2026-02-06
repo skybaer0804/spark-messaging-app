@@ -3,7 +3,8 @@
   background-color: var(--color-bg-default);
   display: flex;
   flex-direction: column;
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: var(--safe-area-inset-top);
+  padding-bottom: var(--safe-area-inset-bottom);
 
   &__header {
     padding: 16px 16px;

@@ -14,8 +14,8 @@
     max-width: 100%;
     margin: 0 auto;
     padding: var(--space-padding-xl);
-    // padding-bottom: calc(var(--space-padding-xl) + env(safe-area-inset-bottom, 0px));
-    padding-bottom: 0;
+    padding-top: calc(var(--space-padding-xl) + var(--safe-area-inset-top));
+    padding-bottom: calc(var(--space-padding-xl) + var(--safe-area-inset-bottom));
   }
 
   &__badge {
