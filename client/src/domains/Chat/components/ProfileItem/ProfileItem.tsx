@@ -1,4 +1,4 @@
-import { memo } from 'preact/compat';
+import { memo, useState, useRef } from 'preact/compat';
 import { Avatar } from '@/ui-components/Avatar/Avatar';
 import { Typography } from '@/ui-components/Typography/Typography';
 import {
@@ -7,6 +7,8 @@ import {
   IconMessageCircle,
   IconHierarchy,
   IconX,
+  IconDots,
+  IconLogout,
 } from '@tabler/icons-preact';
 import './ProfileItem.scss';
 
@@ -21,6 +23,7 @@ interface ProfileItemProps {
   onClick?: () => void;
   onDelete?: (e: MouseEvent) => void;
   onContextMenu?: (e: MouseEvent) => void;
+  onMenuClick?: (e: MouseEvent) => void;
   className?: string;
   style?: any;
   styleOption?: {
@@ -44,6 +47,7 @@ export const ProfileItem = memo(({
   onClick,
   onDelete,
   onContextMenu,
+  onMenuClick,
   className = '',
   style,
   styleOption = {
@@ -132,43 +136,58 @@ export const ProfileItem = memo(({
     <div
       className={`profile-item profile-item--${mode} ${isGrouped ? 'profile-item--grouped' : ''} ${noHover ? 'profile-item--no-hover' : ''} ${isActive ? 'profile-item--active' : ''} ${className}`}
       onClick={onClick}
-      onContextMenu={onContextMenu}
       style={{ '--app-color': getBgColor(), ...style } as any}
     >
-      <div className="profile-item__avatar-container">
-        {!isGrouped ? (
-          <Avatar src={avatar} variant="rounded" size="sm" style={{ backgroundColor: getBgColor() }}>
-            {firstLetter}
-          </Avatar>
-        ) : (
-          <div className="profile-item__avatar-placeholder" />
-        )}
-        {!isGrouped && renderStatus('icon')}
-      </div>
-      
-      {!isGrouped && (
-        <div className="profile-item__content">
-          <div className="profile-item__name-container">
-            <div className="profile-item__name-wrapper">
-              {renderStatus('name-left')}
-              {renderTypeIcon()}
-              <Typography variant="body-medium" className="profile-item__name">
-                {unreadCount ? <strong>{name}</strong> : name}
-              </Typography>
-              {renderStatus('name-right')}
-              {nameSuffix && <div className="profile-item__name-suffix">{nameSuffix}</div>}
-            </div>
-            {unreadCount ? (
-              <div className="profile-item__unread-badge">{unreadCount}</div>
-            ) : null}
-          </div>
-          {showDesc && desc && (
-            <Typography variant="caption" className="profile-item__desc">
-              {desc}
-            </Typography>
+      <div className="profile-item__main-content">
+        <div className="profile-item__avatar-container">
+          {!isGrouped ? (
+            <Avatar src={avatar} variant="rounded" size="sm" style={{ backgroundColor: getBgColor() }}>
+              {firstLetter}
+            </Avatar>
+          ) : (
+            <div className="profile-item__avatar-placeholder" />
           )}
+          {!isGrouped && renderStatus('icon')}
         </div>
-      )}
+        
+        {!isGrouped && (
+          <div className="profile-item__content">
+            <div className="profile-item__name-container">
+              <div className="profile-item__name-wrapper">
+                {renderStatus('name-left')}
+                {renderTypeIcon()}
+                <Typography variant="body-medium" className="profile-item__name">
+                  {unreadCount ? <strong>{name}</strong> : name}
+                </Typography>
+                {renderStatus('name-right')}
+                {nameSuffix && <div className="profile-item__name-suffix">{nameSuffix}</div>}
+              </div>
+              
+              <div className="profile-item__actions">
+                {unreadCount ? (
+                  <div className="profile-item__unread-badge">{unreadCount}</div>
+                ) : null}
+                {onMenuClick && (
+                  <div 
+                    className="profile-item__menu-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMenuClick(e as any);
+                    }}
+                  >
+                    <IconDots size={18} />
+                  </div>
+                )}
+              </div>
+            </div>
+            {showDesc && desc && (
+              <Typography variant="caption" className="profile-item__desc">
+                {desc}
+              </Typography>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 });

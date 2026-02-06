@@ -11,6 +11,51 @@
   margin: 2px 8px;
   position: relative;
   background-color: transparent;
+  overflow: hidden;
+
+  &__main-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+  }
+
+  &__menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    color: var(--color-text-tertiary);
+    transition: all 0.2s;
+
+    @media (max-width: 768px) {
+      display: flex;
+    }
+
+    &:hover {
+      background-color: var(--color-action-hover);
+      color: var(--color-text-primary);
+    }
+  }
+
+  &:hover &__menu-btn,
+  &--active &__menu-btn {
+    display: flex;
+  }
+
+  &:hover &__unread-badge,
+  &--active &__unread-badge {
+    display: none;
+  }
 
   &:hover {
     background-color: var(--color-surface-level-1);
