@@ -47,7 +47,7 @@ export const ChatHeader = ({
         flexShrink: 0, 
         borderBottom: '1px solid var(--color-border-default)',
         padding: '4px 12px',
-        paddingTop: isMobile ? 'var(--safe-area-inset-top)' : '4px'
+        paddingTop: isMobile ? 'calc(var(--space-gap-sm) + var(--safe-area-inset-top)' : '4px'
       }}
     >
       <Stack direction="row" align="center" spacing="md">
