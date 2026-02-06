@@ -127,7 +127,7 @@ function ChatMessageItemComponent({
     } : message;
 
     if (!displayMessage.fileData) {
-      return <TextMessage message={displayMessage} isOwnMessage={isOwnMessage} />;
+      return <TextMessage message={displayMessage} isOwnMessage={isOwnMessage} senderName={senderName} />;
     }
 
     switch (displayMessage.fileData.fileType) {

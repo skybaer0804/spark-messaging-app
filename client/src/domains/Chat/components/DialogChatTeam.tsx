@@ -144,6 +144,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
       maxWidth={false}
       style={{ maxWidth: '800px' }}
       fullWidth
+      className="dialog--mobile-overlay"
       actions={
         <Flex gap="sm">
           <Button onClick={handleClose}>취소</Button>

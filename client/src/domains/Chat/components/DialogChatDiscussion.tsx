@@ -104,6 +104,7 @@ export const DialogChatDiscussion = ({
       maxWidth={false}
       style={{ maxWidth: '600px' }}
       fullWidth
+      className="dialog--mobile-overlay"
       actions={
         <Flex gap="sm">
           <Button onClick={handleClose}>취소</Button>
