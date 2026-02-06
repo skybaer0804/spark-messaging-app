@@ -10,18 +10,7 @@
   padding-bottom: var(--safe-area-inset-bottom);
 
   &__profile {
-    padding: 24px 16px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-
-    &:hover {
-      background-color: var(--color-background-secondary);
-    }
-  }
-
-  &__profile-info {
-    display: flex;
-    flex-direction: column;
+    padding: 16px 8px;
   }
 
   &__divider {

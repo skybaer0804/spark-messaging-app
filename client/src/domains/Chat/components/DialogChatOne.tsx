@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'preact/hooks';
+import { IconX, IconPlus } from '@tabler/icons-preact';
 import { Dialog } from '@/ui-components/Dialog/Dialog';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Button } from '@/ui-components/Button/Button';
@@ -6,6 +7,7 @@ import { Typography } from '@/ui-components/Typography/Typography';
 import { Input } from '@/ui-components/Input/Input';
 import { Stack } from '@/ui-components/Layout/Stack';
 import { useAuth } from '@/core/hooks/useAuth';
+import { useTheme } from '@/core/context/ThemeProvider';
 import { AutocompleteMember } from './AutocompleteMember';
 import type { ChatUser } from '../types';
 
@@ -27,8 +29,10 @@ export const DialogChatOne = ({
   handleCreateRoom,
 }: DialogChatOneProps) => {
   const { user } = useAuth();
+  const { deviceSize } = useTheme();
   const [roomName, setRoomName] = useState('');
   const [showRoomNameInput, setShowRoomNameInput] = useState(false);
+  const isMobile = deviceSize === 'mobile';
 
   // 선택된 사용자 객체 배열
   const selectedUsers = useMemo(() => {
@@ -87,10 +91,27 @@ export const DialogChatOne = ({
       style={{ maxWidth: '800px' }}
       className="dialog--mobile-overlay"
       actions={
-        <Flex gap="sm">
-          <Button onClick={handleClose}>취소</Button>
-          <Button variant="primary" disabled={isCreateDisabled} onClick={handleCreate}>
-            개설
+        <Flex gap="sm" style={isMobile ? { width: '100%' } : {}}>
+          <Button
+            onClick={handleClose}
+            variant="secondary"
+            style={isMobile ? { flex: 4.5 } : {}}
+          >
+            <Flex align="center" gap="xs" justify="center">
+              <IconX size={18} />
+              <span>취소</span>
+            </Flex>
+          </Button>
+          <Button
+            variant="primary"
+            disabled={isCreateDisabled}
+            onClick={handleCreate}
+            style={isMobile ? { flex: 5.5 } : {}}
+          >
+            <Flex align="center" gap="xs" justify="center">
+              <IconPlus size={18} />
+              <span>개설</span>
+            </Flex>
           </Button>
         </Flex>
       }

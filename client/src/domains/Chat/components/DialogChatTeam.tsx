@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { IconX, IconCheck, IconPlus } from '@tabler/icons-preact';
 import { Dialog } from '@/ui-components/Dialog/Dialog';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Button } from '@/ui-components/Button/Button';
@@ -10,6 +11,7 @@ import { Switch } from '@/ui-components/Switch/Switch';
 import { AutocompleteMember } from './AutocompleteMember';
 import { useChat } from '../context/ChatContext';
 import { useAuth } from '@/core/hooks/useAuth';
+import { useTheme } from '@/core/context/ThemeProvider';
 import { useToast } from '@/core/context/ToastContext';
 import { teamApi } from '@/core/api/ApiService';
 import { currentWorkspaceId } from '@/stores/chatRoomsStore';
@@ -34,8 +36,10 @@ interface DialogChatTeamProps {
 export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogChatTeamProps) => {
   const { userList } = useChat();
   const { user } = useAuth();
+  const { deviceSize } = useTheme();
   const { showSuccess, showError } = useToast();
   const isEditMode = !!team;
+  const isMobile = deviceSize === 'mobile';
   const [teamData, setTeamData] = useState({
     teamName: '',
     teamDesc: '',
@@ -106,7 +110,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
         private: false,
         members: [],
       });
-      showSuccess(isEditMode ? '팀이 수정되었습니다.' : '팀이 생성되었습니다.');
+      // showSuccess(isEditMode ? '팀이 수정되었습니다.' : '팀이 생성되었습니다.');
       onTeamCreated?.();
       onClose();
     } catch (error: any) {
@@ -146,10 +150,27 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
       fullWidth
       className="dialog--mobile-overlay"
       actions={
-        <Flex gap="sm">
-          <Button onClick={handleClose}>취소</Button>
-          <Button variant="primary" disabled={!isFormValid} onClick={handleSubmit}>
-            {isEditMode ? '저장' : '개설'}
+        <Flex gap="sm" style={isMobile ? { width: '100%' } : {}}>
+          <Button
+            onClick={handleClose}
+            variant="secondary"
+            style={isMobile ? { flex: 4.5 } : {}}
+          >
+            <Flex align="center" gap="xs" justify="center">
+              <IconX size={18} />
+              <span>취소</span>
+            </Flex>
+          </Button>
+          <Button
+            variant="primary"
+            disabled={!isFormValid}
+            onClick={handleSubmit}
+            style={isMobile ? { flex: 5.5 } : {}}
+          >
+            <Flex align="center" gap="xs" justify="center">
+              {isEditMode ? <IconCheck size={18} /> : <IconPlus size={18} />}
+              <span>{isEditMode ? '저장' : '개설'}</span>
+            </Flex>
           </Button>
         </Flex>
       }
