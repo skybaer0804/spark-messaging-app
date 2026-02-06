@@ -52,64 +52,6 @@
   }
 }
 
-// 모바일 전체 화면 오버레이 패널
-.notification-app__drawer-panel {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1300;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--color-background-primary);
-  animation: panel-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4px 12px;
-    padding-top: calc(var(--space-gap-sm) + var(--safe-area-inset-top));
-    border-bottom: 1px solid var(--color-border-default);
-    background-color: var(--color-bg-default);
-    min-height: 56px;
-    flex-shrink: 0;
-
-    .typography--h4 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      flex: 1;
-      margin: 0;
-    }
-
-    .icon-button {
-      padding: 8px;
-      color: var(--color-text-secondary);
-
-      svg {
-        width: 24px;
-        height: 24px;
-      }
-    }
-  }
-
-  &__content {
-    flex: 1;
-    overflow-y: auto;
-  }
-}
-
-@keyframes panel-slide-up {
-  from {
-    transform: translateY(100%);
-  }
-
-  to {
-    transform: translateY(0);
-  }
-}
-
 .rotate {
   animation: rotate 1s linear infinite;
 }

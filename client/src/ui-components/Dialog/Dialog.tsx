@@ -1,5 +1,5 @@
 import { JSX } from 'preact';
-import { useEffect, useMemo, useRef } from 'preact/hooks';
+import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { IconX, IconChevronLeft } from '@tabler/icons-preact';
 import { IconButton } from '../Button/IconButton';
@@ -45,12 +45,29 @@ export function Dialog({
 }: DialogProps) {
   const { deviceSize } = useTheme();
   const isMobile = deviceSize === 'mobile';
+  const isMobileOverlay = className.includes('dialog--mobile-overlay');
+  const needsSlideAnimation = isMobile && isMobileOverlay;
+
   const idPrefix = useMemo(() => `dialog-${Math.random().toString(36).slice(2, 9)}`, []);
   const titleId = ariaLabelledby ?? (title ? `${idPrefix}-title` : undefined);
   const contentId = ariaDescribedby ?? `${idPrefix}-content`;
 
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const lastFocused = useRef<HTMLElement | null>(null);
+
+  // 모바일 오버레이: exit 애니메이션을 위한 딜레이드 언마운트
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setVisible(true);
+    } else if (needsSlideAnimation) {
+      const timer = setTimeout(() => setVisible(false), 300);
+      return () => clearTimeout(timer);
+    } else {
+      setVisible(false);
+    }
+  }, [open, needsSlideAnimation]);
 
   useEffect(() => {
     if (!open) return;
@@ -72,9 +89,13 @@ export function Dialog({
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open && !visible) return null;
 
-  const isMobileOverlay = className.includes('dialog--mobile-overlay');
+  const rootClasses = [
+    'dialog-root',
+    needsSlideAnimation ? 'dialog-root--mobile-slide' : '',
+    open ? 'dialog-root--open' : '',
+  ].filter(Boolean).join(' ');
 
   const classes = [
     'dialog',
@@ -121,7 +142,7 @@ export function Dialog({
   };
 
   return createPortal(
-    <div className="dialog-root">
+    <div className={rootClasses}>
       <div
         className="dialog-root__backdrop"
         onClick={(e) => {

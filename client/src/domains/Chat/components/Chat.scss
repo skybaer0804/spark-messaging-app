@@ -21,6 +21,7 @@
 
 // 마크다운 렌더러 스타일 (자신의 메시지)
 .markdown-renderer--own-message {
+
   // 자신의 메시지에서는 링크 색상을 밝게 조정
   .markdown-link {
     color: rgba(255, 255, 255, 0.9);
@@ -42,11 +43,11 @@
     background-color: rgba(40, 40, 45, 0.95);
     color: rgba(255, 255, 255, 0.9);
   }
-  
+
   // 자신의 메시지에서도 링크는 파란색 유지
   .markdown-link {
     color: #0066cc;
-    
+
     &:hover {
       color: #0052a3;
     }
@@ -64,8 +65,19 @@
 
   .markdown-renderer {
     color: #000000 !important;
-    
-    p, span, div, li, h1, h2, h3, h4, h5, h6, strong, em {
+
+    p,
+    span,
+    div,
+    li,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    strong,
+    em {
       color: #000000 !important;
     }
 
@@ -78,9 +90,10 @@
   .typography {
     color: #000000 !important;
   }
-  
+
   // 3D 모델 파일 등 내부 텍스트도 검은색으로
-  .text-secondary, .text-tertiary {
+  .text-secondary,
+  .text-tertiary {
     color: rgba(0, 0, 0, 0.6) !important;
   }
 }
@@ -103,7 +116,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     // line-height * 10 = 1.5 * 10 = 15em
-    max-height: 15em; 
+    max-height: 15em;
   }
 }
 
@@ -146,6 +159,14 @@
     background-color: var(--color-bg-default) !important;
     padding: 0 !important; // 패딩 제거 (헤더/컨텐츠에서 개별 관리)
 
+    // 우측 → 좌측 슬라이드 애니메이션 (MobileSlidePanel과 동일 방향)
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+
+    .dialog-root--open & {
+      transform: translateX(0);
+    }
+
     .dialog__content {
       flex: 1 !important;
       overflow-y: auto !important;
@@ -177,7 +198,7 @@
       padding: 8px !important;
       margin-left: 0 !important;
       color: var(--color-text-secondary) !important;
-      
+
       svg {
         width: 24px !important;
         height: 24px !important;
@@ -231,7 +252,7 @@
         padding: 8px !important;
         margin-left: 0 !important;
         color: var(--color-text-secondary) !important;
-        
+
         svg {
           width: 24px !important;
           height: 24px !important;

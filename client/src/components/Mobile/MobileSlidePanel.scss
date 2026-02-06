@@ -1,0 +1,102 @@
+// ─────────────────────────────────────────────────
+// MobileSlidePanel
+// 모바일 전용 우측 → 좌측 슬라이드 오버레이 패널.
+// MobileSidebar(좌 → 우)와 정확히 반대 방향으로 동작.
+//
+// 구조는 SidebarLayout의 MobileSidebar와 동일한 패턴:
+//   - 패널: position:fixed, transform 기반 슬라이드
+//   - 본 콘텐츠: transition으로 밀려남 (push)
+//   - 오버레이: 딤 배경
+//   - visibility 트릭 없이 순수 transition만 사용
+// ─────────────────────────────────────────────────
+
+// 배경 딤 오버레이 (SidebarLayout.__mobile-overlay 대응)
+.mobile-slide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1299;
+  background-color: rgba(0, 0, 0, 0);
+  pointer-events: none;
+  transition: background-color 0.3s ease-in-out;
+
+  &--active {
+    background-color: rgba(0, 0, 0, 0.4);
+    pointer-events: auto;
+  }
+}
+
+// 슬라이드 패널 (SidebarLayout.__mobile-sidebar 대응, 반대 방향)
+.mobile-slide-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1300;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-background-primary);
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+
+  // MobileSidebar와 동일한 패턴: 순수 transform + transition
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+
+  &--open {
+    transform: translateX(0);
+  }
+
+  // 기본 헤더 (noHeader=false일 때)
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    padding-top: calc(var(--space-gap-sm) + var(--safe-area-inset-top));
+    border-bottom: 1px solid var(--color-border-default);
+    background-color: var(--color-bg-default);
+    min-height: 56px;
+    flex-shrink: 0;
+
+    .typography--h4 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .icon-button {
+      color: var(--color-text-secondary);
+      padding: 8px;
+
+      svg {
+        width: 24px;
+        height: 24px;
+      }
+    }
+  }
+
+  // 콘텐츠 영역
+  &__body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+// ─────────────────────────────────────────────────
+// Push 효과: 본 콘텐츠를 왼쪽으로 밀어냄
+// SidebarLayout.__mobile-push-container 패턴과 동일하되 반대 방향
+//
+// sidebar-layout__content에 transition을 걸고,
+// MobileSlidePanel이 열릴 때 --active 클래스를 토글해서
+// 본 콘텐츠가 왼쪽으로 밀려나는 효과를 줌.
+// ─────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .sidebar-layout__content {
+    transition: transform 0.3s ease-in-out;
+  }
+}
+
+.mobile-slide-pushed--active {
+  transform: translateX(-60px);
+}
