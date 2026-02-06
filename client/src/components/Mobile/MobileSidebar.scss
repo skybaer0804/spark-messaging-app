@@ -10,18 +10,18 @@
   padding-bottom: var(--safe-area-inset-bottom);
 
   &__profile {
-    padding: 16px 8px;
+    padding: 0px 0px;
   }
 
   &__divider {
     height: 1px;
     background-color: var(--color-border-default);
-    margin: 0 16px;
+    margin: 0 8px;
   }
 
   &__nav {
     flex: 1;
-    padding: 16px 8px;
+    padding: 8px 8px;
     display: flex;
     flex-direction: column;
     gap: 4px;

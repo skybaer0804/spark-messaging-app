@@ -103,7 +103,7 @@ export const ChatSidebarHeader = ({
           e.stopPropagation();
           setShowProfileMenu(!showProfileMenu);
         }}
-        style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center' }}
+        style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', marginLeft: '7px' }}
       >
         <div className="avatar">
           <Avatar src={currentUser?.profileImage} variant="rounded" size="sm" style={{ backgroundColor: '#23D5AB' }}>

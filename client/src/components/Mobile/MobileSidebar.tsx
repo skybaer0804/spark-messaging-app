@@ -8,7 +8,6 @@ import {
   IconVideo,
   IconPalette,
   IconUsers,
-  IconChevronRight
 } from '@tabler/icons-preact';
 import './MobileSidebar.scss';
 
@@ -44,7 +43,6 @@ export function MobileSidebar() {
             showDesc: true,
             statusPosition: 'icon',
             mode: 'list',
-            nameSuffix: <IconChevronRight size={18} style={{ color: 'var(--color-text-secondary)' }} />
           }}
           className="mobile-sidebar__profile-item"
         />
