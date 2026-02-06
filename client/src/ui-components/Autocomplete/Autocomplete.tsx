@@ -2,6 +2,11 @@ import { JSX } from 'preact';
 import { createPortal } from 'preact/compat';
 import { useState, useRef, useEffect, useMemo } from 'preact/hooks';
 import { useTheme } from '@/core/context/ThemeProvider';
+import { Flex } from '../Layout/Flex';
+import { Stack } from '../Layout/Stack';
+import { Typography } from '../Typography/Typography';
+import { IconButton } from '../Button/IconButton';
+import { IconChevronLeft, IconSearch } from '@tabler/icons-preact';
 import { Input } from '../Input/Input';
 import './Autocomplete.scss';
 
@@ -504,25 +509,36 @@ export function Autocomplete<T = any>({
       {open && (
         isMobile ? (
           createPortal(
-            <div className="autocomplete-overlay" data-theme={theme} ref={overlayRef}>
-              <div className="autocomplete-overlay__header">
-                <button 
-                  type="button" 
-                  className="autocomplete-overlay__back-button"
-                  onClick={() => setOpen(false)}
-                >
-                  ←
-                </button>
-                <div className="autocomplete-overlay__input-container">
-                  <Input
-                    autoFocus
-                    fullWidth
-                    placeholder={placeholder || '검색어 입력'}
-                    value={inputValue}
-                    onInput={handleInputChange}
-                    onKeyDown={handleKeyDown}
-                    endAdornment={
-                      inputValue && (
+            <div className="autocomplete-overlay directory-view directory-view--mobile" data-theme={theme} ref={overlayRef}>
+              <header className="directory-view__header">
+                <Stack spacing="xs">
+                  <Flex align="center" gap="sm">
+                    <IconButton
+                      onClick={() => setOpen(false)}
+                      size="small"
+                      color="secondary"
+                      style={{ marginLeft: '-8px' }}
+                    >
+                      <IconChevronLeft size={24} />
+                    </IconButton>
+                    <Typography variant="h1" className="directory-view__title">
+                      {label || '검색'}
+                    </Typography>
+                  </Flex>
+
+                  <div className="directory-view__controls">
+                    <div className="directory-view__search-wrapper">
+                      <IconSearch className="directory-view__search-icon" size={20} />
+                      <input
+                        autoFocus
+                        type="text"
+                        className="directory-view__search-input"
+                        placeholder={placeholder || '검색어 입력'}
+                        value={inputValue}
+                        onInput={handleInputChange}
+                        onKeyDown={handleKeyDown}
+                      />
+                      {inputValue && (
                         <button
                           type="button"
                           onClick={() => {
@@ -530,17 +546,21 @@ export function Autocomplete<T = any>({
                             onInputChange?.('');
                           }}
                           className="autocomplete__clear-button"
+                          style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                          }}
                         >
                           ×
                         </button>
-                      )
-                    }
-                  />
-                </div>
-              </div>
-              <div className="autocomplete-overlay__content">
-                {renderList()}
-              </div>
+                      )}
+                    </div>
+                  </div>
+                </Stack>
+              </header>
+              <div className="autocomplete-overlay__content">{renderList()}</div>
             </div>,
             document.body
           )
