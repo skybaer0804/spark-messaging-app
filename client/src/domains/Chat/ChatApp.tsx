@@ -20,6 +20,7 @@ import { ChatMessages } from './components/ChatMessages';
 import { ChatSettingPanel } from './components/ChatSettingPanel/ChatSettingPanel';
 import { ImageModal } from './components/ImageModal';
 import { ChatThreadPanel } from './components/ChatThreadPanel';
+import { ChatInfoPanel } from './components/ChatInfoPanel';
 import { Loading } from '@/ui-components/Loading/Loading';
 import { DialogForward } from './components/DialogForward';
 import type { Message } from './types';
@@ -46,6 +47,7 @@ function ChatAppContent() {
     sendMessage,
     handleRoomSelect: handleRoomSelectRaw,
     handleCreateRoom,
+    leaveRoom,
     sendFile,
     uploadingFile,
     uploadProgress,
@@ -137,7 +139,7 @@ function ChatAppContent() {
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imageModal, setImageModal] = useState<{ url: string; fileName: string } | null>(null);
-  const [rightPanel, setRightPanel] = useState<'none' | 'members' | 'settings' | 'thread'>('none');
+  const [rightPanel, setRightPanel] = useState<'none' | 'members' | 'settings' | 'thread' | 'info'>('none');
   const [selectedThreadMessage, setSelectedThreadMessage] = useState<Message | null>(null);
   const [forwardModalMessage, setForwardModalMessage] = useState<Message | null>(null);
   const { user: currentUser } = useAuth();
@@ -297,9 +299,11 @@ function ChatAppContent() {
                 showUserList={rightPanel === 'members'}
                 showSettings={rightPanel === 'settings'}
                 showThreads={rightPanel === 'thread'}
+                showInfo={rightPanel === 'info'}
                 setShowUserList={(show: boolean) => setRightPanel(show ? 'members' : 'none')}
                 setShowSettings={(show: boolean) => setRightPanel(show ? 'settings' : 'none')}
                 setShowThreads={(show: boolean) => setRightPanel(show ? 'thread' : 'none')}
+                setShowInfo={(show: boolean) => setRightPanel(show ? 'info' : 'none')}
                 className="chat-app__header"
               />
 
@@ -362,6 +366,7 @@ function ChatAppContent() {
                 {/* Right Sidebar */}
                 {rightPanel === 'members' && <ChatMemberPanel members={currentRoom.members} onClose={() => setRightPanel('none')} />}
                 {rightPanel === 'settings' && <ChatSettingPanel roomId={currentRoom._id} currentRoom={currentRoom} onClose={() => setRightPanel('none')} />}
+                {rightPanel === 'info' && <ChatInfoPanel currentRoom={currentRoom} onClose={() => setRightPanel('none')} onLeave={() => leaveRoom(currentRoom._id)} />}
                 {rightPanel === 'thread' && (
                   <ChatThreadPanel 
                     roomId={currentRoom._id} 

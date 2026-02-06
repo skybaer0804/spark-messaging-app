@@ -18,6 +18,8 @@ const chatRoomSchema = new mongoose.Schema({
   lastMessage: { type: mongoose.Schema.Types.ObjectId, ref: 'Message' },
   lastSequenceNumber: { type: Number, default: 0 }, // 해당 방의 마지막 메시지 번호 추적
   isArchived: { type: Boolean, default: false },
+  isPrivate: { type: Boolean, default: false },
+  private: { type: Boolean }, // 레거시 데이터 대응
   createdAt: { type: Date, default: Date.now },
 });
 

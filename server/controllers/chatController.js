@@ -122,6 +122,12 @@ exports.createRoom = async (req, res) => {
     // Private 채널인 경우 slug 생성
     let slug = null;
     if ((type === 'private' || isPrivate) && type !== 'direct') {
+      // v2.4.5: type: 'private'은 이제 사용하지 않음. 'public'으로 통일하고 isPrivate 필드로 구분
+      if (type === 'private') {
+        type = 'public';
+        isPrivate = true;
+      }
+
       // 이름 기반으로 slug 생성 (영문, 숫자, 하이픈, 언더스코어만 허용)
       const baseSlug = (name || 'channel')
         .toLowerCase()
@@ -147,7 +153,7 @@ exports.createRoom = async (req, res) => {
       type,
       teamId,
       parentId,
-      isPrivate: !!isPrivate,
+      isPrivate: !!(isPrivate || type === 'private'),
       createdBy: currentUserId,
       identifier: roomIdentifier || undefined, // null 대신 undefined 사용하여 sparse index 활용
       slug: slug || undefined,
@@ -233,6 +239,9 @@ exports.getRooms = async (req, res) => {
         const lastReadSequenceNumber = ur.lastReadSequenceNumber || 0;
         const unreadCount = Math.max(0, lastSequenceNumber - lastReadSequenceNumber);
 
+        // v2.4.4: 비공개 여부 판단 로직 강화 (타입 기반 폴백 포함)
+        const isPrivate = room.isPrivate || room.private || room.type === 'private' || room.type === 'direct';
+
         // 1:1 대화방의 경우 상대적 이름 처리
         if (room.type === 'direct') {
           const otherMember = room.members.find((m) => m._id.toString() !== userId.toString());
@@ -246,6 +255,7 @@ exports.getRooms = async (req, res) => {
 
         return {
           ...room,
+          isPrivate,
           unreadCount,
           isPinned: ur.isPinned,
           notificationEnabled: ur.notificationEnabled,
@@ -383,7 +393,7 @@ exports.joinRoomByInvite = async (req, res) => {
     }
 
     // slug로 채팅방 찾기
-    const room = await ChatRoom.findOne({ slug, workspaceId, type: 'private' });
+    const room = await ChatRoom.findOne({ slug, workspaceId, isPrivate: true });
     if (!room) {
       return res.status(404).json({ message: 'Room not found or invalid invite link' });
     }
@@ -548,6 +558,7 @@ exports.leaveRoom = async (req, res) => {
         socketService.notifyRoomListUpdated(userIdStr, {
           _id: roomId,
           isArchived: room.isArchived,
+          isPrivate: room.isPrivate,
           members: room.members,
           lastMessage: room.lastMessage,
           updatedAt: room.updatedAt,

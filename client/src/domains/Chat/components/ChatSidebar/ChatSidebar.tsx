@@ -2,7 +2,6 @@ import { memo, useState } from 'preact/compat';
 import { useEffect } from 'preact/hooks';
 import { useChatSidebar } from './hooks/useChatSidebar';
 import { IconButton } from '@/ui-components/Button/IconButton';
-import { Button } from '@/ui-components/Button/Button';
 import { Input } from '@/ui-components/Input/Input';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
@@ -70,6 +69,7 @@ export const ChatSidebar = memo(() => {
           name={roomName}
           desc={room.type === 'direct' ? statusText : room.description || room.displayStatusText}
           type={room.type}
+          isPrivate={room.isPrivate || room.private}
           avatar={displayAvatar}
           status={displayStatus}
           isActive={isActive || isFocused}
@@ -108,7 +108,7 @@ export const ChatSidebar = memo(() => {
             </Typography>
             <Flex gap="xs" align="center">
               <IconButton
-                color="warning"
+                color="error"
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -236,7 +236,6 @@ export const ChatSidebar = memo(() => {
         {renderSection('direct', '개인 대화방')}
         {renderSection('team', 'Teams')}
         {renderSection('public', 'Channels')}
-        {renderSection('private', 'Private Groups')}
         {renderSection('discussion', 'Discussion')}
       </div>
     </div>

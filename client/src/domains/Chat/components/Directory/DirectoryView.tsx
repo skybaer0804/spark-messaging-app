@@ -154,12 +154,12 @@ export const DirectoryView = ({
   // 단일 루프로 최적화: filter().filter() 체인을 하나로 통합
   const filteredChannels = useMemo(() => {
     if (!searchTerm.trim()) {
-      return roomList.filter((r) => r.type === 'public' || r.type === 'private');
+      return roomList.filter((r) => r.type === 'public');
     }
     const lowerQuery = searchTerm.toLowerCase();
     const filtered: typeof roomList = [];
     for (const r of roomList) {
-      if ((r.type === 'public' || r.type === 'private') &&
+      if (r.type === 'public' &&
           ((r.name || '').toLowerCase().includes(lowerQuery) ||
            (r.description && r.description.toLowerCase().includes(lowerQuery)))) {
         filtered.push(r);
@@ -353,8 +353,8 @@ export const DirectoryView = ({
       return;
     }
 
-    // Private 채널이고 멤버가 아닌 경우 초대 링크 표시
-    if (room.type === 'private') {
+    // 비공개 채널이고 멤버가 아닌 경우 초대 링크 표시
+    if (room.isPrivate || room.type === 'private') {
       setInviteChannel(room);
       return;
     }
@@ -428,9 +428,9 @@ export const DirectoryView = ({
                   title={room.name || '채널'}
                   description={room.description}
                   icon={<IconHash size={20} />}
-                  color={room.type === 'private' ? '#E73C7E' : '#509EE3'}
+                  color={room.isPrivate || room.type === 'private' ? '#E73C7E' : '#509EE3'}
                   onClick={() => handleChannelClick(room)}
-                  badge={room.type === 'private' ? 'Private' : room.isPrivate ? 'Private' : 'Public'}
+                  badge={room.isPrivate || room.type === 'private' ? 'Private' : 'Public'}
                   actions={
                     isOwner ? (
                       <>

@@ -43,7 +43,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
   const [teamData, setTeamData] = useState({
     teamName: '',
     teamDesc: '',
-    private: false,
+    isPrivate: false,
     members: [] as ChatUser[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,7 +54,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
       setTeamData({
         teamName: team.teamName,
         teamDesc: team.teamDesc || '',
-        private: team.private,
+        isPrivate: team.private || (team as any).isPrivate || false,
         members: team.members || [],
       });
     } else if (!team && open) {
@@ -62,7 +62,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
       setTeamData({
         teamName: '',
         teamDesc: '',
-        private: false,
+        isPrivate: false,
         members: [],
       });
     }
@@ -84,7 +84,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
         await teamApi.updateTeam(team._id, {
           teamName: teamData.teamName.trim(),
           teamDesc: teamData.teamDesc.trim() || undefined,
-          private: teamData.private,
+          private: teamData.isPrivate,
         });
 
         // 새로 추가된 멤버가 있으면 초대
@@ -97,7 +97,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
         await teamApi.createTeam({
           teamName: teamData.teamName.trim(),
           teamDesc: teamData.teamDesc.trim() || undefined,
-          private: teamData.private,
+          private: teamData.isPrivate,
           members: memberIds.length > 0 ? memberIds : undefined,
           workspaceId: currentWorkspaceId.value || undefined,
         });
@@ -107,7 +107,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
       setTeamData({
         teamName: '',
         teamDesc: '',
-        private: false,
+        isPrivate: false,
         members: [],
       });
       // showSuccess(isEditMode ? '팀이 수정되었습니다.' : '팀이 생성되었습니다.');
@@ -125,7 +125,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
     setTeamData({
       teamName: '',
       teamDesc: '',
-      private: false,
+      isPrivate: false,
       members: [],
     });
     onClose();
@@ -225,8 +225,8 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
               </Typography>
             </Flex>
             <Switch
-              checked={teamData.private}
-              onChange={(checked) => setTeamData((prev) => ({ ...prev, private: checked }))}
+              checked={teamData.isPrivate}
+              onChange={(checked) => setTeamData((prev) => ({ ...prev, isPrivate: checked }))}
             />
           </Flex>
         </Box>

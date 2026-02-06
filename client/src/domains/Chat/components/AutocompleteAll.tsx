@@ -36,7 +36,7 @@ export function AutocompleteAll({
   // 룸과 사용자 목록 병합
   const combinedList = useMemo(() => {
     const rooms = roomList
-      .filter((r) => r._id !== excludeRoomId && ['public', 'private', 'team'].includes(r.type))
+      .filter((r) => r._id !== excludeRoomId && ['public', 'team'].includes(r.type))
       .map((r) => ({ ...r, __type: 'room' as const }));
 
     const users = userList
@@ -113,11 +113,12 @@ export function AutocompleteAll({
         name={name || '이름 없음'}
         desc={desc}
         type={isRoom ? (item as ChatRoom).type : 'direct'}
+        isPrivate={isRoom ? ((item as ChatRoom).isPrivate || (item as any).private) : false}
         avatar={isRoom ? (item as ChatRoom).displayAvatar || undefined : (item as ChatUser).profileImage || (item as ChatUser).avatar || undefined}
         status={isUser ? (item as ChatUser).status : undefined}
         styleOption={{
           mode: 'list',
-          statusPosition: isUser ? 'name-left' : 'none',
+          statusPosition: isUser ? 'name-left' : undefined,
           noHover: true,
           nameSuffix: isUser && !existingDMRoom ? (
             <span style={{ 

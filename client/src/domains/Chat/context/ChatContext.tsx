@@ -185,25 +185,28 @@ export function ChatProvider({ children }: { children: any }) {
             return;
           }
 
-          const roomExists = currentRooms.some((r: any) => r._id === roomId);
-          let updatedRooms;
+        const roomExists = currentRooms.some((r: any) => r._id === roomId);
+        let updatedRooms;
 
-          if (roomExists) {
-            updatedRooms = currentRooms.map((room: any) => {
-              if (room._id === roomId) {
-                const newUnreadCount = updateData.unreadCount !== undefined ? updateData.unreadCount : room.unreadCount;
-                return {
-                  ...room,
-                  ...updateData,
-                  unreadCount: newUnreadCount,
-                  updatedAt: updateData.updatedAt || new Date().toISOString(),
-                };
-              }
-              return room;
-            });
-          } else {
-            updatedRooms = [updateData, ...currentRooms];
-          }
+        const isPrivate = updateData.isPrivate || updateData.type === 'private' || updateData.type === 'direct';
+
+        if (roomExists) {
+          updatedRooms = currentRooms.map((room: any) => {
+            if (room._id === roomId) {
+              const newUnreadCount = updateData.unreadCount !== undefined ? updateData.unreadCount : room.unreadCount;
+              return {
+                ...room,
+                ...updateData,
+                isPrivate,
+                unreadCount: newUnreadCount,
+                updatedAt: updateData.updatedAt || new Date().toISOString(),
+              };
+            }
+            return room;
+          });
+        } else {
+          updatedRooms = [{ ...updateData, isPrivate }, ...currentRooms];
+        }
 
           updatedRooms.sort(
             (a: any, b: any) => getSafeTime(b.updatedAt) - getSafeTime(a.updatedAt),

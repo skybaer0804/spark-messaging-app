@@ -1,4 +1,4 @@
-import { memo, useState, useRef } from 'preact/compat';
+import { memo } from 'preact/compat';
 import { Avatar } from '@/ui-components/Avatar/Avatar';
 import { Typography } from '@/ui-components/Typography/Typography';
 import {
@@ -8,14 +8,15 @@ import {
   IconHierarchy,
   IconX,
   IconDots,
-  IconLogout,
 } from '@tabler/icons-preact';
+import { RoomType } from '../../types/ChatRoom';
 import './ProfileItem.scss';
 
 interface ProfileItemProps {
   name: string;
   desc?: string;
-  type?: 'direct' | 'team' | 'public' | 'private' | 'discussion';
+  type?: RoomType | 'private'; // 'private'는 하위 호환성을 위해 유지
+  isPrivate?: boolean;
   avatar?: string;
   status?: string;
   isActive?: boolean;
@@ -40,13 +41,13 @@ export const ProfileItem = memo(({
   name,
   desc,
   type = 'direct',
+  isPrivate = false,
   avatar,
   status,
   isActive,
   unreadCount,
   onClick,
   onDelete,
-  onContextMenu,
   onMenuClick,
   className = '',
   style,
@@ -78,8 +79,8 @@ export const ProfileItem = memo(({
   const getIcon = () => {
     switch (type) {
       case 'team': return <IconHierarchy size={16} />;
-      case 'public': return <IconHash size={16} />;
-      case 'private': return <IconLock size={16} />;
+      case 'public': 
+      case 'private': return <IconHash size={16} />;
       case 'discussion': return <IconMessageCircle size={16} />;
       default: return null;
     }
@@ -98,9 +99,16 @@ export const ProfileItem = memo(({
 
   const renderTypeIcon = () => {
     if (type === 'direct' || !typeIcon) return null;
+    const isReallyPrivate = isPrivate || (type as any) === 'private';
+    
     return (
       <div className="profile-item__type-icon">
         {typeIcon}
+        {isReallyPrivate && (
+          <div className="profile-item__type-icon-badge">
+            <IconLock size={12} stroke={3} />
+          </div>
+        )}
       </div>
     );
   };
@@ -112,7 +120,7 @@ export const ProfileItem = memo(({
         onClick={onClick}
         style={{ '--app-color': getBgColor(), ...style } as any}
       >
-        <Avatar src={avatar} variant="rounded" size="xs" style={{ backgroundColor: getBgColor(), width: '20px', height: '20px', fontSize: '10px' }}>
+        <Avatar src={avatar} variant="rounded" size="sm" style={{ backgroundColor: getBgColor(), width: '20px', height: '20px', fontSize: '10px' }}>
           {firstLetter}
         </Avatar>
         {renderTypeIcon()}

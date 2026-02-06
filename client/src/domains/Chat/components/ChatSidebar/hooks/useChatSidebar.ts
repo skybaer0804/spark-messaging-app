@@ -114,8 +114,7 @@ export const useChatSidebar = () => {
     return {
       direct: sortRooms(filteredRoomList.filter((r) => r.type === 'direct')),
       team: sortRooms(filteredRoomList.filter((r) => r.type === 'team')),
-      public: sortRooms(filteredRoomList.filter((r) => r.type === 'public')),
-      private: sortRooms(filteredRoomList.filter((r) => r.type === 'private')),
+      public: sortRooms(filteredRoomList.filter((r) => r.type === 'public' || r.type === 'private')),
       discussion: sortRooms(filteredRoomList.filter((r) => r.type === 'discussion')),
     };
   }, [filteredRoomList, currentUser]);
@@ -128,7 +127,7 @@ export const useChatSidebar = () => {
     filteredUserList.forEach((u) => results.push({ type: 'user', data: u }));
 
     // 2. Rooms by section
-    const sections: (keyof typeof groupedRooms)[] = ['direct', 'team', 'public', 'private', 'discussion'];
+    const sections: (keyof typeof groupedRooms)[] = ['direct', 'team', 'public', 'discussion'];
     sections.forEach((section) => {
       const rooms = groupedRooms[section];
       rooms.forEach((r) => results.push({ type: 'room', data: r }));
@@ -212,13 +211,6 @@ export const useChatSidebar = () => {
       setSelectedWorkspaceIds([]);
 
       if (isNew) {
-        const typeMap: Record<string, string> = {
-          direct: '1:1 대화방',
-          public: '채널',
-          private: '비공개 채널',
-          team: '팀',
-          discussion: '토론',
-        };
         // showSuccess(`${typeMap[type] || type}이 생성되었습니다.`);
       }
     } catch (error) {
@@ -259,7 +251,7 @@ export const useChatSidebar = () => {
   };
 
   const handleCreateChannelSubmit = () => {
-    handleCreateRoom(newRoomData.isPrivate ? 'private' : 'public', {
+    handleCreateRoom('public', {
       name: newRoomData.name,
       description: newRoomData.topic,
       isPrivate: newRoomData.isPrivate,

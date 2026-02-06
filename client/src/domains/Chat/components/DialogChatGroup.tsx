@@ -81,7 +81,7 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
           name: groupData.name.trim(),
           description: groupData.description.trim() || undefined,
           isPrivate: groupData.isPrivate,
-          type: groupData.isPrivate ? 'private' : 'public',
+          type: 'public',
           members: memberIds.length > 0 ? memberIds : undefined,
         });
         
@@ -94,7 +94,7 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
           name: groupData.name.trim(),
           description: groupData.description.trim() || undefined,
           isPrivate: groupData.isPrivate,
-          type: groupData.isPrivate ? 'private' : 'public',
+          type: 'public',
           members: memberIds.length > 0 ? memberIds : undefined,
           workspaceId: currentWorkspaceId.value || undefined,
         });
