@@ -52,7 +52,7 @@ export const ChatSettingPanel = ({ roomId, onClose }: ChatSettingPanelProps) => 
               <IconChevronLeft size={24} />
             </IconButton>
           )}
-          <Typography variant="h4" style={{ flex: 1 }}>알림 환경 설정</Typography>
+          <Typography variant="h4" style={{ flex: 1, fontWeight: 600 }}>알림 환경 설정</Typography>
         </Box>
         {!isMobile && (
           <IconButton onClick={onClose} size="small">
@@ -60,7 +60,7 @@ export const ChatSettingPanel = ({ roomId, onClose }: ChatSettingPanelProps) => 
           </IconButton>
         )}
       </Box>
-      <Box className="chat-app__sidebar-panel__content" style={{ padding: '16px' }}>
+      <Box className="chat-app__sidebar-panel__content" style={{ padding: '0', flex: 1, overflowY: 'auto' }}>
         {loading ? (
           <Box padding="lg" style={{ textAlign: 'center' }}>
             <Typography variant="body-medium" color="text-secondary">
@@ -68,34 +68,43 @@ export const ChatSettingPanel = ({ roomId, onClose }: ChatSettingPanelProps) => 
             </Typography>
           </Box>
         ) : (
-          <Stack spacing="lg">
-            {/* 알림 모드 선택 */}
-            <Box>
-              <Select
-                label="알림 수신"
-                options={notificationModeOptions}
-                value={settings?.notificationMode || 'default'}
-                onChange={handleModeChange}
-                disabled={saving}
-                fullWidth
-              />
-              <Box padding="sm" style={{ marginTop: '8px' }}>
-                <Typography variant="caption" color="text-secondary">
-                  {settings?.notificationMode === 'default' && '모든 메시지에 대해 알림을 받습니다.'}
-                  {settings?.notificationMode === 'none' && '이 채팅방의 모든 알림을 받지 않습니다.'}
-                  {settings?.notificationMode === 'mention' && '@멘션된 경우에만 알림을 받습니다.'}
-                </Typography>
+          <Box style={{ padding: '24px' }}>
+            <Stack spacing="lg">
+              {/* 알림 모드 선택 */}
+              <Box>
+                <Select
+                  label="알림 수신"
+                  options={notificationModeOptions}
+                  value={settings?.notificationMode || 'default'}
+                  onChange={handleModeChange}
+                  disabled={saving}
+                  fullWidth
+                />
+                <Box padding="sm" style={{ marginTop: '8px' }}>
+                  <Typography variant="caption" color="text-secondary">
+                    {settings?.notificationMode === 'default' && '모든 메시지에 대해 알림을 받습니다.'}
+                    {settings?.notificationMode === 'none' && '이 채팅방의 모든 알림을 받지 않습니다.'}
+                    {settings?.notificationMode === 'mention' && '@멘션된 경우에만 알림을 받습니다.'}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-
-            {/* Footer */}
-            <Box style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--color-border-default)' }}>
-              <Button variant="secondary" onClick={handleReset} disabled={saving} fullWidth>
-                초기화
-              </Button>
-            </Box>
-          </Stack>
+            </Stack>
+          </Box>
         )}
+      </Box>
+
+      {/* Footer 섹션 */}
+      <Box style={{ padding: '16px 24px', borderTop: '1px solid var(--color-border-subtle)', backgroundColor: 'var(--color-bg-default)' }}>
+        <Button 
+          variant="secondary" 
+          onClick={handleReset} 
+          disabled={saving || loading} 
+          fullWidth
+          size="sm"
+          style={{ height: '40px' }}
+        >
+          초기화
+        </Button>
       </Box>
     </Paper>
   );

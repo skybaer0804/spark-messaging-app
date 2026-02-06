@@ -22,6 +22,7 @@ import { teamApi, chatApi } from '@/core/api/ApiService';
 import { currentWorkspaceId } from '@/stores/chatRoomsStore';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
+import { useConfirm } from '@/core/context/ConfirmContext';
 import { useChat } from '../../context/ChatContext';
 import { Dialog } from '@/ui-components/Dialog/Dialog';
 import { Input } from '@/ui-components/Input/Input';
@@ -142,6 +143,7 @@ export const DirectoryView = ({
 }: DirectoryViewProps) => {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
+  const { confirm } = useConfirm();
   const { refreshRoomList } = useChat();
   const [teamList, setTeamList] = useState<Team[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
@@ -327,22 +329,27 @@ export const DirectoryView = ({
 
   // 팀 삭제
   const handleDeleteTeam = async (team: Team) => {
-    if (!confirm(`정말로 "${team.teamName}" 팀을 삭제하시겠습니까?`)) {
-      return;
-    }
-
-    try {
-      await teamApi.deleteTeam(team._id);
-      showSuccess('팀이 삭제되었습니다.');
-      // 팀 목록 새로고침
-      if (directoryTab === 'team' && currentWorkspaceId.value) {
-        const response = await teamApi.getTeams(currentWorkspaceId.value);
-        setTeamList(response.data);
+    confirm({
+      title: '팀 삭제',
+      message: `정말로 "${team.teamName}" 팀을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없으며 모든 데이터가 삭제됩니다.`,
+      type: 'error',
+      confirmText: '삭제',
+      cancelText: '취소',
+      onConfirm: async () => {
+        try {
+          await teamApi.deleteTeam(team._id);
+          showSuccess('팀이 삭제되었습니다.');
+          // 팀 목록 새로고침
+          if (directoryTab === 'team' && currentWorkspaceId.value) {
+            const response = await teamApi.getTeams(currentWorkspaceId.value);
+            setTeamList(response.data);
+          }
+        } catch (error: any) {
+          console.error('[handleDeleteTeam] Failed to delete team:', error);
+          showError(error.response?.data?.message || '팀 삭제에 실패했습니다.');
+        }
       }
-    } catch (error: any) {
-      console.error('[handleDeleteTeam] Failed to delete team:', error);
-      showError(error.response?.data?.message || '팀 삭제에 실패했습니다.');
-    }
+    });
   };
 
   // 채널 클릭 처리 (멤버 여부 확인)
@@ -370,18 +377,23 @@ export const DirectoryView = ({
 
   // 채널 삭제
   const handleDeleteChannel = async (room: ChatRoom) => {
-    if (!confirm(`정말로 "${room.name || '채널'}" 채널을 삭제하시겠습니까?`)) {
-      return;
-    }
-
-    try {
-      await chatApi.deleteRoom(room._id);
-      showSuccess('채널이 삭제되었습니다.');
-      // TODO: 채널 목록 새로고침
-    } catch (error: any) {
-      console.error('[handleDeleteChannel] Failed to delete channel:', error);
-      showError(error.response?.data?.message || '채널 삭제에 실패했습니다.');
-    }
+    confirm({
+      title: '채널 삭제',
+      message: `정말로 "${room.name || '채널'}" 채널을 삭제하시겠습니까?\n모든 대화 기록이 영구적으로 삭제됩니다.`,
+      type: 'error',
+      confirmText: '삭제',
+      cancelText: '취소',
+      onConfirm: async () => {
+        try {
+          await chatApi.deleteRoom(room._id);
+          showSuccess('채널이 삭제되었습니다.');
+          // TODO: 채널 목록 새로고침
+        } catch (error: any) {
+          console.error('[handleDeleteChannel] Failed to delete channel:', error);
+          showError(error.response?.data?.message || '채널 삭제에 실패했습니다.');
+        }
+      }
+    });
   };
 
   // 팀 수정 완료 후 콜백

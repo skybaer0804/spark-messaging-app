@@ -28,6 +28,7 @@ import { useToast } from '@/core/context/ToastContext';
 import { useChat } from '../context/ChatContext';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useConfirm } from '@/core/context/ConfirmContext';
+import { teamApi } from '@/core/api/ApiService';
 
 interface ChatInfoPanelProps {
   currentRoom: ChatRoom;
@@ -122,13 +123,29 @@ export const ChatInfoPanel = ({
 
     setIsSubmitting(true);
     try {
-      const response = await chatApi.updateRoom(currentRoom._id, {
-        name: editData.name.trim(),
-        description: editData.description.trim(),
-        isPrivate: editData.isPrivate
-      });
+      let updatedRoom;
+      if (currentRoom.type === 'team' && currentRoom.teamId) {
+        await teamApi.updateTeam(currentRoom.teamId, {
+          teamName: editData.name.trim(),
+          teamDesc: editData.description.trim(),
+          private: editData.isPrivate
+        });
+        updatedRoom = { 
+          ...currentRoom, 
+          name: editData.name, 
+          displayName: editData.name,
+          description: editData.description, 
+          isPrivate: editData.isPrivate 
+        };
+      } else {
+        const response = await chatApi.updateRoom(currentRoom._id, {
+          name: editData.name.trim(),
+          description: editData.description.trim(),
+          isPrivate: editData.isPrivate
+        });
+        updatedRoom = response.data;
+      }
       
-      const updatedRoom = response.data;
       showSuccess('채팅방 정보가 업데이트되었습니다.');
       setIsEditing(false);
       
@@ -143,9 +160,16 @@ export const ChatInfoPanel = ({
   };
 
   const handleLeaveRoom = () => {
-    if (confirm('정말로 이 채팅방을 나가시겠습니까?')) {
-      onLeave?.();
-    }
+    confirm({
+      title: '채팅방 나가기',
+      message: `정말로 "${currentRoom.displayName || currentRoom.name}" 채팅방을 나가시겠습니까?\n나가면 더 이상 이 방의 메시지를 볼 수 없습니다.`,
+      type: 'warning',
+      confirmText: '나가기',
+      cancelText: '취소',
+      onConfirm: () => {
+        onLeave?.();
+      }
+    });
   };
 
   return (
@@ -190,6 +214,7 @@ export const ChatInfoPanel = ({
                   onInput={(e) => setEditData({ ...editData, name: e.currentTarget.value })}
                   placeholder="방 이름을 입력하세요"
                   autoFocus
+                  style={{ fontSize: '14px', height: '36px' }}
                 />
               ) : (
                 <Typography variant="h3" style={{ fontWeight: 700, color: 'var(--color-text-primary)', wordBreak: 'break-all' }}>
@@ -213,12 +238,12 @@ export const ChatInfoPanel = ({
                   <Box style={{ color: 'var(--color-interactive-primary)', display: 'flex' }}>
                     {getTypeIcon(currentRoom.type)}
                   </Box>
-                  <Typography variant="body-medium" style={{ fontWeight: 600 }}>
+                  <Typography variant="body-small" style={{ fontWeight: 600 }}>
                     {getTypeText(currentRoom.type)}
                   </Typography>
                 </Flex>
 
-                {isEditing && currentRoom.type !== 'team' && currentRoom.type !== 'direct' ? (
+                {isEditing && currentRoom.type !== 'direct' ? (
                   <Flex align="center" gap="md" style={{ 
                     padding: '4px 10px 4px 14px',
                     borderRadius: '20px',
@@ -228,7 +253,7 @@ export const ChatInfoPanel = ({
                   }}>
                     <Flex align="center" gap="xs">
                       {editData.isPrivate ? <IconLock size={16} color="var(--color-status-warning)" /> : <IconWorld size={16} color="var(--color-status-success)" />}
-                      <Typography variant="body-medium" style={{ 
+                      <Typography variant="body-small" style={{ 
                         color: editData.isPrivate ? 'var(--color-status-warning)' : 'var(--color-status-success)',
                         fontWeight: 600
                       }}>
@@ -250,7 +275,7 @@ export const ChatInfoPanel = ({
                     color: isPrivate ? 'var(--color-status-warning)' : 'var(--color-status-success)',
                   }}>
                     {isPrivate ? <IconLock size={18} /> : <IconWorld size={18} />}
-                    <Typography variant="body-medium" style={{ color: 'inherit', fontWeight: 600 }}>
+                    <Typography variant="body-small" style={{ color: 'inherit', fontWeight: 600 }}>
                       {isPrivate ? '비공개' : '공개'}
                     </Typography>
                   </Flex>
@@ -271,6 +296,7 @@ export const ChatInfoPanel = ({
                   value={editData.description}
                   onInput={(e) => setEditData({ ...editData, description: e.currentTarget.value })}
                   placeholder="이 채널의 목적은 무엇인가요?"
+                  style={{ fontSize: '13px', lineHeight: '1.5' }}
                 />
               ) : (
                 <Box style={{ 
@@ -302,35 +328,13 @@ export const ChatInfoPanel = ({
                 </Box>
               </Flex>
             </Stack>
-
-            {/* 나가기 버튼 (비편집 모드) */}
-            {!isEditing && currentRoom.type !== 'direct' && (
-              <Box style={{ marginTop: 'auto', paddingTop: '12px' }}>
-                <Button 
-                  fullWidth 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={handleLeaveRoom}
-                  style={{ 
-                    color: 'var(--color-status-error)', 
-                    borderColor: 'rgba(239, 68, 68, 0.2)',
-                    backgroundColor: 'rgba(239, 68, 68, 0.04)',
-                    fontWeight: 600
-                  }}
-                >
-                  <Flex align="center" gap="xs" justify="center">
-                    <IconLogout size={16} />
-                    <span>채팅방 나가기</span>
-                  </Flex>
-                </Button>
-              </Box>
-            )}
           </Stack>
         </Box>
       </Box>
 
-      {isEditing && (
-        <Box style={{ padding: '16px 24px', borderTop: '1px solid var(--color-border-subtle)', backgroundColor: 'var(--color-bg-default)' }}>
+      {/* Footer 섹션 (나가기 버튼 또는 수정 버튼) */}
+      <Box style={{ padding: '16px 24px', borderTop: '1px solid var(--color-border-subtle)', backgroundColor: 'var(--color-bg-default)' }}>
+        {isEditing ? (
           <Flex gap="sm">
             <Button 
               fullWidth 
@@ -356,8 +360,27 @@ export const ChatInfoPanel = ({
               </Flex>
             </Button>
           </Flex>
-        </Box>
-      )}
+        ) : currentRoom.type !== 'direct' ? (
+          <Button 
+            fullWidth 
+            variant="secondary" 
+            size="sm"
+            onClick={handleLeaveRoom}
+            style={{ 
+              color: 'var(--color-status-error)', 
+              borderColor: 'rgba(239, 68, 68, 0.2)',
+              backgroundColor: 'rgba(239, 68, 68, 0.04)',
+              fontWeight: 600,
+              height: '40px'
+            }}
+          >
+            <Flex align="center" gap="xs" justify="center">
+              <IconLogout size={16} />
+              <span>채팅방 나가기</span>
+            </Flex>
+          </Button>
+        ) : null}
+      </Box>
     </Paper>
   );
 };

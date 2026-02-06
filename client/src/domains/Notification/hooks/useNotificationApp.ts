@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { useToast } from '@/core/context/ToastContext';
+import { useConfirm } from '@/core/context/ConfirmContext';
 import sparkMessagingClient from '../../../config/sparkMessaging';
 import { ConnectionService } from '@/core/socket/ConnectionService';
 import { NotificationService } from '@/core/socket/NotificationService';
@@ -32,6 +33,7 @@ export function useNotificationApp() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const { showSuccess, showError } = useToast();
+  const { confirm } = useConfirm();
   const notificationServiceRef = useRef<NotificationService | null>(null);
 
   const fetchNotifications = async () => {
@@ -117,17 +119,23 @@ export function useNotificationApp() {
   };
 
   const handleDelete = async (notificationId: string) => {
-    if (!window.confirm('정말 이 알림을 삭제하시겠습니까?')) return;
-
-    try {
-      await notificationApi.deleteNotification(notificationId);
-      showSuccess('알림이 삭제되었습니다.');
-      // 목록에서 즉시 제거 (낙관적 업데이트)
-      setNotifications((prev) => prev.filter((n) => n._id !== notificationId));
-    } catch (error) {
-      console.error('Notification delete failed:', error);
-      showError('알림 삭제에 실패했습니다.');
-    }
+    confirm({
+      title: '알림 삭제',
+      message: '정말 이 알림을 삭제하시겠습니까?',
+      type: 'error',
+      confirmText: '삭제',
+      onConfirm: async () => {
+        try {
+          await notificationApi.deleteNotification(notificationId);
+          showSuccess('알림이 삭제되었습니다.');
+          // 목록에서 즉시 제거 (낙관적 업데이트)
+          setNotifications((prev) => prev.filter((n) => n._id !== notificationId));
+        } catch (error) {
+          console.error('Notification delete failed:', error);
+          showError('알림 삭제에 실패했습니다.');
+        }
+      }
+    });
   };
 
   return {

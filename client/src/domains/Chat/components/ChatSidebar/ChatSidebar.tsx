@@ -14,8 +14,10 @@ import {
 } from '@tabler/icons-preact';
 import { ProfileItem } from '../ProfileItem/ProfileItem';
 import { ChatSidebarHeader } from './ChatSidebarHeader';
+import { useConfirm } from '@/core/context/ConfirmContext';
 
 export const ChatSidebar = memo(() => {
+  const { confirm } = useConfirm();
   const {
     userList,
     selectedUserIds,
@@ -112,8 +114,17 @@ export const ChatSidebar = memo(() => {
                 size="small"
                 onClick={(e) => {
                   e.stopPropagation();
-                  leaveRoom(room._id);
-                  setActiveMenuId(null);
+                  confirm({
+                    title: '채팅방 나가기',
+                    message: `정말로 "${roomName}" 채팅방을 나가시겠습니까?`,
+                    type: 'warning',
+                    confirmText: '나가기',
+                    cancelText: '취소',
+                    onConfirm: () => {
+                      leaveRoom(room._id);
+                      setActiveMenuId(null);
+                    }
+                  });
                 }}
               >
                 <IconLogout size={20} />
