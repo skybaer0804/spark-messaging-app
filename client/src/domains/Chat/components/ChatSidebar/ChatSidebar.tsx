@@ -120,8 +120,8 @@ export const ChatSidebar = memo(() => {
                     type: 'warning',
                     confirmText: '나가기',
                     cancelText: '취소',
-                    onConfirm: () => {
-                      leaveRoom(room._id);
+                    onConfirm: async () => {
+                      await leaveRoom(room._id);
                       setActiveMenuId(null);
                     }
                   });
@@ -129,8 +129,8 @@ export const ChatSidebar = memo(() => {
               >
                 <IconLogout size={20} />
               </IconButton>
-              <IconButton 
-                size="small" 
+              <IconButton
+                size="small"
                 onClick={(e) => {
                   e.stopPropagation();
                   setActiveMenuId(null);

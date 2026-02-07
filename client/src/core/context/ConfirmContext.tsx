@@ -9,26 +9,36 @@ interface ConfirmContextType {
 const ConfirmContext = createContext<ConfirmContextType | null>(null);
 
 export function ConfirmProvider({ children }: { children: any }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [options, setOptions] = useState<ConfirmOptions>({ message: '' });
+  const [state, setState] = useState<{
+    isOpen: boolean;
+    options: ConfirmOptions;
+  }>({
+    isOpen: false,
+    options: { message: '' }
+  });
 
   const confirm = useCallback((newOptions: ConfirmOptions) => {
-    setOptions(newOptions);
-    setIsOpen(true);
+    setState({
+      isOpen: true,
+      options: newOptions
+    });
   }, []);
 
   const handleClose = useCallback(() => {
-    setIsOpen(false);
+    setState(prev => ({
+      ...prev,
+      isOpen: false
+    }));
   }, []);
 
   return (
     <ConfirmContext.Provider value={{ confirm }}>
-      {children}
-      <Confirm 
-        isOpen={isOpen} 
-        onClose={handleClose} 
-        {...options} 
+      <Confirm
+        isOpen={state.isOpen}
+        onClose={handleClose}
+        {...state.options}
       />
+      {children}
     </ConfirmContext.Provider>
   );
 }

@@ -1,8 +1,8 @@
-import { 
-  IconAlertCircle, 
-  IconInfoCircle, 
-  IconCheck, 
-  IconAlertTriangle 
+import {
+  IconAlertCircle,
+  IconInfoCircle,
+  IconCheck,
+  IconAlertTriangle
 } from '@tabler/icons-preact';
 import { createPortal } from 'preact/compat';
 import { Button } from '../Button/Button';
@@ -14,8 +14,8 @@ export interface ConfirmOptions {
   type?: 'info' | 'success' | 'warning' | 'error';
   confirmText?: string;
   cancelText?: string;
-  onConfirm?: () => void;
-  onCancel?: () => void;
+  onConfirm?: () => void | Promise<void>;
+  onCancel?: () => void | Promise<void>;
 }
 
 interface ConfirmProps extends ConfirmOptions {
@@ -45,9 +45,16 @@ export function Confirm({
     }
   };
 
-  const handleConfirm = () => {
-    onConfirm?.();
-    onClose();
+  const handleConfirm = async () => {
+    try {
+      if (onConfirm) {
+        await onConfirm();
+      }
+    } catch (error) {
+      console.error('[Confirm] error in onConfirm:', error);
+    } finally {
+      onClose();
+    }
   };
 
   const handleCancel = () => {
@@ -69,17 +76,17 @@ export function Confirm({
           <div className="confirm-dialog__message">{message}</div>
         </div>
         <div className="confirm-dialog__actions">
-          <Button 
-            variant="text" 
-            size="sm" 
+          <Button
+            variant="text"
+            size="sm"
             onClick={handleCancel}
             className="confirm-dialog__button"
           >
             {cancelText}
           </Button>
-          <Button 
-            variant="primary" 
-            size="sm" 
+          <Button
+            variant="primary"
+            size="sm"
             onClick={handleConfirm}
             className="confirm-dialog__button"
             style={type === 'error' ? { backgroundColor: 'var(--color-status-error)' } : undefined}

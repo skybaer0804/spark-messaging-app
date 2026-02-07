@@ -8,13 +8,13 @@ import { Flex } from '@/ui-components/Layout/Flex';
 import { Stack } from '@/ui-components/Layout/Stack';
 import { Input } from '@/ui-components/Input/Input';
 import { Switch } from '@/ui-components/Switch/Switch';
-import { 
-  IconX, 
-  IconInfoCircle, 
-  IconLock, 
-  IconWorld, 
-  IconMessageCircle, 
-  IconHash, 
+import {
+  IconX,
+  IconInfoCircle,
+  IconLock,
+  IconWorld,
+  IconMessageCircle,
+  IconHash,
   IconHierarchy,
   IconEdit,
   IconCheck,
@@ -36,7 +36,7 @@ interface ChatInfoPanelProps {
   onLeave?: () => void;
 }
 
-export const ChatInfoPanel = ({ 
+export const ChatInfoPanel = ({
   currentRoom,
   onClose,
   onLeave
@@ -94,7 +94,7 @@ export const ChatInfoPanel = ({
   const getTypeText = (type: string) => {
     switch (type) {
       case 'team': return '팀';
-      case 'public': 
+      case 'public':
       case 'private': return '채널';
       case 'direct': return '1:1 대화';
       case 'discussion': return '토론';
@@ -105,7 +105,7 @@ export const ChatInfoPanel = ({
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'team': return <IconHierarchy size={18} />;
-      case 'public': 
+      case 'public':
       case 'private': return <IconHash size={18} />;
       case 'direct': return <IconMessageCircle size={18} />;
       case 'discussion': return <IconMessageCircle size={18} />;
@@ -130,12 +130,12 @@ export const ChatInfoPanel = ({
           teamDesc: editData.description.trim(),
           private: editData.isPrivate
         });
-        updatedRoom = { 
-          ...currentRoom, 
-          name: editData.name, 
+        updatedRoom = {
+          ...currentRoom,
+          name: editData.name,
           displayName: editData.name,
-          description: editData.description, 
-          isPrivate: editData.isPrivate 
+          description: editData.description,
+          isPrivate: editData.isPrivate
         };
       } else {
         const response = await chatApi.updateRoom(currentRoom._id, {
@@ -145,10 +145,10 @@ export const ChatInfoPanel = ({
         });
         updatedRoom = response.data;
       }
-      
+
       showSuccess('채팅방 정보가 업데이트되었습니다.');
       setIsEditing(false);
-      
+
       setCurrentRoom(updatedRoom);
       await refreshRoomList();
     } catch (error: any) {
@@ -166,8 +166,10 @@ export const ChatInfoPanel = ({
       type: 'warning',
       confirmText: '나가기',
       cancelText: '취소',
-      onConfirm: () => {
-        onLeave?.();
+      onConfirm: async () => {
+        if (onLeave) {
+          await onLeave();
+        }
       }
     });
   };
@@ -229,7 +231,7 @@ export const ChatInfoPanel = ({
                 유형 및 보안
               </Typography>
               <Flex gap="md" wrap="wrap">
-                <Flex align="center" gap="sm" style={{ 
+                <Flex align="center" gap="sm" style={{
                   padding: '6px 14px',
                   backgroundColor: 'var(--color-bg-secondary)',
                   borderRadius: '20px',
@@ -244,7 +246,7 @@ export const ChatInfoPanel = ({
                 </Flex>
 
                 {isEditing && currentRoom.type !== 'direct' ? (
-                  <Flex align="center" gap="md" style={{ 
+                  <Flex align="center" gap="md" style={{
                     padding: '4px 10px 4px 14px',
                     borderRadius: '20px',
                     backgroundColor: editData.isPrivate ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.12)',
@@ -253,7 +255,7 @@ export const ChatInfoPanel = ({
                   }}>
                     <Flex align="center" gap="xs">
                       {editData.isPrivate ? <IconLock size={16} color="var(--color-status-warning)" /> : <IconWorld size={16} color="var(--color-status-success)" />}
-                      <Typography variant="body-small" style={{ 
+                      <Typography variant="body-small" style={{
                         color: editData.isPrivate ? 'var(--color-status-warning)' : 'var(--color-status-success)',
                         fontWeight: 600
                       }}>
@@ -267,7 +269,7 @@ export const ChatInfoPanel = ({
                     />
                   </Flex>
                 ) : (
-                  <Flex align="center" gap="sm" style={{ 
+                  <Flex align="center" gap="sm" style={{
                     padding: '6px 14px',
                     backgroundColor: isPrivate ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.12)',
                     borderRadius: '20px',
@@ -299,7 +301,7 @@ export const ChatInfoPanel = ({
                   style={{ fontSize: '13px', lineHeight: '1.5' }}
                 />
               ) : (
-                <Box style={{ 
+                <Box style={{
                   padding: '12px 0',
                   minHeight: '40px'
                 }}>
@@ -336,9 +338,9 @@ export const ChatInfoPanel = ({
       <Box style={{ padding: '16px 24px', borderTop: '1px solid var(--color-border-subtle)', backgroundColor: 'var(--color-bg-default)' }}>
         {isEditing ? (
           <Flex gap="sm">
-            <Button 
-              fullWidth 
-              variant="secondary" 
+            <Button
+              fullWidth
+              variant="secondary"
               size="sm"
               onClick={() => setIsEditing(false)}
               disabled={isSubmitting}
@@ -346,9 +348,9 @@ export const ChatInfoPanel = ({
             >
               취소
             </Button>
-            <Button 
-              fullWidth 
-              variant="primary" 
+            <Button
+              fullWidth
+              variant="primary"
               size="sm"
               onClick={handleUpdate}
               disabled={isSubmitting}
@@ -361,13 +363,13 @@ export const ChatInfoPanel = ({
             </Button>
           </Flex>
         ) : currentRoom.type !== 'direct' ? (
-          <Button 
-            fullWidth 
-            variant="secondary" 
+          <Button
+            fullWidth
+            variant="secondary"
             size="sm"
             onClick={handleLeaveRoom}
-            style={{ 
-              color: 'var(--color-status-error)', 
+            style={{
+              color: 'var(--color-status-error)',
               borderColor: 'rgba(239, 68, 68, 0.2)',
               backgroundColor: 'rgba(239, 68, 68, 0.04)',
               fontWeight: 600,
