@@ -1,28 +1,592 @@
-// Chat 컴포넌트 스타일
-// UI 컴포넌트를 사용하므로 최소한의 스타일만 유지
-
 @use '/src/styles/tokens/index';
 
-// 메시지 리스트 스타일 (스크롤바 숨기기 등)
-.chat,
-.video-meeting__chat {
-  &__messages-list {
-    scroll-behavior: smooth;
+// =================================================================
+// 1. Chat App Layout & Global Styles
+// =================================================================
 
-    // 스크롤바 숨기기
-    scrollbar-width: none; // Firefox
-    -ms-overflow-style: none; // IE and Edge
+.chat-app {
+  &__container {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    background-color: var(--color-bg-default);
 
-    &::-webkit-scrollbar {
-      display: none; // Chrome, Safari, Opera
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
+
+    // 전역 스크롤바 스타일 (채팅 앱 내부)
+    * {
+      &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: var(--color-text-tertiary) !important;
+        opacity: 0.5;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        border-radius: 10px;
+
+        &:hover {
+          background: var(--color-text-secondary) !important;
+          background-clip: padding-box;
+        }
+      }
+    }
+  }
+
+  &__main-content {
+    background-color: var(--color-background-secondary);
+    background-image: radial-gradient(var(--color-border-default) 0.5px, transparent 0.5px);
+    background-size: 24px 24px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__header {
+    background-color: var(--color-surface-overlay) !important;
+    opacity: 0.95;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--color-border-default);
+
+    .paper {
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+  }
+
+  &__content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  &__sidebar-panel {
+    width: 320px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--color-border-default);
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-bg-default); // SidebarPanel 배경색 통일
+    z-index: 5;
+    height: 100%;
+    padding: 0;
+
+    @media (max-width: 768px) {
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-left: none;
+      z-index: 100;
+    }
+
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--color-border-default);
+      background-color: var(--color-bg-subtle);
+      flex-shrink: 0;
+
+      @media (max-width: 768px) {
+        padding: 4px 12px !important;
+        padding-top: calc(var(--space-gap-sm) + var(--safe-area-inset-top)) !important;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 8px;
+        background-color: var(--color-bg-default);
+        min-height: 56px;
+
+        .typography--h4 {
+          font-size: 1.0rem !important;
+          font-weight: 600 !important;
+          flex: 1;
+          margin: 0 !important;
+        }
+
+        .icon-button {
+          padding: 8px !important;
+          margin-left: 0 !important;
+          color: var(--color-text-secondary) !important;
+
+          svg {
+            width: 24px !important;
+            height: 24px !important;
+          }
+        }
+      }
+    }
+
+    &__content {
+      flex: 1;
+      overflow-y: auto;
+    }
+  }
+
+  .chat-input__input-paper,
+  .thread-detail__input-paper {
+    background-color: var(--color-background-primary) !important;
+    border: 1px solid var(--color-border-default) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 12px !important;
+    margin: 16px;
+    overflow: hidden;
+
+    @media (max-width: 768px) {
+      margin: 8px 8px 0 8px;
+      border-radius: 8px 8px 0 0 !important;
+    }
+
+    &.paper {
+      background-color: transparent !important;
+      border: none !important;
+    }
+  }
+
+  &__messages-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    background-color: transparent;
+
+    .stack {
+      gap: 4px !important;
+      flex: 1;
+      min-height: 0;
+    }
+
+    &-empty {
+      text-align: center;
+      padding: 24px;
+
+      .typography {
+        color: var(--color-text-tertiary) !important;
+      }
+    }
+
+    &-anchor {
+      height: 1px;
+      width: 100%;
+    }
+  }
+
+  &__divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 24px 0;
+
+    &-line {
+      flex: 1;
+      height: 1px;
+      background-color: var(--color-border-default);
+    }
+
+    &-badge {
+      border-radius: 12px !important;
+      background-color: var(--color-surface-level-1) !important;
+      border: 1px solid var(--color-border-default) !important;
+      padding: 4px 12px;
+
+      .typography {
+        font-weight: bold;
+        color: var(--color-text-secondary);
+        font-size: 12px;
+      }
+    }
+  }
+
+  &__message-item {
+    width: 100%;
+    position: relative;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    &--grouped {
+      padding: 1px 10px;
+    }
+
+    &--not-grouped {
+      padding: 4px 10px;
+    }
+
+    &--own {
+      flex-direction: row-reverse;
+    }
+
+    &--other {
+      flex-direction: row;
+    }
+
+    &-avatar-container {
+      width: 32px;
+      display: flex;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    &-content-wrapper {
+      max-width: 85%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    &-info {
+      margin-bottom: 0px;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+
+      &--own {
+        flex-direction: row-reverse;
+      }
+
+      &--other {
+        flex-direction: row;
+      }
+    }
+  }
+
+  &__message {
+    &-bubble {
+      border-radius: 12px;
+      position: relative;
+      box-shadow: none !important;
+
+      &--own {
+        border-radius: 12px 0 12px 12px !important;
+        background-color: #FEE500 !important;
+        border: none !important;
+        color: #000000 !important;
+
+        .typography {
+          color: #000000 !important;
+        }
+      }
+
+      &--other {
+        border-radius: 0 12px 12px 12px !important;
+        background-color: #ffffff !important;
+        border: 1px solid var(--color-border-default) !important;
+        color: #000000 !important;
+
+        .typography {
+          color: #000000 !important;
+        }
+      }
+    }
+
+    &-avatar {
+      margin-top: 4px;
+      border: 1px solid var(--color-border-default) !important;
+      background-color: var(--color-surface-level-1) !important;
+
+      .typography {
+        color: var(--color-text-primary) !important;
+        font-weight: 800 !important;
+        font-size: 14px;
+      }
+    }
+
+    &-toolbar {
+      background-color: #ffffff !important;
+      border: 1px solid rgba(0, 0, 0, 0.1) !important;
+      border-radius: 8px !important;
+      padding: 2px !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+
+      .chat-message__toolbar-icon {
+        border-radius: 6px !important;
+        padding: 4px !important;
+        color: #5f6368 !important;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+
+        &:hover {
+          background-color: #f1f3f4 !important;
+          color: #202124 !important;
+        }
+      }
+    }
+
+    &-thread {
+      margin-top: 4px;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background-color: #ffffff !important;
+      border: 1px solid rgba(0, 0, 0, 0.1) !important;
+      max-width: fit-content;
+      transition: background-color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+
+      &:hover {
+        background-color: #f8f9fa !important;
+      }
+
+      &-icon {
+        color: #1a73e8 !important;
+      }
+
+      &-count {
+        font-weight: bold !important;
+        color: #1a73e8 !important;
+      }
+
+      &-time {
+        color: #5f6368 !important;
+      }
+    }
+  }
+
+  &__sidebar {
+    background-color: var(--color-bg-sidebar) !important;
+    color: var(--color-text-sidebar);
+    border-right: 1px solid var(--color-border-default);
+    animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+    .icon-button {
+      color: var(--color-icon-secondary);
+
+      &:hover {
+        color: var(--color-icon-primary);
+        background-color: var(--color-action-hover);
+      }
+    }
+
+    &-header {
+      .chat-sidebar-search-input .input-container input {
+        height: 32px !important;
+        min-height: 32px !important;
+        padding: 6px 12px !important;
+        font-size: 14px;
+        background-color: var(--color-bg-secondary) !important;
+        color: var(--color-text-primary) !important;
+      }
+    }
+
+    &-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 4px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--color-border-default);
+    }
+
+    &-section-header {
+      padding: 16px 16px 8px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      color: var(--color-text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+
+      &:hover {
+        color: var(--color-text-primary);
+      }
+
+      .icon {
+        margin-right: 4px;
+        opacity: 0.6;
+      }
+    }
+
+    &-item {
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      border-radius: 4px;
+      margin: 0 8px;
+      position: relative;
+
+      &:hover {
+        background-color: var(--color-action-hover);
+      }
+
+      &--active {
+        background-color: var(--color-action-selected) !important;
+      }
+
+      &--focused {
+        background-color: var(--color-action-selected) !important;
+        outline: 1px solid var(--color-border-default);
+      }
+    }
+
+    &-profile {
+      &-name {
+        font-size: 13px;
+        color: var(--color-text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      &-status-text {
+        font-size: 11px;
+        color: var(--color-text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 2px;
+      }
+
+      &-more {
+        opacity: 0;
+        transition: opacity 0.2s;
+        color: var(--color-icon-secondary) !important;
+        padding: 4px !important;
+        margin-left: auto;
+        flex-shrink: 0;
+
+        &:hover {
+          color: var(--color-text-primary) !important;
+          background-color: var(--color-action-hover) !important;
+        }
+      }
+
+      &:hover &-more {
+        opacity: 1;
+      }
+
+      &-badge {
+        background-color: #e11d48;
+        color: white;
+        font-size: 11px;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 10px;
+        min-width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+
+  &__empty-state {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-background-secondary);
+    background-image: radial-gradient(var(--color-border-default) 0.5px, transparent 0.5px);
+    background-size: 24px 24px;
+    padding: var(--space-padding-xl);
+    text-align: center;
+
+    &-hero {
+      animation: fade-in 0.6s ease-out;
+      max-width: 500px;
+    }
+
+    &-badge {
+      display: inline-flex;
+      padding: 6px 12px;
+      background-color: var(--color-background-primary);
+      border: 1px solid var(--color-border-default);
+      border-radius: 99px;
+      color: var(--color-interactive-primary);
+      margin-bottom: var(--space-gap-sm);
+
+      .typography {
+        color: var(--color-text-secondary);
+      }
+    }
+
+    &-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: var(--space-gap-md);
+      color: var(--color-text-secondary);
+
+      .highlight {
+        background: linear-gradient(120deg, #509ee3, #e73c7e);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    }
+
+    &-desc {
+      font-size: 1.1rem;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    &-icon-wrapper {
+      width: 80px;
+      height: 80px;
+      background-color: var(--color-background-primary);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      color: var(--color-interactive-primary);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
     }
   }
 }
 
-// 마크다운 렌더러 스타일 (자신의 메시지)
-.markdown-renderer--own-message {
+// =================================================================
+// 2. Chat Component & Message Styles
+// =================================================================
 
-  // 자신의 메시지에서는 링크 색상을 밝게 조정
+.chat,
+.video-meeting__chat {
+  &__messages-list {
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+.markdown-renderer--own-message {
   .markdown-link {
     color: rgba(255, 255, 255, 0.9);
     text-decoration: underline;
@@ -32,19 +596,16 @@
     }
   }
 
-  // 코드 블록 배경 조정 (자신의 메시지에서도 블랙 계통 유지)
   .markdown-code-block {
     background-color: rgba(30, 30, 35, 0.95);
     color: rgba(255, 255, 255, 0.9);
   }
 
-  // 인라인 코드 배경 조정 (블랙 계통)
   .markdown-inline-code {
     background-color: rgba(40, 40, 45, 0.95);
     color: rgba(255, 255, 255, 0.9);
   }
 
-  // 자신의 메시지에서도 링크는 파란색 유지
   .markdown-link {
     color: #0066cc;
 
@@ -54,10 +615,6 @@
   }
 }
 
-// 3D 프리뷰 점진적 로딩 (점점점) 애니메이션
-// DotsLoading 컴포넌트에서 정의함
-
-// 카카오톡 스타일 내 메시지
 .chat-message--own {
   background-color: #FEE500 !important;
   color: #000000 !important;
@@ -91,14 +648,12 @@
     color: #000000 !important;
   }
 
-  // 3D 모델 파일 등 내부 텍스트도 검은색으로
   .text-secondary,
   .text-tertiary {
     color: rgba(0, 0, 0, 0.6) !important;
   }
 }
 
-// 텍스트 메시지 높이 제한 및 전체보기
 .text-message-container {
   display: flex;
   flex-direction: column;
@@ -115,7 +670,6 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    // line-height * 10 = 1.5 * 10 = 15em
     max-height: 15em;
   }
 }
@@ -140,7 +694,6 @@
   }
 }
 
-// 모바일 오버레이 스타일 (Dialog.tsx의 .dialog 클래스 확장)
 .dialog--mobile-overlay {
   @media (max-width: 768px) {
     position: fixed !important;
@@ -157,9 +710,7 @@
     display: flex !important;
     flex-direction: column !important;
     background-color: var(--color-bg-default) !important;
-    padding: 0 !important; // 패딩 제거 (헤더/컨텐츠에서 개별 관리)
-
-    // 우측 → 좌측 슬라이드 애니메이션 (MobileSlidePanel과 동일 방향)
+    padding: 0 !important;
     transform: translateX(100%);
     transition: transform 0.3s ease-in-out;
 
@@ -178,7 +729,7 @@
       padding-top: calc(var(--space-gap-sm) + var(--safe-area-inset-top)) !important;
       border-bottom: 1px solid var(--color-border-default);
       display: flex !important;
-      flex-direction: row-reverse !important; // 아이콘과 타이틀 순서 뒤집기
+      flex-direction: row-reverse !important;
       justify-content: flex-end !important;
       gap: 8px !important;
       background-color: var(--color-bg-default);
@@ -193,7 +744,6 @@
       align-items: center;
     }
 
-    // X 버튼을 뒤로가기 버튼 스타일로 변경
     .dialog__header .icon-button {
       padding: 8px !important;
       margin-left: 0 !important;
@@ -214,55 +764,28 @@
   }
 }
 
-// 사이드바 패널들도 모바일에서 동일한 헤더 스타일 적용
-.chat-app__sidebar-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background-color: var(--color-bg-default);
+// =================================================================
+// 3. Common Animations
+// =================================================================
 
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    // margin: 0px 8px;
-    border-bottom: 1px solid var(--color-border-default);
-    background-color: var(--color-bg-subtle);
-
-    @media (max-width: 768px) {
-      padding: 4px 12px !important;
-      padding-top: calc(var(--space-gap-sm) + var(--safe-area-inset-top)) !important;
-      flex-direction: row-reverse;
-      justify-content: flex-end;
-      gap: 8px;
-      background-color: var(--color-bg-default);
-      min-height: 56px;
-
-      // 타이틀 스타일
-      .typography--h4 {
-        font-size: 1.1rem !important;
-        font-weight: 700 !important;
-        flex: 1;
-        margin: 0 !important;
-      }
-
-      // X 버튼을 왼쪽으로 보내고 스타일 변경
-      .icon-button {
-        padding: 8px !important;
-        margin-left: 0 !important;
-        color: var(--color-text-secondary) !important;
-
-        svg {
-          width: 24px !important;
-          height: 24px !important;
-        }
-      }
-    }
+@keyframes fade-in {
+  from {
+    opacity: 0;
   }
 
-  &__content {
-    flex: 1;
-    overflow-y: auto;
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

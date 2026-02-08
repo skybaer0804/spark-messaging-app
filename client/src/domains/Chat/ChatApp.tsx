@@ -26,7 +26,7 @@ import { DialogForward } from './components/DialogForward';
 import type { Message } from './types';
 import { MobileHeader } from '@/components/Mobile/MobileHeader';
 import { MobileSlidePanel } from '@/components/Mobile/MobileSlidePanel';
-import './ChatApp.scss';
+import './components/Chat.scss';
 
 function ChatAppContent() {
   const { pathname, navigate } = useRouterState();
