@@ -677,7 +677,7 @@ exports.uploadFile = async (req, res) => {
     // 2️⃣ 파일 타입 결정
     // ========================================
     const detectedFileType = fileType || getFileType(file.mimetype, file.originalname);
-    
+
     let type = 'file';
     if (detectedFileType === 'image') type = 'image';
     else if (detectedFileType === 'video') type = 'video';
@@ -689,7 +689,7 @@ exports.uploadFile = async (req, res) => {
     // 3️⃣ 썸네일/프리뷰 생성을 워커로 위임 (비동기 처리)
     // ========================================
     let thumbnailUrl = null;
-    
+
     // 이미지인 경우 즉시 썸네일 생성 (기존 동작 유지, 추후 워커로 전환 가능)
     // 다른 타입은 워커에서 처리
     if (detectedFileType === 'image') {
@@ -740,7 +740,7 @@ exports.uploadFile = async (req, res) => {
     if (parentMessageId) {
       const parentMessage = await Message.findByIdAndUpdate(
         parentMessageId,
-        { 
+        {
           $inc: { replyCount: 1, lastThreadSequenceNumber: 1 },
           $set: { lastReplyAt: new Date() }
         },
@@ -755,7 +755,7 @@ exports.uploadFile = async (req, res) => {
     // 파일명 처리 (fileFilter에서 이미 디코딩되었지만, 안전을 위해 다시 확인)
     let fileName = file.originalname;
     const originalFileName = fileName; // 디버깅용
-    
+
     // 한글이 포함되어 있는지 확인하고, 없으면 디코딩 시도
     if (!/[가-힣]/.test(fileName)) {
       try {
@@ -768,7 +768,7 @@ exports.uploadFile = async (req, res) => {
         console.warn('📝 [Controller] 파일명 디코딩 실패:', error, '원본:', originalFileName);
       }
     }
-    
+
     // 2. DB에 메시지 저장
     const newMessageData = {
       roomId,
@@ -801,7 +801,7 @@ exports.uploadFile = async (req, res) => {
       // 썸네일이 아직 생성되지 않은 경우 워커에 위임
       try {
         const FileProcessingQueue = require('../services/queue/FileProcessingQueue');
-        
+
         // 워커 작업 데이터 준비
         // S3 모드에서는 fileUrl을 사용하여 워커에서 다운로드 (메모리 효율적)
         // 로컬 모드에서는 filePath를 사용
@@ -923,7 +923,7 @@ exports.sendMessage = async (req, res) => {
     if (parentMessageId) {
       const parentMessage = await Message.findByIdAndUpdate(
         parentMessageId,
-        { 
+        {
           $inc: { replyCount: 1, lastThreadSequenceNumber: 1 },
           $set: { lastReplyAt: new Date() }
         },
@@ -1089,10 +1089,13 @@ exports.syncMessages = async (req, res) => {
     const { roomId } = req.params;
     const { fromSequence } = req.query;
 
-    const messages = await Message.find({
+    const query = {
       roomId,
       sequenceNumber: { $gt: parseInt(fromSequence) || 0 },
-    })
+      parentMessageId: null, // [v2.5.2] 스레드 메시지는 동기화 목록에서 제외 (본 채팅 오염 방지)
+    };
+
+    const messages = await Message.find(query)
       .populate('senderId', 'username profileImage')
       .sort({ sequenceNumber: 1 });
 
@@ -1371,9 +1374,9 @@ exports.getThreadList = async (req, res) => {
       roomId,
       replyCount: { $gt: 0 }
     })
-    .sort({ lastReplyAt: -1 })
-    .limit(parseInt(limit))
-    .populate('senderId', 'username profileImage');
+      .sort({ lastReplyAt: -1 })
+      .limit(parseInt(limit))
+      .populate('senderId', 'username profileImage');
 
     res.json(parentMessages);
   } catch (error) {
@@ -1385,7 +1388,7 @@ exports.getThreadList = async (req, res) => {
 exports.getThreadMessages = async (req, res) => {
   try {
     const { messageId } = req.params;
-    
+
     const messages = await Message.find({ parentMessageId: messageId })
       .sort({ threadSequenceNumber: 1 })
       .populate('senderId', 'username profileImage');

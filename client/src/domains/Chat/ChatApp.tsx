@@ -96,8 +96,9 @@ function ChatAppContent() {
       const roomId = pathname.split('/').pop();
       if (roomId && currentRoom?._id !== roomId && roomList.length > 0) {
         onRoomSelect(roomId);
-        // 방이 변경되면 우측 패널 닫기
+        // 방이 변경되면 우측 패널 및 스레드 선택 상태 초기화
         setRightPanel('none');
+        setSelectedThreadMessage(null);
       }
     }
   }, [pathname, currentRoom?._id, roomList, view]);
