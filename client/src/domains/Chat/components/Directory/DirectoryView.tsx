@@ -17,6 +17,7 @@ import {
   IconSearch,
   IconCopy,
   IconChevronLeft,
+  IconLock,
 } from '@tabler/icons-preact';
 import { teamApi, chatApi } from '@/core/api/ApiService';
 import { currentWorkspaceId } from '@/stores/chatRoomsStore';
@@ -65,6 +66,8 @@ const DirectoryItemCard = ({
   userImage,
   userStatus,
   initials,
+  memberCount,
+  isPrivate = false,
 }: {
   title: string;
   description?: string;
@@ -77,6 +80,8 @@ const DirectoryItemCard = ({
   userImage?: string;
   userStatus?: string;
   initials?: string;
+  memberCount?: number;
+  isPrivate?: boolean;
 }) => (
   <Paper
     className="directory-card"
@@ -102,9 +107,19 @@ const DirectoryItemCard = ({
       ) : (
         <div
           className="directory-card__icon-box"
-          style={{ backgroundColor: `${color || '#509EE3'}15`, color: color || '#509EE3' }}
+          style={{ backgroundColor: `${color || '#509EE3'}15`, color: color || '#509EE3', position: 'relative' }}
         >
           {icon}
+          {isPrivate && (
+            <div className="directory-card__private-badge">
+              <IconLock size={10} stroke={3} />
+            </div>
+          )}
+          {memberCount !== undefined && memberCount > 0 && (
+            <div className="directory-card__member-badge">
+              {memberCount > 99 ? '99+' : memberCount}
+            </div>
+          )}
         </div>
       )}
 
@@ -156,12 +171,12 @@ export const DirectoryView = ({
   // 단일 루프로 최적화: filter().filter() 체인을 하나로 통합
   const filteredChannels = useMemo(() => {
     if (!searchTerm.trim()) {
-      return roomList.filter((r) => r.type === 'public');
+      return roomList.filter((r) => r.type === 'public' && r.members && r.members.length > 0);
     }
     const lowerQuery = searchTerm.toLowerCase();
     const filtered: typeof roomList = [];
     for (const r of roomList) {
-      if (r.type === 'public' &&
+      if (r.type === 'public' && r.members && r.members.length > 0 &&
         ((r.name || '').toLowerCase().includes(lowerQuery) ||
           (r.description && r.description.toLowerCase().includes(lowerQuery)))) {
         filtered.push(r);
@@ -173,8 +188,9 @@ export const DirectoryView = ({
   const filteredTeams = useMemo(() => {
     return teamList.filter(
       (t) =>
-        t.teamName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (t.teamDesc && t.teamDesc.toLowerCase().includes(searchTerm.toLowerCase())),
+        t.members && t.members.length > 0 &&
+        (t.teamName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (t.teamDesc && t.teamDesc.toLowerCase().includes(searchTerm.toLowerCase()))),
     );
   }, [teamList, searchTerm]);
 
@@ -442,7 +458,8 @@ export const DirectoryView = ({
                   icon={<IconHash size={20} />}
                   color={room.isPrivate || room.type === 'private' ? '#E73C7E' : '#509EE3'}
                   onClick={() => handleChannelClick(room)}
-                  badge={room.isPrivate || room.type === 'private' ? 'Private' : 'Public'}
+                  memberCount={room.members?.length}
+                  isPrivate={room.isPrivate || room.type === 'private'}
                   actions={
                     isOwner ? (
                       <>
@@ -508,7 +525,8 @@ export const DirectoryView = ({
                       icon={<IconUsers size={20} />}
                       color="#E73C7E"
                       onClick={() => handleTeamSelect(team)}
-                      badge={`${team.members?.length || 0} Members`}
+                      memberCount={team.members?.length}
+                      isPrivate={team.private}
                       actions={
                         isOwner ? (
                           <>

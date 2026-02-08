@@ -55,10 +55,10 @@ export function ThemePage() {
   return (
     <Box className="theme-page" style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg-default)', overflow: 'hidden' }}>
       {deviceSize === 'mobile' && <MobileHeader />}
-      
+
       <Box style={{ flex: 1, overflowY: 'auto', padding: deviceSize === 'mobile' ? '16px' : '24px' }}>
         <Box style={{ maxWidth: '800px', margin: '0 auto' }}>
-          
+
           {/* Header */}
           <Stack spacing="lg" style={{ marginBottom: deviceSize === 'mobile' ? '20px' : '32px' }}>
             <Typography variant="h2" style={{ fontSize: deviceSize === 'mobile' ? '1.8rem' : '2.2rem', fontWeight: 700 }}>설정 및 테마</Typography>
@@ -71,7 +71,7 @@ export function ThemePage() {
             {/* Left Column: Theme Settings */}
             <Grid item xs={12} md={8}>
               <Stack spacing="lg">
-                
+
                 {/* Color Theme Section */}
                 <Paper elevation={1} padding="lg">
                   <Stack spacing="md">
@@ -80,7 +80,7 @@ export function ThemePage() {
                       <Typography variant="h4">테마 모드</Typography>
                     </Flex>
                     <Divider />
-                    
+
                     <Flex align="center" justify="space-between">
                       <Box>
                         <Typography variant="body-medium" style={{ fontWeight: 700 }}>다크 모드</Typography>
@@ -91,7 +91,7 @@ export function ThemePage() {
                         onChange={(checked) => checked !== (theme === 'dark') && toggleTheme()}
                       />
                     </Flex>
-                    
+
                     <Flex align="center" justify="space-between">
                       <Box>
                         <Typography variant="body-medium" style={{ fontWeight: 700 }}>고대비 모드</Typography>
@@ -131,11 +131,11 @@ export function ThemePage() {
                           }}
                           onClick={() => setPresetColor(preset.value)}
                         >
-                          <div style={{ 
-                            width: '24px', 
-                            height: '24px', 
-                            borderRadius: '50%', 
-                            backgroundColor: preset.value === 'default' ? '#00A3FF' : preset.value === 'monotone' ? '#333' : `var(--color-preset-${preset.value}-primary, #888)` 
+                          <div style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            backgroundColor: preset.value === 'default' ? '#00A3FF' : preset.value === 'monotone' ? '#333' : `var(--color-preset-${preset.value}-primary, #888)`
                           }} />
                           <Typography variant="caption">{preset.label}</Typography>
                         </button>
@@ -154,7 +154,7 @@ export function ThemePage() {
                     <Divider />
 
                     <Box>
-                       <Flex align="center" justify="space-between" style={{ marginBottom: '8px' }}>
+                      <Flex align="center" justify="space-between" style={{ marginBottom: '8px' }}>
                         <Typography variant="body-medium" style={{ fontWeight: 700 }}>모서리 둥글기</Typography>
                         <Typography variant="body-small">{localBorderRadius}px</Typography>
                       </Flex>
@@ -166,10 +166,10 @@ export function ThemePage() {
                         onInput={(e) => handleBorderRadiusChange(Number((e.target as HTMLInputElement).value))}
                         style={{ width: '100%', cursor: 'pointer' }}
                       />
-                      <div style={{ 
-                        marginTop: '16px', 
-                        padding: '12px', 
-                        backgroundColor: 'var(--color-interactive-primary)', 
+                      <div style={{
+                        marginTop: '16px',
+                        padding: '12px',
+                        backgroundColor: 'var(--color-interactive-primary)',
                         color: 'white',
                         borderRadius: `${localBorderRadius}px`,
                         textAlign: 'center'
@@ -178,7 +178,7 @@ export function ThemePage() {
                       </div>
                     </Box>
 
-                     <Stack spacing="sm" style={{ marginTop: '16px' }}>
+                    <Stack spacing="sm" style={{ marginTop: '16px' }}>
                       <Typography variant="body-medium" style={{ fontWeight: 700 }}>사이드바 설정</Typography>
                       <Flex align="center" justify="space-between">
                         <Typography variant="body-small">미니 드로우 모드 (아이콘만 표시)</Typography>
@@ -195,24 +195,9 @@ export function ThemePage() {
 
             {/* Right Column: Account & Reset */}
             <Grid item xs={12} md={8}>
-               <Stack spacing="lg">
+              <Stack spacing="lg">
                 <Paper elevation={1} padding="lg">
-                   <Stack spacing="md">
-                    <Typography variant="h4">계정</Typography>
-                    <Divider />
-                    {isAuthenticated && (
-                       <Button variant="secondary" fullWidth onClick={handleLogout} style={{ color: 'var(--color-status-error)' }}>
-                        <Flex align="center" justify="center" gap="sm">
-                          <IconLogout size={18} />
-                          <Typography variant="body-small">로그아웃</Typography>
-                        </Flex>
-                      </Button>
-                    )}
-                   </Stack>
-                </Paper>
-
-                <Paper elevation={1} padding="lg">
-                   <Stack spacing="md">
+                  <Stack spacing="md">
                     <Typography variant="h4">초기화</Typography>
                     <Divider />
                     <Typography variant="body-small" color="text-secondary">
@@ -221,9 +206,9 @@ export function ThemePage() {
                     <Button variant="secondary" fullWidth onClick={resetToDefaults}>
                       기본값으로 복원
                     </Button>
-                   </Stack>
+                  </Stack>
                 </Paper>
-               </Stack>
+              </Stack>
             </Grid>
           </Grid>
 
