@@ -1,0 +1,85 @@
+.mobile-chat-input {
+  display: flex;
+  align-items: center; // 중앙 정렬로 변경
+  padding: 8px 12px;
+  gap: 8px;
+  background-color: var(--color-background-primary);
+  width: 100%;
+  box-sizing: border-box;
+
+  &__left,
+  &__right {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  &__center {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center; // 중앙 정렬로 변경
+  }
+
+  &__icon-btn {
+    color: var(--color-text-secondary);
+    padding: 6px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+
+    &--send {
+      color: var(--color-primary-main);
+    }
+
+    &:active {
+      opacity: 0.6;
+    }
+  }
+
+  &__textarea-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: center;
+
+    .input-textarea {
+      background-color: var(--color-background-secondary) !important;
+      border-radius: 18px !important;
+      padding: 7px 40px 7px 14px !important;
+      height: 36px; // !important 제거하여 JS가 높이를 제어할 수 있게 함
+      min-height: 36px !important;
+      max-height: 120px !important;
+      border: none !important;
+      font-size: 15px !important;
+      line-height: 22px !important;
+      box-shadow: none !important;
+      width: 100% !important;
+      margin: 0 !important;
+      overflow-y: auto !important;
+      resize: none !important;
+      box-sizing: border-box !important;
+    }
+
+    .input-container {
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  &__emoji-btn {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%); // 수직 중앙 정렬
+    z-index: 10;
+    color: var(--color-text-secondary);
+    padding: 4px !important;
+
+    &:hover {
+      background: none !important;
+    }
+  }
+}

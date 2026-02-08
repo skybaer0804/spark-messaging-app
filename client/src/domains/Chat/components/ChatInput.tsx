@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect } from 'preact/hooks';
 import { memo, lazy, Suspense } from 'preact/compat';
+import { useTheme } from '@/core/context/ThemeProvider';
 import { FilePreview } from './FilePreview';
+import { MobileChatInput } from './MessageInput/MobileChatInput';
 import { Input } from '@/ui-components/Input/Input';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Stack } from '@/ui-components/Layout/Stack';
@@ -50,6 +52,8 @@ function ChatInputComponent({
   onKeyPress,
   classNamePrefix,
 }: ChatInputProps) {
+  const { deviceSize } = useTheme();
+  const isMobile = deviceSize === 'mobile';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
@@ -62,6 +66,28 @@ function ChatInputComponent({
   const [mentionSearch, setMentionSearch] = useState('');
   const [mentionPos, setMentionPos] = useState(0);
   const [selectedTextForLink, setSelectedTextForLink] = useState('');
+
+  // 멘션 강제 트리거 핸들러
+  const handleMentionTrigger = () => {
+    const targetTextarea = textareaRef.current || document.querySelector('.chat-input-container textarea') as HTMLTextAreaElement;
+    if (!targetTextarea) return;
+
+    const start = targetTextarea.selectionStart;
+    const end = targetTextarea.selectionEnd;
+    const before = input.substring(0, start);
+    const after = input.substring(end);
+
+    // 이미 @가 있고 멘션 피커가 열려있지 않은 경우에만 @ 추가
+    const newText = before + '@' + after;
+    setInput(newText);
+
+    // 커서 위치 조정 및 포커스
+    setTimeout(() => {
+      const newPos = start + 1;
+      targetTextarea.setSelectionRange(newPos, newPos);
+      targetTextarea.focus();
+    }, 0);
+  };
 
   // @ 감지 및 MentionPicker 제어
   useEffect(() => {
@@ -111,10 +137,12 @@ function ChatInputComponent({
   return (
     <Paper
       elevation={4}
-      padding="md"
+      padding={isMobile ? "xs" : "md"}
       style={{
         flexShrink: 0,
-        paddingBottom: 'calc(12px + var(--safe-area-inset-bottom))'
+        paddingBottom: isMobile ? 'max(8px, var(--safe-area-inset-bottom))' : 'calc(12px + var(--safe-area-inset-bottom))',
+        borderTop: isMobile ? '1px solid var(--color-border-default)' : 'none',
+        backgroundColor: 'var(--color-background-primary)',
       }}
       className={`${baseClass}__input-paper`}
     >
@@ -125,77 +153,111 @@ function ChatInputComponent({
           uploadProgress={uploadProgress}
           onRemove={onFileRemove}
         />
-        <div ref={containerRef} className="chat-input-container" style={{ position: 'relative', width: '100%' }}>
-          <Input
-            multiline
-            value={input}
-            onCompositionStart={() => {
-              setIsComposing(true);
-              setFormattingComposing(true);
-            }}
-            onCompositionEnd={() => {
-              setIsComposing(false);
-              setFormattingComposing(false);
-            }}
-            onInput={(e) => {
-              const target = e.target as HTMLTextAreaElement;
-              setInput(target.value);
+        <div
+          ref={containerRef}
+          className={`chat-input-container ${isMobile ? 'chat-input-container--mobile' : ''}`}
+          style={{ position: 'relative', width: '100%' }}
+        >
+          {isMobile ? (
+            <MobileChatInput
+              input={input}
+              setInput={setInput}
+              onSendMessage={onSendMessage}
+              onSendFile={onSendFile}
+              onFileClick={() => fileInputRef.current?.click()}
+              onEmojiClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
+              onMentionClick={handleMentionTrigger}
+              onEmojiButtonRef={(el) => { if (el) emojiButtonRef.current = el; }}
+              onKeyPress={(e) => { if (!isComposing) onKeyPress(e); }}
+              isConnected={isConnected}
+              placeholder={placeholder}
+              canSend={input.trim().length > 0 || selectedFiles.length > 0}
+              isComposing={isComposing}
+              setIsComposing={setIsComposing}
+              setFormattingComposing={setFormattingComposing}
+            />
+          ) : (
+            <>
+              <Input
+                multiline
+                value={input}
+                onCompositionStart={() => {
+                  setIsComposing(true);
+                  setFormattingComposing(true);
+                }}
+                onCompositionEnd={() => {
+                  setIsComposing(false);
+                  setFormattingComposing(false);
+                }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  setInput(target.value);
+                  textareaRef.current = target;
 
-              // textarea ref 업데이트
-              textareaRef.current = target;
+                  // 높이 자동 조절
+                  target.style.height = 'auto';
+                  const scrollHeight = target.scrollHeight;
+                  const lineHeight = parseFloat(getComputedStyle(target).lineHeight) || 24;
+                  const verticalPadding = 64;
+                  const minHeight = lineHeight * 2 + verticalPadding;
+                  const maxHeight = lineHeight * 5 + verticalPadding;
+                  const targetHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+                  target.style.height = `${targetHeight}px`;
 
-              // 높이 자동 조절
-              target.style.height = 'auto';
-              const scrollHeight = target.scrollHeight;
-              const lineHeight = parseFloat(getComputedStyle(target).lineHeight) || 24;
-              const verticalPadding = 64; // 16(top) + 48(bottom) padding
-              const minHeight = lineHeight * 2 + verticalPadding; // 2 rows + padding = 112px
-              const maxHeight = lineHeight * 5 + verticalPadding;
-              const targetHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
-              target.style.height = `${targetHeight}px`;
-              // 한글 입력 시 포커스 유지 로직 최적화
-              if (isComposing) {
-                const inputElement = e.currentTarget;
-                requestAnimationFrame(() => {
-                  if (document.activeElement !== inputElement) {
-                    inputElement.focus();
+                  if (isComposing) {
+                    const inputElement = e.currentTarget;
+                    requestAnimationFrame(() => {
+                      if (document.activeElement !== inputElement) {
+                        inputElement.focus();
+                      }
+                    });
                   }
-                });
-              }
-            }}
-            onKeyPress={(e) => {
-              if (!isComposing) {
-                onKeyPress(e);
-              }
-            }}
-            onKeyDown={(e) => {
-              // 포맷팅 단축키 처리
-              handleFormatKeyDown(e);
+                }}
+                onKeyPress={(e) => {
+                  if (!isComposing) {
+                    onKeyPress(e);
+                  }
+                }}
+                onKeyDown={handleFormatKeyDown}
+                placeholder={placeholder || (isConnected ? '메시지를 입력하세요...' : '연결 중...')}
+                disabled={!isConnected}
+                fullWidth
+                rows={2}
+                style={{
+                  paddingBottom: '48px',
+                  borderRadius: '8px 8px 0 0',
+                  minHeight: '112px'
+                }}
+              />
+              <MessageInputToolbar
+                onFormat={(type) => {
+                  if (type === 'link') {
+                    const targetTextarea = textareaRef.current || (document.activeElement as HTMLTextAreaElement);
+                    if (targetTextarea && targetTextarea.tagName === 'TEXTAREA') {
+                      if (!textareaRef.current) textareaRef.current = targetTextarea;
+                      const start = targetTextarea.selectionStart;
+                      const end = targetTextarea.selectionEnd;
+                      savedSelectionRef.current = { start, end };
+                      const selectedText = start !== end ? targetTextarea.value.substring(start, end) : '';
+                      setSelectedTextForLink(selectedText);
+                      setLinkModalOpen(true);
+                    }
+                  } else {
+                    applyFormat(type);
+                  }
+                }}
+                onSaveSelection={saveSelection}
+                onEmojiClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
+                onEmojiButtonRef={(el) => { if (el) emojiButtonRef.current = el; }}
+                onFileClick={() => fileInputRef.current?.click()}
+                onSendClick={selectedFiles.length > 0 ? onSendFile : onSendMessage}
+                disabled={!isConnected}
+                showFileUpload={showFileUpload}
+                canSend={input.trim().length > 0 || selectedFiles.length > 0}
+              />
+            </>
+          )}
 
-              // Ctrl+L (링크 모달 열기)
-              const isModifierPressed = e.ctrlKey || e.metaKey;
-              if (isModifierPressed && e.key.toLowerCase() === 'l' && !isComposing) {
-                e.preventDefault();
-                // 현재 선택된 텍스트 가져오기
-                const target = e.target as HTMLTextAreaElement;
-                // textarea ref 업데이트
-                textareaRef.current = target;
-                const start = target.selectionStart;
-                const end = target.selectionEnd;
-                // 선택 영역 저장 (모달이 닫힌 후 사용)
-                savedSelectionRef.current = { start, end };
-                const selectedText = start !== end ? target.value.substring(start, end) : '';
-                setSelectedTextForLink(selectedText);
-                setLinkModalOpen(true);
-              }
-              // 기존 onKeyPress는 onKeyPress 이벤트에서만 처리
-            }}
-            placeholder={placeholder || (isConnected ? '메시지를 입력하세요...' : '연결 중...')}
-            disabled={!isConnected}
-            fullWidth
-            rows={2}
-            style={{ paddingBottom: '48px', borderRadius: '8px 8px 0 0', minHeight: '112px' }} // 점프 방지를 위해 minHeight 112px 설정
-          />
           {/* 파일 입력 (숨김) */}
           {showFileUpload && (
             <input
@@ -207,52 +269,6 @@ function ChatInputComponent({
               accept="image/*,video/*,audio/*,.xlsx,.xls,.csv,.md,.docx,.doc,.pdf,.txt,.stl,.obj,.ply,.dxd"
             />
           )}
-
-          {/* 포맷팅 툴바 */}
-          <MessageInputToolbar
-            onFormat={(type) => {
-              if (type === 'link') {
-                // 링크 버튼 클릭 시 모달 열기
-                // textarea ref가 있으면 사용, 없으면 activeElement 사용
-                const targetTextarea = textareaRef.current || (document.activeElement as HTMLTextAreaElement);
-                if (targetTextarea && targetTextarea.tagName === 'TEXTAREA') {
-                  // textarea ref 업데이트
-                  if (!textareaRef.current) {
-                    textareaRef.current = targetTextarea;
-                  }
-                  const start = targetTextarea.selectionStart;
-                  const end = targetTextarea.selectionEnd;
-                  // 선택 영역 저장 (모달이 닫힌 후 사용)
-                  savedSelectionRef.current = { start, end };
-                  const selectedText = start !== end ? targetTextarea.value.substring(start, end) : '';
-                  setSelectedTextForLink(selectedText);
-                  setLinkModalOpen(true);
-                }
-              } else {
-                applyFormat(type);
-              }
-            }}
-            onSaveSelection={saveSelection}
-            onEmojiClick={() => {
-              setEmojiPickerOpen(!emojiPickerOpen);
-            }}
-            onEmojiButtonRef={(el) => {
-              if (el) {
-                emojiButtonRef.current = el;
-              }
-            }}
-            onVoiceClick={() => {
-              // TODO: 음성 메시지 구현
-            }}
-            onVideoClick={() => {
-              // TODO: 화상 메시지 구현
-            }}
-            onFileClick={() => fileInputRef.current?.click()}
-            onSendClick={selectedFiles.length > 0 ? onSendFile : onSendMessage}
-            disabled={!isConnected}
-            showFileUpload={showFileUpload}
-            canSend={input.trim().length > 0 || selectedFiles.length > 0}
-          />
         </div>
       </Stack>
 
