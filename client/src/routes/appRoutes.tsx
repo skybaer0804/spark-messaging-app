@@ -36,11 +36,6 @@ const NotificationApp = lazy(() =>
     default: module.NotificationApp,
   })),
 );
-const ThemePage = lazy(() =>
-  import('@/components/ThemePage/ThemePage').then((module) => ({
-    default: module.ThemePage,
-  })),
-);
 import { HomePage } from '@/components/HomePage/HomePage';
 import { Profile } from '@/components/Profile/Profile';
 import { Workspace } from '@/components/Workspace/Workspace';
@@ -52,7 +47,6 @@ export type AppRouteId =
   | 'chatapp'
   | 'notification'
   | 'video-meeting'
-  | 'settings'
   | 'design-system'
   | 'login'
   | 'signup'
@@ -178,18 +172,6 @@ export const appRoutes: AppRouteNode[] = [
     element: (
       <Suspense fallback={<Loading fullScreen />}>
         <VideoMeeting />
-      </Suspense>
-    ),
-  },
-  {
-    id: 'settings',
-    label: '설정',
-    path: '/settings',
-    icon: <IconSettings size={24} />,
-    title: 'Settings',
-    element: (
-      <Suspense fallback={<Loading fullScreen />}>
-        <ThemePage />
       </Suspense>
     ),
   },

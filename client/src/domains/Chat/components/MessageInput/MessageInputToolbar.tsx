@@ -1,6 +1,5 @@
-import { useCallback } from 'preact/hooks';
+import { useCallback, useState } from 'preact/hooks';
 import { memo } from 'preact/compat';
-import { useTheme } from '@/core/context/ThemeProvider';
 import { IconButton } from '@/ui-components/Button/IconButton';
 import { Flex } from '@/ui-components/Layout/Flex';
 import {
@@ -13,6 +12,7 @@ import {
   IconLink,
   IconPaperclip,
   IconSend,
+  IconDots,
 } from '@tabler/icons-preact';
 import type { FormatType } from '../../types/markdown.types';
 import './MessageInputToolbar.scss';
@@ -43,6 +43,8 @@ function MessageInputToolbarComponent({
   showFileUpload = true,
   canSend = false,
 }: MessageInputToolbarProps) {
+  const [showFormats, setShowFormats] = useState(false);
+
   const formatButtons: Array<{ type: FormatType; icon: any; label: string; shortcut?: string }> = [
     { type: 'bold', icon: IconBold, label: '굵게', shortcut: 'Ctrl+B' },
     { type: 'italic', icon: IconItalic, label: '기울임', shortcut: 'Ctrl+I' },
@@ -63,7 +65,7 @@ function MessageInputToolbarComponent({
   );
 
   const renderFormattingButtons = () => (
-    <>
+    <Flex gap="xs" className={`message-input-toolbar__formats ${showFormats ? 'message-input-toolbar__formats--visible' : ''}`}>
       {formatButtons.map(({ type, icon: Icon, label, shortcut }) => (
         <IconButton
           key={type}
@@ -81,7 +83,7 @@ function MessageInputToolbarComponent({
           <Icon size={18} />
         </IconButton>
       ))}
-    </>
+    </Flex>
   );
 
   return (
@@ -94,30 +96,38 @@ function MessageInputToolbarComponent({
           color="secondary"
           size="small"
           title="이모지"
-          className="message-input-toolbar__button"
+          className="message-input-toolbar__button message-input-toolbar__button--essential"
         >
           <IconMoodSmile size={18} />
         </IconButton>
 
+        {showFileUpload && (
+          <IconButton
+            onClick={onFileClick}
+            disabled={disabled}
+            color="secondary"
+            size="small"
+            title="파일 첨부"
+            className="message-input-toolbar__button message-input-toolbar__button--essential"
+          >
+            <IconPaperclip size={18} />
+          </IconButton>
+        )}
+
         <div className="message-input-toolbar__divider" />
 
-        {renderFormattingButtons()}
+        <IconButton
+          onClick={() => setShowFormats(!showFormats)}
+          disabled={disabled}
+          color="secondary"
+          size="small"
+          title="포맷 옵션"
+          className={`message-input-toolbar__button message-input-toolbar__toggle ${showFormats ? 'message-input-toolbar__toggle--active' : ''}`}
+        >
+          <IconDots size={18} />
+        </IconButton>
 
-        {showFileUpload && (
-          <>
-            <div className="message-input-toolbar__divider" />
-            <IconButton
-              onClick={onFileClick}
-              disabled={disabled}
-              color="secondary"
-              size="small"
-              title="파일 첨부"
-              className="message-input-toolbar__button"
-            >
-              <IconPaperclip size={18} />
-            </IconButton>
-          </>
-        )}
+        {renderFormattingButtons()}
 
         <IconButton
           onClick={onSendClick}

@@ -158,8 +158,8 @@ export function ChatProvider({ children }: { children: any }) {
       // v2.4.0: 성능 최적화 - 채팅 메시지 및 진행률 관련 이벤트는 방 목록을 새로고침하지 않음
       // 이미 ROOM_LIST_UPDATED 또는 개별 메시지 이벤트를 통해 상태가 관리되기 때문
       const skipRefreshTypes = [
-        'text', 'file', 'image', '3d', 'video', 'audio', 
-        'MESSAGE_PROGRESS', 'MESSAGE_UPDATED', 
+        'text', 'file', 'image', '3d', 'video', 'audio',
+        'MESSAGE_PROGRESS', 'MESSAGE_UPDATED',
         'message-progress', 'message-updated'
       ];
       if (msg && !skipRefreshTypes.includes(msg.type)) {
@@ -169,7 +169,7 @@ export function ChatProvider({ children }: { children: any }) {
       // 1. 방 목록 업데이트 알림 수신
       if (msg.type === 'ROOM_LIST_UPDATED') {
         const updateData = msg.data || msg.content || {};
-        
+
         // 데이터가 실제로 변경되었을 때만 처리 (최소한의 필터링)
         if (!updateData._id) return;
 
@@ -185,33 +185,46 @@ export function ChatProvider({ children }: { children: any }) {
             return;
           }
 
-        const roomExists = currentRooms.some((r: any) => r._id === roomId);
-        let updatedRooms;
+          const roomExists = currentRooms.some((r: any) => r._id === roomId);
+          let updatedRooms;
 
-        const isPrivate = updateData.isPrivate || updateData.type === 'private' || updateData.type === 'direct';
+          const isPrivate = updateData.isPrivate || updateData.type === 'private' || updateData.type === 'direct';
 
-        if (roomExists) {
-          updatedRooms = currentRooms.map((room: any) => {
-            if (room._id === roomId) {
-              const newUnreadCount = updateData.unreadCount !== undefined ? updateData.unreadCount : room.unreadCount;
-              return {
-                ...room,
-                ...updateData,
-                isPrivate,
-                unreadCount: newUnreadCount,
-                updatedAt: updateData.updatedAt || new Date().toISOString(),
-              };
-            }
-            return room;
-          });
-        } else {
-          updatedRooms = [{ ...updateData, isPrivate }, ...currentRooms];
-        }
+          if (roomExists) {
+            updatedRooms = currentRooms.map((room: any) => {
+              if (room._id === roomId) {
+                const newUnreadCount = updateData.unreadCount !== undefined ? updateData.unreadCount : room.unreadCount;
+                return {
+                  ...room,
+                  ...updateData,
+                  isPrivate,
+                  unreadCount: newUnreadCount,
+                  updatedAt: updateData.updatedAt || new Date().toISOString(),
+                };
+              }
+              return room;
+            });
+          } else {
+            updatedRooms = [{ ...updateData, isPrivate }, ...currentRooms];
+          }
 
           updatedRooms.sort(
             (a: any, b: any) => getSafeTime(b.updatedAt) - getSafeTime(a.updatedAt),
           );
           updateRoomList(updatedRooms as any, true);
+
+          // v2.6.0: 현재 활성화된 방 정보도 실시간 동기화
+          if (currentRoom && currentRoom._id === roomId) {
+            const updatedRoom = updatedRooms.find((r: any) => r._id === roomId);
+            if (updatedRoom) {
+              // members가 populate되어 있는지 확인 (targetData에서 members가 있으면 반영)
+              setCurrentRoom((prev: any) => ({
+                ...prev,
+                ...updatedRoom,
+                members: updateData.members || updatedRoom.members || prev?.members
+              }));
+            }
+          }
         } else {
           refreshRoomList();
         }

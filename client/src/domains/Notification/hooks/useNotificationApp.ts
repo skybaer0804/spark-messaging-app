@@ -24,6 +24,20 @@ export function useNotificationApp() {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [scheduledDate, setScheduledAt] = useState('');
+
+  const getDefaultScheduledDate = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 10);
+    // YYYY-MM-DDTHH:mm 형식으로 변환 (datetime-local 입력용)
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  };
+
+  const resetForm = () => {
+    setTitle('');
+    setMessage('');
+    setScheduledAt(getDefaultScheduledDate());
+    setTargetType('all');
+  };
   const [targetType, setTargetType] = useState<'all' | 'workspace'>('all');
   const [targetId, setTargetId] = useState('');
   const [workspaceList, setWorkspaceList] = useState<Workspace[]>([]);
@@ -31,10 +45,57 @@ export function useNotificationApp() {
   const [notifications, setNotifications] = useState<FormattedNotification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'view'>('create');
+  const [selectedNotification, setSelectedNotification] = useState<FormattedNotification | null>(null);
 
   const { showSuccess, showError } = useToast();
   const { confirm } = useConfirm();
   const notificationServiceRef = useRef<NotificationService | null>(null);
+
+  const handleOpenCreateDialog = () => {
+    resetForm();
+    setDialogMode('create');
+    setIsDrawerOpen(true);
+  };
+
+  const handleOpenViewDialog = async (notification: FormattedNotification) => {
+    setDialogMode('view');
+    setIsDrawerOpen(true);
+    // 상세 정보 로딩 시작 (낙관적으로 목록 데이터 먼저 표시 후 업데이트)
+    setSelectedNotification(notification);
+    setTitle(notification.title);
+    setMessage(notification.content);
+    setTargetType(notification.targetType as 'all' | 'workspace');
+    setTargetId(notification.targetId || '');
+
+    const date = notification.scheduledAt || notification.createdAt;
+    if (date) {
+      const localISO = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      setScheduledAt(localISO);
+    } else {
+      setScheduledAt('');
+    }
+
+    try {
+      const res = await notificationApi.getNotification(notification._id);
+      const data = formatNotificationData(res.data);
+
+      setSelectedNotification(data);
+      setTitle(data.title);
+      setMessage(data.content);
+      setTargetType(data.targetType as 'all' | 'workspace');
+      setTargetId(data.targetId || '');
+
+      const detailDate = data.scheduledAt || data.createdAt;
+      if (detailDate) {
+        const localISO = new Date(detailDate.getTime() - detailDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        setScheduledAt(localISO);
+      }
+    } catch (err) {
+      console.error('Failed to fetch notification detail:', err);
+      // 목록에 이미 데이터가 있으므로 에러 무시 가능하지만 로그는 남김
+    }
+  };
 
   const fetchNotifications = async () => {
     setIsLoading(true);
@@ -74,6 +135,7 @@ export function useNotificationApp() {
 
     fetchWorkspaces();
     fetchNotifications();
+    setScheduledAt(getDefaultScheduledDate());
 
     return () => {
       connectionService.cleanup();
@@ -90,9 +152,7 @@ export function useNotificationApp() {
         targetId: targetType === 'workspace' ? targetId : undefined,
       });
 
-      setTitle('');
-      setMessage('');
-      setScheduledAt('');
+      resetForm();
       setIsDrawerOpen(false);
       // showSuccess('알림이 생성되었습니다.');
       fetchNotifications();
@@ -102,7 +162,7 @@ export function useNotificationApp() {
     }
   };
 
-  const handleResend = async (notification: Notification) => {
+  const handleResend = async (notification: Notification | FormattedNotification) => {
     try {
       await notificationApi.createNotification({
         title: notification.title,
@@ -156,8 +216,14 @@ export function useNotificationApp() {
     isLoading,
     isDrawerOpen,
     setIsDrawerOpen,
+    dialogMode,
+    setDialogMode,
+    selectedNotification,
+    handleOpenCreateDialog,
+    handleOpenViewDialog,
     handleResend,
     handleDelete,
     fetchNotifications,
+    resetForm,
   };
 }

@@ -13,13 +13,6 @@
   background-color: transparent;
   overflow: hidden;
 
-  &__main-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-  }
-
   &__actions {
     display: flex;
     align-items: center;
@@ -70,7 +63,7 @@
   &--active {
     background-color: var(--color-surface-level-1) !important;
     border: 1px solid var(--app-color);
-    
+
     [data-theme='dark'] & {
       background-color: var(--color-surface-level-1) !important;
     }
@@ -78,7 +71,7 @@
 
   &--no-hover {
     cursor: default;
-    
+
     &:hover {
       background-color: transparent !important;
       transform: none !important;
@@ -141,6 +134,7 @@
 
     .profile-item__type-icon {
       margin-right: -2px;
+
       svg {
         width: 14px;
         height: 14px;
@@ -166,13 +160,37 @@
     }
   }
 
-  &__avatar-container {
+  &__avatar-wrapper {
     position: relative;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__rocket-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background-color: var(--color-background-primary);
+    color: #f59e0b; // Rocket color
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-border-default);
+    z-index: 2;
+
+    svg {
+      display: block;
+    }
   }
 
   &__avatar-placeholder {
-    width: 32px;
+    width: 24px;
     height: 0;
     flex-shrink: 0;
   }
@@ -184,17 +202,28 @@
     z-index: 1;
     flex-shrink: 0;
 
-    &--online { background-color: #2bac76; }
-    &--away { background-color: #f59e0b; }
-    &--offline { background-color: #94a3b8; }
-    &--busy { background-color: #e11d48; }
+    &--online {
+      background-color: #2bac76;
+    }
+
+    &--away {
+      background-color: #f59e0b;
+    }
+
+    &--offline {
+      background-color: #94a3b8;
+    }
+
+    &--busy {
+      background-color: #e11d48;
+    }
 
     &--pos-icon {
       position: absolute;
       bottom: -1px;
       right: -1px;
       border: 2px solid var(--color-bg-default, #fff);
-      
+
       [data-theme='dark'] & {
         border-color: #2c333d;
       }

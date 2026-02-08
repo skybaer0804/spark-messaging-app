@@ -4,9 +4,6 @@ const {
   getWorkspaces,
   getWorkspace,
   createWorkspace,
-  createCompany,
-  createDept,
-  getWorkspaceStructure,
   getWorkspacePrivateKey,
   joinWorkspace,
   updateWorkspace,
@@ -21,8 +18,5 @@ router.get('/:workspaceId/private-key', getWorkspacePrivateKey);
 router.post('/', createWorkspace);
 router.patch('/:workspaceId', updateWorkspace);
 router.post('/:workspaceId/join', joinWorkspace);
-router.post('/company', createCompany);
-router.post('/dept', createDept);
-router.get('/:workspaceId/structure', getWorkspaceStructure);
 
 module.exports = router;

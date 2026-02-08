@@ -99,12 +99,13 @@ export const chatApi = {
   deleteRoom: (roomId: string) => api.delete(`/chat/rooms/${roomId}`),
   joinRoomByInvite: (slug: string) => api.post(`/chat/invite/${slug}`),
   leaveRoom: (roomId: string) => api.post(`/chat/leave/${roomId}`),
+  removeRoomMember: (roomId: string, userId: string) => api.delete(`/chat/rooms/${roomId}/members/${userId}`),
   getMessages: (roomId: string) => api.get(`/chat/messages/${roomId}`),
   getMessageById: (messageId: string) => api.get(`/chat/message/${messageId}`),
-  sendMessage: (data: { 
-    roomId: string; 
-    content: string; 
-    type?: string; 
+  sendMessage: (data: {
+    roomId: string;
+    content: string;
+    type?: string;
     tempId?: string;
     parentMessageId?: string | null;
   }) => api.post('/chat/messages', data),
@@ -148,14 +149,11 @@ export const workspaceApi = {
     workspaceId: string,
     data: { name?: string; initials?: string; color?: string; allowPublicJoin?: boolean },
   ) => api.patch(`/workspace/${workspaceId}`, data),
-  createCompany: (data: { name: string; workspaceId: string }) => api.post('/workspace/company', data),
-  createDept: (data: { name: string; companyId: string; workspaceId: string; parentId?: string }) =>
-    api.post('/workspace/dept', data),
-  getWorkspaceStructure: (workspaceId: string) => api.get(`/workspace/${workspaceId}/structure`),
 };
 
 export const notificationApi = {
   getNotifications: () => api.get('/notification'),
+  getNotification: (notificationId: string) => api.get(`/notification/${notificationId}`),
   syncNotifications: () => api.get('/notification/sync'),
   createNotification: (data: {
     title: string;

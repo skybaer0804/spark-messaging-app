@@ -255,7 +255,7 @@ exports.updateTeam = async (req, res) => {
       if (teamName !== undefined) roomUpdateData.name = teamName.trim();
       if (teamDesc !== undefined) roomUpdateData.description = teamDesc ? teamDesc.trim() : '';
       if (isPrivate !== undefined) roomUpdateData.isPrivate = isPrivate;
-      
+
       if (Object.keys(roomUpdateData).length > 0) {
         await ChatRoom.findByIdAndUpdate(teamChatRoom._id, { $set: roomUpdateData });
         // 모든 멤버에게 방 목록 업데이트 알림
@@ -309,7 +309,7 @@ exports.deleteTeam = async (req, res) => {
       await UserChatRoom.deleteMany({ roomId: teamChatRoom._id });
       // ChatRoom 삭제
       await ChatRoom.findByIdAndDelete(teamChatRoom._id);
-      
+
       // 모든 멤버에게 방 목록 업데이트 알림
       const teamMembers = await UserTeam.find({ teamId }).select('userId');
       teamMembers.forEach((ut) => {
@@ -374,6 +374,34 @@ exports.inviteMembers = async (req, res) => {
 
     await UserTeam.insertMany(memberRecords);
 
+    // [v2.6.0] 팀 채팅방에도 멤버 추가 및 동기화
+    const teamChatRoom = await ChatRoom.findOne({ teamId, type: 'team' });
+    if (teamChatRoom) {
+      // 1. 채팅방 멤버 목록 업데이트
+      const updatedMembers = [...new Set([...teamChatRoom.members.map(m => m.toString()), ...newUserIds])];
+      await ChatRoom.findByIdAndUpdate(teamChatRoom._id, { members: updatedMembers });
+
+      // 2. 새 멤버들에 대해 UserChatRoom 레코드 생성 및 알림
+      for (const userId of newUserIds) {
+        await UserChatRoom.findOneAndUpdate(
+          { userId, roomId: teamChatRoom._id },
+          {
+            userId,
+            roomId: teamChatRoom._id,
+            lastReadSequenceNumber: teamChatRoom.lastSequenceNumber || 0,
+            unreadCount: 0,
+          },
+          { upsert: true, new: true },
+        );
+        socketService.notifyRoomListUpdated(userId.toString());
+      }
+
+      // 3. 기존 멤버들에게도 방 정보 업데이트 알림 (멤버 수 변경 등)
+      teamChatRoom.members.forEach((m) => {
+        socketService.notifyRoomListUpdated(m.toString());
+      });
+    }
+
     // 초대 알림 발송
     const creator = await User.findById(currentUserId).select('username');
     newUserIds.forEach((userId) => {
@@ -422,6 +450,36 @@ exports.removeMember = async (req, res) => {
     }
 
     await UserTeam.findOneAndDelete({ userId, teamId });
+
+    // [v2.6.0] 팀 채팅방에서도 멤버 제거 및 동기화
+    const teamChatRoom = await ChatRoom.findOne({ teamId, type: 'team' });
+    if (teamChatRoom) {
+      // 1. 채팅방 멤버 목록에서 제거
+      await ChatRoom.findByIdAndUpdate(teamChatRoom._id, {
+        $pull: { members: userId }
+      });
+
+      // 2. UserChatRoom 레코드 삭제
+      await UserChatRoom.findOneAndDelete({ userId, roomId: teamChatRoom._id });
+
+      // 3. 제거된 사용자에게 알림 (목록에서 즉시 제거)
+      socketService.notifyRoomListUpdated(userId, {
+        _id: teamChatRoom._id,
+        isRemoved: true,
+        targetUserId: userId,
+      });
+
+      // 4. 남은 멤버들에게 알림 (멤버 수/목록 변경)
+      const updatedRoom = await ChatRoom.findById(teamChatRoom._id);
+      if (updatedRoom) {
+        updatedRoom.members.forEach((m) => {
+          socketService.notifyRoomListUpdated(m.toString(), {
+            ...updatedRoom.toObject(),
+            targetUserId: m.toString()
+          });
+        });
+      }
+    }
 
     res.json({ message: 'Member removed successfully' });
   } catch (error) {

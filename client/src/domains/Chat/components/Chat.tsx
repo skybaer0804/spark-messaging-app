@@ -32,8 +32,6 @@ function ChatComponent({ adapter, config = {}, classNamePrefix = 'chat', roomNam
     setInput: coreSetInput,
     selectedFiles,
     imageModal,
-    handleKeyPress,
-    handleSendMessage,
     handleFileSelect,
     handleFileSend,
     handleFileRemove,
@@ -45,28 +43,14 @@ function ChatComponent({ adapter, config = {}, classNamePrefix = 'chat', roomNam
   const input = inputSignal ? inputSignal.value : coreInput;
   const setInput = inputSignal
     ? (value: string) => {
-        adapter.setInput?.(value);
-      }
+      adapter.setInput?.(value);
+    }
     : coreSetInput;
 
   // Signal이 있으면 명시적으로 읽어서 구독 (컴포넌트 리렌더링 보장)
   if (inputSignal) {
     void inputSignal.value;
   }
-
-  // Signal 기반 input을 사용하는 경우 handleSendMessage 래핑
-  const handleSendMessageWrapped = inputSignal
-    ? async () => {
-        const currentInput = inputSignal.value;
-        if (!currentInput.trim() || !adapter.isConnected()) return;
-        try {
-          await adapter.sendMessage(currentInput.trim());
-          adapter.setInput?.('');
-        } catch (error) {
-          console.error('Failed to send message:', error);
-        }
-      }
-    : handleSendMessage;
 
   // Signal 기반 메시지 가져오기 (반응형 업데이트)
   // Signal.value를 읽으면 자동으로 구독되어 Signal이 변경될 때 컴포넌트가 리렌더링됨
@@ -78,6 +62,42 @@ function ChatComponent({ adapter, config = {}, classNamePrefix = 'chat', roomNam
 
   const showFileUpload = config.showFileUpload !== false && adapter.showFileUpload?.() !== false;
   const showImageModal = config.showImageModal !== false;
+
+  // 통합 전송 핸들러: 텍스트와 파일을 모두 처리
+  const handleSendAll = async () => {
+    // 최신 input 값 가져오기
+    const currentInput = inputSignal ? inputSignal.value : coreInput;
+    const hasFiles = selectedFiles.length > 0;
+
+    if (!adapter.isConnected()) return;
+
+    // 텍스트나 파일 중 하나라도 있어야 전송
+    if (!currentInput.trim() && !hasFiles) return;
+
+    try {
+      // 1. 텍스트 전송
+      if (currentInput.trim()) {
+        await adapter.sendMessage(currentInput.trim());
+        // setInput을 통해 Signal 혹은 Local State 초기화
+        setInput('');
+      }
+
+      // 2. 파일 전송 (텍스트 전송과 병렬 또는 순차 실행)
+      if (hasFiles) {
+        await handleFileSend();
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
+  };
+
+  const handleKeyDownWrapped = (e: KeyboardEvent) => {
+    // ChatInput 내부에서 처리하므로 여기서는 최소한의 로직만 유지하거나 
+    // 필요한 경우 추가적인 전역 단축키를 처리합니다.
+    if (e.key === 'Enter' && !e.shiftKey) {
+      // ChatInput에서 이미 e.preventDefault()와 전송을 처리함
+    }
+  };
 
   return (
     <Box className={baseClass} style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
@@ -125,11 +145,11 @@ function ChatComponent({ adapter, config = {}, classNamePrefix = 'chat', roomNam
         isConnected={adapter.isConnected()}
         placeholder={adapter.getPlaceholder?.() || config.placeholder}
         showFileUpload={showFileUpload}
-        onSendMessage={handleSendMessageWrapped}
-        onSendFile={handleFileSend}
+        onSendMessage={handleSendAll}
+        onSendFile={handleSendAll}
         onFileSelect={handleFileSelect}
         onFileRemove={handleFileRemove}
-        onKeyPress={handleKeyPress}
+        onKeyPress={handleKeyDownWrapped}
         classNamePrefix={baseClass}
       />
       {showImageModal && imageModal && (

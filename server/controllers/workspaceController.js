@@ -1,6 +1,4 @@
 const Workspace = require('../models/Workspace');
-const Company = require('../models/Company');
-const Dept = require('../models/Dept');
 const User = require('../models/User');
 const crypto = require('crypto');
 const { encrypt, decrypt } = require('../utils/encryption');
@@ -140,47 +138,5 @@ exports.updateWorkspace = async (req, res) => {
     res.json(updatedWorkspace);
   } catch (error) {
     res.status(500).json({ message: 'Failed to update workspace', error: error.message });
-  }
-};
-
-// 회사 생성
-exports.createCompany = async (req, res) => {
-  try {
-    const { name, workspaceId } = req.body;
-    const newCompany = new Company({ name, workspaceId });
-    await newCompany.save();
-    res.status(201).json(newCompany);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to create company', error: error.message });
-  }
-};
-
-// 부서 생성
-exports.createDept = async (req, res) => {
-  try {
-    const { name, companyId, workspaceId, parentId } = req.body;
-    const newDept = new Dept({ name, companyId, workspaceId, parentId });
-    await newDept.save();
-    res.status(201).json(newDept);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to create department', error: error.message });
-  }
-};
-
-// 특정 워크스페이스의 조직도(Company > Dept) 조회
-exports.getWorkspaceStructure = async (req, res) => {
-  try {
-    const { workspaceId } = req.params;
-    const companies = await Company.find({ workspaceId }).lean();
-    const depts = await Dept.find({ workspaceId }).lean();
-
-    const structure = companies.map((company) => ({
-      ...company,
-      departments: depts.filter((d) => d.companyId.toString() === company._id.toString()),
-    }));
-
-    res.json(structure);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch workspace structure', error: error.message });
   }
 };

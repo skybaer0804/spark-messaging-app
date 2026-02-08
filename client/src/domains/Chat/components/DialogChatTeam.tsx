@@ -76,9 +76,10 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
     try {
       if (isEditMode && team) {
         // 수정 모드
-        const existingMemberIds = team.members.map((m) => m._id);
-        const newMemberIds = teamData.members.map((m) => m._id);
+        const existingMemberIds = team.members.map((m) => m._id || (m as any).id);
+        const newMemberIds = teamData.members.map((m) => m._id || (m as any).id);
         const addedMemberIds = newMemberIds.filter((id) => !existingMemberIds.includes(id));
+        const removedMemberIds = existingMemberIds.filter((id) => !newMemberIds.includes(id));
 
         // 팀 정보 수정
         await teamApi.updateTeam(team._id, {
@@ -90,6 +91,13 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
         // 새로 추가된 멤버가 있으면 초대
         if (addedMemberIds.length > 0) {
           await teamApi.inviteMembers(team._id, addedMemberIds);
+        }
+
+        // 제거된 멤버가 있으면 삭제
+        if (removedMemberIds.length > 0) {
+          for (const memberId of removedMemberIds) {
+            await teamApi.removeMember(team._id, memberId);
+          }
         }
       } else {
         // 생성 모드

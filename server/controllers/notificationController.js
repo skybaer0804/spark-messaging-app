@@ -129,3 +129,19 @@ exports.deleteNotification = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete notification', error: error.message });
   }
 };
+
+exports.getNotification = async (req, res) => {
+  try {
+    const { notificationId } = req.params;
+    const notification = await Notification.findById(notificationId);
+
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+
+    res.json(notification);
+  } catch (error) {
+    console.error('GetNotification error:', error);
+    res.status(500).json({ message: 'Failed to fetch notification', error: error.message });
+  }
+};
