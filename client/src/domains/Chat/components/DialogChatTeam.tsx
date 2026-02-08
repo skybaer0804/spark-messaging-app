@@ -37,7 +37,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
   const { userList } = useChat();
   const { user } = useAuth();
   const { deviceSize } = useTheme();
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const isEditMode = !!team;
   const isMobile = deviceSize === 'mobile';
   const [teamData, setTeamData] = useState({
@@ -146,7 +146,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
       onClose={handleClose}
       title={isEditMode ? '팀 수정' : '팀 개설'}
       maxWidth={false}
-      style={{ maxWidth: '800px' }}
+      style={{ maxWidth: '600px' }}
       fullWidth
       className="dialog--mobile-overlay"
       actions={

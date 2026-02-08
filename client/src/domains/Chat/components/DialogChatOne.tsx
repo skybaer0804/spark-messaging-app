@@ -88,7 +88,7 @@ export const DialogChatOne = ({
       title="새 다이렉트 메시지"
       maxWidth={false}
       fullWidth
-      style={{ maxWidth: '800px' }}
+      style={{ maxWidth: '600px' }}
       className="dialog--mobile-overlay"
       actions={
         <Flex gap="sm" style={isMobile ? { width: '100%' } : {}}>

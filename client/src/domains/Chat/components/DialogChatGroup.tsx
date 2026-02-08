@@ -84,7 +84,7 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
           type: 'public',
           members: memberIds.length > 0 ? memberIds : undefined,
         });
-        
+
         await refreshRoomList();
         showSuccess('채널이 수정되었습니다.');
       } else {
@@ -98,7 +98,7 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
           members: memberIds.length > 0 ? memberIds : undefined,
           workspaceId: currentWorkspaceId.value || undefined,
         });
-        
+
         await refreshRoomList();
         // showSuccess('채널이 생성되었습니다.');
       }
@@ -145,7 +145,7 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
       onClose={handleClose}
       title={isEditMode ? '채널 수정' : '채널 생성'}
       maxWidth={false}
-      style={{ maxWidth: '800px' }}
+      style={{ maxWidth: '600px' }}
       fullWidth
       className="dialog--mobile-overlay"
       actions={
