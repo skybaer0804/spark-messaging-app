@@ -180,7 +180,6 @@ export const ChatInfoPanel = ({
       square
       padding="none"
       className="chat-app__sidebar-panel"
-      style={{ display: 'flex', flexDirection: 'column', height: '100%', borderLeft: '1px solid var(--color-border-subtle)' }}
     >
       <Box className="chat-app__sidebar-panel__header">
         <Box style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
@@ -362,7 +361,7 @@ export const ChatInfoPanel = ({
               </Flex>
             </Button>
           </Flex>
-        ) : currentRoom.type !== 'direct' ? (
+        ) : (
           <Button
             fullWidth
             variant="secondary"
@@ -381,7 +380,7 @@ export const ChatInfoPanel = ({
               <span>채팅방 나가기</span>
             </Flex>
           </Button>
-        ) : null}
+        )}
       </Box>
     </Paper>
   );

@@ -66,12 +66,12 @@ function ChatInputComponent({
   // @ 감지 및 MentionPicker 제어
   useEffect(() => {
     if (!textareaRef.current) return;
-    
+
     const textarea = textareaRef.current;
     const cursorPos = textarea.selectionStart;
     const textBeforeCursor = input.substring(0, cursorPos);
     const lastAtIdx = textBeforeCursor.lastIndexOf('@');
-    
+
     if (lastAtIdx !== -1 && (lastAtIdx === 0 || textBeforeCursor[lastAtIdx - 1] === ' ')) {
       const searchStr = textBeforeCursor.substring(lastAtIdx + 1);
       // 공백이 포함되지 않은 경우에만 멘션 모드 유지
@@ -82,7 +82,7 @@ function ChatInputComponent({
         return;
       }
     }
-    
+
     setMentionOpen(false);
   }, [input]);
 
@@ -99,7 +99,7 @@ function ChatInputComponent({
         textareaRef.current = textarea;
       }
     };
-    
+
     updateTextareaRef();
     // input이 변경될 때마다 ref 업데이트
     const interval = setInterval(updateTextareaRef, 100);
@@ -109,13 +109,13 @@ function ChatInputComponent({
   const baseClass = classNamePrefix || 'chat-input';
 
   return (
-    <Paper 
-      elevation={4} 
-      padding="md" 
-      style={{ 
+    <Paper
+      elevation={4}
+      padding="md"
+      style={{
         flexShrink: 0,
-        paddingBottom: 'var(--safe-area-inset-bottom)'
-      }} 
+        paddingBottom: 'calc(12px + var(--safe-area-inset-bottom))'
+      }}
       className={`${baseClass}__input-paper`}
     >
       <Stack spacing="sm">
@@ -140,10 +140,10 @@ function ChatInputComponent({
             onInput={(e) => {
               const target = e.target as HTMLTextAreaElement;
               setInput(target.value);
-              
+
               // textarea ref 업데이트
               textareaRef.current = target;
-              
+
               // 높이 자동 조절
               target.style.height = 'auto';
               const scrollHeight = target.scrollHeight;
@@ -171,7 +171,7 @@ function ChatInputComponent({
             onKeyDown={(e) => {
               // 포맷팅 단축키 처리
               handleFormatKeyDown(e);
-              
+
               // Ctrl+L (링크 모달 열기)
               const isModifierPressed = e.ctrlKey || e.metaKey;
               if (isModifierPressed && e.key.toLowerCase() === 'l' && !isComposing) {
@@ -255,7 +255,7 @@ function ChatInputComponent({
           />
         </div>
       </Stack>
-      
+
       {/* 링크 추가 모달 */}
       <AddLinkModal
         open={linkModalOpen}
@@ -287,7 +287,7 @@ function ChatInputComponent({
         }}
         initialText={selectedTextForLink}
       />
-      
+
       {/* 이모지 피커 (lazy loading) */}
       {emojiPickerOpen && (
         <Suspense fallback={null}>
@@ -298,15 +298,15 @@ function ChatInputComponent({
             onSelect={(emoji) => {
               const targetTextarea = textareaRef.current;
               if (!targetTextarea) return;
-              
+
               const start = targetTextarea.selectionStart;
               const end = targetTextarea.selectionEnd;
               const before = input.substring(0, start);
               const after = input.substring(end);
               const newText = before + emoji + after;
-              
+
               setInput(newText);
-              
+
               // 커서 위치 조정
               setTimeout(() => {
                 const newPos = start + emoji.length;
@@ -329,17 +329,17 @@ function ChatInputComponent({
           onSelect={(item) => {
             const targetTextarea = textareaRef.current;
             if (!targetTextarea) return;
-            
+
             const cursorPos = targetTextarea.selectionStart;
             const beforeMention = input.substring(0, mentionPos);
             const afterMention = input.substring(cursorPos);
-            
+
             const mentionText = typeof item === 'string' ? item : item.username;
             const newText = beforeMention + '@' + mentionText + ' ' + afterMention;
-            
+
             setInput(newText);
             setMentionOpen(false);
-            
+
             // 커서 위치 조정
             setTimeout(() => {
               const newPos = beforeMention.length + mentionText.length + 2; // @ + text + space
