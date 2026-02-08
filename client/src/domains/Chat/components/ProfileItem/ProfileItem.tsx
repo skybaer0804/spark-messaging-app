@@ -8,6 +8,7 @@ import {
   IconHierarchy,
   IconX,
   IconDots,
+  IconRocket,
 } from '@tabler/icons-preact';
 import { RoomType } from '../../types/ChatRoom';
 import './ProfileItem.scss';
@@ -57,8 +58,8 @@ export const ProfileItem = memo(({
     mode: 'list',
   },
 }: ProfileItemProps) => {
-  const { 
-    showDesc = true, 
+  const {
+    showDesc = true,
     statusPosition = 'name-left',
     mode = 'list',
     isGrouped = false,
@@ -79,7 +80,7 @@ export const ProfileItem = memo(({
   const getIcon = () => {
     switch (type) {
       case 'team': return <IconHierarchy size={16} />;
-      case 'public': 
+      case 'public':
       case 'private': return <IconHash size={16} />;
       case 'discussion': return <IconMessageCircle size={16} />;
       default: return null;
@@ -91,7 +92,7 @@ export const ProfileItem = memo(({
 
   const renderStatus = (position: 'icon' | 'name-left' | 'name-right') => {
     if (type !== 'direct' || !status || statusPosition !== position) return null;
-    
+
     return (
       <div className={`profile-item__status profile-item__status--${status} profile-item__status--pos-${position}`} />
     );
@@ -100,7 +101,7 @@ export const ProfileItem = memo(({
   const renderTypeIcon = () => {
     if (type === 'direct' || !typeIcon) return null;
     const isReallyPrivate = isPrivate || (type as any) === 'private';
-    
+
     return (
       <div className="profile-item__type-icon">
         {typeIcon}
@@ -126,8 +127,8 @@ export const ProfileItem = memo(({
         {renderTypeIcon()}
         <span className="profile-item__name">{name}</span>
         {onDelete && (
-          <div 
-            className="profile-item__delete-btn" 
+          <div
+            className="profile-item__delete-btn"
             onClick={(e) => {
               e.stopPropagation();
               onDelete(e as any);
@@ -146,56 +147,66 @@ export const ProfileItem = memo(({
       onClick={onClick}
       style={{ '--app-color': getBgColor(), ...style } as any}
     >
-      <div className="profile-item__main-content">
-        <div className="profile-item__avatar-container">
-          {!isGrouped ? (
-            <Avatar src={avatar} variant="rounded" size="sm" style={{ backgroundColor: getBgColor() }}>
-              {firstLetter}
-            </Avatar>
-          ) : (
-            <div className="profile-item__avatar-placeholder" />
-          )}
-          {!isGrouped && renderStatus('icon')}
-        </div>
-        
-        {!isGrouped && (
-          <div className="profile-item__content">
-            <div className="profile-item__name-container">
-              <div className="profile-item__name-wrapper">
-                {renderStatus('name-left')}
-                {renderTypeIcon()}
-                <Typography variant="body-medium" className="profile-item__name">
-                  {unreadCount ? <strong>{name}</strong> : name}
-                </Typography>
-                {renderStatus('name-right')}
-                {nameSuffix && <div className="profile-item__name-suffix">{nameSuffix}</div>}
-              </div>
-              
-              <div className="profile-item__actions">
-                {unreadCount ? (
-                  <div className="profile-item__unread-badge">{unreadCount}</div>
-                ) : null}
-                {onMenuClick && (
-                  <div 
-                    className="profile-item__menu-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onMenuClick(e as any);
-                    }}
-                  >
-                    <IconDots size={18} />
-                  </div>
-                )}
-              </div>
-            </div>
-            {showDesc && desc && (
-              <Typography variant="caption" className="profile-item__desc">
-                {desc}
-              </Typography>
-            )}
+      {!isGrouped ? (
+        <div className="profile-item__avatar-wrapper">
+          <Avatar
+            src={avatar}
+            variant="rounded"
+            style={{
+              backgroundColor: getBgColor(),
+              width: '24px',
+              height: '24px',
+              fontSize: '11px'
+            }}
+          >
+            {firstLetter}
+          </Avatar>
+          {renderStatus('icon')}
+          <div className="profile-item__rocket-badge">
+            <IconRocket size={10} />
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="profile-item__avatar-placeholder" />
+      )}
+
+      {!isGrouped && (
+        <div className="profile-item__content">
+          <div className="profile-item__name-container">
+            <div className="profile-item__name-wrapper">
+              {renderStatus('name-left')}
+              {renderTypeIcon()}
+              <Typography variant="body-medium" className="profile-item__name">
+                {unreadCount ? <strong>{name}</strong> : name}
+              </Typography>
+              {renderStatus('name-right')}
+              {nameSuffix && <div className="profile-item__name-suffix">{nameSuffix}</div>}
+            </div>
+
+            <div className="profile-item__actions">
+              {unreadCount ? (
+                <div className="profile-item__unread-badge">{unreadCount}</div>
+              ) : null}
+              {onMenuClick && (
+                <div
+                  className="profile-item__menu-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMenuClick(e as any);
+                  }}
+                >
+                  <IconDots size={18} />
+                </div>
+              )}
+            </div>
+          </div>
+          {showDesc && desc && (
+            <Typography variant="caption" className="profile-item__desc">
+              {desc}
+            </Typography>
+          )}
+        </div>
+      )}
     </div>
   );
 });

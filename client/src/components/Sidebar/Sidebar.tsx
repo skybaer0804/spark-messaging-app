@@ -142,16 +142,6 @@ export const Sidebar = memo(() => {
               {user?.username?.substring(0, 1).toUpperCase() || <IconUser size={24} />}
             </Avatar>
           </div>
-          <div
-            className={`lnb__workspace-item ${pathname.startsWith('/settings') ? 'lnb__workspace-item--active' : ''}`}
-            onClick={() => navigate('/settings')}
-            title="Theme & Settings"
-            style={{ marginTop: '12px' }}
-          >
-            <div className="lnb__workspace-icon lnb__workspace-icon--theme">
-              <IconPalette size={24} />
-            </div>
-          </div>
         </div>
       </div>
     </aside>
