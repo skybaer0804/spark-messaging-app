@@ -7,7 +7,7 @@ export interface ChipProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'siz
   label: string;
   onDelete?: () => void;
   variant?: 'default' | 'primary' | 'secondary';
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   avatar?: preact.ComponentChildren;
 }

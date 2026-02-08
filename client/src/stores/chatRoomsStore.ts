@@ -3,6 +3,7 @@ import { signal, computed } from '@preact/signals';
 export const chatRoomList = signal<any[]>([]);
 export const chatCurrentRoom = signal<string | null>(null);
 export const currentWorkspaceId = signal<string | null>(null);
+export const workspacesList = signal<any[]>([]);
 
 // v2.4.0: 읽지 않은 메시지 총합을 시그널로 관리하여 렌더링 최적화
 export const totalUnreadCount = computed(() => {

@@ -1,9 +1,9 @@
-import { useMemo, useEffect, useState } from 'preact/hooks';
+import { useMemo, useEffect } from 'preact/hooks';
 import { memo } from 'preact/compat';
-import { IconSparkles, IconPlus, IconUser, IconPalette } from '@tabler/icons-preact';
+import { IconSparkles, IconUser, IconPalette } from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes, type AppRouteNode } from '@/routes/appRoutes';
-import { currentWorkspaceId, setCurrentWorkspaceId, totalUnreadCount } from '@/stores/chatRoomsStore';
+import { currentWorkspaceId, setCurrentWorkspaceId, totalUnreadCount, workspacesList } from '@/stores/chatRoomsStore';
 import { workspaceApi } from '@/core/api/ApiService';
 import { useAuth } from '@/core/hooks/useAuth';
 import { Badge } from '@/ui-components/Badge/Badge';
@@ -38,7 +38,7 @@ const NavItem = memo(({ route, isActive, onClick }: { route: AppRouteNode; isAct
 export const Sidebar = memo(() => {
   const { pathname, navigate } = useRouterState();
   const { user } = useAuth();
-  const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const workspaces = workspacesList.value;
 
   // Set으로 최적화: O(n) find() 반복 대신 Map 사용
   const lnbRouteIds = useMemo(() => new Set(['chatapp', 'video-meeting', 'notification']), []);
@@ -57,7 +57,7 @@ export const Sidebar = memo(() => {
   const fetchWorkspaces = async () => {
     try {
       const res = await workspaceApi.getWorkspaces();
-      setWorkspaces(res.data);
+      workspacesList.value = res.data;
       if (res.data.length > 0 && !currentWorkspaceId.value) {
         setCurrentWorkspaceId(res.data[0]._id);
       }
@@ -73,11 +73,6 @@ export const Sidebar = memo(() => {
   }, [user]);
 
   const activeWorkspaceId = currentWorkspaceId.value;
-
-  const handleWorkspaceSelect = (id: string) => {
-    setCurrentWorkspaceId(id);
-    navigate(`/workspace/${id}`);
-  };
 
   return (
     <aside className="lnb">
@@ -97,23 +92,22 @@ export const Sidebar = memo(() => {
 
         <div className="lnb__divider" />
 
-        {/* 워크스페이스 목록 (Column 1) */}
+        {/* 워크스페이스 목록 (Column 1) - 현재 활성화된 것만 표시 */}
         <div className="lnb__workspaces">
-          {workspaces.map((ws) => (
-            <div
-              key={ws._id}
-              className={`lnb__workspace-item ${activeWorkspaceId === ws._id ? 'lnb__workspace-item--active' : ''}`}
-              onClick={() => handleWorkspaceSelect(ws._id)}
-              title={ws.name}
-            >
-              <div className="lnb__workspace-icon" style={{ backgroundColor: ws.color }}>
-                {ws.initials || ws.name.substring(0, 1).toUpperCase()}
+          {workspaces
+            .filter((ws) => ws._id === activeWorkspaceId)
+            .map((ws) => (
+              <div
+                key={ws._id}
+                className="lnb__workspace-item lnb__workspace-item--active"
+                onClick={() => navigate('/workspace')}
+                title={ws.name}
+              >
+                <div className="lnb__workspace-icon" style={{ backgroundColor: ws.color }}>
+                  {ws.initials || ws.name.substring(0, 1).toUpperCase()}
+                </div>
               </div>
-            </div>
-          ))}
-          <button className="lnb__add-workspace" title="Add workspace" onClick={() => navigate('/workspace')}>
-            <IconPlus size={20} />
-          </button>
+            ))}
         </div>
 
         <div className="lnb__divider" />
@@ -163,3 +157,4 @@ export const Sidebar = memo(() => {
     </aside>
   );
 });
+

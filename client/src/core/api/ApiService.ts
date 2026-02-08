@@ -149,10 +149,6 @@ export const workspaceApi = {
     workspaceId: string,
     data: { name?: string; initials?: string; color?: string; allowPublicJoin?: boolean },
   ) => api.patch(`/workspace/${workspaceId}`, data),
-  createCompany: (data: { name: string; workspaceId: string }) => api.post('/workspace/company', data),
-  createDept: (data: { name: string; companyId: string; workspaceId: string; parentId?: string }) =>
-    api.post('/workspace/dept', data),
-  getWorkspaceStructure: (workspaceId: string) => api.get(`/workspace/${workspaceId}/structure`),
 };
 
 export const notificationApi = {

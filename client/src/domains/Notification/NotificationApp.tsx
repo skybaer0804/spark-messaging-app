@@ -172,7 +172,7 @@ export function NotificationApp() {
       <Box padding={isMobile ? 'sm' : 'lg'} className="notification-app__header">
         <Flex justify="space-between" align="center">
           <Box>
-            <Typography variant="h3" style={{ fontSize: isMobile ? '1.25rem' : 'inherit' }}>시스템 알림 관리</Typography>
+            <Typography variant="h2" style={{ fontSize: isMobile ? '1.25rem' : 'inherit' }}>시스템 알림 관리</Typography>
             <Typography variant="body-medium" color="text-secondary" style={{ display: isMobile ? 'none' : 'block' }}>
               과거 발송 목록을 확인하고 새로운 알림를 생성합니다.
             </Typography>

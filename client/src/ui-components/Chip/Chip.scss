@@ -24,6 +24,12 @@
     font-size: 14px;
   }
 
+  &--lg {
+    padding: 6px 16px;
+    font-size: 16px;
+    gap: 8px;
+  }
+
   // Variants
   &--default {
     background-color: var(--color-surface-level-2);

@@ -8,39 +8,47 @@ import { Box } from '@/ui-components/Layout/Box';
 import { Avatar } from '@/ui-components/Avatar/Avatar';
 import { Button } from '@/ui-components/Button/Button';
 import { Input } from '@/ui-components/Input/Input';
-import { Checkbox } from '@/ui-components/Checkbox/Checkbox';
-import { List, ListItem, ListItemText, ListItemAvatar } from '@/ui-components/List/List';
-import { Tabs } from '@/ui-components/Tabs/Tabs';
+import { Switch } from '@/ui-components/Switch/Switch';
+import { Chip } from '@/ui-components/Chip/Chip';
+import { Grid } from '@/ui-components/Layout/Grid';
 import { Dialog } from '@/ui-components/Dialog/Dialog';
 import { useToast } from '@/core/context/ToastContext';
 import { useAuth } from '@/core/hooks/useAuth';
 import { workspaceApi, authApi } from '@/core/api/ApiService';
 import {
-  IconSettings,
-  IconUsers,
-  IconHierarchy,
   IconPlus,
   IconKey,
   IconWorld,
   IconLock,
   IconPencil,
+  IconCheck,
+  IconCircleCheck,
 } from '@tabler/icons-preact';
-import { currentWorkspaceId } from '@/stores/chatRoomsStore';
+import { currentWorkspaceId, setCurrentWorkspaceId, workspacesList } from '@/stores/chatRoomsStore';
 import './Workspace.scss';
+
+const PRESET_COLORS = [
+  '#4f46e5', // Indigo
+  '#10b981', // Emerald
+  '#f43f5e', // Rose
+  '#f59e0b', // Amber
+  '#0ea5e9', // Sky
+];
 
 export function Workspace() {
   const { user, updateUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<any>('workspace');
-  const [workspaces, setWorkspaces] = useState<any[]>([]);
-  const [structure, setStructure] = useState<any[]>([]);
+  const workspaces = workspacesList.value;
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
   const [showEditWorkspace, setShowEditWorkspace] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState<any>(null);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
-  const [editWorkspaceData, setEditWorkspaceData] = useState({ name: '', allowPublicJoin: false });
+  const [newWorkspaceColor, setNewWorkspaceColor] = useState(PRESET_COLORS[0]);
+  const [newWorkspaceAllowPublicJoin, setNewWorkspaceAllowPublicJoin] = useState(false);
+  const [editWorkspaceData, setEditWorkspaceData] = useState({ name: '', allowPublicJoin: false, color: PRESET_COLORS[0] });
   const [revealedKeys, setRevealedKeys] = useState<Record<string, string>>({});
 
   const { showSuccess, showError } = useToast();
+  const isAdmin = user?.role === 'admin';
 
   const handleRevealKey = async (workspaceId: string) => {
     try {
@@ -54,7 +62,7 @@ export function Workspace() {
   const fetchWorkspaces = async () => {
     try {
       const res = await workspaceApi.getWorkspaces();
-      setWorkspaces(res.data);
+      workspacesList.value = res.data;
     } catch (err) {
       console.error(err);
     }
@@ -69,32 +77,22 @@ export function Workspace() {
     }
   };
 
-  const fetchStructure = async () => {
-    if (!currentWorkspaceId.value) return;
-    try {
-      const res = await workspaceApi.getWorkspaceStructure(currentWorkspaceId.value);
-      setStructure(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
     fetchWorkspaces();
   }, []);
 
-  useEffect(() => {
-    if (activeTab === 'structure') {
-      fetchStructure();
-    }
-  }, [activeTab, currentWorkspaceId.value]);
-
   const handleCreateWorkspace = async () => {
     if (!newWorkspaceName.trim()) return;
     try {
-      await workspaceApi.createWorkspace({ name: newWorkspaceName });
+      await workspaceApi.createWorkspace({
+        name: newWorkspaceName,
+        color: newWorkspaceColor,
+        allowPublicJoin: newWorkspaceAllowPublicJoin
+      });
       setShowCreateWorkspace(false);
       setNewWorkspaceName('');
+      setNewWorkspaceColor(PRESET_COLORS[0]);
+      setNewWorkspaceAllowPublicJoin(false);
       // 병렬 실행으로 성능 개선
       await Promise.all([fetchWorkspaces(), refreshUser()]);
     } catch (err) {
@@ -107,6 +105,7 @@ export function Workspace() {
       await workspaceApi.joinWorkspace(workspaceId);
       showSuccess('워크스페이스에 참여하였습니다.');
       refreshUser();
+      fetchWorkspaces();
     } catch (err: any) {
       showError(err.response?.data?.message || '참여 실패');
     }
@@ -117,6 +116,7 @@ export function Workspace() {
     setEditWorkspaceData({
       name: workspace.name,
       allowPublicJoin: workspace.allowPublicJoin || false,
+      color: workspace.color || PRESET_COLORS[0],
     });
     setShowEditWorkspace(true);
   };
@@ -137,189 +137,6 @@ export function Workspace() {
     return user?.workspaces?.includes(workspaceId);
   };
 
-  const tabItems = [
-    {
-      value: 'workspace',
-      label: (
-        <Flex align="center" gap="xs">
-          <IconSettings size={18} /> 워크스페이스
-        </Flex>
-      ),
-      content: (
-        <Flex direction="column" gap="lg" style={{ marginTop: '20px' }}>
-          <Flex justify="space-between" align="center">
-            <Typography variant="h3">워크스페이스 목록</Typography>
-            <Button variant="primary" size="sm" onClick={() => setShowCreateWorkspace(true)}>
-              <Flex align="center" gap="xs">
-                <IconPlus size={16} /> 새 워크스페이스
-              </Flex>
-            </Button>
-          </Flex>
-
-          <Flex direction="column" gap="md">
-            {workspaces.map((ws) => (
-              <Card key={ws._id}>
-                <CardBody>
-                  <Flex justify="space-between" align="center">
-                    <Flex align="center" gap="md">
-                      <Avatar style={{ backgroundColor: ws.color }}>{ws.initials}</Avatar>
-                      <Box>
-                        <Flex align="center" gap="xs">
-                          <Typography variant="h4">{ws.name}</Typography>
-                          {ws.allowPublicJoin ? (
-                            <IconWorld size={14} color="var(--color-primary)" title="누구나 참여 가능" />
-                          ) : (
-                            <IconLock size={14} color="var(--color-text-secondary)" title="초대 전용" />
-                          )}
-                        </Flex>
-                        <Typography variant="caption" color="text-secondary">
-                          Created at {new Date(ws.createdAt).toLocaleDateString()}
-                        </Typography>
-                      </Box>
-                    </Flex>
-                    <Flex gap="sm">
-                      {isJoined(ws._id) ? (
-                        <>
-                          {(ws.ownerId === user?.id || !ws.ownerId) && (
-                            <Button variant="secondary" size="sm" onClick={() => handleEditWorkspace(ws)}>
-                              <Flex align="center" gap="xs">
-                                <IconPencil size={14} /> 설정
-                              </Flex>
-                            </Button>
-                          )}
-                        </>
-                      ) : (
-                        ws.allowPublicJoin && (
-                          <Button variant="primary" size="sm" onClick={() => handleJoinWorkspace(ws._id)}>
-                            참여하기
-                          </Button>
-                        )
-                      )}
-                    </Flex>
-                  </Flex>
-
-                  {isJoined(ws._id) && ws._id === currentWorkspaceId.value && (
-                    <Box
-                      style={{
-                        marginTop: '16px',
-                        padding: '12px',
-                        backgroundColor: 'var(--color-bg-secondary)',
-                        borderRadius: '8px',
-                      }}
-                    >
-                      <Typography
-                        variant="body-medium"
-                        color="primary"
-                        style={{ marginBottom: '8px', display: 'block', fontWeight: 'bold' }}
-                      >
-                        연동 정보 (현재 활성)
-                      </Typography>
-                      <Flex direction="column" gap="sm">
-                        <Flex align="center" gap="sm">
-                          <IconKey size={16} color="var(--color-text-secondary)" />
-                          <Typography variant="body-small">
-                            <strong>Public Key:</strong> {ws.projectPublicKey}
-                          </Typography>
-                        </Flex>
-                        <Flex align="center" gap="sm">
-                          <IconLock size={16} color="var(--color-text-secondary)" />
-                          <Typography variant="body-small">
-                            <strong>Private Key:</strong> {revealedKeys[ws._id] || '********'}
-                          </Typography>
-                          {!revealedKeys[ws._id] && (
-                            <Button variant="secondary" size="sm" onClick={() => handleRevealKey(ws._id)}>
-                              조회
-                            </Button>
-                          )}
-                        </Flex>
-                        <Flex align="center" gap="sm">
-                          <IconWorld size={16} color="var(--color-text-secondary)" />
-                          <Typography variant="body-small">
-                            <strong>Integration URL:</strong> {ws.projectUrl || 'Not set'}
-                          </Typography>
-                        </Flex>
-                      </Flex>
-                    </Box>
-                  )}
-                </CardBody>
-              </Card>
-            ))}
-          </Flex>
-        </Flex>
-      ),
-    },
-    {
-      value: 'structure',
-      label: (
-        <Flex align="center" gap="xs">
-          <IconHierarchy size={18} /> 조직도 관리
-        </Flex>
-      ),
-      content: (
-        <Flex direction="column" gap="lg" style={{ marginTop: '20px' }}>
-          <Flex justify="space-between" align="center">
-            <Typography variant="h3">조직도 (회사 및 부서)</Typography>
-            <Flex gap="sm">
-              <Button variant="secondary" size="sm">
-                회사 추가
-              </Button>
-              <Button variant="primary" size="sm">
-                부서 추가
-              </Button>
-            </Flex>
-          </Flex>
-
-          {structure.length === 0 ? (
-            <Card style={{ padding: '40px', textAlign: 'center' }}>
-              <Typography color="text-secondary">등록된 회사나 부서 정보가 없습니다.</Typography>
-            </Card>
-          ) : (
-            <Flex direction="column" gap="md">
-              {structure.map((company) => (
-                <Card key={company._id}>
-                  <CardBody>
-                    <Typography variant="h4" style={{ marginBottom: '12px' }}>
-                      {company.name}
-                    </Typography>
-                    <List>
-                      {company.departments?.map((dept: any) => (
-                        <ListItem key={dept._id} style={{ paddingLeft: '24px' }}>
-                          <ListItemAvatar>
-                            <IconHierarchy size={18} />
-                          </ListItemAvatar>
-                          <ListItemText primary={dept.name} secondary={`${dept.order}순위`} />
-                        </ListItem>
-                      ))}
-                      {(!company.departments || company.departments.length === 0) && (
-                        <Typography variant="caption" color="text-secondary" style={{ marginLeft: '24px' }}>
-                          부서 정보가 없습니다.
-                        </Typography>
-                      )}
-                    </List>
-                  </CardBody>
-                </Card>
-              ))}
-            </Flex>
-          )}
-        </Flex>
-      ),
-    },
-    {
-      value: 'members',
-      label: (
-        <Flex align="center" gap="xs">
-          <IconUsers size={18} /> 멤버 관리
-        </Flex>
-      ),
-      content: (
-        <Flex direction="column" gap="lg" style={{ marginTop: '20px' }}>
-          <Typography variant="h3">멤버 관리</Typography>
-          <Typography color="text-secondary">준비 중인 기능입니다.</Typography>
-        </Flex>
-      ),
-    },
-  ];
-
   const { deviceSize } = useTheme();
 
   return (
@@ -335,7 +152,123 @@ export function Workspace() {
           </header>
 
           <Box style={{ marginTop: '24px' }}>
-            <Tabs items={tabItems} value={activeTab} onChange={(val) => setActiveTab(val)} />
+            <Flex direction="column" gap="lg">
+              <Flex justify="space-between" align="center">
+                <Typography variant="h3">워크스페이스 목록</Typography>
+                {isAdmin && (
+                  <Button variant="primary" size="sm" onClick={() => setShowCreateWorkspace(true)}>
+                    <Flex align="center" gap="xs">
+                      <IconPlus size={16} /> 새 워크스페이스
+                    </Flex>
+                  </Button>
+                )}
+              </Flex>
+
+              <Grid container spacing={2} columns={1}>
+                {workspaces.map((ws) => (
+                  <Grid item key={ws._id} xs={1}>
+                    <Card style={{ height: '100%' }}>
+                      <CardBody>
+                        <Flex justify="space-between" align="center">
+                          <Flex align="center" gap="md">
+                            <Avatar style={{ backgroundColor: ws.color }}>{ws.initials}</Avatar>
+                            <Box>
+                              <Flex align="center" gap="xs">
+                                <Typography variant="h4">{ws.name}</Typography>
+                                {ws.allowPublicJoin ? (
+                                  <IconWorld size={14} color="var(--color-primary)" title="누구나 참여 가능" />
+                                ) : (
+                                  <IconLock size={14} color="var(--color-text-secondary)" title="초대 전용" />
+                                )}
+                              </Flex>
+                              <Typography variant="caption" color="text-secondary">
+                                Created at {new Date(ws.createdAt).toLocaleDateString()}
+                              </Typography>
+                            </Box>
+                          </Flex>
+                          <Flex gap="sm" align="center">
+                            {isJoined(ws._id) ? (
+                              <>
+                                {ws._id !== currentWorkspaceId.value ? (
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => setCurrentWorkspaceId(ws._id)}
+                                  >
+                                    <Flex align="center" gap="xs">
+                                      <IconCircleCheck size={16} /> 활성
+                                    </Flex>
+                                  </Button>
+                                ) : (
+                                  <Chip label="활성 중" variant="default" size="lg" />
+                                )}
+                                {(isAdmin || ws.ownerId === user?.id || !ws.ownerId) && (
+                                  <Button variant="secondary" size="sm" onClick={() => handleEditWorkspace(ws)}>
+                                    <Flex align="center" gap="xs">
+                                      <IconPencil size={14} /> 수정
+                                    </Flex>
+                                  </Button>
+                                )}
+                              </>
+                            ) : (
+                              ws.allowPublicJoin && (
+                                <Button variant="primary" size="sm" onClick={() => handleJoinWorkspace(ws._id)}>
+                                  참여하기
+                                </Button>
+                              )
+                            )}
+                          </Flex>
+                        </Flex>
+
+                        {isJoined(ws._id) && ws._id === currentWorkspaceId.value && (
+                          <Box
+                            style={{
+                              marginTop: '16px',
+                              padding: '12px',
+                              backgroundColor: 'var(--color-bg-secondary)',
+                              borderRadius: '8px',
+                            }}
+                          >
+                            <Typography
+                              variant="body-medium"
+                              color="primary"
+                              style={{ marginBottom: '8px', display: 'block', fontWeight: 'bold' }}
+                            >
+                              연동 정보 (현재 활성)
+                            </Typography>
+                            <Flex direction="column" gap="sm">
+                              <Flex align="center" gap="sm">
+                                <IconKey size={16} color="var(--color-text-secondary)" />
+                                <Typography variant="body-small" style={{ wordBreak: 'break-all' }}>
+                                  <strong>Public Key:</strong> {ws.projectPublicKey}
+                                </Typography>
+                              </Flex>
+                              <Flex align="center" gap="sm">
+                                <IconLock size={16} color="var(--color-text-secondary)" />
+                                <Typography variant="body-small" style={{ wordBreak: 'break-all' }}>
+                                  <strong>Private Key:</strong> {revealedKeys[ws._id] || '********'}
+                                </Typography>
+                                {!revealedKeys[ws._id] && (
+                                  <Button variant="secondary" size="sm" onClick={() => handleRevealKey(ws._id)}>
+                                    조회
+                                  </Button>
+                                )}
+                              </Flex>
+                              <Flex align="center" gap="sm">
+                                <IconWorld size={16} color="var(--color-text-secondary)" />
+                                <Typography variant="body-small" style={{ wordBreak: 'break-all' }}>
+                                  <strong>Integration URL:</strong> {ws.projectUrl || 'Not set'}
+                                </Typography>
+                              </Flex>
+                            </Flex>
+                          </Box>
+                        )}
+                      </CardBody>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Flex>
           </Box>
 
           <Dialog
@@ -352,15 +285,61 @@ export function Workspace() {
             }
           >
             <Box style={{ padding: '8px 0' }}>
-              <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block' }}>
-                워크스페이스 이름
-              </Typography>
-              <Input
-                fullWidth
-                placeholder="예: Spark Enterprise"
-                value={newWorkspaceName}
-                onInput={(e) => setNewWorkspaceName(e.currentTarget.value)}
-              />
+              <Flex direction="column" gap="md">
+                <Box>
+                  <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block' }}>
+                    워크스페이스 이름
+                  </Typography>
+                  <Input
+                    fullWidth
+                    placeholder="예: Spark Enterprise"
+                    value={newWorkspaceName}
+                    onInput={(e) => setNewWorkspaceName(e.currentTarget.value)}
+                  />
+                </Box>
+                <Box>
+                  <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block' }}>
+                    브랜드 컬러
+                  </Typography>
+                  <Flex gap="sm">
+                    {PRESET_COLORS.map((color) => (
+                      <div
+                        key={color}
+                        onClick={() => setNewWorkspaceColor(color)}
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          backgroundColor: color,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: newWorkspaceColor === color ? '2px solid var(--color-text-primary)' : 'none',
+                        }}
+                      >
+                        {newWorkspaceColor === color && <IconCheck size={16} color="white" />}
+                      </div>
+                    ))}
+                  </Flex>
+                </Box>
+                <Box>
+                  <Flex justify="space-between" align="center">
+                    <Box>
+                      <Typography variant="body-medium" style={{ display: 'block' }}>
+                        누구나 참여 허용
+                      </Typography>
+                      <Typography variant="caption" color="text-secondary" style={{ display: 'block', marginTop: '4px' }}>
+                        체크하면 다른 사용자가 초대 없이 워크스페이스에 참여할 수 있습니다.
+                      </Typography>
+                    </Box>
+                    <Switch
+                      checked={newWorkspaceAllowPublicJoin}
+                      onChange={(checked) => setNewWorkspaceAllowPublicJoin(checked)}
+                    />
+                  </Flex>
+                </Box>
+              </Flex>
             </Box>
           </Dialog>
 
@@ -390,14 +369,46 @@ export function Workspace() {
                   />
                 </Box>
                 <Box>
-                  <Checkbox
-                    label="누구나 참여 허용"
-                    checked={editWorkspaceData.allowPublicJoin}
-                    onChange={(checked) => setEditWorkspaceData({ ...editWorkspaceData, allowPublicJoin: checked })}
-                  />
-                  <Typography variant="caption" color="text-secondary" style={{ display: 'block', marginTop: '4px' }}>
-                    체크하면 다른 사용자가 초대 없이 워크스페이스에 참여할 수 있습니다.
+                  <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block' }}>
+                    브랜드 컬러
                   </Typography>
+                  <Flex gap="sm">
+                    {PRESET_COLORS.map((color) => (
+                      <div
+                        key={color}
+                        onClick={() => setEditWorkspaceData({ ...editWorkspaceData, color })}
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          backgroundColor: color,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: editWorkspaceData.color === color ? '2px solid var(--color-text-primary)' : 'none',
+                        }}
+                      >
+                        {editWorkspaceData.color === color && <IconCheck size={16} color="white" />}
+                      </div>
+                    ))}
+                  </Flex>
+                </Box>
+                <Box>
+                  <Flex justify="space-between" align="center">
+                    <Box>
+                      <Typography variant="body-medium" style={{ display: 'block' }}>
+                        누구나 참여 허용
+                      </Typography>
+                      <Typography variant="caption" color="text-secondary" style={{ display: 'block', marginTop: '4px' }}>
+                        체크하면 다른 사용자가 초대 없이 워크스페이스에 참여할 수 있습니다.
+                      </Typography>
+                    </Box>
+                    <Switch
+                      checked={editWorkspaceData.allowPublicJoin}
+                      onChange={(checked) => setEditWorkspaceData({ ...editWorkspaceData, allowPublicJoin: checked })}
+                    />
+                  </Flex>
                 </Box>
               </Flex>
             </Box>

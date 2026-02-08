@@ -119,7 +119,8 @@ export function WorkspaceDetail({ id }: WorkspaceDetailProps) {
 
   if (!workspace) return null;
 
-  const isOwner = workspace.ownerId === user?.id || !workspace.ownerId;
+  const isAdmin = user?.role === 'admin';
+  const canEdit = isAdmin || workspace.ownerId === user?.id || !workspace.ownerId;
 
   return (
     <div className="workspace-detail">
@@ -132,7 +133,7 @@ export function WorkspaceDetail({ id }: WorkspaceDetailProps) {
             </Button>
             <Typography variant="h2">워크스페이스 상세</Typography>
           </Flex>
-          {isOwner && (
+          {canEdit && (
             <Button variant={isEditing ? 'secondary' : 'primary'} onClick={() => setIsEditing(!isEditing)}>
               {isEditing ? '취소' : <Flex align="center" gap="xs"><IconSettings size={18} /> 설정</Flex>}
             </Button>
@@ -148,13 +149,13 @@ export function WorkspaceDetail({ id }: WorkspaceDetailProps) {
                   <section>
                     <Typography variant="h4" className="workspace-detail__section-title">기본 정보</Typography>
                     <Flex align="center" gap="lg" style={{ marginTop: '16px' }}>
-                      <div 
+                      <div
                         className="workspace-detail__avatar-container"
                         style={{ backgroundColor: isEditing ? formData.color : workspace.color }}
                       >
                         {isEditing ? (
-                          <input 
-                            type="text" 
+                          <input
+                            type="text"
                             className="workspace-detail__initials-input"
                             value={formData.initials}
                             maxLength={2}
@@ -164,7 +165,7 @@ export function WorkspaceDetail({ id }: WorkspaceDetailProps) {
                           workspace.initials || workspace.name.substring(0, 1).toUpperCase()
                         )}
                       </div>
-                      
+
                       <Box style={{ flex: 1 }}>
                         {isEditing ? (
                           <Flex direction="column" gap="sm">
@@ -178,8 +179,8 @@ export function WorkspaceDetail({ id }: WorkspaceDetailProps) {
                               <Box style={{ flex: 1 }}>
                                 <Typography variant="body-small" style={{ marginBottom: '4px', display: 'block' }}>브랜드 컬러</Typography>
                                 <div className="workspace-detail__color-picker">
-                                  <input 
-                                    type="color" 
+                                  <input
+                                    type="color"
                                     value={formData.color}
                                     onInput={(e) => setFormData({ ...formData, color: e.currentTarget.value })}
                                   />
