@@ -162,8 +162,8 @@ export const DirectoryView = ({
     const filtered: typeof roomList = [];
     for (const r of roomList) {
       if (r.type === 'public' &&
-          ((r.name || '').toLowerCase().includes(lowerQuery) ||
-           (r.description && r.description.toLowerCase().includes(lowerQuery)))) {
+        ((r.name || '').toLowerCase().includes(lowerQuery) ||
+          (r.description && r.description.toLowerCase().includes(lowerQuery)))) {
         filtered.push(r);
       }
     }
@@ -588,11 +588,14 @@ export const DirectoryView = ({
                       e.stopPropagation();
                       startDirectChat(userItem._id);
                     }}
+                    style={{
+                      padding: '8px',
+                      minWidth: 'auto',
+                      boxShadow: 'none',
+                      border: '1px solid var(--color-border-default)'
+                    }}
                   >
-                    <IconMessageCircle size={14} />
-                    <span className="directory-card__action-text" style={{ marginLeft: '4px' }}>
-                      메시지
-                    </span>
+                    <IconMessageCircle size={18} />
                   </Button>
                 }
               />
@@ -626,7 +629,7 @@ export const DirectoryView = ({
               디렉토리
             </Typography>
           </Flex>
-          
+
           {!isMobile && (
             <Typography variant="body-large" className="directory-view__subtitle">
               워크스페이스의 채널, 팀, 그리고 동료들을 한눈에 확인하고 빠르게 소통을 시작하세요.
@@ -679,13 +682,13 @@ export const DirectoryView = ({
           group={
             editChannel
               ? {
-                  _id: editChannel._id,
-                  name: editChannel.name || '',
-                  description: editChannel.description,
-                  isPrivate: editChannel.isPrivate || false,
-                  members: editChannel.members || [],
-                  createdBy: editChannel.members?.[0] || ({} as ChatUser),
-                }
+                _id: editChannel._id,
+                name: editChannel.name || '',
+                description: editChannel.description,
+                isPrivate: editChannel.isPrivate || false,
+                members: editChannel.members || [],
+                createdBy: editChannel.members?.[0] || ({} as ChatUser),
+              }
               : undefined
           }
         />

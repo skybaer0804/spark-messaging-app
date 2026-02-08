@@ -42,6 +42,39 @@
     }
   }
 
+  // 공통 아바타 및 상태 표시 스타일
+  .avatar {
+    position: relative;
+    display: inline-block;
+
+    &-status {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--color-bg-sidebar, #fff);
+      z-index: 1;
+
+      &--online {
+        background-color: #2bac76;
+      }
+
+      &--away {
+        background-color: #f59e0b;
+      }
+
+      &--offline {
+        background-color: #94a3b8;
+      }
+
+      &--busy {
+        background-color: #e11d48;
+      }
+    }
+  }
+
   &__main-content {
     background-color: var(--color-background-secondary);
     background-image: radial-gradient(var(--color-border-default) 0.5px, transparent 0.5px);
@@ -384,6 +417,10 @@
       }
     }
 
+    .typography {
+      color: inherit;
+    }
+
     &-header {
       .chat-sidebar-search-input .input-container input {
         height: 32px !important;
@@ -395,7 +432,7 @@
       }
     }
 
-    &-toolbar {
+    &-actions {
       display: flex;
       justify-content: flex-end;
       gap: 4px;
@@ -449,6 +486,16 @@
     }
 
     &-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: var(--color-action-hover);
+      }
+
       &-name {
         font-size: 13px;
         color: var(--color-text-primary);
@@ -497,6 +544,102 @@
         align-items: center;
         justify-content: center;
       }
+    }
+  }
+
+  // Create Menu Dropdown
+  &__create-menu {
+    position: absolute;
+    top: 50px;
+    right: 16px;
+    z-index: 1000;
+    background-color: var(--color-surface-overlay);
+    border: 1px solid var(--color-border-default);
+    border-radius: 8px;
+    box-shadow: var(--elevation-shadow-2);
+    padding: 8px 0;
+    min-width: 180px;
+
+    &-header {
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--color-text-tertiary);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    &-item {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      color: var(--color-text-primary);
+      font-size: 14px;
+
+      &:hover {
+        background-color: var(--color-background-secondary);
+      }
+
+      .icon {
+        color: var(--color-icon-secondary);
+      }
+    }
+  }
+
+  // Profile Menu Dropdown
+  &__profile-menu {
+    position: absolute;
+    top: 50px;
+    left: 16px;
+    z-index: 1000;
+    background-color: var(--color-surface-overlay);
+    border: 1px solid var(--color-border-default);
+    border-radius: 8px;
+    box-shadow: var(--elevation-shadow-2);
+    padding: 8px 0;
+    min-width: 240px;
+
+    &-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--color-border-light);
+
+      .typography {
+        color: var(--color-text-primary);
+      }
+    }
+
+    &-section {
+      padding: 8px 0;
+
+      &-title {
+        display: block;
+        padding: 4px 16px;
+        font-weight: bold;
+        color: var(--color-text-tertiary);
+        font-size: 11px;
+        text-transform: uppercase;
+      }
+    }
+
+    &-item {
+      padding: 4px 16px;
+      cursor: pointer;
+      color: var(--color-text-primary);
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: var(--color-background-secondary);
+      }
+
+      .list-item-text__primary {
+        font-size: 14px;
+        color: var(--color-text-primary);
+      }
+    }
+
+    .divider {
+      margin: 4px 0;
     }
   }
 
