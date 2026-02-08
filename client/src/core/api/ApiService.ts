@@ -153,6 +153,7 @@ export const workspaceApi = {
 
 export const notificationApi = {
   getNotifications: () => api.get('/notification'),
+  getNotification: (notificationId: string) => api.get(`/notification/${notificationId}`),
   syncNotifications: () => api.get('/notification/sync'),
   createNotification: (data: {
     title: string;

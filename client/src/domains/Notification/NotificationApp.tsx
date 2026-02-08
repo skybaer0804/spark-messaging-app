@@ -2,18 +2,15 @@ import { useNotificationApp } from './hooks/useNotificationApp';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { MobileHeader } from '@/components/Mobile/MobileHeader';
 import { Button } from '@/ui-components/Button/Button';
-import { Input } from '@/ui-components/Input/Input';
-import { Select } from '@/ui-components/Select/Select';
 import { Box } from '@/ui-components/Layout/Box';
 import { Stack } from '@/ui-components/Layout/Stack';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Typography } from '@/ui-components/Typography/Typography';
-import { IconSend, IconCalendar, IconPlus, IconRefresh, IconHistory, IconTrash } from '@tabler/icons-preact';
+import { IconSend, IconPlus, IconRefresh, IconHistory, IconTrash, IconRocket } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
-import { Drawer } from '@/ui-components/Drawer/Drawer';
-import { MobileSlidePanel } from '@/components/Mobile/MobileSlidePanel';
-import { StatusChip } from '@/ui-components/StatusChip/StatusChip';
+import { DialogNotification } from './components/DialogNotification';
+import { Chip } from '@/ui-components/Chip/Chip';
 import './NotificationApp.scss';
 
 export function NotificationApp() {
@@ -39,14 +36,17 @@ export function NotificationApp() {
     isLoading,
     isDrawerOpen,
     setIsDrawerOpen,
+    dialogMode,
+    handleOpenCreateDialog,
+    handleOpenViewDialog,
     handleResend,
     handleDelete,
     fetchNotifications,
   } = useNotificationApp();
 
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
+  const formatDate = (dateInput?: string | Date) => {
+    if (!dateInput) return '-';
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     return new Intl.DateTimeFormat('ko-KR', {
       year: 'numeric',
       month: '2-digit',
@@ -78,242 +78,147 @@ export function NotificationApp() {
 
   const isMobile = deviceSize === 'mobile';
 
-  // 모바일에서 폼 콘텐츠 (인라인 페이지 전환용)
-  const formContent = (
-    <Stack spacing="xl">
-      <Input
-        label="알림 제목"
-        value={title}
-        onInput={(e) => setTitle(e.currentTarget.value)}
-        placeholder="알림 제목을 입력하세요..."
-        fullWidth
-      />
-
-      <Input
-        label="메시지 내용"
-        multiline
-        rows={6}
-        value={message}
-        onInput={(e) => setMessage(e.currentTarget.value)}
-        placeholder="알림 메시지를 입력하세요..."
-        fullWidth
-      />
-
-      <Select
-        label="대상 유형"
-        value={targetType}
-        onChange={(e) => setTargetType(e.currentTarget.value as any)}
-        options={[
-          { label: '전체 사용자', value: 'all' },
-          { label: '특정 워크스페이스', value: 'workspace' },
-        ]}
-        fullWidth
-      />
-
-      {targetType === 'workspace' && (
-        <Select
-          label="워크스페이스 선택"
-          value={targetId}
-          onChange={(e) => setTargetId(e.currentTarget.value)}
-          options={workspaceList.map((ws) => ({
-            label: ws.name,
-            value: ws._id,
-          }))}
-          fullWidth
-        />
-      )}
-
-      <Box>
-        <Typography variant="body-small" style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}>
-          예약 전송 (선택 사항)
-        </Typography>
-        <Flex gap="sm" align="center">
-          <IconCalendar size={20} color="var(--color-text-tertiary)" />
-          <input
-            type="datetime-local"
-            value={scheduledDate}
-            onChange={(e) => setScheduledAt(e.currentTarget.value)}
-            style={{
-              padding: '8px',
-              borderRadius: '4px',
-              border: '1px solid var(--color-border-default)',
-              backgroundColor: 'var(--color-bg-default)',
-              color: 'var(--color-text-primary)',
-              flex: 1,
-            }}
-          />
-        </Flex>
-        <Typography variant="caption" color="text-secondary" style={{ marginTop: '4px', display: 'block' }}>
-          비워두면 즉시 전송됩니다.
-        </Typography>
-      </Box>
-
-      <Box style={{ marginTop: '24px' }}>
-        <Button
-          variant="primary"
-          fullWidth
-          size="lg"
-          onClick={handleSend}
-          disabled={!isConnected || !message.trim() || !title.trim()}
-        >
-          <Stack direction="row" align="center" spacing="sm" justify="center">
-            <IconSend size={20} />
-            <span>알림 보내기</span>
-          </Stack>
-        </Button>
-      </Box>
-    </Stack>
-  );
-
   return (
     <Paper square elevation={0} padding="none" className="notification-app">
       {isMobile && <MobileHeader />}
 
-      <Box padding={isMobile ? 'sm' : 'lg'} className="notification-app__header">
-        <Flex justify="space-between" align="center">
-          <Box>
-            <Typography variant="h2" style={{ fontSize: isMobile ? '1.25rem' : 'inherit' }}>시스템 알림 관리</Typography>
-            <Typography variant="body-medium" color="text-secondary" style={{ display: isMobile ? 'none' : 'block' }}>
-              과거 발송 목록을 확인하고 새로운 알림를 생성합니다.
-            </Typography>
-          </Box>
-          <Flex gap="sm">
-            <Button variant="secondary" onClick={fetchNotifications} disabled={isLoading} style={{ padding: isMobile ? '8px' : undefined }}>
-              <IconRefresh size={20} className={isLoading ? 'rotate' : ''} />
-            </Button>
-            <Button variant="primary" onClick={() => setIsDrawerOpen(true)} style={{ padding: isMobile ? '8px' : undefined }}>
-              <IconPlus size={20} />
-              {!isMobile && <span>알림 생성</span>}
-            </Button>
-          </Flex>
-        </Flex>
-      </Box>
-
-      <Box padding={isMobile ? 'md' : 'lg'} style={{ flex: 1, overflowY: 'auto' }}>
-        <div className="notification-list">
-          {notifications.length === 0 ? (
-            <Flex direction="column" align="center" justify="center" style={{ padding: '80px 0' }}>
-              <IconHistory size={48} color="var(--color-text-tertiary)" style={{ marginBottom: '16px' }} />
-              <Typography color="text-tertiary">발송된 알림이 없습니다.</Typography>
+      <div className="notification-app__container">
+        <Box padding={isMobile ? 'md' : 'xl'} className="notification-app__hero">
+          <Stack spacing="sm" style={{ flex: 1 }}>
+            <Flex align="center" gap="xs" className="notification-app__badge">
+              <IconRocket size={16} />
+              <Typography variant="body-small">시스템 공지</Typography>
             </Flex>
-          ) : isMobile ? (
-            <Stack spacing="md">
-              {notifications.map((notif) => (
-                <Paper key={notif._id} elevation={1} padding="md" style={{ border: '1px solid var(--color-border-subtle)' }}>
-                  <Flex justify="space-between" align="flex-start" style={{ marginBottom: '8px' }}>
-                    <Box style={{ flex: 1 }}>
-                      <Typography variant="body-medium" style={{ fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+            <Typography variant="h1" className="notification-app__title">
+              시스템 <span className="highlight">알림 관리</span>
+            </Typography>
+            <Typography variant="body-large" color="text-secondary" className="notification-app__desc">
+              중요한 공지사항을 발송하고 내역을 관리합니다.
+            </Typography>
+          </Stack>
+        </Box>
+
+        <div className="notification-app__sticky-bar">
+          <Box padding={isMobile ? 'md' : 'xl'} style={{ paddingTop: '12px', paddingBottom: '12px' }}>
+            <Flex justify="flex-end" gap="sm" align="center">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={fetchNotifications}
+                disabled={isLoading}
+                style={{ borderRadius: '12px', padding: '8px', backgroundColor: 'var(--color-background-primary)' }}
+                title="새로고침"
+              >
+                <IconRefresh size={20} className={isLoading ? 'rotate' : ''} />
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleOpenCreateDialog}
+                style={{ borderRadius: '12px' }}
+              >
+                <Flex align="center" gap="xs">
+                  <IconPlus size={18} />
+                  <span>알림 생성</span>
+                </Flex>
+              </Button>
+            </Flex>
+          </Box>
+        </div>
+
+        <Box padding={isMobile ? 'md' : 'xl'} className="notification-scroll-area">
+          <Stack spacing="md" className="notification-list">
+            {notifications.length === 0 ? (
+              <Flex direction="column" align="center" justify="center" style={{ padding: '80px 0' }}>
+                <IconHistory size={48} color="var(--color-text-tertiary)" style={{ marginBottom: '16px' }} />
+                <Typography color="text-tertiary">발송된 알림이 없습니다.</Typography>
+              </Flex>
+            ) : (
+              notifications.map((notif) => (
+                <Paper
+                  key={notif._id}
+                  elevation={2}
+                  padding="md"
+                  className="notification-item-card"
+                  onClick={() => handleOpenViewDialog(notif)}
+                >
+                  <Flex justify="space-between" align="center" gap="lg" className="notification-item-card__container">
+                    <Stack spacing="xs" className="notification-item-card__main">
+                      <Typography variant="body-large" className="notification-item-card__title" style={{ fontWeight: 700 }}>
                         {notif.title}
                       </Typography>
-                      <Typography variant="caption" color="text-secondary">
+                      <Typography variant="body-medium" color="text-secondary" className="notification-item-card__content text-truncate">
+                        {notif.content}
+                      </Typography>
+                    </Stack>
+
+                    <Flex align="center" gap="xl" className="notification-item-card__meta">
+                      <Typography variant="caption" color="text-secondary" className="meta-target text-nowrap">
+                        {getTargetLabel(notif.targetType, notif.targetId)}
+                      </Typography>
+                      <Typography variant="caption" color="text-secondary" className="meta-time text-nowrap">
                         {formatDate(notif.createdAt)}
                       </Typography>
-                    </Box>
-                    <StatusChip
-                      label={notif.isSent ? '발송완료' : '대기중'}
-                      variant={notif.isSent ? 'active' : 'pending'}
-                    />
-                  </Flex>
-                  <Typography variant="body-small" style={{ marginBottom: '12px', display: 'block' }}>
-                    {notif.content}
-                  </Typography>
-                  <Flex justify="space-between" align="center">
-                    <Typography variant="caption" color="text-tertiary">
-                      대상: {getTargetLabel(notif.targetType, notif.targetId)}
-                    </Typography>
-                    <Flex gap="xs">
-                      <Button variant="secondary" size="sm" onClick={() => handleResend(notif)} style={{ padding: '4px 8px' }}>
-                        <IconSend size={14} />
-                      </Button>
-                      <Button variant="secondary" size="sm" onClick={() => handleDelete(notif._id)} style={{ padding: '4px 8px' }}>
-                        <IconTrash size={14} />
-                      </Button>
+                      <div className="meta-status">
+                        <Chip
+                          label={notif.isSent ? '발송완료' : '대기중'}
+                          variant={notif.isSent ? 'primary' : 'default'}
+                          size="sm"
+                        />
+                      </div>
+                      <Flex gap="xs" className="meta-actions">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleResend(notif);
+                          }}
+                          style={{ borderRadius: '8px', padding: '6px' }}
+                          title="재발송"
+                        >
+                          <IconSend size={18} />
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(notif._id);
+                          }}
+                          style={{ borderRadius: '8px', color: 'var(--color-text-error)', padding: '6px' }}
+                          title="삭제"
+                        >
+                          <IconTrash size={18} />
+                        </Button>
+                      </Flex>
                     </Flex>
                   </Flex>
                 </Paper>
-              ))}
-            </Stack>
-          ) : (
-            <table className="notification-table">
-              <thead>
-                <tr>
-                  <th>제목</th>
-                  <th>내용</th>
-                  <th>대상</th>
-                  <th>발송 시간</th>
-                  <th>상태</th>
-                  <th>관리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {notifications.map((notif) => (
-                  <tr key={notif._id}>
-                    <td>
-                      <Typography variant="body-medium" style={{ fontWeight: 600 }}>
-                        {notif.title}
-                      </Typography>
-                    </td>
-                    <td>
-                      <Typography variant="caption">
-                        {notif.content}
-                      </Typography>
-                    </td>
-                    <td>
-                      <Typography variant="caption">{getTargetLabel(notif.targetType, notif.targetId)}</Typography>
-                    </td>
-                    <td>
-                      <Typography variant="caption">{formatDate(notif.createdAt)}</Typography>
-                    </td>
-                    <td>
-                      <StatusChip
-                        label={notif.isSent ? '발송완료' : '대기중'}
-                        variant={notif.isSent ? 'active' : 'pending'}
-                      />
-                    </td>
-                    <td>
-                      <Flex gap="xs">
-                        <Button variant="secondary" size="sm" onClick={() => handleResend(notif)}>
-                          <IconSend size={16} />
-                          <span>재발송</span>
-                        </Button>
-                        <Button variant="secondary" size="sm" onClick={() => handleDelete(notif._id)}>
-                          <IconTrash size={16} />
-                          <span>삭제</span>
-                        </Button>
-                      </Flex>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </Box>
+              ))
+            )}
+          </Stack>
+        </Box>
+      </div>
 
-      {/* 모바일: MobileSlidePanel / 데스크톱: Drawer */}
-      {isMobile ? (
-        <MobileSlidePanel
-          open={isDrawerOpen}
-          onClose={() => setIsDrawerOpen(false)}
-          title="새 시스템 알림 생성"
-        >
-          <Box padding="md">
-            {formContent}
-          </Box>
-        </MobileSlidePanel>
-      ) : (
-        <Drawer
-          open={isDrawerOpen}
-          onClose={() => setIsDrawerOpen(false)}
-          title="새 시스템 알림 생성"
-          anchor="right"
-          width="400px"
-        >
-          <Box padding="lg">
-            {formContent}
-          </Box>
-        </Drawer>
-      )}
+      <DialogNotification
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        mode={dialogMode}
+        title={title}
+        setTitle={setTitle}
+        message={message}
+        setMessage={setMessage}
+        scheduledDate={scheduledDate}
+        setScheduledAt={setScheduledAt}
+        targetType={targetType}
+        setTargetType={setTargetType}
+        targetId={targetId}
+        setTargetId={setTargetId}
+        workspaceList={workspaceList}
+        isConnected={isConnected}
+        handleSend={handleSend}
+      />
     </Paper>
   );
 }
