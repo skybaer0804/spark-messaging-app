@@ -1,6 +1,12 @@
 import { JSX } from 'preact';
+import { createPortal } from 'preact/compat';
 import { useState, useRef, useEffect, useMemo } from 'preact/hooks';
 import { useTheme } from '@/core/context/ThemeProvider';
+import { Flex } from '@/ui-components/Layout/Flex';
+import { Stack } from '@/ui-components/Layout/Stack';
+import { Typography } from '../Typography/Typography';
+import { IconButton } from '../Button/IconButton';
+import { IconChevronLeft, IconSearch } from '@tabler/icons-preact';
 import { Input } from '../Input/Input';
 import './Autocomplete.scss';
 
@@ -70,8 +76,30 @@ export function Autocomplete<T = any>({
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const [popperStyle, setPopperStyle] = useState<{ top: string; left: string; width: string } | null>(null);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth <= 768);
   const containerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+
+  // 모바일 화면 감지
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // 모바일 오버레이 열릴 때 바디 스크롤 잠금
+  useEffect(() => {
+    if (isMobile && open) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isMobile, open]);
 
   const selectedValues = useMemo(() => {
     if (value === undefined || value === null) return [];
@@ -96,10 +124,15 @@ export function Autocomplete<T = any>({
     setInputValue(newValue);
     onInputChange?.(newValue);
     updatePopperPosition();
-    // 입력값이 있으면 목록 열기 (필터링은 useMemo에서 처리)
+    
+    // 모바일 오버레이 모드일 때는 입력값에 따라 창을 닫지 않음
+    if (isMobile) {
+      setOpen(true);
+      return;
+    }
+
     if (newValue.trim() || openOnFocus) {
       setOpen(true);
-      // autoHighlight가 true이면 첫 번째 항목 하이라이트 (다음 렌더링에서)
       if (!autoHighlight) {
         setHighlightedIndex(-1);
       }
@@ -134,6 +167,9 @@ export function Autocomplete<T = any>({
   };
 
   const handleInputBlur = () => {
+    // 모바일 오버레이 모드일 때는 블러 이벤트로 닫지 않음 (오버레이 내부 인풋이 포커스를 가져가기 때문)
+    if (isMobile) return;
+
     // Delay to allow option click to fire first
     setTimeout(() => {
       if (!containerRef.current?.contains(document.activeElement)) {
@@ -272,7 +308,11 @@ export function Autocomplete<T = any>({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isInsideContainer = containerRef.current?.contains(target);
+      const isInsideOverlay = overlayRef.current?.contains(target);
+
+      if (!isInsideContainer && !isInsideOverlay) {
         setOpen(false);
         setHighlightedIndex(-1);
       }
@@ -362,8 +402,40 @@ export function Autocomplete<T = any>({
     tabIndex: -1,
   });
 
+  // 옵션 리스트 렌더링 함수 (재사용)
+  const renderList = () => (
+    <ul className="autocomplete__list" ref={listRef} role="listbox">
+      {filteredOptions.map((option, index) => {
+        const selected = isOptionSelected(option);
+        const highlighted = index === highlightedIndex;
+        const optionClasses = [
+          'autocomplete__option',
+          selected ? 'autocomplete__option--selected' : '',
+          highlighted ? 'autocomplete__option--highlighted' : '',
+          option.disabled ? 'autocomplete__option--disabled' : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+        return (
+          <li
+            key={index}
+            className={optionClasses}
+            role="option"
+            aria-selected={selected}
+            onClick={() => handleOptionClick(option)}
+            onMouseEnter={() => setHighlightedIndex(index)}
+          >
+            {renderOption ? renderOption(option, { selected, inputValue }) : getOptionLabel(option)}
+          </li>
+        );
+      })}
+    </ul>
+  );
+
   return (
     <div className={wrapperClasses} data-theme={theme} data-contrast={contrast} ref={containerRef} {...props}>
+      {/* 기본 입력부 */}
       {multiple && renderValue && selectedValues.length > 0 ? (
         <div className="autocomplete__input-wrapper">
           <div className="autocomplete__chips-container">
@@ -379,8 +451,11 @@ export function Autocomplete<T = any>({
             value={inputValue}
             onInput={handleInputChange}
             onFocus={handleInputFocus}
+            onClick={handleInputFocus} // 클릭 시에도 트리거
             onBlur={handleInputBlur}
             onKeyDown={handleKeyDown}
+            readOnly={isMobile} // 모바일에서는 읽기 전용으로 만들어 키보드 방지
+            style={isMobile ? { cursor: 'pointer' } : {}}
             endAdornment={
               !disableClearable && (inputValue || selectedValues.length > 0) ? (
                 <button
@@ -408,8 +483,11 @@ export function Autocomplete<T = any>({
           value={multiple ? inputValue : displayValue || inputValue}
           onInput={handleInputChange}
           onFocus={handleInputFocus}
+          onClick={handleInputFocus} // 클릭 시에도 트리거
           onBlur={handleInputBlur}
           onKeyDown={handleKeyDown}
+          readOnly={isMobile} // 모바일에서는 읽기 전용으로 만들어 키보드 방지
+          style={isMobile ? { cursor: 'pointer' } : {}}
           endAdornment={
             !disableClearable && (inputValue || (value !== undefined && value !== null)) ? (
               <button
@@ -426,36 +504,73 @@ export function Autocomplete<T = any>({
           }
         />
       )}
-      {open && filteredOptions.length > 0 && popperStyle && (
-        <div className="autocomplete__popper" style={popperStyle}>
-          <ul className="autocomplete__list" ref={listRef} role="listbox">
-            {filteredOptions.map((option, index) => {
-              const selected = isOptionSelected(option);
-              const highlighted = index === highlightedIndex;
-              const optionClasses = [
-                'autocomplete__option',
-                selected ? 'autocomplete__option--selected' : '',
-                highlighted ? 'autocomplete__option--highlighted' : '',
-                option.disabled ? 'autocomplete__option--disabled' : '',
-              ]
-                .filter(Boolean)
-                .join(' ');
 
-              return (
-                <li
-                  key={index}
-                  className={optionClasses}
-                  role="option"
-                  aria-selected={selected}
-                  onClick={() => handleOptionClick(option)}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                >
-                  {renderOption ? renderOption(option, { selected, inputValue }) : getOptionLabel(option)}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+      {/* 데스크탑 팝퍼 또는 모바일 오버레이 */}
+      {open && (
+        isMobile ? (
+          createPortal(
+            <div className="autocomplete-overlay directory-view directory-view--mobile" data-theme={theme} ref={overlayRef}>
+              <header className="directory-view__header">
+                <Stack spacing="xs">
+                  <Flex align="center" gap="sm">
+                    <IconButton
+                      onClick={() => setOpen(false)}
+                      size="small"
+                      color="secondary"
+                      style={{ marginLeft: '-8px' }}
+                    >
+                      <IconChevronLeft size={24} />
+                    </IconButton>
+                    <Typography variant="h1" className="directory-view__title">
+                      {label || '검색'}
+                    </Typography>
+                  </Flex>
+
+                  <div className="directory-view__controls">
+                    <div className="directory-view__search-wrapper">
+                      <IconSearch className="directory-view__search-icon" size={20} />
+                      <input
+                        autoFocus
+                        type="text"
+                        className="directory-view__search-input"
+                        placeholder={placeholder || '검색어 입력'}
+                        value={inputValue}
+                        onInput={handleInputChange}
+                        onKeyDown={handleKeyDown}
+                      />
+                      {inputValue && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInputValue('');
+                            onInputChange?.('');
+                          }}
+                          className="autocomplete__clear-button"
+                          style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                          }}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </Stack>
+              </header>
+              <div className="autocomplete-overlay__content">{renderList()}</div>
+            </div>,
+            document.body
+          )
+        ) : (
+          filteredOptions.length > 0 && popperStyle && (
+            <div className="autocomplete__popper" style={popperStyle}>
+              {renderList()}
+            </div>
+          )
+        )
       )}
     </div>
   );

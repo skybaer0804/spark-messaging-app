@@ -22,6 +22,7 @@ import { teamApi, chatApi } from '@/core/api/ApiService';
 import { currentWorkspaceId } from '@/stores/chatRoomsStore';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
+import { useConfirm } from '@/core/context/ConfirmContext';
 import { useChat } from '../../context/ChatContext';
 import { Dialog } from '@/ui-components/Dialog/Dialog';
 import { Input } from '@/ui-components/Input/Input';
@@ -142,6 +143,7 @@ export const DirectoryView = ({
 }: DirectoryViewProps) => {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
+  const { confirm } = useConfirm();
   const { refreshRoomList } = useChat();
   const [teamList, setTeamList] = useState<Team[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
@@ -154,14 +156,14 @@ export const DirectoryView = ({
   // 단일 루프로 최적화: filter().filter() 체인을 하나로 통합
   const filteredChannels = useMemo(() => {
     if (!searchTerm.trim()) {
-      return roomList.filter((r) => r.type === 'public' || r.type === 'private');
+      return roomList.filter((r) => r.type === 'public');
     }
     const lowerQuery = searchTerm.toLowerCase();
     const filtered: typeof roomList = [];
     for (const r of roomList) {
-      if ((r.type === 'public' || r.type === 'private') &&
-          ((r.name || '').toLowerCase().includes(lowerQuery) ||
-           (r.description && r.description.toLowerCase().includes(lowerQuery)))) {
+      if (r.type === 'public' &&
+        ((r.name || '').toLowerCase().includes(lowerQuery) ||
+          (r.description && r.description.toLowerCase().includes(lowerQuery)))) {
         filtered.push(r);
       }
     }
@@ -327,22 +329,27 @@ export const DirectoryView = ({
 
   // 팀 삭제
   const handleDeleteTeam = async (team: Team) => {
-    if (!confirm(`정말로 "${team.teamName}" 팀을 삭제하시겠습니까?`)) {
-      return;
-    }
-
-    try {
-      await teamApi.deleteTeam(team._id);
-      showSuccess('팀이 삭제되었습니다.');
-      // 팀 목록 새로고침
-      if (directoryTab === 'team' && currentWorkspaceId.value) {
-        const response = await teamApi.getTeams(currentWorkspaceId.value);
-        setTeamList(response.data);
+    confirm({
+      title: '팀 삭제',
+      message: `정말로 "${team.teamName}" 팀을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없으며 모든 데이터가 삭제됩니다.`,
+      type: 'error',
+      confirmText: '삭제',
+      cancelText: '취소',
+      onConfirm: async () => {
+        try {
+          await teamApi.deleteTeam(team._id);
+          showSuccess('팀이 삭제되었습니다.');
+          // 팀 목록 새로고침
+          if (directoryTab === 'team' && currentWorkspaceId.value) {
+            const response = await teamApi.getTeams(currentWorkspaceId.value);
+            setTeamList(response.data);
+          }
+        } catch (error: any) {
+          console.error('[handleDeleteTeam] Failed to delete team:', error);
+          showError(error.response?.data?.message || '팀 삭제에 실패했습니다.');
+        }
       }
-    } catch (error: any) {
-      console.error('[handleDeleteTeam] Failed to delete team:', error);
-      showError(error.response?.data?.message || '팀 삭제에 실패했습니다.');
-    }
+    });
   };
 
   // 채널 클릭 처리 (멤버 여부 확인)
@@ -353,8 +360,8 @@ export const DirectoryView = ({
       return;
     }
 
-    // Private 채널이고 멤버가 아닌 경우 초대 링크 표시
-    if (room.type === 'private') {
+    // 비공개 채널이고 멤버가 아닌 경우 초대 링크 표시
+    if (room.isPrivate || room.type === 'private') {
       setInviteChannel(room);
       return;
     }
@@ -370,18 +377,23 @@ export const DirectoryView = ({
 
   // 채널 삭제
   const handleDeleteChannel = async (room: ChatRoom) => {
-    if (!confirm(`정말로 "${room.name || '채널'}" 채널을 삭제하시겠습니까?`)) {
-      return;
-    }
-
-    try {
-      await chatApi.deleteRoom(room._id);
-      showSuccess('채널이 삭제되었습니다.');
-      // TODO: 채널 목록 새로고침
-    } catch (error: any) {
-      console.error('[handleDeleteChannel] Failed to delete channel:', error);
-      showError(error.response?.data?.message || '채널 삭제에 실패했습니다.');
-    }
+    confirm({
+      title: '채널 삭제',
+      message: `정말로 "${room.name || '채널'}" 채널을 삭제하시겠습니까?\n모든 대화 기록이 영구적으로 삭제됩니다.`,
+      type: 'error',
+      confirmText: '삭제',
+      cancelText: '취소',
+      onConfirm: async () => {
+        try {
+          await chatApi.deleteRoom(room._id);
+          showSuccess('채널이 삭제되었습니다.');
+          // TODO: 채널 목록 새로고침
+        } catch (error: any) {
+          console.error('[handleDeleteChannel] Failed to delete channel:', error);
+          showError(error.response?.data?.message || '채널 삭제에 실패했습니다.');
+        }
+      }
+    });
   };
 
   // 팀 수정 완료 후 콜백
@@ -428,9 +440,9 @@ export const DirectoryView = ({
                   title={room.name || '채널'}
                   description={room.description}
                   icon={<IconHash size={20} />}
-                  color={room.type === 'private' ? '#E73C7E' : '#509EE3'}
+                  color={room.isPrivate || room.type === 'private' ? '#E73C7E' : '#509EE3'}
                   onClick={() => handleChannelClick(room)}
-                  badge={room.type === 'private' ? 'Private' : room.isPrivate ? 'Private' : 'Public'}
+                  badge={room.isPrivate || room.type === 'private' ? 'Private' : 'Public'}
                   actions={
                     isOwner ? (
                       <>
@@ -576,11 +588,14 @@ export const DirectoryView = ({
                       e.stopPropagation();
                       startDirectChat(userItem._id);
                     }}
+                    style={{
+                      padding: '8px',
+                      minWidth: 'auto',
+                      boxShadow: 'none',
+                      border: '1px solid var(--color-border-default)'
+                    }}
                   >
-                    <IconMessageCircle size={14} />
-                    <span className="directory-card__action-text" style={{ marginLeft: '4px' }}>
-                      메시지
-                    </span>
+                    <IconMessageCircle size={18} />
                   </Button>
                 }
               />
@@ -614,7 +629,7 @@ export const DirectoryView = ({
               디렉토리
             </Typography>
           </Flex>
-          
+
           {!isMobile && (
             <Typography variant="body-large" className="directory-view__subtitle">
               워크스페이스의 채널, 팀, 그리고 동료들을 한눈에 확인하고 빠르게 소통을 시작하세요.
@@ -667,13 +682,13 @@ export const DirectoryView = ({
           group={
             editChannel
               ? {
-                  _id: editChannel._id,
-                  name: editChannel.name || '',
-                  description: editChannel.description,
-                  isPrivate: editChannel.isPrivate || false,
-                  members: editChannel.members || [],
-                  createdBy: editChannel.members?.[0] || ({} as ChatUser),
-                }
+                _id: editChannel._id,
+                name: editChannel.name || '',
+                description: editChannel.description,
+                isPrivate: editChannel.isPrivate || false,
+                members: editChannel.members || [],
+                createdBy: editChannel.members?.[0] || ({} as ChatUser),
+              }
               : undefined
           }
         />

@@ -1,17 +1,13 @@
 import { useRouterState } from '@/routes/RouterState';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useSidebarLayout } from '@/layouts/SidebarLayout/SidebarLayoutContext';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Flex } from '@/ui-components/Layout/Flex';
+import { ProfileItem } from '@/domains/Chat/components/ProfileItem/ProfileItem';
 import {
   IconMessageCircle,
   IconBell,
   IconVideo,
   IconPalette,
   IconUsers,
-  IconUser,
-  IconChevronRight
 } from '@tabler/icons-preact';
 import './MobileSidebar.scss';
 
@@ -36,26 +32,20 @@ export function MobileSidebar() {
   return (
     <div className="mobile-sidebar">
       {/* 프로필 영역 */}
-      <div className="mobile-sidebar__profile" onClick={() => handleNavigate('/profile')}>
-        <Flex align="center" gap="md">
-          <Avatar
-            src={user?.profileImage}
-            size="lg"
-            variant="circular"
-            style={{ backgroundColor: 'var(--color-interactive-primary)' }}
-          >
-            {user?.username?.substring(0, 1).toUpperCase() || <IconUser size={24} />}
-          </Avatar>
-          <div className="mobile-sidebar__profile-info">
-            <Typography variant="h3" style={{ fontWeight: 600 }}>
-              {user?.username || '사용자'}
-            </Typography>
-            <Typography variant="body-small" color="text-secondary">
-              내 프로필 보기
-            </Typography>
-          </div>
-          <IconChevronRight size={20} style={{ marginLeft: 'auto', color: 'var(--color-text-secondary)' }} />
-        </Flex>
+      <div className="mobile-sidebar__profile">
+        <ProfileItem
+          name={user?.username || '사용자'}
+          desc="내 프로필 보기"
+          avatar={user?.profileImage}
+          status={user?.status}
+          onClick={() => handleNavigate('/profile')}
+          styleOption={{
+            showDesc: true,
+            statusPosition: 'icon',
+            mode: 'list',
+          }}
+          className="mobile-sidebar__profile-item"
+        />
       </div>
 
       <div className="mobile-sidebar__divider" />

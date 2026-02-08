@@ -1,4 +1,4 @@
-import { memo } from 'preact/compat';
+import { memo, useState } from 'preact/compat';
 import { useEffect } from 'preact/hooks';
 import { useChatSidebar } from './hooks/useChatSidebar';
 import { IconButton } from '@/ui-components/Button/IconButton';
@@ -6,16 +6,18 @@ import { Input } from '@/ui-components/Input/Input';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
-import { List, ListItem } from '@/ui-components/List/List';
 import {
   IconX,
   IconChevronDown,
   IconChevronRight,
+  IconLogout,
 } from '@tabler/icons-preact';
 import { ProfileItem } from '../ProfileItem/ProfileItem';
 import { ChatSidebarHeader } from './ChatSidebarHeader';
+import { useConfirm } from '@/core/context/ConfirmContext';
 
 export const ChatSidebar = memo(() => {
+  const { confirm } = useConfirm();
   const {
     userList,
     selectedUserIds,
@@ -27,8 +29,6 @@ export const ChatSidebar = memo(() => {
     handleCreateRoom,
     roomIdInput,
     setRoomIdInput,
-    contextMenu,
-    setContextMenu,
     isSearching,
     setIsSearching,
     searchQuery,
@@ -37,11 +37,12 @@ export const ChatSidebar = memo(() => {
     allSearchResults,
     handleSearchKeyDown,
     expandedSections,
-    handleContextMenu,
     toggleSection,
     groupedRooms,
     filteredUserList,
   } = useChatSidebar();
+
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   // 검색창이 열릴 때 자동 포커스
   useEffect(() => {
@@ -65,22 +66,82 @@ export const ChatSidebar = memo(() => {
     const statusText = room.displayStatusText;
 
     return (
-      <ProfileItem
-        key={room._id}
-        name={roomName}
-        desc={room.type === 'direct' ? statusText : room.description || room.displayStatusText}
-        type={room.type}
-        avatar={displayAvatar}
-        status={displayStatus}
-        isActive={isActive || isFocused}
-        unreadCount={room.unreadCount}
-        onClick={() => {
-          handleRoomSelect(room._id, room);
-          setIsSearching(false);
-          setSearchQuery('');
-        }}
-        onContextMenu={(e) => handleContextMenu(e as any, room._id)}
-      />
+      <div key={room._id} style={{ position: 'relative' }}>
+        <ProfileItem
+          name={roomName}
+          desc={room.type === 'direct' ? statusText : room.description || room.displayStatusText}
+          type={room.type}
+          isPrivate={room.isPrivate || room.private}
+          avatar={displayAvatar}
+          status={displayStatus}
+          isActive={isActive || isFocused}
+          unreadCount={room.unreadCount}
+          onClick={() => {
+            handleRoomSelect(room._id, room);
+            setIsSearching(false);
+            setSearchQuery('');
+          }}
+          onMenuClick={(e) => {
+            e.stopPropagation();
+            setActiveMenuId(room._id);
+          }}
+        />
+
+        {activeMenuId === room._id && (
+          <Paper
+            elevation={2}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 8px 0 16px',
+              backgroundColor: 'var(--color-surface-level-1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Typography variant="body-medium" style={{ fontWeight: 600, color: 'var(--color-text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '8px' }}>
+              {roomName}
+            </Typography>
+            <Flex gap="xs" align="center">
+              <IconButton
+                color="error"
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  confirm({
+                    title: '채팅방 나가기',
+                    message: `정말로 "${roomName}" 채팅방을 나가시겠습니까?`,
+                    type: 'warning',
+                    confirmText: '나가기',
+                    cancelText: '취소',
+                    onConfirm: async () => {
+                      await leaveRoom(room._id);
+                      setActiveMenuId(null);
+                    }
+                  });
+                }}
+              >
+                <IconLogout size={20} />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveMenuId(null);
+                }}
+              >
+                <IconX size={16} />
+              </IconButton>
+            </Flex>
+          </Paper>
+        )}
+      </div>
     );
   };
 
@@ -186,41 +247,8 @@ export const ChatSidebar = memo(() => {
         {renderSection('direct', '개인 대화방')}
         {renderSection('team', 'Teams')}
         {renderSection('public', 'Channels')}
-        {renderSection('private', 'Private Groups')}
         {renderSection('discussion', 'Discussion')}
       </div>
-
-      {contextMenu && (
-        <Paper
-          elevation={4}
-          style={{
-            position: 'fixed',
-            top: contextMenu.y,
-            left: contextMenu.x,
-            zIndex: 1000,
-            padding: '4px 0',
-            minWidth: '160px',
-            backgroundColor: 'var(--color-bg-elevated, #fff)',
-            border: '1px solid var(--color-border-default)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          }}
-        >
-          <List style={{ padding: 0 }}>
-            <ListItem
-              onClick={(e) => {
-                e.stopPropagation();
-                leaveRoom(contextMenu.roomId);
-                setContextMenu(null);
-              }}
-              style={{ cursor: 'pointer', padding: '8px 16px' }}
-            >
-              <Typography variant="body-medium" style={{ color: 'var(--color-text-error, #ff4d4f)' }}>
-                방 나가기
-              </Typography>
-            </ListItem>
-          </List>
-        </Paper>
-      )}
     </div>
   );
 });

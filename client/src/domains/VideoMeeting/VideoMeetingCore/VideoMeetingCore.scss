@@ -2,14 +2,10 @@
 
 .video-meeting-core {
   width: 100%;
-  flex: 1; // 추가
-  min-height: 0; // 추가
-  background-color: var(--color-background-secondary);
-  background-image: radial-gradient(var(--color-border-default) 0.5px, transparent 0.5px);
-  background-size: 24px 24px;
-  overflow-y: auto;
-  display: flex; // 추가
-  flex-direction: column; // 추가
+  flex: 1;
+  background-color: transparent; // 부모에서 관리하므로 투명하게
+  display: flex;
+  flex-direction: column;
   padding: var(--space-padding-lg) 0;
 
   @media (max-width: 768px) {
@@ -17,8 +13,14 @@
   }
 
   &__container {
-    max-width: 100%;
+    width: 100%;
+    max-width: 100%; // 이미 부모에서 800px로 제한됨
     margin: 0 auto;
+    padding: 0 var(--space-padding-xl);
+
+    @media (max-width: 768px) {
+      padding: var(--space-padding-md);
+    }
   }
 
   &__hero {
@@ -116,6 +118,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -127,7 +130,7 @@
     &__title {
       font-size: 2rem;
     }
-    
+
     &__container {
       padding: var(--space-padding-md);
     }

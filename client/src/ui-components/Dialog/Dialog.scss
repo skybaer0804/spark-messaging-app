@@ -82,9 +82,17 @@
   }
 }
 
+// ─────────────────────────────────────────────────
+// 모바일 슬라이드 애니메이션 (dialog--mobile-overlay와 함께 사용)
+// dialog-root--mobile-slide + dialog-root--open 으로 transition 제어
+// ─────────────────────────────────────────────────
+.dialog-root--mobile-slide {
+  .dialog-root__backdrop {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+  }
 
-
-
-
-
-
+  &.dialog-root--open .dialog-root__backdrop {
+    opacity: 1;
+  }
+}

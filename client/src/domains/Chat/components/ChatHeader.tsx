@@ -2,9 +2,8 @@ import { IconButton } from '@/ui-components/Button/IconButton';
 import { Box } from '@/ui-components/Layout/Box';
 import { Stack } from '@/ui-components/Layout/Stack';
 import { Paper } from '@/ui-components/Paper/Paper';
-import { IconArrowLeft, IconUsers, IconSettings, IconMessageCircle2 } from '@tabler/icons-preact';
+import { IconChevronLeft, IconUsers, IconSettings, IconMessageCircle2, IconInfoCircle } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
-import { useToast } from '@/core/context/ToastContext';
 import { getDirectChatName } from '../utils/chatUtils';
 import { ProfileItem } from './ProfileItem/ProfileItem';
 import type { ChatRoom } from '../types';
@@ -16,9 +15,11 @@ interface ChatHeaderProps {
   showUserList: boolean;
   showSettings: boolean;
   showThreads: boolean;
+  showInfo: boolean;
   setShowUserList: (val: boolean) => void;
   setShowSettings: (val: boolean) => void;
   setShowThreads: (val: boolean) => void;
+  setShowInfo: (val: boolean) => void;
   className?: string;
 }
 
@@ -29,9 +30,11 @@ export const ChatHeader = ({
   showUserList,
   showSettings,
   showThreads,
+  showInfo,
   setShowUserList,
   setShowSettings,
   setShowThreads,
+  setShowInfo,
   className = '',
 }: ChatHeaderProps) => {
   const { user: currentUser } = useAuth();
@@ -47,13 +50,13 @@ export const ChatHeader = ({
         flexShrink: 0, 
         borderBottom: '1px solid var(--color-border-default)',
         padding: '4px 12px',
-        paddingTop: isMobile ? 'var(--safe-area-inset-top)' : '4px'
+        paddingTop: isMobile ? 'calc(var(--space-gap-sm) + var(--safe-area-inset-top)' : '4px'
       }}
     >
       <Stack direction="row" align="center" spacing="md">
         {isMobile && (
           <IconButton onClick={goToHome} color="secondary">
-            <IconArrowLeft />
+            <IconChevronLeft />
           </IconButton>
         )}
         <Box style={{ flex: 1, minWidth: 0 }}>
@@ -64,6 +67,7 @@ export const ChatHeader = ({
             }
             desc={currentRoom.description || undefined}
             type={currentRoom.type as any}
+            isPrivate={currentRoom.isPrivate || (currentRoom as any).private}
             avatar={currentRoom.displayAvatar || undefined}
             status={currentRoom.displayStatus}
             styleOption={{
@@ -76,11 +80,29 @@ export const ChatHeader = ({
         </Box>
         <IconButton
           onClick={() => {
+            if (showInfo) {
+              setShowInfo(false);
+            } else {
+              setShowUserList(false);
+              setShowSettings(false);
+              setShowThreads(false);
+              setShowInfo(true);
+            }
+          }}
+          active={showInfo}
+          color={showInfo ? 'primary' : 'secondary'}
+          title="정보"
+        >
+          <IconInfoCircle size={20} />
+        </IconButton>
+        <IconButton
+          onClick={() => {
             if (showThreads) {
               setShowThreads(false);
             } else {
               setShowUserList(false);
               setShowSettings(false);
+              setShowInfo(false);
               setShowThreads(true);
             }
           }}
@@ -97,6 +119,7 @@ export const ChatHeader = ({
             } else {
               setShowSettings(false);
               setShowThreads(false);
+              setShowInfo(false);
               setShowUserList(true);
             }
           }}
@@ -113,6 +136,7 @@ export const ChatHeader = ({
             } else {
               setShowUserList(false);
               setShowThreads(false);
+              setShowInfo(false);
               setShowSettings(true);
             }
           }}

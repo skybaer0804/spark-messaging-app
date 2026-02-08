@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect } from 'preact/hooks';
 import { memo, lazy, Suspense } from 'preact/compat';
+import { useTheme } from '@/core/context/ThemeProvider';
 import { FilePreview } from './FilePreview';
+import { MobileChatInput } from './MessageInput/MobileChatInput';
 import { Input } from '@/ui-components/Input/Input';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Stack } from '@/ui-components/Layout/Stack';
@@ -50,6 +52,8 @@ function ChatInputComponent({
   onKeyPress,
   classNamePrefix,
 }: ChatInputProps) {
+  const { deviceSize } = useTheme();
+  const isMobile = deviceSize === 'mobile';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
@@ -63,15 +67,37 @@ function ChatInputComponent({
   const [mentionPos, setMentionPos] = useState(0);
   const [selectedTextForLink, setSelectedTextForLink] = useState('');
 
+  // 멘션 강제 트리거 핸들러
+  const handleMentionTrigger = () => {
+    const targetTextarea = textareaRef.current || document.querySelector('.chat-input-container textarea') as HTMLTextAreaElement;
+    if (!targetTextarea) return;
+
+    const start = targetTextarea.selectionStart;
+    const end = targetTextarea.selectionEnd;
+    const before = input.substring(0, start);
+    const after = input.substring(end);
+
+    // 이미 @가 있고 멘션 피커가 열려있지 않은 경우에만 @ 추가
+    const newText = before + '@' + after;
+    setInput(newText);
+
+    // 커서 위치 조정 및 포커스
+    setTimeout(() => {
+      const newPos = start + 1;
+      targetTextarea.setSelectionRange(newPos, newPos);
+      targetTextarea.focus();
+    }, 0);
+  };
+
   // @ 감지 및 MentionPicker 제어
   useEffect(() => {
     if (!textareaRef.current) return;
-    
+
     const textarea = textareaRef.current;
     const cursorPos = textarea.selectionStart;
     const textBeforeCursor = input.substring(0, cursorPos);
     const lastAtIdx = textBeforeCursor.lastIndexOf('@');
-    
+
     if (lastAtIdx !== -1 && (lastAtIdx === 0 || textBeforeCursor[lastAtIdx - 1] === ' ')) {
       const searchStr = textBeforeCursor.substring(lastAtIdx + 1);
       // 공백이 포함되지 않은 경우에만 멘션 모드 유지
@@ -82,7 +108,7 @@ function ChatInputComponent({
         return;
       }
     }
-    
+
     setMentionOpen(false);
   }, [input]);
 
@@ -99,7 +125,7 @@ function ChatInputComponent({
         textareaRef.current = textarea;
       }
     };
-    
+
     updateTextareaRef();
     // input이 변경될 때마다 ref 업데이트
     const interval = setInterval(updateTextareaRef, 100);
@@ -109,13 +135,15 @@ function ChatInputComponent({
   const baseClass = classNamePrefix || 'chat-input';
 
   return (
-    <Paper 
-      elevation={4} 
-      padding="md" 
-      style={{ 
+    <Paper
+      elevation={4}
+      padding={isMobile ? "xs" : "md"}
+      style={{
         flexShrink: 0,
-        paddingBottom: 'var(--safe-area-inset-bottom)'
-      }} 
+        paddingBottom: isMobile ? 'max(8px, var(--safe-area-inset-bottom))' : 'calc(12px + var(--safe-area-inset-bottom))',
+        borderTop: isMobile ? '1px solid var(--color-border-default)' : 'none',
+        backgroundColor: 'var(--color-background-primary)',
+      }}
       className={`${baseClass}__input-paper`}
     >
       <Stack spacing="sm">
@@ -125,77 +153,111 @@ function ChatInputComponent({
           uploadProgress={uploadProgress}
           onRemove={onFileRemove}
         />
-        <div ref={containerRef} className="chat-input-container" style={{ position: 'relative', width: '100%' }}>
-          <Input
-            multiline
-            value={input}
-            onCompositionStart={() => {
-              setIsComposing(true);
-              setFormattingComposing(true);
-            }}
-            onCompositionEnd={() => {
-              setIsComposing(false);
-              setFormattingComposing(false);
-            }}
-            onInput={(e) => {
-              const target = e.target as HTMLTextAreaElement;
-              setInput(target.value);
-              
-              // textarea ref 업데이트
-              textareaRef.current = target;
-              
-              // 높이 자동 조절
-              target.style.height = 'auto';
-              const scrollHeight = target.scrollHeight;
-              const lineHeight = parseFloat(getComputedStyle(target).lineHeight) || 24;
-              const verticalPadding = 64; // 16(top) + 48(bottom) padding
-              const minHeight = lineHeight * 2 + verticalPadding; // 2 rows + padding = 112px
-              const maxHeight = lineHeight * 5 + verticalPadding;
-              const targetHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
-              target.style.height = `${targetHeight}px`;
-              // 한글 입력 시 포커스 유지 로직 최적화
-              if (isComposing) {
-                const inputElement = e.currentTarget;
-                requestAnimationFrame(() => {
-                  if (document.activeElement !== inputElement) {
-                    inputElement.focus();
+        <div
+          ref={containerRef}
+          className={`chat-input-container ${isMobile ? 'chat-input-container--mobile' : ''}`}
+          style={{ position: 'relative', width: '100%' }}
+        >
+          {isMobile ? (
+            <MobileChatInput
+              input={input}
+              setInput={setInput}
+              onSendMessage={onSendMessage}
+              onSendFile={onSendFile}
+              onFileClick={() => fileInputRef.current?.click()}
+              onEmojiClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
+              onMentionClick={handleMentionTrigger}
+              onEmojiButtonRef={(el) => { if (el) emojiButtonRef.current = el; }}
+              onKeyPress={(e) => { if (!isComposing) onKeyPress(e); }}
+              isConnected={isConnected}
+              placeholder={placeholder}
+              canSend={input.trim().length > 0 || selectedFiles.length > 0}
+              isComposing={isComposing}
+              setIsComposing={setIsComposing}
+              setFormattingComposing={setFormattingComposing}
+            />
+          ) : (
+            <>
+              <Input
+                multiline
+                value={input}
+                onCompositionStart={() => {
+                  setIsComposing(true);
+                  setFormattingComposing(true);
+                }}
+                onCompositionEnd={() => {
+                  setIsComposing(false);
+                  setFormattingComposing(false);
+                }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  setInput(target.value);
+                  textareaRef.current = target;
+
+                  // 높이 자동 조절
+                  target.style.height = 'auto';
+                  const scrollHeight = target.scrollHeight;
+                  const lineHeight = parseFloat(getComputedStyle(target).lineHeight) || 24;
+                  const verticalPadding = 64;
+                  const minHeight = lineHeight * 2 + verticalPadding;
+                  const maxHeight = lineHeight * 5 + verticalPadding;
+                  const targetHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+                  target.style.height = `${targetHeight}px`;
+
+                  if (isComposing) {
+                    const inputElement = e.currentTarget;
+                    requestAnimationFrame(() => {
+                      if (document.activeElement !== inputElement) {
+                        inputElement.focus();
+                      }
+                    });
                   }
-                });
-              }
-            }}
-            onKeyPress={(e) => {
-              if (!isComposing) {
-                onKeyPress(e);
-              }
-            }}
-            onKeyDown={(e) => {
-              // 포맷팅 단축키 처리
-              handleFormatKeyDown(e);
-              
-              // Ctrl+L (링크 모달 열기)
-              const isModifierPressed = e.ctrlKey || e.metaKey;
-              if (isModifierPressed && e.key.toLowerCase() === 'l' && !isComposing) {
-                e.preventDefault();
-                // 현재 선택된 텍스트 가져오기
-                const target = e.target as HTMLTextAreaElement;
-                // textarea ref 업데이트
-                textareaRef.current = target;
-                const start = target.selectionStart;
-                const end = target.selectionEnd;
-                // 선택 영역 저장 (모달이 닫힌 후 사용)
-                savedSelectionRef.current = { start, end };
-                const selectedText = start !== end ? target.value.substring(start, end) : '';
-                setSelectedTextForLink(selectedText);
-                setLinkModalOpen(true);
-              }
-              // 기존 onKeyPress는 onKeyPress 이벤트에서만 처리
-            }}
-            placeholder={placeholder || (isConnected ? '메시지를 입력하세요...' : '연결 중...')}
-            disabled={!isConnected}
-            fullWidth
-            rows={2}
-            style={{ paddingBottom: '48px', borderRadius: '8px 8px 0 0', minHeight: '112px' }} // 점프 방지를 위해 minHeight 112px 설정
-          />
+                }}
+                onKeyPress={(e) => {
+                  if (!isComposing) {
+                    onKeyPress(e);
+                  }
+                }}
+                onKeyDown={handleFormatKeyDown}
+                placeholder={placeholder || (isConnected ? '메시지를 입력하세요...' : '연결 중...')}
+                disabled={!isConnected}
+                fullWidth
+                rows={2}
+                style={{
+                  paddingBottom: '48px',
+                  borderRadius: '8px 8px 0 0',
+                  minHeight: '112px'
+                }}
+              />
+              <MessageInputToolbar
+                onFormat={(type) => {
+                  if (type === 'link') {
+                    const targetTextarea = textareaRef.current || (document.activeElement as HTMLTextAreaElement);
+                    if (targetTextarea && targetTextarea.tagName === 'TEXTAREA') {
+                      if (!textareaRef.current) textareaRef.current = targetTextarea;
+                      const start = targetTextarea.selectionStart;
+                      const end = targetTextarea.selectionEnd;
+                      savedSelectionRef.current = { start, end };
+                      const selectedText = start !== end ? targetTextarea.value.substring(start, end) : '';
+                      setSelectedTextForLink(selectedText);
+                      setLinkModalOpen(true);
+                    }
+                  } else {
+                    applyFormat(type);
+                  }
+                }}
+                onSaveSelection={saveSelection}
+                onEmojiClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
+                onEmojiButtonRef={(el) => { if (el) emojiButtonRef.current = el; }}
+                onFileClick={() => fileInputRef.current?.click()}
+                onSendClick={selectedFiles.length > 0 ? onSendFile : onSendMessage}
+                disabled={!isConnected}
+                showFileUpload={showFileUpload}
+                canSend={input.trim().length > 0 || selectedFiles.length > 0}
+              />
+            </>
+          )}
+
           {/* 파일 입력 (숨김) */}
           {showFileUpload && (
             <input
@@ -207,55 +269,9 @@ function ChatInputComponent({
               accept="image/*,video/*,audio/*,.xlsx,.xls,.csv,.md,.docx,.doc,.pdf,.txt,.stl,.obj,.ply,.dxd"
             />
           )}
-
-          {/* 포맷팅 툴바 */}
-          <MessageInputToolbar
-            onFormat={(type) => {
-              if (type === 'link') {
-                // 링크 버튼 클릭 시 모달 열기
-                // textarea ref가 있으면 사용, 없으면 activeElement 사용
-                const targetTextarea = textareaRef.current || (document.activeElement as HTMLTextAreaElement);
-                if (targetTextarea && targetTextarea.tagName === 'TEXTAREA') {
-                  // textarea ref 업데이트
-                  if (!textareaRef.current) {
-                    textareaRef.current = targetTextarea;
-                  }
-                  const start = targetTextarea.selectionStart;
-                  const end = targetTextarea.selectionEnd;
-                  // 선택 영역 저장 (모달이 닫힌 후 사용)
-                  savedSelectionRef.current = { start, end };
-                  const selectedText = start !== end ? targetTextarea.value.substring(start, end) : '';
-                  setSelectedTextForLink(selectedText);
-                  setLinkModalOpen(true);
-                }
-              } else {
-                applyFormat(type);
-              }
-            }}
-            onSaveSelection={saveSelection}
-            onEmojiClick={() => {
-              setEmojiPickerOpen(!emojiPickerOpen);
-            }}
-            onEmojiButtonRef={(el) => {
-              if (el) {
-                emojiButtonRef.current = el;
-              }
-            }}
-            onVoiceClick={() => {
-              // TODO: 음성 메시지 구현
-            }}
-            onVideoClick={() => {
-              // TODO: 화상 메시지 구현
-            }}
-            onFileClick={() => fileInputRef.current?.click()}
-            onSendClick={selectedFiles.length > 0 ? onSendFile : onSendMessage}
-            disabled={!isConnected}
-            showFileUpload={showFileUpload}
-            canSend={input.trim().length > 0 || selectedFiles.length > 0}
-          />
         </div>
       </Stack>
-      
+
       {/* 링크 추가 모달 */}
       <AddLinkModal
         open={linkModalOpen}
@@ -287,7 +303,7 @@ function ChatInputComponent({
         }}
         initialText={selectedTextForLink}
       />
-      
+
       {/* 이모지 피커 (lazy loading) */}
       {emojiPickerOpen && (
         <Suspense fallback={null}>
@@ -298,15 +314,15 @@ function ChatInputComponent({
             onSelect={(emoji) => {
               const targetTextarea = textareaRef.current;
               if (!targetTextarea) return;
-              
+
               const start = targetTextarea.selectionStart;
               const end = targetTextarea.selectionEnd;
               const before = input.substring(0, start);
               const after = input.substring(end);
               const newText = before + emoji + after;
-              
+
               setInput(newText);
-              
+
               // 커서 위치 조정
               setTimeout(() => {
                 const newPos = start + emoji.length;
@@ -329,17 +345,17 @@ function ChatInputComponent({
           onSelect={(item) => {
             const targetTextarea = textareaRef.current;
             if (!targetTextarea) return;
-            
+
             const cursorPos = targetTextarea.selectionStart;
             const beforeMention = input.substring(0, mentionPos);
             const afterMention = input.substring(cursorPos);
-            
+
             const mentionText = typeof item === 'string' ? item : item.username;
             const newText = beforeMention + '@' + mentionText + ' ' + afterMention;
-            
+
             setInput(newText);
             setMentionOpen(false);
-            
+
             // 커서 위치 조정
             setTimeout(() => {
               const newPos = beforeMention.length + mentionText.length + 2; // @ + text + space

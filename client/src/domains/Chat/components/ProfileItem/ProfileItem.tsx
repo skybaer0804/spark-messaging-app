@@ -7,13 +7,16 @@ import {
   IconMessageCircle,
   IconHierarchy,
   IconX,
+  IconDots,
 } from '@tabler/icons-preact';
+import { RoomType } from '../../types/ChatRoom';
 import './ProfileItem.scss';
 
 interface ProfileItemProps {
   name: string;
   desc?: string;
-  type?: 'direct' | 'team' | 'public' | 'private' | 'discussion';
+  type?: RoomType | 'private'; // 'private'는 하위 호환성을 위해 유지
+  isPrivate?: boolean;
   avatar?: string;
   status?: string;
   isActive?: boolean;
@@ -21,6 +24,7 @@ interface ProfileItemProps {
   onClick?: () => void;
   onDelete?: (e: MouseEvent) => void;
   onContextMenu?: (e: MouseEvent) => void;
+  onMenuClick?: (e: MouseEvent) => void;
   className?: string;
   style?: any;
   styleOption?: {
@@ -37,13 +41,14 @@ export const ProfileItem = memo(({
   name,
   desc,
   type = 'direct',
+  isPrivate = false,
   avatar,
   status,
   isActive,
   unreadCount,
   onClick,
   onDelete,
-  onContextMenu,
+  onMenuClick,
   className = '',
   style,
   styleOption = {
@@ -74,8 +79,8 @@ export const ProfileItem = memo(({
   const getIcon = () => {
     switch (type) {
       case 'team': return <IconHierarchy size={16} />;
-      case 'public': return <IconHash size={16} />;
-      case 'private': return <IconLock size={16} />;
+      case 'public': 
+      case 'private': return <IconHash size={16} />;
       case 'discussion': return <IconMessageCircle size={16} />;
       default: return null;
     }
@@ -94,9 +99,16 @@ export const ProfileItem = memo(({
 
   const renderTypeIcon = () => {
     if (type === 'direct' || !typeIcon) return null;
+    const isReallyPrivate = isPrivate || (type as any) === 'private';
+    
     return (
       <div className="profile-item__type-icon">
         {typeIcon}
+        {isReallyPrivate && (
+          <div className="profile-item__type-icon-badge">
+            <IconLock size={12} stroke={3} />
+          </div>
+        )}
       </div>
     );
   };
@@ -108,7 +120,7 @@ export const ProfileItem = memo(({
         onClick={onClick}
         style={{ '--app-color': getBgColor(), ...style } as any}
       >
-        <Avatar src={avatar} variant="rounded" size="xs" style={{ backgroundColor: getBgColor(), width: '20px', height: '20px', fontSize: '10px' }}>
+        <Avatar src={avatar} variant="rounded" size="sm" style={{ backgroundColor: getBgColor(), width: '20px', height: '20px', fontSize: '10px' }}>
           {firstLetter}
         </Avatar>
         {renderTypeIcon()}
@@ -132,43 +144,58 @@ export const ProfileItem = memo(({
     <div
       className={`profile-item profile-item--${mode} ${isGrouped ? 'profile-item--grouped' : ''} ${noHover ? 'profile-item--no-hover' : ''} ${isActive ? 'profile-item--active' : ''} ${className}`}
       onClick={onClick}
-      onContextMenu={onContextMenu}
       style={{ '--app-color': getBgColor(), ...style } as any}
     >
-      <div className="profile-item__avatar-container">
-        {!isGrouped ? (
-          <Avatar src={avatar} variant="rounded" size="sm" style={{ backgroundColor: getBgColor() }}>
-            {firstLetter}
-          </Avatar>
-        ) : (
-          <div className="profile-item__avatar-placeholder" />
-        )}
-        {!isGrouped && renderStatus('icon')}
-      </div>
-      
-      {!isGrouped && (
-        <div className="profile-item__content">
-          <div className="profile-item__name-container">
-            <div className="profile-item__name-wrapper">
-              {renderStatus('name-left')}
-              {renderTypeIcon()}
-              <Typography variant="body-medium" className="profile-item__name">
-                {unreadCount ? <strong>{name}</strong> : name}
-              </Typography>
-              {renderStatus('name-right')}
-              {nameSuffix && <div className="profile-item__name-suffix">{nameSuffix}</div>}
-            </div>
-            {unreadCount ? (
-              <div className="profile-item__unread-badge">{unreadCount}</div>
-            ) : null}
-          </div>
-          {showDesc && desc && (
-            <Typography variant="caption" className="profile-item__desc">
-              {desc}
-            </Typography>
+      <div className="profile-item__main-content">
+        <div className="profile-item__avatar-container">
+          {!isGrouped ? (
+            <Avatar src={avatar} variant="rounded" size="sm" style={{ backgroundColor: getBgColor() }}>
+              {firstLetter}
+            </Avatar>
+          ) : (
+            <div className="profile-item__avatar-placeholder" />
           )}
+          {!isGrouped && renderStatus('icon')}
         </div>
-      )}
+        
+        {!isGrouped && (
+          <div className="profile-item__content">
+            <div className="profile-item__name-container">
+              <div className="profile-item__name-wrapper">
+                {renderStatus('name-left')}
+                {renderTypeIcon()}
+                <Typography variant="body-medium" className="profile-item__name">
+                  {unreadCount ? <strong>{name}</strong> : name}
+                </Typography>
+                {renderStatus('name-right')}
+                {nameSuffix && <div className="profile-item__name-suffix">{nameSuffix}</div>}
+              </div>
+              
+              <div className="profile-item__actions">
+                {unreadCount ? (
+                  <div className="profile-item__unread-badge">{unreadCount}</div>
+                ) : null}
+                {onMenuClick && (
+                  <div 
+                    className="profile-item__menu-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMenuClick(e as any);
+                    }}
+                  >
+                    <IconDots size={18} />
+                  </div>
+                )}
+              </div>
+            </div>
+            {showDesc && desc && (
+              <Typography variant="caption" className="profile-item__desc">
+                {desc}
+              </Typography>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 });

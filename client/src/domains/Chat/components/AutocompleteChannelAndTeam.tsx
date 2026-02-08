@@ -29,7 +29,7 @@ export function AutocompleteChannelAndTeam({
 }: AutocompleteChannelAndTeamProps) {
   // 토론의 부모가 될 수 있는 룸 목록 (공개 채널, 비공개 채널, 팀)
   const filteredRoomList = useMemo(() => {
-    return roomList.filter((room) => ['public', 'private', 'team'].includes(room.type));
+    return roomList.filter((room) => ['public', 'team'].includes(room.type));
   }, [roomList]);
 
   // Autocomplete 옵션으로 변환
@@ -63,6 +63,7 @@ export function AutocompleteChannelAndTeam({
         name={room.name || room.displayName || '이름 없음'}
         desc={room.description}
         type={room.type}
+        isPrivate={room.isPrivate || room.private}
         avatar={room.displayAvatar || undefined}
         styleOption={{
           mode: 'list',

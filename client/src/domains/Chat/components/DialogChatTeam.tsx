@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { IconX, IconCheck, IconPlus } from '@tabler/icons-preact';
 import { Dialog } from '@/ui-components/Dialog/Dialog';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Button } from '@/ui-components/Button/Button';
@@ -10,6 +11,7 @@ import { Switch } from '@/ui-components/Switch/Switch';
 import { AutocompleteMember } from './AutocompleteMember';
 import { useChat } from '../context/ChatContext';
 import { useAuth } from '@/core/hooks/useAuth';
+import { useTheme } from '@/core/context/ThemeProvider';
 import { useToast } from '@/core/context/ToastContext';
 import { teamApi } from '@/core/api/ApiService';
 import { currentWorkspaceId } from '@/stores/chatRoomsStore';
@@ -34,12 +36,14 @@ interface DialogChatTeamProps {
 export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogChatTeamProps) => {
   const { userList } = useChat();
   const { user } = useAuth();
-  const { showSuccess, showError } = useToast();
+  const { deviceSize } = useTheme();
+  const { showError } = useToast();
   const isEditMode = !!team;
+  const isMobile = deviceSize === 'mobile';
   const [teamData, setTeamData] = useState({
     teamName: '',
     teamDesc: '',
-    private: false,
+    isPrivate: false,
     members: [] as ChatUser[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,7 +54,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
       setTeamData({
         teamName: team.teamName,
         teamDesc: team.teamDesc || '',
-        private: team.private,
+        isPrivate: team.private || (team as any).isPrivate || false,
         members: team.members || [],
       });
     } else if (!team && open) {
@@ -58,7 +62,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
       setTeamData({
         teamName: '',
         teamDesc: '',
-        private: false,
+        isPrivate: false,
         members: [],
       });
     }
@@ -80,7 +84,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
         await teamApi.updateTeam(team._id, {
           teamName: teamData.teamName.trim(),
           teamDesc: teamData.teamDesc.trim() || undefined,
-          private: teamData.private,
+          private: teamData.isPrivate,
         });
 
         // 새로 추가된 멤버가 있으면 초대
@@ -93,7 +97,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
         await teamApi.createTeam({
           teamName: teamData.teamName.trim(),
           teamDesc: teamData.teamDesc.trim() || undefined,
-          private: teamData.private,
+          private: teamData.isPrivate,
           members: memberIds.length > 0 ? memberIds : undefined,
           workspaceId: currentWorkspaceId.value || undefined,
         });
@@ -103,10 +107,10 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
       setTeamData({
         teamName: '',
         teamDesc: '',
-        private: false,
+        isPrivate: false,
         members: [],
       });
-      showSuccess(isEditMode ? '팀이 수정되었습니다.' : '팀이 생성되었습니다.');
+      // showSuccess(isEditMode ? '팀이 수정되었습니다.' : '팀이 생성되었습니다.');
       onTeamCreated?.();
       onClose();
     } catch (error: any) {
@@ -121,7 +125,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
     setTeamData({
       teamName: '',
       teamDesc: '',
-      private: false,
+      isPrivate: false,
       members: [],
     });
     onClose();
@@ -142,13 +146,31 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
       onClose={handleClose}
       title={isEditMode ? '팀 수정' : '팀 개설'}
       maxWidth={false}
-      style={{ maxWidth: '800px' }}
+      style={{ maxWidth: '600px' }}
       fullWidth
+      className="dialog--mobile-overlay"
       actions={
-        <Flex gap="sm">
-          <Button onClick={handleClose}>취소</Button>
-          <Button variant="primary" disabled={!isFormValid} onClick={handleSubmit}>
-            {isEditMode ? '저장' : '개설'}
+        <Flex gap="sm" style={isMobile ? { width: '100%' } : {}}>
+          <Button
+            onClick={handleClose}
+            variant="secondary"
+            style={isMobile ? { flex: 4.5 } : {}}
+          >
+            <Flex align="center" gap="xs" justify="center">
+              <IconX size={18} />
+              <span>취소</span>
+            </Flex>
+          </Button>
+          <Button
+            variant="primary"
+            disabled={!isFormValid}
+            onClick={handleSubmit}
+            style={isMobile ? { flex: 5.5 } : {}}
+          >
+            <Flex align="center" gap="xs" justify="center">
+              {isEditMode ? <IconCheck size={18} /> : <IconPlus size={18} />}
+              <span>{isEditMode ? '저장' : '개설'}</span>
+            </Flex>
           </Button>
         </Flex>
       }
@@ -203,8 +225,8 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
               </Typography>
             </Flex>
             <Switch
-              checked={teamData.private}
-              onChange={(checked) => setTeamData((prev) => ({ ...prev, private: checked }))}
+              checked={teamData.isPrivate}
+              onChange={(checked) => setTeamData((prev) => ({ ...prev, isPrivate: checked }))}
             />
           </Flex>
         </Box>

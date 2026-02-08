@@ -17,28 +17,27 @@ export const ChatMessageItemToolbar = ({
   isOwnMessage
 }: ChatMessageItemToolbarProps) => {
   return (
-    <Flex 
-      gap="xs" 
+    <Flex
+      gap="xs"
       className="chat-app__message-toolbar"
-      style={{ 
-        position: 'absolute', 
-        top: '50%', 
-        transform: 'translateY(-50%)',
+      style={{
+        position: 'absolute',
+        bottom: 0,
         [isOwnMessage ? 'right' : 'left']: '100%',
         [isOwnMessage ? 'marginRight' : 'marginLeft']: '8px',
         zIndex: 10,
         whiteSpace: 'nowrap'
       }}
     >
-      <Box 
-        className="chat-message__toolbar-icon" 
+      <Box
+        className="chat-message__toolbar-icon"
         onClick={() => onThreadClick?.(message)}
         title="스레드에서 답장"
       >
         <IconMessageCircle2 size={18} />
       </Box>
-      <Box 
-        className="chat-message__toolbar-icon" 
+      <Box
+        className="chat-message__toolbar-icon"
         onClick={() => onForwardClick?.(message)}
         title="메시지 전달"
       >

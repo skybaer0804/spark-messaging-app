@@ -28,7 +28,7 @@ export function MobileHeader() {
         zIndex: 100,
         backgroundColor: 'var(--color-bg-default)',
         borderBottom: '1px solid var(--color-border-default)',
-        paddingTop: 'var(--safe-area-inset-top)',
+        paddingTop: 'calc(var(--space-gap-sm) + var(--safe-area-inset-top))',
       }}
     >
       <Flex align="center" gap="xs">

@@ -45,19 +45,22 @@ function ChatMessagesComponent({
 
   // 스크롤 관리 및 스타일 결정
   const isChatAppStyle = externalMessagesRef !== undefined;
-  
+
   useEffect(() => {
     if (!externalMessagesRef && messagesRef.current) {
       messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     }
   }, [messages.length, externalMessagesRef]);
 
+  // v2.5.2: 렌더링 시점에 스레드 답글(parentMessageId가 있는 경우)이 본 채팅에 섞이지 않도록 방어 필터링 적용
+  const mainMessages = messages.filter(msg => !msg.parentMessageId);
+
   return (
     <Box
       className={isChatAppStyle ? 'chat-app__messages-container' : `${baseClass}__messages-list`}
       ref={messagesRef}
     >
-      {messages.length === 0 ? (
+      {mainMessages.length === 0 ? (
         <Box className="chat-app__messages-container-empty">
           <Typography variant="body-small">
             {emptyMessage || '메시지가 없습니다.'}
@@ -65,7 +68,7 @@ function ChatMessagesComponent({
         </Box>
       ) : (
         <Stack spacing="none" style={{ flex: 1, minHeight: 0 }}>
-          {groupMessagesByDate(messages).map((item, index, array) => {
+          {groupMessagesByDate(mainMessages).map((item, index, array) => {
             if (item.type === 'divider') {
               return (
                 <DateDivider
@@ -79,17 +82,17 @@ function ChatMessagesComponent({
             const currentMsg = item.message!;
             const prevItem = index > 0 ? array[index - 1] : null;
             const prevMsg = prevItem?.type === 'message' ? prevItem.message : null;
-            
+
             let isGrouped = false;
             if (prevMsg) {
-              const isSameSender = 
+              const isSameSender =
                 (prevMsg.senderId?.toString() === currentMsg.senderId?.toString());
-              
-              const isSameMinute = 
+
+              const isSameMinute =
                 new Date(prevMsg.timestamp).getMinutes() === new Date(currentMsg.timestamp).getMinutes() &&
                 new Date(prevMsg.timestamp).getHours() === new Date(currentMsg.timestamp).getHours() &&
                 new Date(prevMsg.timestamp).toDateString() === new Date(currentMsg.timestamp).toDateString();
-              
+
               isGrouped = isSameSender && isSameMinute;
             }
 
@@ -138,7 +141,7 @@ export const ChatMessages = memo(ChatMessagesComponent, (prevProps, nextProps) =
     const lastReplyTime = getSafeTime(m.lastReplyAt);
     return `${m._id}-${m.replyCount || 0}-${lastReplyTime}-${m.status}`;
   }).join(',');
-  
+
   return (
     prevData === nextData &&
     prevProps.classNamePrefix === nextProps.classNamePrefix &&

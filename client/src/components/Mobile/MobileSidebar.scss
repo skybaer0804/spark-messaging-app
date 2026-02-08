@@ -10,29 +10,18 @@
   padding-bottom: var(--safe-area-inset-bottom);
 
   &__profile {
-    padding: 24px 16px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-
-    &:hover {
-      background-color: var(--color-background-secondary);
-    }
-  }
-
-  &__profile-info {
-    display: flex;
-    flex-direction: column;
+    padding: 0px 0px;
   }
 
   &__divider {
     height: 1px;
     background-color: var(--color-border-default);
-    margin: 0 16px;
+    margin: 0 8px;
   }
 
   &__nav {
     flex: 1;
-    padding: 16px 8px;
+    padding: 8px 8px;
     display: flex;
     flex-direction: column;
     gap: 4px;

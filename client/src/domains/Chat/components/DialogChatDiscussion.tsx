@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { IconX, IconPlus } from '@tabler/icons-preact';
 import { Dialog } from '@/ui-components/Dialog/Dialog';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Button } from '@/ui-components/Button/Button';
@@ -10,6 +11,7 @@ import { AutocompleteMember } from './AutocompleteMember';
 import { AutocompleteChannelAndTeam } from './AutocompleteChannelAndTeam';
 import { useChat } from '../context/ChatContext';
 import { useAuth } from '@/core/hooks/useAuth';
+import { useTheme } from '@/core/context/ThemeProvider';
 import { useToast } from '@/core/context/ToastContext';
 import { currentWorkspaceId } from '@/stores/chatRoomsStore';
 import type { ChatUser, ChatRoom } from '../types';
@@ -29,7 +31,9 @@ export const DialogChatDiscussion = ({
 }: DialogChatDiscussionProps) => {
   const { roomList, userList } = useChat();
   const { user } = useAuth();
-  const { showSuccess, showError } = useToast();
+  const { deviceSize } = useTheme();
+  const { showError } = useToast();
+  const isMobile = deviceSize === 'mobile';
 
   const [discussionData, setDiscussionData] = useState({
     parentRoom: null as ChatRoom | null,
@@ -104,11 +108,29 @@ export const DialogChatDiscussion = ({
       maxWidth={false}
       style={{ maxWidth: '600px' }}
       fullWidth
+      className="dialog--mobile-overlay"
       actions={
-        <Flex gap="sm">
-          <Button onClick={handleClose}>취소</Button>
-          <Button variant="primary" disabled={!isFormValid} onClick={handleSubmit}>
-            개설
+        <Flex gap="sm" style={isMobile ? { width: '100%' } : {}}>
+          <Button
+            onClick={handleClose}
+            variant="secondary"
+            style={isMobile ? { flex: 4.5 } : {}}
+          >
+            <Flex align="center" gap="xs" justify="center">
+              <IconX size={18} />
+              <span>취소</span>
+            </Flex>
+          </Button>
+          <Button
+            variant="primary"
+            disabled={!isFormValid}
+            onClick={handleSubmit}
+            style={isMobile ? { flex: 5.5 } : {}}
+          >
+            <Flex align="center" gap="xs" justify="center">
+              <IconPlus size={18} />
+              <span>개설</span>
+            </Flex>
           </Button>
         </Flex>
       }

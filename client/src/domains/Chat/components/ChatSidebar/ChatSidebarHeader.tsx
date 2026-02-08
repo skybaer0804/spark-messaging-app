@@ -16,6 +16,7 @@ import {
   IconHome,
 } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
+import { useTheme } from '@/core/context/ThemeProvider';
 import { authApi } from '@/core/api/ApiService';
 import { useToast } from '@/core/context/ToastContext';
 import { useRouterState } from '@/routes/RouterState';
@@ -43,7 +44,8 @@ export const ChatSidebarHeader = ({
 }: ChatSidebarHeaderProps) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { user: currentUser, signOut } = useAuth();
-  const { showInfo, showSuccess } = useToast();
+  const { deviceSize } = useTheme();
+  const { showSuccess } = useToast();
   const { navigate, pathname } = useRouterState();
 
   const handleUpdateStatus = async (status: string) => {
@@ -101,7 +103,7 @@ export const ChatSidebarHeader = ({
           e.stopPropagation();
           setShowProfileMenu(!showProfileMenu);
         }}
-        style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center' }}
+        style={{ cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', marginLeft: '7px' }}
       >
         <div className="avatar">
           <Avatar src={currentUser?.profileImage} variant="rounded" size="sm" style={{ backgroundColor: '#23D5AB' }}>
@@ -199,18 +201,20 @@ export const ChatSidebarHeader = ({
       )}
 
       <div className="chat-app__sidebar-actions">
-        <IconButton
-          size="small"
-          title="채팅 홈"
-          active={pathname === '/chatapp'}
-          color={pathname === '/chatapp' ? 'primary' : 'secondary'}
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate('/chatapp');
-          }}
-        >
-          <IconHome size={20} />
-        </IconButton>
+        {deviceSize !== 'mobile' && (
+          <IconButton
+            size="small"
+            title="채팅 홈"
+            active={pathname === '/chatapp'}
+            color={pathname === '/chatapp' ? 'primary' : 'secondary'}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate('/chatapp');
+            }}
+          >
+            <IconHome size={20} />
+          </IconButton>
+        )}
         <IconButton 
           size="small" 
           title="검색" 

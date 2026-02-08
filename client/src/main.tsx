@@ -3,6 +3,7 @@ import { registerSW } from 'virtual:pwa-register';
 import { App } from './app';
 import { AuthProvider } from '@/core/context/AuthContext';
 import { ToastProvider } from '@/core/context/ToastContext';
+import { ConfirmProvider } from '@/core/context/ConfirmContext';
 import { ThemeProvider } from '@/core/context/ThemeProvider';
 import './index.css';
 
@@ -26,12 +27,14 @@ if ('requestIdleCallback' in window) {
 }
 
 render(
-  <ToastProvider>
-    <ThemeProvider>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </ThemeProvider>
-  </ToastProvider>,
+  <ThemeProvider>
+    <ToastProvider>
+      <ConfirmProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ConfirmProvider>
+    </ToastProvider>
+  </ThemeProvider>,
   document.getElementById('app')!,
 );

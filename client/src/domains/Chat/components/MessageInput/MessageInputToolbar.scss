@@ -1,27 +1,15 @@
 @use '/src/styles/tokens/index';
 
 .message-input-toolbar-container {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .message-input-toolbar {
-  padding: var(--space-padding-xs, 8px) var(--space-padding-sm, 12px);
+  padding: var(--space-padding-xs, 4px) var(--space-padding-sm, 8px);
   background-color: var(--color-background-primary);
   border-top: 1px solid var(--color-border-default);
-  border-radius: 0 0 var(--primitive-radius-md) var(--primitive-radius-md);
-
-  &__more-panel {
-    background-color: var(--color-background-secondary);
-    border-top: 1px solid var(--color-border-default);
-    padding: 8px;
-    animation: slideUp 0.2s ease-out;
-  }
 
   &__button {
     transition: background-color 0.2s, opacity 0.2s;
@@ -29,7 +17,7 @@
     &:hover:not(:disabled) {
       background-color: var(--color-background-secondary);
     }
- 
+
     &:active:not(:disabled) {
       background-color: var(--color-surface-level-1);
     }
@@ -38,19 +26,17 @@
       opacity: 0.4;
       cursor: not-allowed;
     }
+
+    &--send {
+      margin-left: auto;
+    }
   }
 
   &__divider {
     width: 1px;
-    height: 24px;
+    height: 18px;
     background-color: var(--color-border-default);
-    margin: 0 var(--space-gap-xs);
-  }
-
-  &__button {
-    &--send {
-      margin-left: auto; // 전송 버튼을 오른쪽 끝으로
-    }
+    margin: 0 4px;
   }
 }
 
@@ -61,6 +47,8 @@
   background-color: var(--color-background-primary);
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
 
   // Input 컴포넌트 스타일 오버라이드
   .input-group {
@@ -79,7 +67,13 @@
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    padding-bottom: 48px !important; // 툴바 공간 확보
+  }
+
+  // 모바일 특화 스타일
+  &--mobile {
+    border: none;
+    border-top: 1px solid var(--color-border-default);
+    border-radius: 0;
   }
 }
 
@@ -88,6 +82,7 @@
     transform: translateY(10px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;

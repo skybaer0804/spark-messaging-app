@@ -10,6 +10,7 @@ export interface InputProps extends Omit<JSX.HTMLAttributes<HTMLInputElement | H
   fullWidth?: boolean;
   placeholder?: string;
   disabled?: boolean;
+  readOnly?: boolean;
   value?: string | number;
   rows?: number;
   type?: string;

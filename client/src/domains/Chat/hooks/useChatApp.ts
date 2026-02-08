@@ -114,7 +114,7 @@ export function useChatApp() {
           team: '팀',
           discussion: '토론',
         };
-        showSuccess(`${typeMap[type] || type}이 생성되었습니다.`);
+        // showSuccess(`${typeMap[type] || type}이 생성되었습니다.`);
       }
 
       return newRoom;

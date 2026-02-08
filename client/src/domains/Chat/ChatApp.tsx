@@ -20,11 +20,13 @@ import { ChatMessages } from './components/ChatMessages';
 import { ChatSettingPanel } from './components/ChatSettingPanel/ChatSettingPanel';
 import { ImageModal } from './components/ImageModal';
 import { ChatThreadPanel } from './components/ChatThreadPanel';
+import { ChatInfoPanel } from './components/ChatInfoPanel';
 import { Loading } from '@/ui-components/Loading/Loading';
 import { DialogForward } from './components/DialogForward';
 import type { Message } from './types';
 import { MobileHeader } from '@/components/Mobile/MobileHeader';
-import './ChatApp.scss';
+import { MobileSlidePanel } from '@/components/Mobile/MobileSlidePanel';
+import './components/Chat.scss';
 
 function ChatAppContent() {
   const { pathname, navigate } = useRouterState();
@@ -46,6 +48,7 @@ function ChatAppContent() {
     sendMessage,
     handleRoomSelect: handleRoomSelectRaw,
     handleCreateRoom,
+    leaveRoom,
     sendFile,
     uploadingFile,
     uploadProgress,
@@ -93,8 +96,9 @@ function ChatAppContent() {
       const roomId = pathname.split('/').pop();
       if (roomId && currentRoom?._id !== roomId && roomList.length > 0) {
         onRoomSelect(roomId);
-        // 방이 변경되면 우측 패널 닫기
+        // 방이 변경되면 우측 패널 및 스레드 선택 상태 초기화
         setRightPanel('none');
+        setSelectedThreadMessage(null);
       }
     }
   }, [pathname, currentRoom?._id, roomList, view]);
@@ -137,7 +141,7 @@ function ChatAppContent() {
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imageModal, setImageModal] = useState<{ url: string; fileName: string } | null>(null);
-  const [rightPanel, setRightPanel] = useState<'none' | 'members' | 'settings' | 'thread'>('none');
+  const [rightPanel, setRightPanel] = useState<'none' | 'members' | 'settings' | 'thread' | 'info'>('none');
   const [selectedThreadMessage, setSelectedThreadMessage] = useState<Message | null>(null);
   const [forwardModalMessage, setForwardModalMessage] = useState<Message | null>(null);
   const { user: currentUser } = useAuth();
@@ -217,21 +221,21 @@ function ChatAppContent() {
   const showMainContent = !isMobile || view === 'chat' || view === 'directory';
 
   return (
-    <Box 
-      style={{ 
-        display: 'flex', 
+    <Box
+      style={{
+        display: 'flex',
         height: '100%', // 100dvh 대신 안전한 100%로 복구 (CSS에서 dvh 처리)
         width: '100%',
-        minHeight: 0, 
+        minHeight: 0,
         position: 'relative',
-        overflow: 'hidden' 
-      }} 
+        overflow: 'hidden'
+      }}
       className="chat-app__container"
     >
       {/* Forward Modal - Rendered at top level */}
       {forwardModalMessage && (
         <DialogForward
-          open={!!forwardModalMessage}  
+          open={!!forwardModalMessage}
           message={forwardModalMessage}
           roomList={roomList}
           userList={userList}
@@ -250,7 +254,7 @@ function ChatAppContent() {
             width: isMobile ? '100%' : '300px',
             height: '100%',
             flexShrink: 0,
-            display: 'flex', 
+            display: 'flex',
             flexDirection: 'column',
             minHeight: 0,
           }}
@@ -297,9 +301,11 @@ function ChatAppContent() {
                 showUserList={rightPanel === 'members'}
                 showSettings={rightPanel === 'settings'}
                 showThreads={rightPanel === 'thread'}
+                showInfo={rightPanel === 'info'}
                 setShowUserList={(show: boolean) => setRightPanel(show ? 'members' : 'none')}
                 setShowSettings={(show: boolean) => setRightPanel(show ? 'settings' : 'none')}
                 setShowThreads={(show: boolean) => setRightPanel(show ? 'thread' : 'none')}
+                setShowInfo={(show: boolean) => setRightPanel(show ? 'info' : 'none')}
                 className="chat-app__header"
               />
 
@@ -307,10 +313,10 @@ function ChatAppContent() {
                 {/* 메인 채팅 영역 (메시지 + 입력창) */}
                 <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative' }}>
                   {isRoomLoading ? (
-                    <Box style={{ 
-                      flex: 1, 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    <Box style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
                       justifyContent: 'center',
                       background: 'var(--color-background-primary)',
                       opacity: 0.8,
@@ -344,10 +350,9 @@ function ChatAppContent() {
                     placeholder={
                       !isConnected
                         ? 'Connecting...'
-                        : `Message #${
-                            currentRoom.displayName ||
-                            getDirectChatName(currentRoom, currentUser?.id || (currentUser as any)?._id)
-                          }`
+                        : `Message #${currentRoom.displayName ||
+                        getDirectChatName(currentRoom, currentUser?.id || (currentUser as any)?._id)
+                        }`
                     }
                     showFileUpload={true}
                     onSendMessage={sendMessage}
@@ -360,16 +365,42 @@ function ChatAppContent() {
                 </Box>
 
                 {/* Right Sidebar */}
-                {rightPanel === 'members' && <ChatMemberPanel members={currentRoom.members} onClose={() => setRightPanel('none')} />}
-                {rightPanel === 'settings' && <ChatSettingPanel roomId={currentRoom._id} currentRoom={currentRoom} onClose={() => setRightPanel('none')} />}
-                {rightPanel === 'thread' && (
-                  <ChatThreadPanel 
-                    roomId={currentRoom._id} 
-                    currentRoom={currentRoom}
-                    currentUser={currentUser as any}
-                    onClose={() => setRightPanel('none')}
-                    initialSelectedMessage={selectedThreadMessage}
-                  />
+                {isMobile ? (
+                  <>
+                    <MobileSlidePanel open={rightPanel === 'members'} onClose={() => setRightPanel('none')} noHeader>
+                      <ChatMemberPanel members={currentRoom.members} onClose={() => setRightPanel('none')} />
+                    </MobileSlidePanel>
+                    <MobileSlidePanel open={rightPanel === 'settings'} onClose={() => setRightPanel('none')} noHeader>
+                      <ChatSettingPanel roomId={currentRoom._id} currentRoom={currentRoom} onClose={() => setRightPanel('none')} />
+                    </MobileSlidePanel>
+                    <MobileSlidePanel open={rightPanel === 'info'} onClose={() => setRightPanel('none')} noHeader>
+                      <ChatInfoPanel currentRoom={currentRoom} onClose={() => setRightPanel('none')} onLeave={() => leaveRoom(currentRoom._id)} />
+                    </MobileSlidePanel>
+                    <MobileSlidePanel open={rightPanel === 'thread'} onClose={() => setRightPanel('none')} noHeader>
+                      <ChatThreadPanel
+                        roomId={currentRoom._id}
+                        currentRoom={currentRoom}
+                        currentUser={currentUser as any}
+                        onClose={() => setRightPanel('none')}
+                        initialSelectedMessage={selectedThreadMessage}
+                      />
+                    </MobileSlidePanel>
+                  </>
+                ) : (
+                  <>
+                    {rightPanel === 'members' && <ChatMemberPanel members={currentRoom.members} onClose={() => setRightPanel('none')} />}
+                    {rightPanel === 'settings' && <ChatSettingPanel roomId={currentRoom._id} currentRoom={currentRoom} onClose={() => setRightPanel('none')} />}
+                    {rightPanel === 'info' && <ChatInfoPanel currentRoom={currentRoom} onClose={() => setRightPanel('none')} onLeave={() => leaveRoom(currentRoom._id)} />}
+                    {rightPanel === 'thread' && (
+                      <ChatThreadPanel
+                        roomId={currentRoom._id}
+                        currentRoom={currentRoom}
+                        currentUser={currentUser as any}
+                        onClose={() => setRightPanel('none')}
+                        initialSelectedMessage={selectedThreadMessage}
+                      />
+                    )}
+                  </>
                 )}
               </Box>
             </>
