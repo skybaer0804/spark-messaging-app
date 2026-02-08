@@ -15,25 +15,41 @@ export function useChatCore(adapter: ChatAdapter) {
   const input = hasInputSignal ? '' : localInput;
   const setInput = hasInputSignal
     ? (value: string) => {
-        adapter.setInput?.(value);
-      }
+      adapter.setInput?.(value);
+    }
     : setLocalInput;
 
   const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+
+      // 텍스트가 있거나 선택된 파일이 있으면 전송
+      const currentInput = hasInputSignal ? adapter.getInput?.() || '' : localInput;
+      if (currentInput.trim() || selectedFiles.length > 0) {
+        handleSendMessage();
+      }
     }
   };
 
   const handleSendMessage = async () => {
     // Signal이 있으면 adapter.getInput()을 사용, 없으면 로컬 state 사용
     const currentInput = hasInputSignal ? adapter.getInput?.() || '' : localInput;
-    if (!currentInput.trim() || !adapter.isConnected()) return;
+    const hasFiles = selectedFiles.length > 0;
+
+    if (!adapter.isConnected()) return;
+    if (!currentInput.trim() && !hasFiles) return;
 
     try {
-      await adapter.sendMessage(currentInput.trim());
-      setInput('');
+      // 텍스트가 있으면 메시지 전송
+      if (currentInput.trim()) {
+        await adapter.sendMessage(currentInput.trim());
+        setInput('');
+      }
+
+      // 파일이 있으면 파일 전송
+      if (hasFiles) {
+        await handleFileSend();
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
     }

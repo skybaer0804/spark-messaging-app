@@ -23,66 +23,92 @@ function FilePreviewComponent({ files, uploadingFile, uploadProgress = 0, onRemo
   }
 
   return (
-    <Stack spacing="xs">
-      {files.map((file: File, index: number) => (
-        <Paper
-          key={index}
-          variant="outlined"
-          padding="sm"
-          style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-gap-xs)' }}
-        >
-          <Box style={{ fontSize: '1.25rem' }}>{getFileIcon(file.type)}</Box>
-          <Box style={{ flex: 1 }}>
-            <Typography variant="body-medium" style={{ fontWeight: 500 }}>
-              {file.name}
-            </Typography>
-            <Typography variant="caption" color="text-tertiary">
-              {formatFileSize(file.size)}
-            </Typography>
-          </Box>
-          <IconButton size="small" onClick={() => onRemove(index)} color="error">
-            <IconX size={14} />
-          </IconButton>
-        </Paper>
-      ))}
-      {uploadingFile && (
-        <Box
-          style={{
-            padding: 'var(--space-padding-card-xs) var(--space-padding-card-sm)',
-            background: 'var(--color-background-secondary)',
-            borderRadius: 'var(--shape-radius-sm)',
-          }}
-        >
-          <Flex align="center" gap="sm">
-            <Box style={{ flex: 1 }}>
-              <Typography variant="caption" color="interactive-primary" style={{ fontWeight: 500 }}>
-                {uploadingFile.name} 전송 중... {Math.round(uploadProgress)}%
-              </Typography>
-              <Box
+    <Box
+      className="file-preview-container"
+      style={{
+        width: '100%',
+        overflowX: 'auto',
+        padding: 'var(--space-padding-xs) 0',
+      }}
+    >
+      <Flex gap="xs" style={{ minWidth: 'min-content' }}>
+        {files.map((file: File, index: number) => (
+          <Paper
+            key={index}
+            variant="outlined"
+            padding="sm"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-gap-xs)',
+              width: '240px',
+              flexShrink: 0,
+              backgroundColor: 'var(--color-background-secondary)'
+            }}
+          >
+            <Box style={{ fontSize: '1.25rem' }}>{getFileIcon(file.type)}</Box>
+            <Box style={{ flex: 1, overflow: 'hidden' }}>
+              <Typography
+                variant="body-medium"
                 style={{
-                  height: '6px',
-                  width: '100%',
-                  background: 'var(--color-border-default)',
-                  borderRadius: 'var(--shape-radius-xs)',
-                  marginTop: '4px',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
                   overflow: 'hidden',
+                  textOverflow: 'ellipsis'
                 }}
               >
+                {file.name}
+              </Typography>
+              <Typography variant="caption" color="text-tertiary">
+                {formatFileSize(file.size)}
+              </Typography>
+            </Box>
+            <IconButton size="small" onClick={() => onRemove(index)} color="error">
+              <IconX size={14} />
+            </IconButton>
+          </Paper>
+        ))}
+        {uploadingFile && (
+          <Box
+            style={{
+              padding: 'var(--space-padding-card-xs) var(--space-padding-card-sm)',
+              background: 'var(--color-background-secondary)',
+              borderRadius: 'var(--shape-radius-sm)',
+              width: '240px',
+              flexShrink: 0,
+            }}
+          >
+            <Flex align="center" gap="sm">
+              <Box style={{ flex: 1 }}>
+                <Typography variant="caption" color="interactive-primary" style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {uploadingFile.name} 전송 중...
+                </Typography>
                 <Box
                   style={{
-                    height: '100%',
-                    width: `${uploadProgress}%`,
-                    background: 'var(--color-interactive-primary)',
+                    height: '6px',
+                    width: '100%',
+                    background: 'var(--color-border-default)',
                     borderRadius: 'var(--shape-radius-xs)',
-                    transition: 'width 0.3s ease',
+                    marginTop: '4px',
+                    overflow: 'hidden',
                   }}
-                />
+                >
+                  <Box
+                    style={{
+                      height: '100%',
+                      width: `${uploadProgress}%`,
+                      background: 'var(--color-interactive-primary)',
+                      borderRadius: 'var(--shape-radius-xs)',
+                      transition: 'width 0.3s ease',
+                    }}
+                  />
+                </Box>
               </Box>
-            </Box>
-          </Flex>
-        </Box>
-      )}
-    </Stack>
+            </Flex>
+          </Box>
+        )}
+      </Flex>
+    </Box>
   );
 }
 

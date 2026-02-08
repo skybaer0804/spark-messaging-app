@@ -10,9 +10,13 @@
   padding: var(--space-padding-xs, 4px) var(--space-padding-sm, 8px);
   background-color: var(--color-background-primary);
   border-top: 1px solid var(--color-border-default);
+  min-height: 40px;
+  flex-wrap: nowrap;
+  overflow: hidden;
 
   &__button {
     transition: background-color 0.2s, opacity 0.2s;
+    flex-shrink: 0;
 
     &:hover:not(:disabled) {
       background-color: var(--color-background-secondary);
@@ -29,7 +33,29 @@
 
     &--send {
       margin-left: auto;
+      color: var(--color-interactive-primary);
     }
+
+    &--essential {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  &__toggle {
+    display: none;
+    color: var(--color-text-tertiary);
+
+    &--active {
+      background-color: var(--color-background-secondary);
+      color: var(--color-interactive-primary);
+    }
+  }
+
+  &__formats {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    transition: all 0.2s ease;
   }
 
   &__divider {
@@ -37,6 +63,68 @@
     height: 18px;
     background-color: var(--color-border-default);
     margin: 0 4px;
+    flex-shrink: 0;
+  }
+}
+
+// 반응형 처리: 폭이 좁을 때 포맷 버튼 숨기기
+@media (max-width: 600px) {
+  .message-input-toolbar {
+    &__toggle {
+      display: flex;
+    }
+
+    &__formats {
+      position: absolute;
+      bottom: 100%;
+      left: 8px;
+      background: var(--color-background-primary);
+      padding: 8px;
+      border-radius: var(--primitive-radius-md);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--color-border-default);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      z-index: 100;
+
+      &--visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(-8px);
+      }
+    }
+  }
+}
+
+// 스레드 상세나 사이드바 내의 입력창에서도 축약 모드 강제 적용
+.thread-detail__input-paper,
+.chat-sidebar__input-paper {
+  .message-input-toolbar {
+    &__toggle {
+      display: flex;
+    }
+
+    &__formats {
+      position: absolute;
+      bottom: 100%;
+      left: 8px;
+      background: var(--color-background-primary);
+      padding: 8px;
+      border-radius: var(--primitive-radius-md);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--color-border-default);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      z-index: 100;
+
+      &--visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(-8px);
+      }
+    }
   }
 }
 

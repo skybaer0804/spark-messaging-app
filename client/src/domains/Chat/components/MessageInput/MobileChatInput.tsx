@@ -8,7 +8,6 @@ interface MobileChatInputProps {
   input: string;
   setInput: (value: string) => void;
   onSendMessage: () => void;
-  onSendFile: () => void;
   onFileClick: () => void;
   onEmojiClick: () => void;
   onMentionClick: () => void;
@@ -26,7 +25,6 @@ export function MobileChatInput({
   input,
   setInput,
   onSendMessage,
-  onSendFile,
   onFileClick,
   onEmojiClick,
   onMentionClick,
@@ -39,7 +37,6 @@ export function MobileChatInput({
   setIsComposing,
   setFormattingComposing,
 }: MobileChatInputProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleInput = (e: any) => {
     const target = e.target as HTMLTextAreaElement;
@@ -105,7 +102,7 @@ export function MobileChatInput({
       </div>
 
       <div className="mobile-chat-input__right">
-        {input.trim().length === 0 ? (
+        {!canSend ? (
           <IconButton
             onClick={onMentionClick}
             disabled={!isConnected}
@@ -115,8 +112,8 @@ export function MobileChatInput({
           </IconButton>
         ) : (
           <IconButton
-            onClick={canSend ? onSendMessage : undefined}
-            disabled={!isConnected || !canSend}
+            onClick={onSendMessage}
+            disabled={!isConnected}
             className="mobile-chat-input__icon-btn mobile-chat-input__icon-btn--send"
           >
             <IconSend size={24} />

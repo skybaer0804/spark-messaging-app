@@ -163,12 +163,18 @@ function ChatInputComponent({
               input={input}
               setInput={setInput}
               onSendMessage={onSendMessage}
-              onSendFile={onSendFile}
               onFileClick={() => fileInputRef.current?.click()}
               onEmojiClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
               onMentionClick={handleMentionTrigger}
               onEmojiButtonRef={(el) => { if (el) emojiButtonRef.current = el; }}
-              onKeyPress={(e) => { if (!isComposing) onKeyPress(e); }}
+              onKeyPress={(e) => {
+                // 엔터 키는 항상 허용하여 전송 가능하게 함
+                if (e.key === 'Enter') {
+                  onKeyPress(e as any);
+                } else if (!isComposing) {
+                  onKeyPress(e as any);
+                }
+              }}
               isConnected={isConnected}
               placeholder={placeholder}
               canSend={input.trim().length > 0 || selectedFiles.length > 0}
@@ -213,12 +219,29 @@ function ChatInputComponent({
                     });
                   }
                 }}
-                onKeyPress={(e) => {
-                  if (!isComposing) {
-                    onKeyPress(e);
+                onKeyDown={(e) => {
+                  // 포맷 단축키 처리
+                  if (typeof handleFormatKeyDown === 'function') {
+                    handleFormatKeyDown(e as any);
+                  }
+
+                  // 엔터 키 전송 처리
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    const hasText = input.trim().length > 0;
+                    const hasFiles = selectedFiles.length > 0;
+
+                    if (isConnected && (hasText || hasFiles)) {
+                      // 파일이 있으면 파일 전송 핸들러, 없으면 메시지 핸들러 호출
+                      // Chat.tsx에서 두 핸들러는 handleSendAll로 통합되어 있음
+                      if (hasFiles) {
+                        onSendFile();
+                      } else {
+                        onSendMessage();
+                      }
+                    }
                   }
                 }}
-                onKeyDown={handleFormatKeyDown}
                 placeholder={placeholder || (isConnected ? '메시지를 입력하세요...' : '연결 중...')}
                 disabled={!isConnected}
                 fullWidth
@@ -369,17 +392,5 @@ function ChatInputComponent({
   );
 }
 
-// memo로 메모이제이션하여 props가 변경되지 않으면 리렌더링 방지
-export const ChatInput = memo(ChatInputComponent, (prevProps, nextProps) => {
-  return (
-    prevProps.input === nextProps.input &&
-    prevProps.isConnected === nextProps.isConnected &&
-    prevProps.uploadProgress === nextProps.uploadProgress &&
-    prevProps.selectedFiles.length === nextProps.selectedFiles.length &&
-    prevProps.classNamePrefix === nextProps.classNamePrefix &&
-    prevProps.showFileUpload === nextProps.showFileUpload &&
-    prevProps.placeholder === nextProps.placeholder &&
-    prevProps.members === nextProps.members &&
-    prevProps.roomMembers === nextProps.roomMembers
-  );
-});
+// memo로 메모이제이션하여 리렌더링 방지
+export const ChatInput = memo(ChatInputComponent);
