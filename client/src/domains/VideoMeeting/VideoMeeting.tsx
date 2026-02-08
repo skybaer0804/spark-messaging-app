@@ -136,31 +136,34 @@ export function VideoMeeting() {
   const { deviceSize } = useTheme();
 
   return (
-    <div className="video-meeting" ref={containerRef}>
+    <div className={`video-meeting ${currentRoom ? 'video-meeting--in-room' : ''}`}>
       {deviceSize === 'mobile' && <MobileHeader />}
-      {/* 화상회의 핵심 로직 (룸 리스트, 룸 생성, 참가 요청 등) */}
-      <VideoMeetingCore store={videoMeetingStore} />
 
-      {/* 룸 상세 화면에서만 영상과 채팅 표시 */}
-      {currentRoom && (
-        <div className="video-meeting__main-content">
-          {/* 영상 영역 */}
-          <div className="video-meeting__video-section" style={{ flex: 1 }}>
-            {videoConferenceAdapter && <VideoConference adapter={videoConferenceAdapter} />}
+      <div className="video-meeting__container" ref={containerRef}>
+        {/* 화상회의 핵심 로직 (룸 리스트, 룸 생성, 참가 요청 등) */}
+        <VideoMeetingCore store={videoMeetingStore} />
+
+        {/* 룸 상세 화면에서만 영상과 채팅 표시 */}
+        {currentRoom && (
+          <div className="video-meeting__main-content">
+            {/* 영상 영역 */}
+            <div className="video-meeting__video-section" style={{ flex: 1 }}>
+              {videoConferenceAdapter && <VideoConference adapter={videoConferenceAdapter} />}
+            </div>
+
+            {/* v2.4.0: Resizable Splitter */}
+            <div
+              className={`video-meeting__splitter ${isResizing ? 'video-meeting__splitter--active' : ''}`}
+              onMouseDown={startResizing}
+            />
+
+            {/* 채팅 영역 */}
+            <div className="video-meeting__chat-section" style={{ width: `${chatWidth}px`, flexShrink: 0 }}>
+              {chatAdapterInstance && <Chat adapter={chatAdapterInstance} classNamePrefix="video-meeting__chat" />}
+            </div>
           </div>
-
-          {/* v2.4.0: Resizable Splitter */}
-          <div
-            className={`video-meeting__splitter ${isResizing ? 'video-meeting__splitter--active' : ''}`}
-            onMouseDown={startResizing}
-          />
-
-          {/* 채팅 영역 */}
-          <div className="video-meeting__chat-section" style={{ width: `${chatWidth}px`, flexShrink: 0 }}>
-            {chatAdapterInstance && <Chat adapter={chatAdapterInstance} classNamePrefix="video-meeting__chat" />}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

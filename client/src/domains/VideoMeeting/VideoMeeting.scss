@@ -1,13 +1,38 @@
 .video-meeting {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  flex-shrink: 0;
   width: 100%;
-  overflow: hidden;
   background-color: var(--color-background-secondary);
+  // 미세한 도트 패턴 추가 (HomePage와 통일)
+  background-image: radial-gradient(var(--color-border-default) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+
+  &--in-room {
+    height: 100%;
+    overflow: hidden;
+    flex: none; // 회의 중에는 고정 높이 사용
+  }
 
   @media (max-width: 768px) {
     background-color: var(--color-background-primary);
+    background-image: none;
+  }
+
+  &__container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    background-color: transparent;
+
+    @media (max-width: 768px) {
+      max-width: 100%;
+    }
   }
 
   &__main-content {
@@ -15,6 +40,7 @@
     flex: 1;
     min-height: 0; // 추가: 중요
     overflow: hidden;
+
     @media (max-width: 768px) {
       flex-direction: column;
     }
@@ -23,6 +49,7 @@
   &__video-section {
     flex: 1;
     min-height: 0;
+
     // border-right 제거 (splitter가 대신함)
     @media (max-width: 768px) {
       flex: 0 0 40%;
@@ -53,6 +80,7 @@
     display: flex;
     flex-direction: column;
     background-color: var(--color-bg-secondary);
+
     @media (max-width: 768px) {
       width: 100%;
       flex: 1;

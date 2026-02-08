@@ -48,10 +48,10 @@ export function HomePage() {
   ];
 
   return (
-    <Box className="home-page" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0, overflow: 'hidden' }}>
+    <Box className="home-page">
       {deviceSize === 'mobile' && <MobileHeader />}
-      
-      <div className="home-page__container" style={{ flex: 1, overflowY: 'auto', padding: deviceSize === 'mobile' ? '20px' : 'var(--space-padding-xl)' }}>
+
+      <div className="home-page__container">
         {/* 히어로 섹션 */}
         <section className="home-page__hero">
           <Stack spacing="sm">
