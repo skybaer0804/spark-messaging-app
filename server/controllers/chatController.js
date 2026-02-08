@@ -1414,3 +1414,85 @@ exports.setActiveRoom = async (req, res) => {
     res.status(500).json({ message: 'Failed to set active room', error: error.message });
   }
 };
+
+// [v2.6.0] 채팅방 멤버 강퇴 (Owner 전용)
+exports.removeRoomMember = async (req, res) => {
+  try {
+    const { roomId, userId } = req.params;
+    const currentUserId = req.user.id;
+
+    const room = await ChatRoom.findById(roomId);
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    // 권한 확인: 방장(createdBy)만 강퇴 가능
+    const isOwner = room.createdBy && room.createdBy.toString() === currentUserId.toString();
+    if (!isOwner) {
+      // 하위 호환성: 첫 번째 멤버를 방장으로 간주하는 로직
+      const firstMemberId = room.members[0]?.toString();
+      if (firstMemberId !== currentUserId.toString()) {
+        return res.status(403).json({ message: 'Only the room owner can remove members' });
+      }
+    }
+
+    // 자기 자신은 강퇴할 수 없음 (나가기 기능 이용)
+    if (userId === currentUserId) {
+      return res.status(400).json({ message: 'Cannot remove yourself. Use leave room instead.' });
+    }
+
+    // 1. ChatRoom의 members 배열에서 사용자 제거
+    room.members = room.members.filter((m) => m.toString() !== userId.toString());
+    await room.save();
+
+    // 2. UserChatRoom 레코드 삭제 (사용자의 방 목록에서 제거)
+    await UserChatRoom.findOneAndDelete({ userId, roomId });
+
+    // 3. 강퇴당한 사용자에게 알림 (목록에서 즉시 제거)
+    socketService.notifyRoomListUpdated(userId, {
+      _id: roomId,
+      isRemoved: true,
+      targetUserId: userId,
+    });
+
+    // 4. 남은 멤버들에게 알림 (멤버 목록 갱신)
+    const updatedRoom = await ChatRoom.findById(roomId).populate('members', 'username profileImage status statusText');
+    updatedRoom.members.forEach((member) => {
+      socketService.notifyRoomListUpdated(member._id.toString(), {
+        ...updatedRoom.toObject(),
+        targetUserId: member._id.toString()
+      });
+    });
+
+    // 5. 시스템 메시지 생성 (강퇴 알림)
+    const targetUser = await User.findById(userId).select('username');
+    const systemMessage = new Message({
+      roomId,
+      senderId: currentUserId,
+      content: `${targetUser?.username || '알 수 없는 사용자'}님이 강퇴되었습니다.`,
+      type: 'system',
+      sequenceNumber: room.lastSequenceNumber + 1,
+    });
+    await systemMessage.save();
+
+    await ChatRoom.findByIdAndUpdate(roomId, {
+      $inc: { lastSequenceNumber: 1 },
+      lastMessage: systemMessage._id
+    });
+
+    await socketService.sendRoomMessage(roomId, 'system', {
+      _id: systemMessage._id,
+      roomId,
+      content: systemMessage.content,
+      senderId: currentUserId,
+      senderName: 'System',
+      sequenceNumber: systemMessage.sequenceNumber,
+      timestamp: systemMessage.timestamp,
+    }, currentUserId);
+
+    res.json({ message: 'Member removed successfully' });
+  } catch (error) {
+    console.error('RemoveRoomMember error:', error);
+    res.status(500).json({ message: 'Failed to remove member', error: error.message });
+  }
+};

@@ -20,6 +20,7 @@ const {
   forwardMessage,
   getThreadList,
   getThreadMessages,
+  removeRoomMember, // 추가
 } = require('../controllers/chatController');
 const auth = require('../middleware/auth');
 const workspaceAuth = require('../middleware/workspaceAuth');
@@ -42,6 +43,7 @@ router.get('/message/:messageId', getMessageById);
 router.get('/sync/:roomId', syncMessages);
 router.post('/read/:roomId', markAsRead);
 router.post('/active-room', setActiveRoom);
+router.delete('/rooms/:roomId/members/:userId', workspaceAuth, removeRoomMember); // 강퇴 API 추가
 router.get('/rooms/:roomId/notification-settings', getRoomNotificationSettings);
 router.put('/rooms/:roomId/notification-settings', updateRoomNotificationSettings);
 

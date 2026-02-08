@@ -99,12 +99,13 @@ export const chatApi = {
   deleteRoom: (roomId: string) => api.delete(`/chat/rooms/${roomId}`),
   joinRoomByInvite: (slug: string) => api.post(`/chat/invite/${slug}`),
   leaveRoom: (roomId: string) => api.post(`/chat/leave/${roomId}`),
+  removeRoomMember: (roomId: string, userId: string) => api.delete(`/chat/rooms/${roomId}/members/${userId}`),
   getMessages: (roomId: string) => api.get(`/chat/messages/${roomId}`),
   getMessageById: (messageId: string) => api.get(`/chat/message/${messageId}`),
-  sendMessage: (data: { 
-    roomId: string; 
-    content: string; 
-    type?: string; 
+  sendMessage: (data: {
+    roomId: string;
+    content: string;
+    type?: string;
     tempId?: string;
     parentMessageId?: string | null;
   }) => api.post('/chat/messages', data),

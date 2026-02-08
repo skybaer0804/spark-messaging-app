@@ -368,7 +368,7 @@ function ChatAppContent() {
                 {isMobile ? (
                   <>
                     <MobileSlidePanel open={rightPanel === 'members'} onClose={() => setRightPanel('none')} noHeader>
-                      <ChatMemberPanel members={currentRoom.members} onClose={() => setRightPanel('none')} />
+                      <ChatMemberPanel members={currentRoom.members} currentRoom={currentRoom} onClose={() => setRightPanel('none')} />
                     </MobileSlidePanel>
                     <MobileSlidePanel open={rightPanel === 'settings'} onClose={() => setRightPanel('none')} noHeader>
                       <ChatSettingPanel roomId={currentRoom._id} currentRoom={currentRoom} onClose={() => setRightPanel('none')} />
@@ -388,7 +388,7 @@ function ChatAppContent() {
                   </>
                 ) : (
                   <>
-                    {rightPanel === 'members' && <ChatMemberPanel members={currentRoom.members} onClose={() => setRightPanel('none')} />}
+                    {rightPanel === 'members' && <ChatMemberPanel members={currentRoom.members} currentRoom={currentRoom} onClose={() => setRightPanel('none')} />}
                     {rightPanel === 'settings' && <ChatSettingPanel roomId={currentRoom._id} currentRoom={currentRoom} onClose={() => setRightPanel('none')} />}
                     {rightPanel === 'info' && <ChatInfoPanel currentRoom={currentRoom} onClose={() => setRightPanel('none')} onLeave={() => leaveRoom(currentRoom._id)} />}
                     {rightPanel === 'thread' && (
