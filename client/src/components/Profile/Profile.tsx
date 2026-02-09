@@ -456,63 +456,65 @@ export function Profile() {
     <div className="profile-app">
       {deviceSize === 'mobile' && <MobileHeader />}
 
-      <div className="profile-app__container">
-        {/* Hero Section */}
-        <header className="profile-app__hero">
-          <Box className="profile-app__badge">Account Settings</Box>
-          <Typography variant="h1" className="profile-app__title">
-            사용자 <span className="highlight">설정</span>
-          </Typography>
-          <Typography variant="body-large" color="text-secondary" className="profile-app__desc">
-            개인 프로필과 워크스페이스, 그리고 나만의 테마를 여기서 관리하세요.
-          </Typography>
-        </header>
+      <div className="profile-app__scroll-container">
+        <div className="profile-app__container">
+          {/* Hero Section */}
+          <header className="profile-app__hero">
+            <Box className="profile-app__badge">Account Settings</Box>
+            <Typography variant="h1" className="profile-app__title">
+              사용자 <span className="highlight">설정</span>
+            </Typography>
+            <Typography variant="body-large" color="text-secondary" className="profile-app__desc">
+              개인 프로필과 워크스페이스, 그리고 나만의 테마를 여기서 관리하세요.
+            </Typography>
+          </header>
 
-        {/* Profile Header (Basic Info) */}
-        <Card className="profile-app__header-card">
-          <CardBody>
-            <Flex align="center" gap="lg">
-              <div style={{ position: 'relative' }}>
-                <Avatar size="xl" variant="rounded" className="profile-app__avatar" src={user?.profileImage}>
-                  {formData.username.substring(0, 1)}
-                </Avatar>
-                <div className={`avatar-status-dot avatar-status-dot--${formData.status}`} />
-              </div>
-              <Box>
-                <Typography variant="h2" style={{ fontSize: '1.75rem', fontWeight: 700 }}>
-                  {formData.username}
-                </Typography>
-                <Typography variant="body-medium" color="text-secondary">
-                  {formData.email}
-                </Typography>
-              </Box>
-            </Flex>
-          </CardBody>
-        </Card>
+          {/* Profile Header (Basic Info) */}
+          <Card className="profile-app__header-card">
+            <CardBody>
+              <Flex align="center" gap="lg">
+                <div style={{ position: 'relative' }}>
+                  <Avatar size="xl" variant="rounded" className="profile-app__avatar" src={user?.profileImage}>
+                    {formData.username.substring(0, 1)}
+                  </Avatar>
+                  <div className={`avatar-status-dot avatar-status-dot--${formData.status}`} />
+                </div>
+                <Box>
+                  <Typography variant="h2" style={{ fontSize: '1.75rem', fontWeight: 700 }}>
+                    {formData.username}
+                  </Typography>
+                  <Typography variant="body-medium" color="text-secondary">
+                    {formData.email}
+                  </Typography>
+                </Box>
+              </Flex>
+            </CardBody>
+          </Card>
 
-        {/* Main Content (Tabs) */}
-        <div className="profile-app__tabs-wrapper">
-          <Tabs items={tabItems} defaultValue="info" />
+          {/* Main Content (Tabs) */}
+          <div className="profile-app__tabs-wrapper">
+            <Tabs items={tabItems} defaultValue="info" />
+          </div>
+
+          {/* Footer (Logout) */}
+          <footer className="profile-app__footer">
+            <Divider style={{ marginBottom: '24px' }} />
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={async () => {
+                await signOut();
+                navigate('/login');
+              }}
+              className="logout-btn"
+            >
+              <IconLogout size={18} style={{ marginRight: '8px' }} /> 로그아웃
+            </Button>
+            <Typography variant="caption" color="text-tertiary" style={{ display: 'block', textAlign: 'center', marginTop: '16px' }}>
+              © 2026 Spark Messaging. All rights reserved.
+            </Typography>
+          </footer>
         </div>
-
-        {/* Footer (Logout) */}
-        <footer className="profile-app__footer">
-          <Divider style={{ marginBottom: '24px' }} />
-          <Button
-            variant="secondary"
-            fullWidth
-            onClick={async () => {
-              await signOut();
-              navigate('/login');
-            }}
-            className="logout-btn"
-          >
-            <IconLogout size={18} style={{ marginRight: '8px' }} /> 로그아웃
-          </Button>
-          <Typography variant="caption" color="text-tertiary" style={{ display: 'block', textAlign: 'center', marginTop: '16px' }}>
-            © 2026 Spark Messaging. All rights reserved.
-          </Typography>
-        </footer>
       </div>
     </div>
   );

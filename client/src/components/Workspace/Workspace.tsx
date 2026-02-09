@@ -158,7 +158,8 @@ export function Workspace() {
                 {isAdmin && (
                   <Button variant="primary" size="sm" onClick={() => setShowCreateWorkspace(true)}>
                     <Flex align="center" gap="xs">
-                      <IconPlus size={16} /> 새 워크스페이스
+                      <IconPlus size={16} />
+                      {deviceSize !== 'mobile' && ' 새 워크스페이스'}
                     </Flex>
                   </Button>
                 )}
@@ -205,7 +206,8 @@ export function Workspace() {
                                 {(isAdmin || ws.ownerId === user?.id || !ws.ownerId) && (
                                   <Button variant="secondary" size="sm" onClick={() => handleEditWorkspace(ws)}>
                                     <Flex align="center" gap="xs">
-                                      <IconPencil size={14} /> 수정
+                                      <IconPencil size={14} />
+                                      {deviceSize !== 'mobile' && ' 수정'}
                                     </Flex>
                                   </Button>
                                 )}

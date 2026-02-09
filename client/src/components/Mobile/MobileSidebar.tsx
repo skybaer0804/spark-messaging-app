@@ -6,7 +6,6 @@ import {
   IconMessageCircle,
   IconBell,
   IconVideo,
-  IconPalette,
   IconUsers,
 } from '@tabler/icons-preact';
 import './MobileSidebar.scss';
@@ -20,7 +19,6 @@ export function MobileSidebar() {
     { id: 'chatapp', label: '채팅', path: '/chatapp', icon: <IconMessageCircle size={24} /> },
     { id: 'notification', label: '알림', path: '/notification', icon: <IconBell size={24} /> },
     { id: 'video-meeting', label: '회의', path: '/video-meeting', icon: <IconVideo size={24} /> },
-    { id: 'settings', label: '테마', path: '/settings', icon: <IconPalette size={24} /> },
     { id: 'workspace', label: '워크스페이스', path: '/workspace', icon: <IconUsers size={24} /> },
   ];
 
