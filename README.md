@@ -96,4 +96,4 @@ npm run dev
 
 이 프로젝트는 **MVC 패턴**을 기반으로, 실시간성 보장을 위한 **Socket 서버**와 무거운 작업을 분리한 **Worker 서버**가 유기적으로 결합된 **Micro-services 지향 아키텍처**를 따릅니다.
 
-> 자세한 기술적 분석 내용은 [project_report.md](./project_report.md)를 참고하세요.
+> 자세한 기술적 분석 내용은 [https://dfwjxuuu.gensparkspace.com/](https://dfwjxuuu.gensparkspace.com/)에서 ppt로 확인하세요.
