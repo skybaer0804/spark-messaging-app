@@ -46,6 +46,55 @@ function parseMentions(content, roomMembers) {
   return { mentions, mentionAll, mentionHere };
 }
 
+// [v2.7.3] 푸시 알림 전송 공통 헬퍼 함수
+async function sendPushNotificationHelper(roomId, senderId, senderName, content, allMemberIds, messageData = {}) {
+  const { mentions = [], mentionAll = false, mentionHere = false } = messageData;
+  
+  // 1. 발송 대상 필터링 (나를 제외한 나머지 멤버)
+  const recipientIds = [...new Set(allMemberIds.filter((id) => id !== senderId))];
+  if (recipientIds.length === 0) return;
+
+  // 2. 현재 해당 방을 보고 있는 사용자 제외
+  const activeRooms = await userService.getUsersActiveRooms(recipientIds);
+  const recipientIdsToNotify = recipientIds.filter((id) => {
+    const isNotInRoom = activeRooms[id] !== roomId.toString();
+    return isNotInRoom;
+  });
+  if (recipientIdsToNotify.length === 0) return;
+
+  // 3. 사용자별 알림 설정(방별 설정) 확인
+  const finalRecipients = [];
+  for (const userId of recipientIdsToNotify) {
+    const userChatRoom = await UserChatRoom.findOne({ userId, roomId });
+
+    if (!userChatRoom) {
+      // 설정이 없으면 기본적으로 알림 전송
+      finalRecipients.push(userId);
+      continue;
+    }
+
+    const mode = userChatRoom.notificationMode || 'default';
+    if (mode === 'none') continue; // 알림 끔
+
+    if (mode === 'mention') {
+      // 멘션 모드일 때 멘션 여부 확인
+      const isMentioned = mentions.some((m) => m.toString() === userId) || mentionAll || mentionHere;
+      if (!isMentioned) continue;
+    }
+
+    finalRecipients.push(userId);
+  }
+
+  // 4. 알림 전송
+  if (finalRecipients.length > 0) {
+    notificationService.notifyNewMessage(finalRecipients, senderName, content, roomId, {
+      mentions: mentions.map((m) => m.toString()),
+      mentionAll,
+      mentionHere,
+    });
+  }
+}
+
 // 채팅방 생성
 exports.createRoom = async (req, res) => {
   try {
@@ -1013,6 +1062,15 @@ exports.uploadFile = async (req, res) => {
       }
     }
 
+    // [v2.7.3] 푸시 알림 전송 (첨부파일)
+    await sendPushNotificationHelper(
+      roomId,
+      senderId,
+      sender ? sender.username : 'Unknown',
+      newMessage.content,
+      allMemberIds
+    );
+
     res.status(201).json(newMessage);
   } catch (error) {
     res.status(500).json({ ...ERROR_MESSAGES.COMMON.FILE_UPLOAD_FAILED, error: error.message });
@@ -1148,56 +1206,15 @@ exports.sendMessage = async (req, res) => {
     // 5. Socket SDK를 통해 실시간 브로드캐스트 (MESSAGE_ADDED)
     await socketService.sendRoomMessage(roomId, newMessage.type, messageData, senderId);
 
-    // 6. 푸시 알림 전송 (현재 방에 있지 않은 모든 유저에게)
-    const recipientIds = [...new Set(allMemberIds.filter((id) => id !== senderId))];
-
-    if (recipientIds.length > 0) {
-      const activeRooms = await userService.getUsersActiveRooms(recipientIds);
-
-      const recipientIdsToNotify = recipientIds.filter((id) => {
-        const isNotInRoom = activeRooms[id] !== roomId.toString(); // ID 비교 안정화
-        return isNotInRoom;
-      });
-
-      if (recipientIdsToNotify.length > 0) {
-        // 각 수신자별로 알림 설정 확인하여 필터링
-        const finalRecipients = [];
-        for (const userId of recipientIdsToNotify) {
-          const userChatRoom = await UserChatRoom.findOne({ userId, roomId });
-
-          if (!userChatRoom) {
-            // UserChatRoom이 없으면 기본값으로 알림 전송
-            finalRecipients.push(userId);
-            continue;
-          }
-
-          const mode = userChatRoom.notificationMode || 'default';
-
-          if (mode === 'none') {
-            continue; // 알림 차단
-          }
-
-          if (mode === 'mention') {
-            // 멘션 체크
-            const isMentioned = mentions.some((m) => m.toString() === userId) || mentionAll || mentionHere;
-
-            if (!isMentioned) {
-              continue; // 멘션되지 않았으면 스킵
-            }
-          }
-
-          finalRecipients.push(userId);
-        }
-
-        if (finalRecipients.length > 0) {
-          notificationService.notifyNewMessage(finalRecipients, sender ? sender.username : 'Unknown', content, roomId, {
-            mentions: mentions.map((m) => m.toString()),
-            mentionAll,
-            mentionHere,
-          });
-        }
-      }
-    }
+    // [v2.7.3] 푸시 알림 전송 (공통 헬퍼 사용)
+    await sendPushNotificationHelper(
+      roomId,
+      senderId,
+      sender ? sender.username : 'Unknown',
+      content,
+      allMemberIds,
+      { mentions, mentionAll, mentionHere }
+    );
 
     res.status(201).json(newMessage);
   } catch (error) {
@@ -1478,6 +1495,15 @@ exports.forwardMessage = async (req, res) => {
         lastMessage: messageData,
       });
     }
+
+    // [v2.7.3] 푸시 알림 전송 (메시지 전달)
+    await sendPushNotificationHelper(
+      targetRoomId,
+      senderId,
+      sender ? sender.username : 'Unknown',
+      newMessage.content,
+      allMemberIds
+    );
 
     res.status(201).json(newMessage);
   } catch (error) {
