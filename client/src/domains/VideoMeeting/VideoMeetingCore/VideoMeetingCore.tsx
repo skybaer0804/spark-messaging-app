@@ -28,6 +28,7 @@ import {
   IconMessages,
 } from '@tabler/icons-preact';
 import { authApi } from '@/core/api/ApiService';
+import { useToast } from '@/core/context/ToastContext';
 import './VideoMeetingCore.scss';
 
 interface VideoMeetingCoreProps {
@@ -35,6 +36,7 @@ interface VideoMeetingCoreProps {
 }
 
 function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
+  const { showWarning } = useToast();
   const isConnected = store.isConnected.value;
   const userRole = store.userRole.value;
   const currentRoom = store.currentRoom.value;
@@ -240,7 +242,7 @@ function VideoMeetingCoreComponent({ store }: VideoMeetingCoreProps) {
                         onChange={(e) => {
                           const isChecked = e.currentTarget.checked;
                           if (isChecked && meetingForm.invitedUsers.length >= 1) {
-                            alert('화상회의는 최대 2명(나 + 초대 1명)까지만 가능합니다.');
+                            showWarning('화상회의는 최대 2명(나 + 초대 1명)까지만 가능합니다.');
                             return;
                           }
                           const ids = isChecked

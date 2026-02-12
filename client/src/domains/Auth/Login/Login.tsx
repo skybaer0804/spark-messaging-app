@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { getLocalStorage, setLocalStorage, removeLocalStorage } from '@/core/utils/storageCache';
 import { useAuth } from '@/core/hooks/useAuth';
+import { useToast } from '@/core/context/ToastContext';
 import { useRouterState } from '@/routes/RouterState';
 import { TextField } from '@/ui-components/TextField/TextField';
 import { Button } from '@/ui-components/Button/Button';
@@ -19,6 +20,7 @@ export function Login() {
   const [rememberMe, setRememberMe] = useState(false);
 
   const { signIn, loading } = useAuth();
+  const { showError } = useToast();
   const { navigate } = useRouterState();
 
   useEffect(() => {
@@ -41,9 +43,10 @@ export function Login() {
       }
 
       navigate('/chatapp');
-    } catch (error) {
+    } catch (error: any) {
       console.error('로그인 실패:', error);
-      alert('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+      const errorMessage = error.response?.data?.message || error.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.';
+      showError(errorMessage);
     }
   };
 

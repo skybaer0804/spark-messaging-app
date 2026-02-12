@@ -7,10 +7,11 @@ exports.register = async (req, res, next) => {
   try {
     const { email, password, username } = req.body;
 
-    // Check if user already exists
-    let user = await User.findOne({ email });
+    // Check if user already exists (email or username)
+    let user = await User.findOne({ $or: [{ email }, { username }] });
     if (user) {
-      return res.status(400).json({ message: 'User already exists' });
+      const message = user.email === email ? 'User with this email already exists' : 'Username already exists';
+      return res.status(400).json({ message });
     }
 
     // Hash password
@@ -35,6 +36,15 @@ exports.register = async (req, res, next) => {
   } catch (error) {
     console.error('--- Register Handler Error ---');
     console.error('Error detail:', error);
+    
+    // Check for Mongoose duplicate key error
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(400).json({ 
+        message: `${field === 'email' ? 'Email' : 'Username'} already exists` 
+      });
+    }
+
     res.status(500).json({
       message: 'Server error',
       error: error.message,
