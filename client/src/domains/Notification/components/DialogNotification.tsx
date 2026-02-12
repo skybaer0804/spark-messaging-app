@@ -3,8 +3,7 @@ import { Dialog } from '@/ui-components/Dialog/Dialog';
 import { Button } from '@/ui-components/Button/Button';
 import { Input } from '@/ui-components/Input/Input';
 import { Select } from '@/ui-components/Select/Select';
-import { Box } from '@/ui-components/Layout/Box';
-import { Stack } from '@/ui-components/Layout/Stack';
+import { Grid } from '@/ui-components/Layout/Grid';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { IconSend, IconCalendar, IconX } from '@tabler/icons-preact';
@@ -51,6 +50,21 @@ export function DialogNotification({
   const isMobile = deviceSize === 'mobile';
   const isViewMode = mode === 'view';
 
+  // 알림 제목 유효성 검사 (Injection 방어 포함)
+  const isValidTitle = (val: string) => {
+    if (!val.trim()) return false;
+    // 제목에는 일부 특수문자 허용하되 Injection 방어 (< > / \ & 제한)
+    return /^[^<>/\\&]*$/.test(val);
+  };
+
+  // 알림 메시지 유효성 검사 (Injection 방어)
+  const isValidMessage = (val: string) => {
+    if (!val.trim()) return false;
+    return /^[^<>/\\&]*$/.test(val);
+  };
+
+  const isFormValid = isValidTitle(title) && isValidMessage(message) && isConnected;
+
   return (
     <Dialog
       open={open}
@@ -64,6 +78,7 @@ export function DialogNotification({
         <Flex gap="sm" style={isMobile ? { width: '100%' } : { justifySelf: 'flex-end' }}>
           <Button
             variant="secondary"
+            size="sm"
             onClick={onClose}
             style={isMobile ? { flex: isViewMode ? 1 : 4.5 } : {}}
           >
@@ -75,8 +90,9 @@ export function DialogNotification({
           {!isViewMode && (
             <Button
               variant="primary"
+              size="sm"
               onClick={handleSend}
-              disabled={!isConnected || !message.trim() || !title.trim()}
+              disabled={!isFormValid}
               style={isMobile ? { flex: 5.5 } : {}}
             >
               <Flex align="center" gap="xs" justify="center">
@@ -88,25 +104,27 @@ export function DialogNotification({
         </Flex>
       }
     >
-      <Stack spacing="xl">
-        <Box>
-          <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}>
-            알림 제목
-          </Typography>
+      <Grid container spacing="xl">
+        <Grid item xs={12}>
           <Input
+            label="알림 제목"
+            isValid={isValidTitle(title)}
             value={title}
             onInput={(e) => setTitle(e.currentTarget.value)}
             placeholder="알림 제목을 입력하세요..."
             fullWidth
             disabled={isViewMode}
+            error={!isViewMode && title.length > 0 && !isValidTitle(title)}
+            helperText={!isViewMode && title.length > 0 && !isValidTitle(title)
+              ? "보안을 위해 일부 특수문자(<, >, /, \, &)는 사용할 수 없습니다."
+              : ""}
           />
-        </Box>
+        </Grid>
 
-        <Box>
-          <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}>
-            메시지 내용
-          </Typography>
+        <Grid item xs={12}>
           <Input
+            label="메시지 내용"
+            isValid={isValidMessage(message)}
             multiline
             rows={6}
             value={message}
@@ -114,10 +132,14 @@ export function DialogNotification({
             placeholder="알림 메시지를 입력하세요..."
             fullWidth
             disabled={isViewMode}
+            error={!isViewMode && message.length > 0 && !isValidMessage(message)}
+            helperText={!isViewMode && message.length > 0 && !isValidMessage(message)
+              ? "보안을 위해 일부 특수문자(<, >, /, \, &)는 사용할 수 없습니다."
+              : ""}
           />
-        </Box>
+        </Grid>
 
-        <Box>
+        <Grid item xs={12}>
           <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}>
             대상 유형
           </Typography>
@@ -131,10 +153,10 @@ export function DialogNotification({
             fullWidth
             disabled={isViewMode}
           />
-        </Box>
+        </Grid>
 
         {targetType === 'workspace' && (
-          <Box>
+          <Grid item xs={12}>
             <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}>
               워크스페이스 선택
             </Typography>
@@ -148,10 +170,10 @@ export function DialogNotification({
               fullWidth
               disabled={isViewMode}
             />
-          </Box>
+          </Grid>
         )}
 
-        <Box>
+        <Grid item xs={12}>
           <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'block', fontWeight: 600 }}>
             {isViewMode ? '전송 일시' : '예약 전송 (선택 사항)'}
           </Typography>
@@ -193,8 +215,8 @@ export function DialogNotification({
               비워두면 즉시 전송됩니다.
             </Typography>
           )}
-        </Box>
-      </Stack>
+        </Grid>
+      </Grid>
     </Dialog>
   );
-}
+};

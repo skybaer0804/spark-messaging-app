@@ -614,7 +614,7 @@
   --dialog-radius: var(--primitive-radius-large);
   --dialog-padding: var(--space-padding-card-lg);
   --dialog-header-gap: var(--space-gap-md);
-  --dialog-title-size: var(--typo-heading-4-size);
+  --dialog-title-size: var(--typo-heading-3-size-mobile);
   --dialog-title-weight: var(--primitive-font-weight-bold);
   --dialog-body-gap: var(--space-gap-md);
   --dialog-actions-gap: var(--space-gap-sm);
@@ -667,7 +667,7 @@
   --textarea-line-height: var(--typo-body-medium-line-height);
 
   // Label
-  --input-label-font-size: var(--typo-label-medium-size);
+  --input-label-font-size: var(--typo-body-small-size);
   --input-label-font-weight: var(--primitive-font-weight-regular);
   --input-label-margin-bottom: var(--space-gap-sm);
 

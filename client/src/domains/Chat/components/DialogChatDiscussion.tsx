@@ -5,8 +5,7 @@ import { Flex } from '@/ui-components/Layout/Flex';
 import { Button } from '@/ui-components/Button/Button';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Input } from '@/ui-components/Input/Input';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Box } from '@/ui-components/Layout/Box';
+import { Grid } from '@/ui-components/Layout/Grid';
 import { AutocompleteMember } from './AutocompleteMember';
 import { AutocompleteChannelAndTeam } from './AutocompleteChannelAndTeam';
 import { useChat } from '../context/ChatContext';
@@ -98,7 +97,23 @@ export const DialogChatDiscussion = ({
     onClose();
   };
 
-  const isFormValid = discussionData.parentRoom && discussionData.name.trim() && !isSubmitting;
+  // 토론 이름 유효성 검사 (공백 및 특수문자 제한)
+  const isValidDiscussionName = (name: string) => {
+    if (!name.trim()) return false;
+    // 공백이나 특수문자 체크 (영문, 한글, 숫자, 언더스코어, 하이픈만 허용)
+    return /^[a-zA-Z0-9가-힣_-]+$/.test(name.trim());
+  };
+
+  // 설명 유효성 검사 (Injection 방어: <, >, /, \ 등 제한)
+  const isValidDescription = (desc: string) => {
+    if (!desc) return true;
+    return /^[^<>/\\&]*$/.test(desc);
+  };
+
+  const isFormValid = discussionData.parentRoom && 
+    isValidDiscussionName(discussionData.name) && 
+    isValidDescription(discussionData.description) && 
+    !isSubmitting;
 
   return (
     <Dialog
@@ -114,6 +129,7 @@ export const DialogChatDiscussion = ({
           <Button
             onClick={handleClose}
             variant="secondary"
+            size="sm"
             style={isMobile ? { flex: 4.5 } : {}}
           >
             <Flex align="center" gap="xs" justify="center">
@@ -123,6 +139,7 @@ export const DialogChatDiscussion = ({
           </Button>
           <Button
             variant="primary"
+            size="sm"
             disabled={!isFormValid}
             onClick={handleSubmit}
             style={isMobile ? { flex: 5.5 } : {}}
@@ -135,12 +152,14 @@ export const DialogChatDiscussion = ({
         </Flex>
       }
     >
-      <Stack spacing="lg">
-        <Typography variant="body-small" color="text-secondary">
-          진행 상황에 대한 개요를 유지하십시오! 토론을 생성하면 선택한 채널의 하위 채널이 만들어지고 둘 다 연결됩니다.
-        </Typography>
+      <Grid container spacing="lg">
+        <Grid item xs={12}>
+          <Typography variant="body-small" color="text-secondary">
+            토론을 생성하면 선택한 채널의 하위 채널이 만들어지고 둘 다 연결됩니다.
+          </Typography>
+        </Grid>
 
-        <Box>
+        <Grid item xs={12}>
           <AutocompleteChannelAndTeam
             roomList={roomList}
             selectedRoom={discussionData.parentRoom}
@@ -148,46 +167,49 @@ export const DialogChatDiscussion = ({
             error={open && !discussionData.parentRoom}
             helperText={!discussionData.parentRoom ? '상위 채널 또는 그룹을 선택해주세요.' : ''}
           />
-        </Box>
+        </Grid>
 
-        <Box>
-          <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-            이름 *
-          </Typography>
+        <Grid item xs={12}>
           <Input
+            label="이름"
+            isValid={isValidDiscussionName(discussionData.name)}
             fullWidth
             placeholder="예: 프로젝트-마일스톤-논의"
             value={discussionData.name}
             onInput={(e) => setDiscussionData((prev) => ({ ...prev, name: e.currentTarget.value }))}
+            error={discussionData.name.length > 0 && !isValidDiscussionName(discussionData.name)}
+            helperText={discussionData.name.length > 0 && !isValidDiscussionName(discussionData.name)
+              ? "공백이나 특수문자는 사용할 수 없습니다 (한글, 영문, 숫자, _, -만 허용)."
+              : ""}
           />
-        </Box>
+        </Grid>
 
-        <Box>
-          <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-            설명
-          </Typography>
+        <Grid item xs={12}>
           <Input
+            label="설명"
+            isValid={isValidDescription(discussionData.description)}
             fullWidth
-            placeholder="Displayed next to name"
+            placeholder="이름 옆에 표시될 간단한 설명"
             value={discussionData.description}
             onInput={(e) => setDiscussionData((prev) => ({ ...prev, description: e.currentTarget.value }))}
+            error={discussionData.description.length > 0 && !isValidDescription(discussionData.description)}
+            helperText={discussionData.description.length > 0 && !isValidDescription(discussionData.description)
+              ? "보안을 위해 일부 특수문자(<, >, /, \, &)는 사용할 수 없습니다."
+              : ""}
           />
-          <Typography variant="caption" color="text-secondary" style={{ marginTop: '4px', display: 'block' }}>
-            이름 옆에 표시됩니다.
-          </Typography>
-        </Box>
+        </Grid>
 
-        <Box>
+        <Grid item xs={12}>
           <AutocompleteMember
             userList={userList}
             selectedUsers={discussionData.members}
             onUsersChange={(users) => setDiscussionData((prev) => ({ ...prev, members: users }))}
             currentUserId={user?.id}
-            placeholder="Add people"
+            placeholder="참여자 추가"
             label="참여자"
           />
-        </Box>
-      </Stack>
+        </Grid>
+      </Grid>
     </Dialog>
   );
 };

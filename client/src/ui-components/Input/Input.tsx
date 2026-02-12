@@ -1,9 +1,11 @@
 import { JSX } from 'preact';
 import { useTheme } from '@/core/context/ThemeProvider';
+import { Flex } from '@/ui-components/Layout/Flex';
+import { IconCircleCheckFilled } from '@tabler/icons-preact';
 import './Input.scss';
 
 export interface InputProps extends Omit<JSX.HTMLAttributes<HTMLInputElement | HTMLTextAreaElement>, 'size'> {
-  label?: string;
+  label?: preact.ComponentChildren;
   helperText?: string;
   error?: boolean;
   multiline?: boolean;
@@ -14,14 +16,27 @@ export interface InputProps extends Omit<JSX.HTMLAttributes<HTMLInputElement | H
   value?: string | number;
   rows?: number;
   type?: string;
+  isValid?: boolean;
   startAdornment?: JSX.Element;
   endAdornment?: JSX.Element;
 }
+
+const ValidationBadge = ({ isValid }: { isValid: boolean }) => (
+  <span style={{ 
+    color: isValid ? 'var(--color-status-success)' : 'var(--color-text-tertiary)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    marginLeft: '4px'
+  }}>
+    <IconCircleCheckFilled size={14} />
+  </span>
+);
 
 export function Input({
   label,
   helperText,
   error,
+  isValid = false,
   multiline = false,
   fullWidth = true,
   className = '',
@@ -48,7 +63,10 @@ export function Input({
     <div className={wrapperClasses} data-theme={theme} data-contrast={contrast}>
       {label && (
         <label htmlFor={inputId} className="input-label">
-          {label}
+          <Flex align="center" gap="xs">
+            {typeof label === 'string' ? <span>{label}</span> : label}
+            <ValidationBadge isValid={isValid} />
+          </Flex>
         </label>
       )}
       <div className="input-container">
