@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'preact/hooks';
-import { IconX, IconPlus } from '@tabler/icons-preact';
+import { IconX, IconPlus, IconEdit } from '@tabler/icons-preact';
 import { Dialog } from '@/ui-components/Dialog/Dialog';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Button } from '@/ui-components/Button/Button';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Input } from '@/ui-components/Input/Input';
 import { Grid } from '@/ui-components/Layout/Grid';
+import { Switch } from '@/ui-components/Switch/Switch';
 import { AutocompleteMember } from './AutocompleteMember';
 import { AutocompleteChannelAndTeam } from './AutocompleteChannelAndTeam';
 import { useChat } from '../context/ChatContext';
@@ -20,6 +21,7 @@ interface DialogChatDiscussionProps {
   onClose: () => void;
   onDiscussionCreated?: () => void;
   handleCreateRoom: (type: string, extraData: any) => Promise<void>;
+  discussion?: ChatRoom;
 }
 
 export const DialogChatDiscussion = ({
@@ -27,32 +29,57 @@ export const DialogChatDiscussion = ({
   onClose,
   onDiscussionCreated,
   handleCreateRoom,
+  discussion,
 }: DialogChatDiscussionProps) => {
   const { roomList, userList } = useChat();
   const { user } = useAuth();
   const { deviceSize } = useTheme();
   const { showError } = useToast();
   const isMobile = deviceSize === 'mobile';
+  const isEdit = !!discussion;
 
   const [discussionData, setDiscussionData] = useState({
     parentRoom: null as ChatRoom | null,
     name: '',
     description: '',
     members: [] as ChatUser[],
+    isPrivate: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 모달 열릴 때 초기화
   useEffect(() => {
     if (open) {
-      setDiscussionData({
-        parentRoom: null,
-        name: '',
-        description: '',
-        members: [],
-      });
+      if (discussion) {
+        // 수정 모드인 경우 상위 방 찾기
+        const parentRoom = roomList.find(r => r._id === discussion.parentId) || null;
+        
+        // 멤버 데이터 처리
+        let currentMembers: ChatUser[] = [];
+        if (discussion.members) {
+          currentMembers = discussion.members.map(m => 
+            typeof m === 'string' ? userList.find(u => u._id === m) : m
+          ).filter(Boolean) as ChatUser[];
+        }
+
+        setDiscussionData({
+          parentRoom,
+          name: discussion.name || '',
+          description: discussion.description || '',
+          members: currentMembers,
+          isPrivate: discussion.isPrivate || discussion.type === 'private' || false,
+        });
+      } else {
+        setDiscussionData({
+          parentRoom: null,
+          name: '',
+          description: '',
+          members: [],
+          isPrivate: false,
+        });
+      }
     }
-  }, [open]);
+  }, [open, discussion, roomList, userList]);
 
   const handleSubmit = async () => {
     if (!discussionData.parentRoom || !discussionData.name.trim()) return;
@@ -74,14 +101,15 @@ export const DialogChatDiscussion = ({
         description: discussionData.description.trim() || undefined,
         parentId: discussionData.parentRoom._id,
         members: allMemberIds,
+        isPrivate: discussionData.isPrivate,
         workspaceId: currentWorkspaceId.value || undefined,
       });
 
       onDiscussionCreated?.();
       handleClose();
     } catch (error: any) {
-      console.error('Failed to create discussion:', error);
-      showError(error.message || '토론 생성에 실패했습니다.');
+      console.error(`Failed to ${isEdit ? 'update' : 'create'} discussion:`, error);
+      showError(error.message || `토론 ${isEdit ? '수정' : '생성'}에 실패했습니다.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -93,6 +121,7 @@ export const DialogChatDiscussion = ({
       name: '',
       description: '',
       members: [],
+      isPrivate: false,
     });
     onClose();
   };
@@ -119,7 +148,7 @@ export const DialogChatDiscussion = ({
     <Dialog
       open={open}
       onClose={handleClose}
-      title="새 토론 만들기"
+      title={isEdit ? '토론 수정' : '새 토론 만들기'}
       maxWidth={false}
       style={{ maxWidth: '600px' }}
       fullWidth
@@ -145,8 +174,8 @@ export const DialogChatDiscussion = ({
             style={isMobile ? { flex: 5.5 } : {}}
           >
             <Flex align="center" gap="xs" justify="center">
-              <IconPlus size={18} />
-              <span>개설</span>
+              {isEdit ? <IconEdit size={18} /> : <IconPlus size={18} />}
+              <span>{isEdit ? '수정' : '개설'}</span>
             </Flex>
           </Button>
         </Flex>
@@ -155,7 +184,9 @@ export const DialogChatDiscussion = ({
       <Grid container spacing="lg">
         <Grid item xs={12}>
           <Typography variant="body-small" color="text-secondary">
-            토론을 생성하면 선택한 채널의 하위 채널이 만들어지고 둘 다 연결됩니다.
+            {isEdit 
+              ? '토론 정보를 수정합니다. 상위 채널이나 참여자를 변경할 수 있습니다.' 
+              : '토론을 생성하면 선택한 채널의 하위 채널이 만들어지고 둘 다 연결됩니다.'}
           </Typography>
         </Grid>
 
@@ -166,6 +197,7 @@ export const DialogChatDiscussion = ({
             onRoomChange={(room) => setDiscussionData((prev) => ({ ...prev, parentRoom: room }))}
             error={open && !discussionData.parentRoom}
             helperText={!discussionData.parentRoom ? '상위 채널 또는 그룹을 선택해주세요.' : ''}
+            disabled={isEdit} // 수정 모드에서는 상위 방 변경 불가하도록 설정 (일반적인 정책)
           />
         </Grid>
 
@@ -197,6 +229,23 @@ export const DialogChatDiscussion = ({
               ? "보안을 위해 일부 특수문자(<, >, /, \, &)는 사용할 수 없습니다."
               : ""}
           />
+        </Grid>
+
+        <Grid item xs={12}>
+          <Flex justify="space-between" align="center">
+            <Flex direction="column" style={{ flex: 1 }}>
+              <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                비공개
+              </Typography>
+              <Typography variant="caption" style={{ color: 'var(--color-text-secondary)' }}>
+                초대된 사람만 가입할 수 있습니다.
+              </Typography>
+            </Flex>
+            <Switch
+              checked={discussionData.isPrivate}
+              onChange={(checked) => setDiscussionData((prev) => ({ ...prev, isPrivate: checked }))}
+            />
+          </Flex>
         </Grid>
 
         <Grid item xs={12}>

@@ -228,9 +228,9 @@ exports.getRooms = async (req, res) => {
 
     const joinedRoomIds = userRooms.filter(ur => ur.roomId).map(ur => ur.roomId._id.toString());
 
-    // 2. 해당 워크스페이스의 모든 공개 채널 조회 (참여하지 않은 것 포함)
+    // 2. 해당 워크스페이스의 모든 공개 채널 및 토론 조회 (참여하지 않은 것 포함)
     const publicQuery = { 
-      type: 'public', 
+      type: { $in: ['public', 'discussion'] }, 
       isPrivate: { $ne: true }, 
       isArchived: { $ne: true } 
     };

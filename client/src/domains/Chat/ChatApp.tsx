@@ -64,7 +64,7 @@ function ChatAppContent() {
     return 'home';
   }, [pathname]);
 
-  const [directoryTab, setDirectoryTab] = useState<'channel' | 'team' | 'user'>('channel');
+  const [directoryTab, setDirectoryTab] = useState<'channel' | 'team' | 'user' | 'discussion'>('user');
   const { showSuccess, showError } = useToast();
 
   // 초대 링크로 입장 처리
