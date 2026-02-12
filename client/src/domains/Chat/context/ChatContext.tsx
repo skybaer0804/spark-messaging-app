@@ -43,7 +43,14 @@ export function ChatProvider({ children }: { children: any }) {
   const [userList, setUserList] = useState<ChatUser[]>([]);
   const [workspaceList, setWorkspaceList] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentRoom, setCurrentRoom] = useState<ChatRoom | null>(null);
+  const [currentRoom, _setCurrentRoom] = useState<ChatRoom | null>(null);
+  const currentRoomRef = useRef<ChatRoom | null>(null);
+
+  // v2.7.2: stale closure 방지를 위한 ref 업데이트 및 setter 래핑
+  const setCurrentRoom = useCallback((room: ChatRoom | null) => {
+    currentRoomRef.current = room;
+    _setCurrentRoom(room);
+  }, []);
 
   // v2.2.0: 전역 Signal과 로컬 상태 동기화 (Reactivity 보장)
   // Signal이 변경될 때마다 Context의 roomList 상태를 업데이트하여 구독 중인 컴포넌트들을 리렌더링함
@@ -187,6 +194,23 @@ export function ChatProvider({ children }: { children: any }) {
         if (roomId) {
           if (updateData.isRemoved) {
             chatRoomList.value = currentRooms.filter((r: any) => r._id !== roomId) as any;
+
+            // [v2.7.2] currentRoomRef를 사용하여 stale closure 문제 해결
+            const latestCurrentRoom = currentRoomRef.current;
+            const targetRoomId = (updateData._id || updateData.roomId || roomId).toString();
+
+            if (latestCurrentRoom && latestCurrentRoom._id.toString() === targetRoomId) {
+              setCurrentRoom(null);
+              window.dispatchEvent(
+                new CustomEvent('api-info', {
+                  detail: { message: '해당 채팅방에서 퇴장 처리되었습니다.' },
+                }),
+              );
+              // 채팅 메인으로 이동 (SPA 경로에 맞춰 /chatapp으로 리다이렉트)
+              if (window.location.pathname.includes('/chatapp/chat/')) {
+                window.location.href = '/chatapp';
+              }
+            }
             return;
           }
 
@@ -218,16 +242,17 @@ export function ChatProvider({ children }: { children: any }) {
           );
           updateRoomList(updatedRooms as any, true);
 
-          // v2.6.0: 현재 활성화된 방 정보도 실시간 동기화
-          if (currentRoom && currentRoom._id === roomId) {
+          // v2.6.0: 현재 활성화된 방 정보도 실시간 동기화 (Ref 사용)
+          const latestCurrentRoom = currentRoomRef.current;
+          if (latestCurrentRoom && latestCurrentRoom._id === roomId) {
             const updatedRoom = updatedRooms.find((r: any) => r._id === roomId);
             if (updatedRoom) {
               // members가 populate되어 있는지 확인 (targetData에서 members가 있으면 반영)
-              setCurrentRoom((prev: any) => ({
-                ...prev,
+              setCurrentRoom({
+                ...latestCurrentRoom,
                 ...updatedRoom,
-                members: updateData.members || updatedRoom.members || prev?.members
-              }));
+                members: updateData.members || updatedRoom.members || latestCurrentRoom?.members
+              });
             }
           }
         } else {
@@ -274,18 +299,16 @@ export function ChatProvider({ children }: { children: any }) {
           });
           chatRoomList.value = updatedRooms as any;
 
-          // 3. 현재 활성화된 방 멤버 상태 업데이트
-          if (currentRoom) {
-            const hasUserInCurrent = currentRoom.members?.some((m: any) => (m._id || m) === userId);
+          // 3. 현재 활성화된 방 멤버 상태 업데이트 (Ref 사용)
+          const latestCurrentRoom = currentRoomRef.current;
+          if (latestCurrentRoom) {
+            const hasUserInCurrent = latestCurrentRoom.members?.some((m: any) => (m._id || m) === userId);
             if (hasUserInCurrent) {
-              setCurrentRoom((prev: any) => {
-                if (!prev) return prev;
-                return {
-                  ...prev,
-                  members: prev.members.map((m: any) =>
-                    (m._id || m) === userId ? { ...(typeof m === 'object' ? m : { _id: m }), status } : m
-                  )
-                };
+              setCurrentRoom({
+                ...latestCurrentRoom,
+                members: latestCurrentRoom.members.map((m: any) =>
+                  (m._id || m) === userId ? { ...(typeof m === 'object' ? m : { _id: m }), status } : m
+                )
               });
             }
           }

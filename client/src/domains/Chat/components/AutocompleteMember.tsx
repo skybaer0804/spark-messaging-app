@@ -107,7 +107,7 @@ export function AutocompleteMember({
             name={user.username}
             avatar={user.profileImage || user.avatar}
             styleOption={{ mode: 'chip' }}
-            onDelete={() => {
+            onDelete={user._id === currentUserId ? undefined : () => {
               const newUsers = selectedUsers.filter((u) => u._id !== user._id);
               onUsersChange(newUsers);
             }}

@@ -346,7 +346,7 @@ export const DirectoryView = ({
                 description: editChannel.description,
                 isPrivate: editChannel.isPrivate || false,
                 members: editChannel.members || [],
-                createdBy: editChannel.members?.[0] || ({} as ChatUser),
+                createdBy: editChannel.createdBy as ChatUser,
               }
               : undefined
           }
