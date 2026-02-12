@@ -12,12 +12,13 @@ interface MentionPickerProps {
   members: ChatUser[];
   roomMembers: ChatUser[];
   search: string;
+  existingMentions?: string[];
   onSelect: (user: ChatUser | 'all' | 'here') => void;
   onClose: () => void;
   anchorRef: any;
 }
 
-function MentionPickerComponent({ members, roomMembers, search, onSelect, onClose, anchorRef }: MentionPickerProps) {
+function MentionPickerComponent({ members, roomMembers, search, existingMentions = [], onSelect, onClose, anchorRef }: MentionPickerProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const position = useMentionPicker(anchorRef, true);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -29,8 +30,21 @@ function MentionPickerComponent({ members, roomMembers, search, onSelect, onClos
 
   // 1. 데이터 가공 및 정렬
   const filteredSpecial = specialMentions.filter(m => 
-    m.username.toLowerCase().includes(search.toLowerCase())
+    m.username.toLowerCase().includes(search.toLowerCase()) && 
+    !existingMentions.includes(m.username)
   );
+
+  // v2.7.5: 멘션 리스트 중복 제거
+  const uniqueMembers = useMemo(() => {
+    if (!members) return [];
+    const seen = new Set();
+    return members.filter(m => {
+      const id = m._id || (m as any).id;
+      if (!id || seen.has(id.toString())) return false;
+      seen.add(id.toString());
+      return true;
+    });
+  }, [members]);
 
   // 방에 있는지 확인하는 헬퍼 함수
   const roomMemberIds = useMemo(() => {
@@ -42,9 +56,10 @@ function MentionPickerComponent({ members, roomMembers, search, onSelect, onClos
   };
 
   const sortedMembers = useMemo(() => {
-    // 검색어로 필터링
-    const filtered = members.filter(m => 
-      m.username.toLowerCase().includes(search.toLowerCase())
+    // 검색어로 필터링 및 이미 멘션된 유저 제외
+    const filtered = uniqueMembers.filter(m => 
+      m.username.toLowerCase().includes(search.toLowerCase()) &&
+      !existingMentions.includes(m.username)
     );
 
     // 정렬 로직: 방 멤버 우선 -> 이름순

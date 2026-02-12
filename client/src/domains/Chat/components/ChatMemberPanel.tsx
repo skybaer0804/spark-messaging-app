@@ -28,6 +28,18 @@ export const ChatMemberPanel = ({ members = [], currentRoom, onClose }: ChatMemb
 
   const currentUserId = (user as any)?.id || (user as any)?._id;
 
+  // v2.7.5: 렌더링 전 멤버 중복 제거
+  const uniqueMembers = useMemo(() => {
+    if (!members) return [];
+    const seen = new Set();
+    return members.filter(m => {
+      const id = m._id || (m as any).id;
+      if (!id || seen.has(id.toString())) return false;
+      seen.add(id.toString());
+      return true;
+    });
+  }, [members]);
+
   // 방장(Owner) 확인 로직
   const isOwner = useMemo(() => {
     if (!currentRoom || !currentUserId) return false;
@@ -44,13 +56,13 @@ export const ChatMemberPanel = ({ members = [], currentRoom, onClose }: ChatMemb
     }
 
     // 하위 호환성: 첫 번째 멤버를 방장으로 간주
-    if (currentRoom.members && currentRoom.members.length > 0) {
-      const firstMemberId = (currentRoom.members[0] as any)?._id || (currentRoom.members[0] as any)?.id || currentRoom.members[0];
+    if (uniqueMembers && uniqueMembers.length > 0) {
+      const firstMemberId = (uniqueMembers[0] as any)?._id || (uniqueMembers[0] as any)?.id || uniqueMembers[0];
       return firstMemberId && firstMemberId.toString() === currentUserId.toString();
     }
 
     return false;
-  }, [currentRoom, currentUserId]);
+  }, [currentRoom, currentUserId, uniqueMembers]);
 
   const handleKickMember = (member: ChatUser) => {
     const memberId = member._id || (member as any).id;
@@ -92,7 +104,7 @@ export const ChatMemberPanel = ({ members = [], currentRoom, onClose }: ChatMemb
               <IconChevronLeft size={24} />
             </IconButton>
           )}
-          <Typography variant="h4" style={{ flex: 1 }}>참여자 ({members.length})</Typography>
+          <Typography variant="h4" style={{ flex: 1 }}>참여자 ({uniqueMembers.length})</Typography>
         </Box>
         {!isMobile && (
           <IconButton onClick={onClose} size="small">
@@ -102,13 +114,13 @@ export const ChatMemberPanel = ({ members = [], currentRoom, onClose }: ChatMemb
       </Box>
       <Box className="chat-app__sidebar-panel__content">
         <List style={{ padding: '8px 0' }}>
-          {members.map((member) => {
+          {uniqueMembers.map((member) => {
             const memberId = member._id || (member as any).id;
             const isMemberOwner = currentRoom?.createdBy
               ? (typeof currentRoom.createdBy === 'string'
                 ? currentRoom.createdBy === memberId
                 : ((currentRoom.createdBy as any)?._id || (currentRoom.createdBy as any)?.id) === memberId)
-              : (currentRoom?.members?.[0] as any)?._id === memberId || currentRoom?.members?.[0] === memberId;
+              : (uniqueMembers[0] as any)?._id === memberId || uniqueMembers[0] === memberId;
 
             return (
               <ProfileItem

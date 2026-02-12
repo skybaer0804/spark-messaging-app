@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'preact/hooks';
+import { useRef, useState, useEffect, useMemo } from 'preact/hooks';
 import { memo, lazy, Suspense } from 'preact/compat';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { FilePreview } from './FilePreview';
@@ -68,7 +68,7 @@ function ChatInputComponent({
   const [mentionPos, setMentionPos] = useState(0);
   const [selectedTextForLink, setSelectedTextForLink] = useState('');
 
-  // 멘션 텍스트를 칩으로 렌더링하는 함수
+  // 텍스트를 칩으로 렌더링하는 함수 (rich text 용도)
   const renderRichText = (text: string) => {
     if (!text) return null;
 
@@ -90,13 +90,15 @@ function ChatInputComponent({
               size="md"
               variant={isSpecial ? 'secondary' : 'primary'}
               style={{ 
-                margin: '0 1px', 
+                margin: '0px', 
+                padding: '1px 2px',
                 display: 'inline-flex',
                 height: '24px',
                 fontSize: '14px',
                 verticalAlign: 'baseline',
                 pointerEvents: 'auto',
                 position: 'relative',
+                borderRadius: '5px',
                 zIndex: 10
               }}
             />
@@ -107,42 +109,9 @@ function ChatInputComponent({
     });
   };
 
-  // 활성화된 멘션들을 칩으로 보여주는 상단 바
-  const renderMentionChips = () => {
-    // 텍스트에서 모든 멘션 추출
-    const mentionPattern = /((?:^|\s)@all\b|(?:^|\s)@here\b|@(?:[가-힣a-zA-Z0-9_]+))/g;
-    const matches = input.match(mentionPattern) || [];
-    const uniqueMentions = [...new Set(matches.map(m => m.trim()))];
-
-    if (uniqueMentions.length === 0) return null;
-
-    return (
-      <div 
-        className="chat-input__mention-chips"
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '4px',
-          padding: '8px 12px',
-          borderBottom: '1px solid var(--color-border-subtle)',
-          backgroundColor: 'var(--color-bg-subtle)'
-        }}
-      >
-        {uniqueMentions.map((mention, i) => (
-          <Chip
-            key={i}
-            label={mention}
-            size="md"
-            style={{ height: '24px', fontSize: '14px' }}
-          />
-        ))}
-      </div>
-    );
-  };
-
   // 멘션 강제 트리거 핸들러
   const handleMentionTrigger = () => {
-    const targetTextarea = textareaRef.current || document.querySelector('.chat-input-container textarea') as HTMLTextAreaElement;
+    const targetTextarea = textareaRef.current || containerRef.current?.querySelector('textarea') as HTMLTextAreaElement;
     if (!targetTextarea) return;
 
     const start = targetTextarea.selectionStart;
@@ -185,6 +154,13 @@ function ChatInputComponent({
     setMentionOpen(false);
   }, [input]);
 
+  // 현재 입력된 멘션들 추출
+  const existingMentions = useMemo(() => {
+    const mentionPattern = /@([가-힣a-zA-Z0-9_]+)/g;
+    const matches = input.match(mentionPattern) || [];
+    return matches.map(m => m.substring(1));
+  }, [input]);
+
   // 포맷팅 훅 (단축키 핸들러 포함)
   const { applyFormat, handleKeyDown: handleFormatKeyDown, setIsComposing: setFormattingComposing, saveSelection, insertLink } = useFormatting({
     setInput,
@@ -193,7 +169,7 @@ function ChatInputComponent({
   // textarea ref 업데이트 (Input 컴포넌트 내부의 textarea를 찾아서 저장)
   useEffect(() => {
     const updateTextareaRef = () => {
-      const textarea = document.querySelector('.chat-input-container textarea') as HTMLTextAreaElement;
+      const textarea = containerRef.current?.querySelector('textarea') as HTMLTextAreaElement;
       if (textarea) {
         textareaRef.current = textarea;
       }
@@ -226,7 +202,6 @@ function ChatInputComponent({
           uploadProgress={uploadProgress}
           onRemove={onFileRemove}
         />
-        {renderMentionChips()}
         <div
           ref={containerRef}
           className={`chat-input-container ${isMobile ? 'chat-input-container--mobile' : ''}`}
@@ -305,7 +280,7 @@ function ChatInputComponent({
                     setFormattingComposing(false);
                   }}
                   onScroll={(e) => {
-                    const display = document.querySelector('.chat-input__display');
+                    const display = containerRef.current?.querySelector('.chat-input__display');
                     if (display) {
                       display.scrollTop = (e.target as HTMLTextAreaElement).scrollTop;
                     }
@@ -439,7 +414,7 @@ function ChatInputComponent({
         }}
         onAdd={(text, url) => {
           // 모달이 닫힌 후 textarea에 링크 삽입
-          const targetTextarea = textareaRef.current || document.querySelector('textarea') as HTMLTextAreaElement;
+          const targetTextarea = textareaRef.current || containerRef.current?.querySelector('textarea') as HTMLTextAreaElement;
           if (targetTextarea && savedSelectionRef.current) {
             // 저장된 선택 영역 위치에 커서 설정
             const { start, end } = savedSelectionRef.current;
@@ -493,6 +468,7 @@ function ChatInputComponent({
           members={members}
           roomMembers={roomMembers}
           search={mentionSearch}
+          existingMentions={existingMentions}
           anchorRef={containerRef}
           onClose={() => setMentionOpen(false)}
           onSelect={(item) => {

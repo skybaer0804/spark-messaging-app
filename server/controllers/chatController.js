@@ -43,7 +43,7 @@ function parseMentions(content, roomMembers) {
   if (/(^|\s)@all\b/i.test(content)) mentionAll = true;
   if (/(^|\s)@here\b/i.test(content)) mentionHere = true;
 
-  return { mentions, mentionAll, mentionHere };
+  return { mentions, mentionAll, mentionHere, foundUsernames: Array.from(foundUsernames) };
 }
 
 // [v2.7.3] 푸시 알림 전송 공통 헬퍼 함수
@@ -1129,7 +1129,52 @@ exports.sendMessage = async (req, res) => {
     }
 
     // 3. 멘션 파싱
-    const { mentions, mentionAll, mentionHere } = parseMentions(content, room.members);
+    const { mentions, mentionAll, mentionHere, foundUsernames } = parseMentions(content, room.members);
+
+    // [요구사항 2] 채널에 없는 유저 자동 초대 로직
+    const newMembers = [];
+    if (foundUsernames && foundUsernames.length > 0) {
+      for (const username of foundUsernames) {
+        if (username === 'all' || username === 'here') continue;
+
+        // v2.7.5: 중복 초대 방지를 위해 ID와 username 모두 체크
+        const isMember = room.members.some((m) => {
+          if (!m) return false;
+          return m.username === username;
+        });
+
+        if (!isMember) {
+          const userToInvite = await User.findOne({ username }).select('username profileImage status statusText');
+          if (userToInvite) {
+            const userToInviteId = userToInvite._id.toString();
+            
+            // 메모리 상의 멤버 목록에 이미 ID가 있는지 한 번 더 확인 (경합 방지)
+            const alreadyInMem = room.members.some(m => {
+              if (!m) return false;
+              const mId = m._id?.toString() || m.toString();
+              return mId === userToInviteId;
+            });
+            
+            if (!alreadyInMem) {
+              // 1. ChatRoom 멤버 추가
+              await ChatRoom.findByIdAndUpdate(roomId, { $addToSet: { members: userToInvite._id } });
+
+              // 2. UserChatRoom 생성 (채팅 목록 활성화)
+              await UserChatRoom.findOneAndUpdate(
+                { userId: userToInvite._id, roomId },
+                { $setOnInsert: { userId: userToInvite._id, roomId, joinedAt: new Date() } },
+                { upsert: true }
+              );
+
+              // 3. 현재 메모리 상의 방 멤버 목록 업데이트
+              room.members.push(userToInvite);
+              mentions.push(userToInvite._id);
+              newMembers.push(userToInvite);
+            }
+          }
+        }
+      }
+    }
 
     // 4. DB에 메시지 저장
     const newMessageData = {

@@ -48,8 +48,25 @@ export function ChatProvider({ children }: { children: any }) {
 
   // v2.7.2: stale closure 방지를 위한 ref 업데이트 및 setter 래핑
   const setCurrentRoom = useCallback((room: ChatRoom | null) => {
-    currentRoomRef.current = room;
-    _setCurrentRoom(room);
+    // v2.7.5: 멤버 중복 제거 로직 추가
+    let sanitizedRoom = room;
+    if (room && room.members && Array.isArray(room.members)) {
+      const uniqueMembers = [];
+      const seenIds = new Set();
+      
+      for (const member of room.members) {
+        if (!member) continue;
+        const memberId = member._id || (member as any).id || (typeof member === 'string' ? member : null);
+        if (memberId && !seenIds.has(memberId.toString())) {
+          seenIds.add(memberId.toString());
+          uniqueMembers.push(member);
+        }
+      }
+      sanitizedRoom = { ...room, members: uniqueMembers };
+    }
+    
+    currentRoomRef.current = sanitizedRoom;
+    _setCurrentRoom(sanitizedRoom);
   }, []);
 
   // v2.2.0: 전역 Signal과 로컬 상태 동기화 (Reactivity 보장)
