@@ -26,6 +26,7 @@ interface ProfileItemProps {
   onDelete?: (e: MouseEvent) => void;
   onContextMenu?: (e: MouseEvent) => void;
   onMenuClick?: (e: MouseEvent) => void;
+  actions?: any;
   className?: string;
   style?: any;
   styleOption?: {
@@ -33,6 +34,7 @@ interface ProfileItemProps {
     statusPosition?: 'icon' | 'name-left' | 'name-right';
     mode?: 'list' | 'chat' | 'chip';
     isGrouped?: boolean;
+    avatarSize?: number;
     nameSuffix?: any;
     noHover?: boolean;
   };
@@ -50,6 +52,7 @@ export const ProfileItem = memo(({
   onClick,
   onDelete,
   onMenuClick,
+  actions,
   className = '',
   style,
   styleOption = {
@@ -63,9 +66,14 @@ export const ProfileItem = memo(({
     statusPosition = 'name-left',
     mode = 'list',
     isGrouped = false,
+    avatarSize = 24,
     nameSuffix,
     noHover = false,
   } = styleOption;
+
+  const fontSize = Math.floor(avatarSize * 0.45);
+  const statusSize = Math.max(8, Math.floor(avatarSize * 0.4));
+  const badgeSize = Math.max(12, Math.floor(avatarSize * 0.6));
 
   const getBgColor = () => {
     switch (type) {
@@ -93,8 +101,16 @@ export const ProfileItem = memo(({
   const renderStatus = (position: 'icon' | 'name-left' | 'name-right') => {
     if (type !== 'direct' || !status || statusPosition !== position) return null;
 
+    const sizeStyle = position === 'icon' ? {
+      width: `${statusSize}px`,
+      height: `${statusSize}px`,
+    } : {};
+
     return (
-      <div className={`profile-item__status profile-item__status--${status} profile-item__status--pos-${position}`} />
+      <div
+        className={`profile-item__status profile-item__status--${status} profile-item__status--pos-${position}`}
+        style={sizeStyle}
+      />
     );
   };
 
@@ -154,20 +170,28 @@ export const ProfileItem = memo(({
             variant="rounded"
             style={{
               backgroundColor: getBgColor(),
-              width: '24px',
-              height: '24px',
-              fontSize: '11px'
+              width: `${avatarSize}px`,
+              height: `${avatarSize}px`,
+              fontSize: `${fontSize}px`
             }}
           >
             {firstLetter}
           </Avatar>
           {renderStatus('icon')}
-          <div className="profile-item__rocket-badge">
-            <IconRocket size={10} />
+          <div
+            className="profile-item__rocket-badge"
+            style={{
+              width: `${badgeSize}px`,
+              height: `${badgeSize}px`,
+              top: `-${badgeSize / 4}px`,
+              right: `-${badgeSize / 4}px`,
+            }}
+          >
+            <IconRocket size={badgeSize * 0.6} />
           </div>
         </div>
       ) : (
-        <div className="profile-item__avatar-placeholder" />
+        <div className="profile-item__avatar-placeholder" style={{ width: `${avatarSize}px` }} />
       )}
 
       {!isGrouped && (
@@ -187,6 +211,7 @@ export const ProfileItem = memo(({
               {unreadCount ? (
                 <div className="profile-item__unread-badge">{unreadCount}</div>
               ) : null}
+              {actions}
               {onMenuClick && (
                 <div
                   className="profile-item__menu-btn"

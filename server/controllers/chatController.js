@@ -2,6 +2,7 @@ const ChatRoom = require('../models/ChatRoom');
 const Message = require('../models/Message');
 const User = require('../models/User');
 const UserChatRoom = require('../models/UserChatRoom');
+const UserTeam = require('../models/UserTeam');
 const socketService = require('../services/socketService');
 const notificationService = require('../services/notificationService');
 const userService = require('../services/userService');
@@ -213,10 +214,8 @@ exports.getRooms = async (req, res) => {
     const userId = req.user.id;
     const { workspaceId } = req.query;
 
-    const query = { userId };
-
-    // UserChatRoom에서 해당 유저의 방 목록 조회
-    let userRooms = await UserChatRoom.find(query).populate({
+    // 1. 사용자가 참여 중인 방 목록 조회 (UserChatRoom 기반)
+    const userRooms = await UserChatRoom.find({ userId }).populate({
       path: 'roomId',
       populate: [
         { path: 'members', select: 'username profileImage status statusText' },
@@ -227,8 +226,27 @@ exports.getRooms = async (req, res) => {
       ],
     });
 
-    // 워크스페이스 필터링 및 응답 포맷팅
-    const formattedRooms = userRooms
+    const joinedRoomIds = userRooms.filter(ur => ur.roomId).map(ur => ur.roomId._id.toString());
+
+    // 2. 해당 워크스페이스의 모든 공개 채널 조회 (참여하지 않은 것 포함)
+    const publicQuery = { 
+      type: 'public', 
+      isPrivate: { $ne: true }, 
+      isArchived: { $ne: true } 
+    };
+    if (workspaceId) {
+      publicQuery.workspaceId = workspaceId;
+    }
+    
+    const allPublicRooms = await ChatRoom.find(publicQuery)
+      .populate('members', 'username profileImage status statusText')
+      .populate({
+        path: 'lastMessage',
+        populate: { path: 'senderId', select: 'username' },
+      });
+
+    // 3. 참여 중인 방 가공
+    const joinedRoomsFormatted = userRooms
       .filter(
         (ur) =>
           ur.roomId && !ur.roomId.isArchived && (!workspaceId || ur.roomId.workspaceId.toString() === workspaceId),
@@ -239,10 +257,8 @@ exports.getRooms = async (req, res) => {
         const lastReadSequenceNumber = ur.lastReadSequenceNumber || 0;
         const unreadCount = Math.max(0, lastSequenceNumber - lastReadSequenceNumber);
 
-        // v2.4.4: 비공개 여부 판단 로직 강화 (타입 기반 폴백 포함)
         const isPrivate = room.isPrivate || room.private || room.type === 'private' || room.type === 'direct';
 
-        // 1:1 대화방의 경우 상대적 이름 처리
         if (room.type === 'direct') {
           const otherMember = room.members.find((m) => m._id.toString() !== userId.toString());
           room.displayName = otherMember ? otherMember.username : 'Unknown';
@@ -259,8 +275,25 @@ exports.getRooms = async (req, res) => {
           unreadCount,
           isPinned: ur.isPinned,
           notificationEnabled: ur.notificationEnabled,
+          isJoined: true,
         };
-      })
+      });
+
+    // 4. 참여하지 않은 공개 채널 가공 및 병합
+    const unjoinedPublicRooms = allPublicRooms
+      .filter(pr => !joinedRoomIds.includes(pr._id.toString()))
+      .map(pr => {
+        const room = pr.toObject();
+        return {
+          ...room,
+          displayName: room.name,
+          isPrivate: false,
+          unreadCount: 0,
+          isJoined: false,
+        };
+      });
+
+    const formattedRooms = [...joinedRoomsFormatted, ...unjoinedPublicRooms]
       .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
     res.json(formattedRooms);
@@ -502,7 +535,12 @@ exports.leaveRoom = async (req, res) => {
     // 2. ChatRoom의 members 배열에서 사용자 제거
     room.members = room.members.filter((m) => m._id.toString() !== userId.toString());
 
-    // 3. 1:1 대화방(direct)인 경우 추가 처리
+    // 3. 팀 채팅방인 경우 UserTeam에서도 제거
+    if (room.type === 'team' && room.teamId) {
+      await UserTeam.findOneAndDelete({ userId, teamId: room.teamId });
+    }
+
+    // 4. 1:1 대화방(direct)인 경우 추가 처리
     if (room.type === 'direct') {
       room.identifier = undefined; // null 대신 undefined로 설정하여 유니크 인덱스 충돌 방지 (sparse)
       if (room.members.length === 0) {
@@ -1494,5 +1532,94 @@ exports.removeRoomMember = async (req, res) => {
   } catch (error) {
     console.error('RemoveRoomMember error:', error);
     res.status(500).json({ message: 'Failed to remove member', error: error.message });
+  }
+};
+
+// 채팅방 참여 (공개 채널용)
+exports.joinRoom = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const currentUserId = req.user.id;
+
+    const room = await ChatRoom.findById(roomId);
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    // 공개 채널이 아니면 참여 불가 (초대 링크 등을 이용해야 함)
+    if (room.isPrivate || room.type === 'private' || room.type === 'direct') {
+      return res.status(403).json({ message: 'This room is private. You need an invite to join.' });
+    }
+
+    // 이미 멤버인지 확인
+    const isMember = room.members.some((m) => m.toString() === currentUserId.toString());
+    if (isMember) {
+      const populatedRoom = await ChatRoom.findById(roomId).populate(
+        'members',
+        'username profileImage status statusText',
+      );
+      const roomObj = populatedRoom.toObject();
+      roomObj.displayName = roomObj.name;
+      return res.status(200).json(roomObj);
+    }
+
+    // 멤버 추가
+    room.members.push(currentUserId);
+    await room.save();
+
+    // UserChatRoom 레코드 생성
+    await UserChatRoom.findOneAndUpdate(
+      { userId: currentUserId, roomId: room._id },
+      {
+        userId: currentUserId,
+        roomId: room._id,
+        lastReadSequenceNumber: room.lastSequenceNumber || 0,
+        unreadCount: 0,
+      },
+      { upsert: true, new: true },
+    );
+
+    // 모든 멤버에게 방 목록 업데이트 알림
+    room.members.forEach((memberId) => {
+      socketService.notifyRoomListUpdated(memberId.toString());
+    });
+
+    // 시스템 메시지 생성 (입장 알림)
+    const user = await User.findById(currentUserId).select('username');
+    const systemMessage = new Message({
+      roomId,
+      senderId: currentUserId,
+      content: `${user?.username || 'Unknown'}님이 입장했습니다.`,
+      type: 'system',
+      sequenceNumber: (room.lastSequenceNumber || 0) + 1,
+    });
+    await systemMessage.save();
+
+    await ChatRoom.findByIdAndUpdate(roomId, {
+      $inc: { lastSequenceNumber: 1 },
+      lastMessage: systemMessage._id
+    });
+
+    await socketService.sendRoomMessage(roomId, 'system', {
+      _id: systemMessage._id,
+      roomId,
+      content: systemMessage.content,
+      senderId: currentUserId,
+      senderName: 'System',
+      sequenceNumber: systemMessage.sequenceNumber,
+      timestamp: systemMessage.timestamp,
+    }, currentUserId);
+
+    const populatedRoom = await ChatRoom.findById(room._id).populate(
+      'members',
+      'username profileImage status statusText',
+    );
+    const roomObj = populatedRoom.toObject();
+    roomObj.displayName = roomObj.name;
+
+    res.json(roomObj);
+  } catch (error) {
+    console.error('JoinRoom error:', error);
+    res.status(500).json({ message: 'Failed to join room', error: error.message });
   }
 };

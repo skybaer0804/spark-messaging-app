@@ -168,7 +168,12 @@ export function ChatProvider({ children }: { children: any }) {
 
       // 1. 방 목록 업데이트 알림 수신
       if (msg.type === 'ROOM_LIST_UPDATED') {
-        const updateData = msg.data || msg.content || {};
+        const updateData = { ...(msg.data || msg.content || msg || {}) };
+        
+        // v2.6.1: msg.type이 방의 type을 덮어쓰지 않도록 방어 (ROOM_LIST_UPDATED가 타입이 되면 안됨)
+        if (updateData.type === 'ROOM_LIST_UPDATED') {
+          delete (updateData as any).type;
+        }
 
         // 데이터가 실제로 변경되었을 때만 처리 (최소한의 필터링)
         if (!updateData._id) return;
@@ -246,9 +251,44 @@ export function ChatProvider({ children }: { children: any }) {
 
       // 3. 유저 상태 변경 감지
       if (msg.type === 'USER_STATUS_CHANGED') {
-        const { userId, status } = msg.content || msg.data || {};
+        const { userId, status } = msg.content || msg.data || msg || {};
         if (userId) {
+          // 1. 유저 목록 업데이트
           setUserList((prev) => prev.map((u) => (u._id === userId ? { ...u, status } : u)));
+
+          // 2. 방 목록 멤버 상태 업데이트 (Reactivity 보장)
+          const currentRooms = chatRoomList.value;
+          const updatedRooms = currentRooms.map((room: any) => {
+            if (room.members && Array.isArray(room.members)) {
+              const hasUser = room.members.some((m: any) => (m._id || m) === userId);
+              if (hasUser) {
+                return {
+                  ...room,
+                  members: room.members.map((m: any) =>
+                    (m._id || m) === userId ? { ...(typeof m === 'object' ? m : { _id: m }), status } : m
+                  )
+                };
+              }
+            }
+            return room;
+          });
+          chatRoomList.value = updatedRooms as any;
+
+          // 3. 현재 활성화된 방 멤버 상태 업데이트
+          if (currentRoom) {
+            const hasUserInCurrent = currentRoom.members?.some((m: any) => (m._id || m) === userId);
+            if (hasUserInCurrent) {
+              setCurrentRoom((prev: any) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  members: prev.members.map((m: any) =>
+                    (m._id || m) === userId ? { ...(typeof m === 'object' ? m : { _id: m }), status } : m
+                  )
+                };
+              });
+            }
+          }
         }
       }
     });

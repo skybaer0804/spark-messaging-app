@@ -5,7 +5,6 @@ import { Stack } from '@/ui-components/Layout/Stack';
 import { Grid } from '@/ui-components/Layout/Grid';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Paper } from '@/ui-components/Paper/Paper';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
 import { Button } from '@/ui-components/Button/Button';
 import { IconButton } from '@/ui-components/Button/IconButton';
 import {
@@ -30,6 +29,7 @@ import { Input } from '@/ui-components/Input/Input';
 import { Tabs, TabsItem } from '@/ui-components/Tabs/Tabs';
 import { DialogChatTeam } from '../DialogChatTeam';
 import { DialogChatGroup } from '../DialogChatGroup';
+import { ProfileItem } from '../ProfileItem/ProfileItem';
 import type { ChatRoom, ChatUser } from '../../types';
 import './DirectoryView.scss';
 
@@ -62,10 +62,6 @@ const DirectoryItemCard = ({
   onClick,
   actions,
   badge,
-  isUser = false,
-  userImage,
-  userStatus,
-  initials,
   memberCount,
   isPrivate = false,
 }: {
@@ -76,10 +72,6 @@ const DirectoryItemCard = ({
   onClick?: () => void;
   actions?: any;
   badge?: string;
-  isUser?: boolean;
-  userImage?: string;
-  userStatus?: string;
-  initials?: string;
   memberCount?: number;
   isPrivate?: boolean;
 }) => (
@@ -95,40 +87,29 @@ const DirectoryItemCard = ({
     }
   >
     <Flex align="center" gap="sm" style={{ width: '100%' }}>
-      {isUser ? (
-        <div className="directory-card__icon-box directory-card__icon-box--user" style={{ position: 'relative' }}>
-          <Avatar src={userImage} variant="rounded" size="md" style={{ width: '40px', height: '40px' }}>
-            {initials}
-          </Avatar>
-          <div
-            className={`directory-card__status-indicator directory-card__status-indicator--${userStatus || 'offline'}`}
-          />
-        </div>
-      ) : (
-        <div
-          className="directory-card__icon-box"
-          style={{ backgroundColor: `${color || '#509EE3'}15`, color: color || '#509EE3', position: 'relative' }}
-        >
-          {icon}
-          {isPrivate && (
-            <div className="directory-card__private-badge">
-              <IconLock size={10} stroke={3} />
-            </div>
-          )}
-          {memberCount !== undefined && memberCount > 0 && (
-            <div className="directory-card__member-badge">
-              {memberCount > 99 ? '99+' : memberCount}
-            </div>
-          )}
-        </div>
-      )}
+      <div
+        className="directory-card__icon-box"
+        style={{ backgroundColor: `${color || '#509EE3'}15`, color: color || '#509EE3', position: 'relative' }}
+      >
+        {icon}
+        {isPrivate && (
+          <div className="directory-card__private-badge">
+            <IconLock size={10} stroke={3} />
+          </div>
+        )}
+        {memberCount !== undefined && memberCount > 0 && (
+          <div className="directory-card__member-badge">
+            {memberCount > 99 ? '99+' : memberCount}
+          </div>
+        )}
+      </div>
 
       <Stack spacing="none" className="directory-card__body" style={{ flex: 1, minWidth: 0 }}>
         <Typography variant="h4" className="directory-card__title-text">
           {title}
         </Typography>
         <Typography variant="body-small" color="text-secondary" className="directory-card__desc">
-          {description || (isUser ? (userStatus === 'online' ? '온라인' : '오프라인') : '설명이 없습니다.')}
+          {description || '설명이 없습니다.'}
         </Typography>
       </Stack>
 
@@ -170,32 +151,38 @@ export const DirectoryView = ({
   // 검색어에 따른 필터링된 목록 (public과 private 모두 표시)
   // 단일 루프로 최적화: filter().filter() 체인을 하나로 통합
   const filteredChannels = useMemo(() => {
+    let result: typeof roomList = [];
     if (!searchTerm.trim()) {
-      return roomList.filter((r) => r.type === 'public' && r.members && r.members.length > 0);
-    }
-    const lowerQuery = searchTerm.toLowerCase();
-    const filtered: typeof roomList = [];
-    for (const r of roomList) {
-      if (r.type === 'public' && r.members && r.members.length > 0 &&
-        ((r.name || '').toLowerCase().includes(lowerQuery) ||
-          (r.description && r.description.toLowerCase().includes(lowerQuery)))) {
-        filtered.push(r);
+      result = roomList.filter((r) => r.type === 'public' && r.members && r.members.length > 0);
+    } else {
+      const lowerQuery = searchTerm.toLowerCase();
+      for (const r of roomList) {
+        if (r.type === 'public' && r.members && r.members.length > 0 &&
+          ((r.name || '').toLowerCase().includes(lowerQuery) ||
+            (r.description && r.description.toLowerCase().includes(lowerQuery)))) {
+          result.push(r);
+        }
       }
     }
-    return filtered;
+    // 이름순 오름차순 정렬 (ㄱ-ㅎ, a-z)
+    return result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }, [roomList, searchTerm]);
 
   const filteredTeams = useMemo(() => {
-    return teamList.filter(
+    const result = teamList.filter(
       (t) =>
         t.members && t.members.length > 0 &&
         (t.teamName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (t.teamDesc && t.teamDesc.toLowerCase().includes(searchTerm.toLowerCase()))),
     );
+    // 이름순 오름차순 정렬 (ㄱ-ㅎ, a-z)
+    return result.sort((a, b) => (a.teamName || '').localeCompare(b.teamName || ''));
   }, [teamList, searchTerm]);
 
   const filteredUsers = useMemo(() => {
-    return userList.filter((u) => u.username.toLowerCase().includes(searchTerm.toLowerCase()));
+    const result = userList.filter((u) => u.username.toLowerCase().includes(searchTerm.toLowerCase()));
+    // 이름순 오름차순 정렬 (ㄱ-ㅎ, a-z)
+    return result.sort((a, b) => (a.username || '').localeCompare(b.username || ''));
   }, [userList, searchTerm]);
 
   // 팀 목록 조회
@@ -382,8 +369,19 @@ export const DirectoryView = ({
       return;
     }
 
-    // Public 채널은 바로 입장
-    onRoomSelect(room._id);
+    // Public 채널이지만 멤버가 아닌 경우 서버에 요청하여 참여 후 입장
+    try {
+      const response = await chatApi.joinRoom(room._id);
+
+      if (response.data && response.data._id) {
+        // 방 목록 새로고침 요청
+        await refreshRoomList();
+        onRoomSelect(response.data._id);
+      }
+    } catch (error) {
+      console.error('Failed to join channel:', error);
+      showError('채널 입장에 실패했습니다.');
+    }
   };
 
   // 채널 수정
@@ -450,6 +448,7 @@ export const DirectoryView = ({
         <Grid container spacing={2} columns={4}>
           {filteredChannels.map((room) => {
             const isOwner = isChannelOwner(room);
+            const isMember = isChannelMember(room);
             return (
               <Grid item key={room._id} xs={4} sm={2} md={1}>
                 <DirectoryItemCard
@@ -460,6 +459,7 @@ export const DirectoryView = ({
                   onClick={() => handleChannelClick(room)}
                   memberCount={room.members?.length}
                   isPrivate={room.isPrivate || room.type === 'private'}
+                  badge={isMember ? '참여 중' : '참여 가능'}
                   actions={
                     isOwner ? (
                       <>
@@ -517,16 +517,21 @@ export const DirectoryView = ({
             <Grid container spacing={2} columns={4}>
               {filteredTeams.map((team) => {
                 const isOwner = isTeamOwner(team);
+                const isMember = team.members?.some(m => {
+                  const currentUserId = (user as any).id || (user as any)._id;
+                  return (m._id || m) === currentUserId;
+                });
                 return (
                   <Grid item key={team._id} xs={4} sm={2} md={1}>
                     <DirectoryItemCard
                       title={team.teamName}
                       description={team.teamDesc}
                       icon={<IconUsers size={20} />}
-                      color="#E73C7E"
+                      color={team.private ? '#E73C7E' : '#23D5AB'}
                       onClick={() => handleTeamSelect(team)}
                       memberCount={team.members?.length}
                       isPrivate={team.private}
+                      badge={isMember ? `${team.private ? '비공개' : '공개'} · 참여 중` : (team.private ? '비공개' : '공개')}
                       actions={
                         isOwner ? (
                           <>
@@ -585,38 +590,50 @@ export const DirectoryView = ({
         <Grid container spacing={2} columns={4}>
           {filteredUsers.map((userItem) => (
             <Grid item key={userItem._id} xs={4} sm={2} md={1}>
-              <DirectoryItemCard
-                isUser
-                title={userItem.username}
-                initials={userItem.username.substring(0, 1).toUpperCase()}
-                userImage={
-                  userItem.avatar ||
-                  userItem.profileImage ||
-                  `https://ui-avatars.com/api/?name=${encodeURIComponent(userItem.username)}&background=random`
-                }
-                userStatus={userItem.status || 'offline'}
-                color="#23D5AB"
+              <Paper
+                className="directory-card"
+                elevation={0}
                 onClick={() => startDirectChat(userItem._id)}
-                actions={
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="directory-card__action-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startDirectChat(userItem._id);
-                    }}
-                    style={{
-                      padding: '8px',
-                      minWidth: 'auto',
-                      boxShadow: 'none',
-                      border: '1px solid var(--color-border-default)'
-                    }}
-                  >
-                    <IconMessageCircle size={18} />
-                  </Button>
-                }
-              />
+                style={{ cursor: 'pointer', padding: '12px 16px' }}
+              >
+                <ProfileItem
+                  name={userItem.username}
+                  avatar={
+                    userItem.avatar ||
+                    userItem.profileImage ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(userItem.username)}&background=random`
+                  }
+                  status={userItem.status || 'offline'}
+                  desc={userItem.status === 'online' ? '온라인' : '오프라인'}
+                  styleOption={{
+                    showDesc: true,
+                    statusPosition: 'icon',
+                    mode: 'list',
+                    noHover: true,
+                    avatarSize: 40,
+                  }}
+                  style={{ margin: 0, padding: 0 }}
+                  actions={
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="directory-card__action-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startDirectChat(userItem._id);
+                      }}
+                      style={{
+                        padding: '8px',
+                        minWidth: 'auto',
+                        boxShadow: 'none',
+                        border: '1px solid var(--color-border-default)',
+                      }}
+                    >
+                      <IconMessageCircle size={18} />
+                    </Button>
+                  }
+                />
+              </Paper>
             </Grid>
           ))}
           {filteredUsers.length === 0 && (

@@ -15,8 +15,9 @@ const FILE_TYPE_CONFIG = {
       'image/png',
       'image/gif',
       'image/webp',
+      'image/svg+xml',
     ],
-    extensions: ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
+    extensions: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'],
   },
 
   // 문서 파일 설정
