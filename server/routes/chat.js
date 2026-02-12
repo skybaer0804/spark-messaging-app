@@ -21,6 +21,7 @@ const {
   getThreadList,
   getThreadMessages,
   removeRoomMember, // 추가
+  joinRoom, // 추가
 } = require('../controllers/chatController');
 const auth = require('../middleware/auth');
 const workspaceAuth = require('../middleware/workspaceAuth');
@@ -29,6 +30,7 @@ const { upload, validateFileSize } = require('../middleware/upload');
 router.use(auth); // 모든 채팅 라우트는 인증 필요
 
 router.post('/rooms', workspaceAuth, createRoom);
+router.post('/rooms/:roomId/join', workspaceAuth, joinRoom); // 추가
 router.get('/rooms', getRooms);
 router.put('/rooms/:roomId', workspaceAuth, updateRoom);
 router.delete('/rooms/:roomId', workspaceAuth, deleteRoom);

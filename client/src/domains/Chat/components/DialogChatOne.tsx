@@ -5,7 +5,7 @@ import { Flex } from '@/ui-components/Layout/Flex';
 import { Button } from '@/ui-components/Button/Button';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Input } from '@/ui-components/Input/Input';
-import { Stack } from '@/ui-components/Layout/Stack';
+import { Grid } from '@/ui-components/Layout/Grid';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { AutocompleteMember } from './AutocompleteMember';
@@ -79,7 +79,15 @@ export const DialogChatOne = ({
     onClose();
   };
 
-  const isCreateDisabled = selectedUserIds.length === 0 || (selectedUserIds.length > 1 && !roomName.trim());
+  // 채팅방 이름 유효성 검사 (공백 및 특수문자 제한)
+  const isValidRoomName = (name: string) => {
+    if (!name.trim()) return false;
+    // 영문, 한글, 숫자, 공백, 언더스코어, 하이픈 허용
+    return /^[a-zA-Z0-9가-힣\s_-]+$/.test(name.trim());
+  };
+
+  const isCreateDisabled = selectedUserIds.length === 0 || 
+    (selectedUserIds.length > 1 && (!roomName.trim() || !isValidRoomName(roomName)));
 
   return (
     <Dialog
@@ -116,35 +124,41 @@ export const DialogChatOne = ({
         </Flex>
       }
     >
-      <Stack spacing="md">
-        <Typography variant="body-small" color="text-secondary">
-          여러 사용자와 채팅을 하려고 합니다. 1:1 메시지를 사용하여 같은 대화방에 있는 모든 사람과 대화하고 싶은 사람을
-          추가하십시오.
-        </Typography>
+      <Grid container spacing="md">
+        <Grid item xs={12}>
+          <Typography variant="body-small" color="text-secondary">
+            여러 사용자와 채팅을 하려면 대화방 이름을 지정하고 멤버를 추가하십시오.
+          </Typography>
+        </Grid>
 
-        <AutocompleteMember
-          userList={userList}
-          selectedUsers={selectedUsers}
-          onUsersChange={handleUsersChange}
-          currentUserId={user?.id}
-          placeholder="사용자 검색"
-          fullWidth
-        />
+        <Grid item xs={12}>
+          <AutocompleteMember
+            userList={userList}
+            selectedUsers={selectedUsers}
+            onUsersChange={handleUsersChange}
+            currentUserId={user?.id}
+            placeholder="사용자 검색 및 추가"
+            fullWidth
+          />
+        </Grid>
 
         {showRoomNameInput && (
-          <div>
-            <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-              채팅방 제목 *
-            </Typography>
+          <Grid item xs={12}>
             <Input
+              label="채팅방 제목"
+              isValid={isValidRoomName(roomName)}
               fullWidth
               placeholder="채팅방 제목을 입력하세요"
               value={roomName}
               onInput={(e) => setRoomName(e.currentTarget.value)}
+              error={roomName.length > 0 && !isValidRoomName(roomName)}
+              helperText={roomName.length > 0 && !isValidRoomName(roomName)
+                ? "특수문자는 사용할 수 없습니다 (한글, 영문, 숫자, 공백, _, -만 허용)"
+                : ""}
             />
-          </div>
+          </Grid>
         )}
-      </Stack>
+      </Grid>
     </Dialog>
   );
 };

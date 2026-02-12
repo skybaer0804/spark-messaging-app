@@ -9,6 +9,7 @@ import { formatTimestamp } from '@/core/utils/messageUtils';
 import { useChat } from '../context/ChatContext';
 import type { Message } from '../types';
 import { IconMessageCircle2 } from '@tabler/icons-preact';
+import './ThreadList.scss';
 
 interface ThreadListProps {
   roomId: string;
@@ -76,7 +77,7 @@ export const ThreadList = ({ roomId, onThreadSelect }: ThreadListProps) => {
   }
 
   return (
-    <Box style={{ flex: 1, overflowY: 'auto' }}>
+    <Box style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
       <List>
         {parentMessages.map((msg) => (
           <ListItem 

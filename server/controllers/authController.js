@@ -7,10 +7,11 @@ exports.register = async (req, res, next) => {
   try {
     const { email, password, username } = req.body;
 
-    // Check if user already exists
-    let user = await User.findOne({ email });
+    // Check if user already exists (email or username)
+    let user = await User.findOne({ $or: [{ email }, { username }] });
     if (user) {
-      return res.status(400).json({ message: 'User already exists' });
+      const message = user.email === email ? 'User with this email already exists' : 'Username already exists';
+      return res.status(400).json({ message });
     }
 
     // Hash password
@@ -35,6 +36,15 @@ exports.register = async (req, res, next) => {
   } catch (error) {
     console.error('--- Register Handler Error ---');
     console.error('Error detail:', error);
+    
+    // Check for Mongoose duplicate key error
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(400).json({ 
+        message: `${field === 'email' ? 'Email' : 'Username'} already exists` 
+      });
+    }
+
     res.status(500).json({
       message: 'Server error',
       error: error.message,
@@ -148,6 +158,11 @@ exports.updateProfile = async (req, res) => {
     if (role) updateData.role = role;
 
     const updatedUser = await User.findByIdAndUpdate(userId, { $set: updateData }, { new: true }).select('-password');
+
+    // [v2.7.5] 상태가 변경된 경우 Redis 및 소켓에도 반영하여 알림 수신이 즉시 복구되도록 함
+    if (status) {
+      await userService.setUserStatus(userId, status);
+    }
 
     res.json(updatedUser);
   } catch (error) {

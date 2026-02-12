@@ -5,10 +5,9 @@ import { Flex } from '@/ui-components/Layout/Flex';
 import { Button } from '@/ui-components/Button/Button';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Input } from '@/ui-components/Input/Input';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Box } from '@/ui-components/Layout/Box';
 import { Switch } from '@/ui-components/Switch/Switch';
 import { AutocompleteMember } from './AutocompleteMember';
+import { Grid } from '@/ui-components/Layout/Grid';
 import { useChat } from '../context/ChatContext';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useTheme } from '@/core/context/ThemeProvider';
@@ -146,7 +145,16 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
     return /^[a-zA-Z0-9가-힣_-]+$/.test(name.trim());
   };
 
-  const isFormValid = isValidTeamName(teamData.teamName) && !isSubmitting;
+  // 설명/주제 유효성 검사 (Injection 방어: <, >, /, \ 등 제한)
+  const isValidDescription = (desc: string) => {
+    if (!desc) return true;
+    // HTML 태그나 스크립트 주입 방지를 위해 특정 특수문자 제한
+    return /^[^<>/\\&]*$/.test(desc);
+  };
+
+  const isFormValid = isValidTeamName(teamData.teamName) && 
+    isValidDescription(teamData.teamDesc) && 
+    !isSubmitting;
 
   return (
     <Dialog
@@ -162,6 +170,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
           <Button
             onClick={handleClose}
             variant="secondary"
+            size="sm"
             style={isMobile ? { flex: 4.5 } : {}}
           >
             <Flex align="center" gap="xs" justify="center">
@@ -171,6 +180,7 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
           </Button>
           <Button
             variant="primary"
+            size="sm"
             disabled={!isFormValid}
             onClick={handleSubmit}
             style={isMobile ? { flex: 5.5 } : {}}
@@ -183,53 +193,56 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
         </Flex>
       }
     >
-      <Stack spacing="md">
-        <Box>
-          <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-            이름 *
-          </Typography>
+      <Grid container spacing="md">
+        <Grid item xs={12}>
           <Input
+            label="이름"
+            isValid={isValidTeamName(teamData.teamName)}
             fullWidth
             placeholder="예: 마케팅팀"
             value={teamData.teamName}
             onInput={(e) => setTeamData((prev) => ({ ...prev, teamName: e.currentTarget.value }))}
             error={teamData.teamName.length > 0 && !isValidTeamName(teamData.teamName)}
+            helperText={teamData.teamName.length > 0 && !isValidTeamName(teamData.teamName) 
+              ? "공백이나 특수문자는 사용할 수 없습니다 (한글, 영문, 숫자, _, -만 허용)" 
+              : ""}
           />
-          {teamData.teamName.length > 0 && !isValidTeamName(teamData.teamName) && (
-            <Typography variant="caption" style={{ color: 'var(--color-error)', marginTop: '4px' }}>
-              No spaces or special characters
-            </Typography>
-          )}
-        </Box>
-        <Box>
-          <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-            주제
-          </Typography>
+        </Grid>
+        
+        <Grid item xs={12}>
           <Input
+            label="주제"
+            isValid={isValidDescription(teamData.teamDesc)}
             fullWidth
-            placeholder="Displayed next to name"
+            placeholder="이름 옆에 표시될 간단한 설명"
             value={teamData.teamDesc}
             onInput={(e) => setTeamData((prev) => ({ ...prev, teamDesc: e.currentTarget.value }))}
+            error={teamData.teamDesc.length > 0 && !isValidDescription(teamData.teamDesc)}
+            helperText={teamData.teamDesc.length > 0 && !isValidDescription(teamData.teamDesc)
+              ? "보안을 위해 일부 특수문자(<, >, /, \, &)는 사용할 수 없습니다."
+              : ""}
           />
-        </Box>
-        <Box>
+        </Grid>
+
+        <Grid item xs={12}>
           <AutocompleteMember
             userList={userList}
             selectedUsers={teamData.members}
             onUsersChange={(users) => setTeamData((prev) => ({ ...prev, members: users }))}
             currentUserId={user?.id}
-            placeholder="Add people"
+            placeholder="멤버 추가"
             label="멤버 추가"
           />
-        </Box>
-        <Box>
+        </Grid>
+
+        <Grid item xs={12}>
           <Flex justify="space-between" align="center">
             <Flex direction="column" style={{ flex: 1 }}>
               <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '4px' }}>
                 비공개
               </Typography>
               <Typography variant="caption" style={{ color: 'var(--color-text-secondary)' }}>
-                People can only join by being invited
+                초대된 사람만 가입할 수 있습니다.
               </Typography>
             </Flex>
             <Switch
@@ -237,8 +250,8 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
               onChange={(checked) => setTeamData((prev) => ({ ...prev, isPrivate: checked }))}
             />
           </Flex>
-        </Box>
-      </Stack>
+        </Grid>
+      </Grid>
     </Dialog>
   );
 };

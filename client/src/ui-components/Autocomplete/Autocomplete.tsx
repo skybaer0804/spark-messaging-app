@@ -29,6 +29,7 @@ export interface AutocompleteProps<T = any> extends Omit<JSX.HTMLAttributes<HTML
   label?: string;
   helperText?: string;
   error?: boolean;
+  isValid?: boolean; // 추가: 유효성 상태
   disabled?: boolean;
   fullWidth?: boolean;
   openOnFocus?: boolean;
@@ -68,6 +69,7 @@ export function Autocomplete<T = any>({
   disableClearable = false,
   limitTags,
   renderValue,
+  isValid = false,
   className = '',
   ...props
 }: AutocompleteProps<T>) {
@@ -80,6 +82,9 @@ export function Autocomplete<T = any>({
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+
+  // Injection 방어용 정규식
+  const INJECTION_REGEX = /[<>/\\&]/;
 
   // 모바일 화면 감지
   useEffect(() => {
@@ -443,8 +448,11 @@ export function Autocomplete<T = any>({
           </div>
           <Input
             label={label}
-            helperText={helperText}
-            error={error}
+            isValid={isValid}
+            helperText={inputValue.length > 0 && INJECTION_REGEX.test(inputValue) 
+              ? "보안을 위해 일부 특수문자(<, >, /, \, &)는 사용할 수 없습니다." 
+              : helperText}
+            error={error || (inputValue.length > 0 && INJECTION_REGEX.test(inputValue))}
             disabled={disabled}
             fullWidth={fullWidth}
             placeholder={placeholder}
@@ -475,8 +483,11 @@ export function Autocomplete<T = any>({
       ) : (
         <Input
           label={label}
-          helperText={helperText}
-          error={error}
+          isValid={isValid}
+          helperText={inputValue.length > 0 && INJECTION_REGEX.test(inputValue) 
+            ? "보안을 위해 일부 특수문자(<, >, /, \, &)는 사용할 수 없습니다." 
+            : helperText}
+          error={error || (inputValue.length > 0 && INJECTION_REGEX.test(inputValue))}
           disabled={disabled}
           fullWidth={fullWidth}
           placeholder={placeholder}

@@ -14,6 +14,7 @@ export interface AutocompleteAllProps {
   label?: string;
   helperText?: string;
   error?: boolean;
+  isValid?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
 }
@@ -30,6 +31,7 @@ export function AutocompleteAll({
   label = '대상 선택',
   helperText,
   error = false,
+  isValid = false,
   disabled = false,
   fullWidth = true,
 }: AutocompleteAllProps) {
@@ -153,6 +155,7 @@ export function AutocompleteAll({
         label={label}
         helperText={helperText}
         error={error}
+        isValid={isValid || !!selectedTarget}
         disabled={disabled}
         fullWidth={fullWidth}
         openOnFocus

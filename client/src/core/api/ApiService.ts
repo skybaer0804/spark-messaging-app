@@ -86,6 +86,7 @@ export const chatApi = {
     parentId?: string;
     isPrivate?: boolean;
   }) => api.post('/chat/rooms', data),
+  joinRoom: (roomId: string) => api.post(`/chat/rooms/${roomId}/join`), // 추가
   updateRoom: (
     roomId: string,
     data: {

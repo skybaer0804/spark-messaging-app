@@ -13,6 +13,7 @@ export interface AutocompleteMemberProps {
   label?: string;
   helperText?: string;
   error?: boolean;
+  isValid?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
 }
@@ -26,6 +27,7 @@ export function AutocompleteMember({
   label,
   helperText,
   error = false,
+  isValid = false,
   disabled = false,
   fullWidth = true,
 }: AutocompleteMemberProps) {
@@ -105,7 +107,7 @@ export function AutocompleteMember({
             name={user.username}
             avatar={user.profileImage || user.avatar}
             styleOption={{ mode: 'chip' }}
-            onDelete={() => {
+            onDelete={user._id === currentUserId ? undefined : () => {
               const newUsers = selectedUsers.filter((u) => u._id !== user._id);
               onUsersChange(newUsers);
             }}
@@ -136,6 +138,7 @@ export function AutocompleteMember({
         label={label}
         helperText={helperText}
         error={error}
+        isValid={isValid || selectedUsers.length > 0}
         disabled={disabled}
         fullWidth={fullWidth}
         openOnFocus

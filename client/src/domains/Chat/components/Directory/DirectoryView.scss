@@ -237,6 +237,37 @@
   &__actions {
     display: flex;
     gap: 4px;
+    align-items: center;
+  }
+
+  &__action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    background-color: transparent !important;
+    border: 1px solid var(--color-border-default) !important;
+    box-shadow: none !important;
+    color: var(--color-text-secondary) !important;
+    transition: all 0.2s ease !important;
+
+    &:hover {
+      background-color: var(--color-bg-subtle) !important;
+      border-color: var(--color-primary) !important;
+      color: var(--color-primary) !important;
+    }
+
+    &--delete {
+      &:hover {
+        border-color: #ef4444 !important;
+        color: #ef4444 !important;
+        background-color: rgba(239, 68, 68, 0.05) !important;
+      }
+    }
   }
 
   &__status-indicator {
@@ -263,18 +294,6 @@
 
     &--busy {
       background-color: #e11d48;
-    }
-  }
-
-  &__action-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    border-radius: 8px !important;
-
-    &:hover {
-      background-color: var(--color-bg-subtle) !important;
     }
   }
 }

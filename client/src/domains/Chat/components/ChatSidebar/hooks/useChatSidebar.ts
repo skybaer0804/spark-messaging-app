@@ -82,11 +82,14 @@ export const useChatSidebar = () => {
   }, []);
 
   const { filteredRoomList, filteredUserList } = useMemo(() => {
-    if (!searchQuery.trim()) return { filteredRoomList: roomList, filteredUserList: [] };
+    // 사이드바에는 내가 참여한(isJoined: true) 방만 표시
+    const joinedRooms = roomList.filter((r: any) => r.isJoined !== false);
+
+    if (!searchQuery.trim()) return { filteredRoomList: joinedRooms, filteredUserList: [] };
     const lowerQuery = searchQuery.toLowerCase();
     const currentUserId = currentUser?.id || (currentUser as any)?._id;
 
-    const filteredRooms = roomList.filter((r) => {
+    const filteredRooms = joinedRooms.filter((r) => {
       const roomName = r.type === 'direct' ? getDirectChatName(r, currentUserId) : r.name;
       return roomName?.toLowerCase().includes(lowerQuery);
     });

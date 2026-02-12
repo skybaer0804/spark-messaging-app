@@ -1,7 +1,9 @@
 const ChatRoom = require('../models/ChatRoom');
+const ERROR_MESSAGES = require('../constants/errorMessages');
 const Message = require('../models/Message');
 const User = require('../models/User');
 const UserChatRoom = require('../models/UserChatRoom');
+const UserTeam = require('../models/UserTeam');
 const socketService = require('../services/socketService');
 const notificationService = require('../services/notificationService');
 const userService = require('../services/userService');
@@ -37,11 +39,70 @@ function parseMentions(content, roomMembers) {
     }
   }
 
-  // @all, @here 체크 (단어 경계 고려)
-  if (/\b@all\b/i.test(content)) mentionAll = true;
-  if (/\b@here\b/i.test(content)) mentionHere = true;
+  // @all, @here 체크 (단어 경계 고려, 메시지 시작 부분 또는 공백 뒤)
+  if (/(^|\s)@all\b/i.test(content)) mentionAll = true;
+  if (/(^|\s)@here\b/i.test(content)) mentionHere = true;
 
-  return { mentions, mentionAll, mentionHere };
+  return { mentions, mentionAll, mentionHere, foundUsernames: Array.from(foundUsernames) };
+}
+
+// [v2.7.3] 푸시 알림 전송 공통 헬퍼 함수
+async function sendPushNotificationHelper(roomId, senderId, senderName, content, allMemberIds, messageData = {}) {
+  const { mentions = [], mentionAll = false, mentionHere = false } = messageData;
+  
+  // 1. 발송 대상 필터링 (나를 제외한 나머지 멤버)
+  const recipientIds = [...new Set(allMemberIds.filter((id) => id !== senderId))];
+  if (recipientIds.length === 0) return;
+
+  // 2. 현재 해당 방을 보고 있는 사용자 제외
+  const activeRooms = await userService.getUsersActiveRooms(recipientIds);
+  const recipientIdsToNotify = recipientIds.filter((id) => {
+    const isNotInRoom = activeRooms[id] !== roomId.toString();
+    return isNotInRoom;
+  });
+  if (recipientIdsToNotify.length === 0) return;
+
+  // 3. 사용자별 알림 설정(방별 설정) 확인 및 @here/@all 필터링
+  const finalRecipients = [];
+  
+  // [v2.7.4] @here 처리를 위해 사용자들의 온라인 상태 조회
+  const userStatuses = mentionHere ? await userService.getUsersStatus(recipientIdsToNotify) : {};
+
+  for (const userId of recipientIdsToNotify) {
+    const userChatRoom = await UserChatRoom.findOne({ userId, roomId });
+
+    // 기본 모드 결정 (설정 없으면 default)
+    const mode = userChatRoom ? (userChatRoom.notificationMode || 'default') : 'default';
+    
+    if (mode === 'none') continue; // 알림 끔
+
+    // 멘션 여부 확인
+    const isExplicitlyMentioned = mentions.some((m) => m.toString() === userId.toString());
+    const isMentioned = isExplicitlyMentioned || mentionAll || mentionHere;
+
+    if (mode === 'mention' && !isMentioned) {
+      continue; // 멘션 모드인데 멘션되지 않았으면 건너뜀
+    }
+
+    // [v2.7.4] @here 처리: 오프라인이 아닌 유저(online, away, busy)이거나 직접 멘션된 경우만 발송
+    if (mentionHere && !mentionAll && !isExplicitlyMentioned) {
+      const status = userStatuses[userId] || 'offline';
+      if (status === 'offline') {
+        continue;
+      }
+    }
+
+    finalRecipients.push(userId);
+  }
+
+  // 4. 알림 전송
+  if (finalRecipients.length > 0) {
+    notificationService.notifyNewMessage(finalRecipients, senderName, content, roomId, {
+      mentions: mentions.map((m) => m.toString()),
+      mentionAll,
+      mentionHere,
+    });
+  }
 }
 
 // 채팅방 생성
@@ -56,7 +117,7 @@ exports.createRoom = async (req, res) => {
     }
 
     if (!workspaceId) {
-      return res.status(400).json({ message: 'workspaceId is required' });
+      return res.status(400).json(ERROR_MESSAGES.COMMON.WORKSPACE_REQUIRED);
     }
 
     // 멤버 목록에 현재 사용자 추가 (중복 방지)
@@ -203,7 +264,7 @@ exports.createRoom = async (req, res) => {
     res.status(201).json(roomObj);
   } catch (error) {
     console.error('Error creating room:', error);
-    res.status(500).json({ message: 'Failed to create room', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_CREATE_ROOM, error: error.message });
   }
 };
 
@@ -213,10 +274,8 @@ exports.getRooms = async (req, res) => {
     const userId = req.user.id;
     const { workspaceId } = req.query;
 
-    const query = { userId };
-
-    // UserChatRoom에서 해당 유저의 방 목록 조회
-    let userRooms = await UserChatRoom.find(query).populate({
+    // 1. 사용자가 참여 중인 방 목록 조회 (UserChatRoom 기반)
+    const userRooms = await UserChatRoom.find({ userId }).populate({
       path: 'roomId',
       populate: [
         { path: 'members', select: 'username profileImage status statusText' },
@@ -227,8 +286,27 @@ exports.getRooms = async (req, res) => {
       ],
     });
 
-    // 워크스페이스 필터링 및 응답 포맷팅
-    const formattedRooms = userRooms
+    const joinedRoomIds = userRooms.filter(ur => ur.roomId).map(ur => ur.roomId._id.toString());
+
+    // 2. 해당 워크스페이스의 모든 공개 채널 및 토론 조회 (참여하지 않은 것 포함)
+    const publicQuery = { 
+      type: { $in: ['public', 'discussion'] }, 
+      isPrivate: { $ne: true }, 
+      isArchived: { $ne: true } 
+    };
+    if (workspaceId) {
+      publicQuery.workspaceId = workspaceId;
+    }
+    
+    const allPublicRooms = await ChatRoom.find(publicQuery)
+      .populate('members', 'username profileImage status statusText')
+      .populate({
+        path: 'lastMessage',
+        populate: { path: 'senderId', select: 'username' },
+      });
+
+    // 3. 참여 중인 방 가공
+    const joinedRoomsFormatted = userRooms
       .filter(
         (ur) =>
           ur.roomId && !ur.roomId.isArchived && (!workspaceId || ur.roomId.workspaceId.toString() === workspaceId),
@@ -239,10 +317,8 @@ exports.getRooms = async (req, res) => {
         const lastReadSequenceNumber = ur.lastReadSequenceNumber || 0;
         const unreadCount = Math.max(0, lastSequenceNumber - lastReadSequenceNumber);
 
-        // v2.4.4: 비공개 여부 판단 로직 강화 (타입 기반 폴백 포함)
         const isPrivate = room.isPrivate || room.private || room.type === 'private' || room.type === 'direct';
 
-        // 1:1 대화방의 경우 상대적 이름 처리
         if (room.type === 'direct') {
           const otherMember = room.members.find((m) => m._id.toString() !== userId.toString());
           room.displayName = otherMember ? otherMember.username : 'Unknown';
@@ -259,13 +335,30 @@ exports.getRooms = async (req, res) => {
           unreadCount,
           isPinned: ur.isPinned,
           notificationEnabled: ur.notificationEnabled,
+          isJoined: true,
         };
-      })
+      });
+
+    // 4. 참여하지 않은 공개 채널 가공 및 병합
+    const unjoinedPublicRooms = allPublicRooms
+      .filter(pr => !joinedRoomIds.includes(pr._id.toString()))
+      .map(pr => {
+        const room = pr.toObject();
+        return {
+          ...room,
+          displayName: room.name,
+          isPrivate: false,
+          unreadCount: 0,
+          isJoined: false,
+        };
+      });
+
+    const formattedRooms = [...joinedRoomsFormatted, ...unjoinedPublicRooms]
       .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
     res.json(formattedRooms);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch rooms', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_FETCH_ROOMS, error: error.message });
   }
 };
 
@@ -278,13 +371,13 @@ exports.updateRoom = async (req, res) => {
 
     const room = await ChatRoom.findById(roomId);
     if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.ROOM_NOT_FOUND);
     }
 
     // 권한 확인: 현재 사용자가 방의 멤버인지 확인
     const isMember = room.members.some((m) => m.toString() === currentUserId.toString());
     if (!isMember) {
-      return res.status(403).json({ message: 'You are not a member of this room' });
+      return res.status(403).json(ERROR_MESSAGES.CHAT.NOT_MEMBER);
     }
 
     // 업데이트할 데이터 구성
@@ -312,8 +405,16 @@ exports.updateRoom = async (req, res) => {
     }
     if (type !== undefined) updateData.type = type;
     if (members !== undefined && Array.isArray(members)) {
-      // 멤버 목록에 현재 사용자 포함 (방장은 항상 멤버여야 함)
-      const roomMembers = [...new Set([...members, currentUserId])];
+      // [v2.7.0] 방장(createdBy)은 절대로 멤버에서 제거될 수 없음
+      const roomOwnerId = room.createdBy ? room.createdBy.toString() : null;
+      
+      // 권한 확인: 멤버 변경은 방장만 가능
+      if (roomOwnerId && currentUserId.toString() !== roomOwnerId) {
+        return res.status(403).json(ERROR_MESSAGES.CHAT.ONLY_OWNER_CAN_CHANGE);
+      }
+
+      // 멤버 목록에 방장 포함 보장
+      const roomMembers = [...new Set([...members, roomOwnerId || currentUserId])];
       updateData.members = roomMembers;
     }
 
@@ -323,9 +424,9 @@ exports.updateRoom = async (req, res) => {
       'username profileImage status statusText',
     );
 
-    // 멤버 목록이 변경된 경우 UserChatRoom 레코드 업데이트
+    // 멤버 목록이 변경된 경우 UserChatRoom 레코드 업데이트 및 강퇴 처리
     if (members !== undefined && Array.isArray(members)) {
-      const roomMembers = [...new Set([...members, currentUserId])];
+      const roomMembers = updateData.members;
 
       // 기존 멤버들의 UserChatRoom 레코드 유지
       const existingUserChatRooms = await UserChatRoom.find({ roomId });
@@ -346,20 +447,86 @@ exports.updateRoom = async (req, res) => {
         );
       }
 
-      // 제거된 멤버들의 UserChatRoom 레코드 삭제
+      // [v2.7.0] 제거된 멤버들의 UserChatRoom 레코드 삭제 및 강퇴 알림 발송
       const removedUserIds = existingUserIds.filter((id) => !roomMembers.some((m) => m.toString() === id));
-      for (const userId of removedUserIds) {
-        await UserChatRoom.findOneAndDelete({ userId, roomId });
-      }
+      
+      if (removedUserIds.length > 0) {
+        // [v2.7.2] 제거된 멤버들에 대한 시스템 메시지 생성 및 방 정보 업데이트 준비
+        let currentSequenceNumber = updatedRoom.lastSequenceNumber || 0;
+        
+        for (const userId of removedUserIds) {
+          await UserChatRoom.findOneAndDelete({ userId, roomId });
+          
+          // 강퇴된 사용자에게 실시간 알림 (방 목록에서 즉시 삭제되도록)
+          socketService.notifyRoomListUpdated(userId, {
+            _id: roomId,
+            isRemoved: true,
+            targetUserId: userId,
+          });
 
-      // 모든 멤버에게 방 목록 업데이트 알림
-      roomMembers.forEach((userId) => {
-        socketService.notifyRoomListUpdated(userId.toString());
-      });
+          // [v2.7.1] 강퇴된 사용자에게 푸시 알림 발송
+          notificationService.notifyKickedOut(userId, updatedRoom.name || room.name, roomId);
+
+          // [v2.7.2] 시스템 메시지 생성 (강퇴 알림)
+          const targetUser = await User.findById(userId).select('username');
+          currentSequenceNumber += 1;
+          
+          const systemMessage = new Message({
+            roomId,
+            senderId: currentUserId,
+            content: `${targetUser?.username || '알 수 없는 사용자'}님이 강퇴되었습니다.`,
+            type: 'system',
+            sequenceNumber: currentSequenceNumber,
+          });
+          await systemMessage.save();
+
+          // 실시간 시스템 메시지 브로드캐스트
+          await socketService.sendRoomMessage(roomId, 'system', {
+            _id: systemMessage._id,
+            roomId,
+            content: systemMessage.content,
+            senderId: currentUserId,
+            senderName: 'System',
+            sequenceNumber: systemMessage.sequenceNumber,
+            timestamp: systemMessage.timestamp,
+          }, currentUserId);
+
+          // 방의 마지막 메시지 및 시퀀스 업데이트
+          await ChatRoom.findByIdAndUpdate(roomId, {
+            lastSequenceNumber: currentSequenceNumber,
+            lastMessage: systemMessage._id
+          });
+        }
+        
+        // 최종적으로 업데이트된 방 정보를 다시 가져옴 (시스템 메시지 반영됨)
+        const finalUpdatedRoom = await ChatRoom.findById(roomId).populate(
+          'members',
+          'username profileImage status statusText',
+        );
+
+        // 남은 멤버들에게 업데이트된 방 정보 브로드캐스트
+        roomMembers.forEach((userId) => {
+          socketService.notifyRoomListUpdated(userId.toString(), {
+            ...finalUpdatedRoom.toObject(),
+            targetUserId: userId.toString()
+          });
+        });
+      } else {
+        // 남은 멤버들에게 방 목록 업데이트 알림 (추가만 된 경우 등)
+        roomMembers.forEach((userId) => {
+          socketService.notifyRoomListUpdated(userId.toString(), {
+            ...updatedRoom.toObject(),
+            targetUserId: userId.toString()
+          });
+        });
+      }
     } else {
       // 멤버 목록이 변경되지 않은 경우에도 방 목록 업데이트 알림
       updatedRoom.members.forEach((member) => {
-        socketService.notifyRoomListUpdated(member._id.toString());
+        socketService.notifyRoomListUpdated(member._id.toString(), {
+          ...updatedRoom.toObject(),
+          targetUserId: member._id.toString()
+        });
       });
     }
 
@@ -377,7 +544,7 @@ exports.updateRoom = async (req, res) => {
     res.json(roomObj);
   } catch (error) {
     console.error('Error updating room:', error);
-    res.status(500).json({ message: 'Failed to update room', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_UPDATE_ROOM, error: error.message });
   }
 };
 
@@ -389,13 +556,13 @@ exports.joinRoomByInvite = async (req, res) => {
     const workspaceId = req.headers['x-workspace-id'] || req.body.workspaceId;
 
     if (!workspaceId) {
-      return res.status(400).json({ message: 'workspaceId is required' });
+      return res.status(400).json(ERROR_MESSAGES.COMMON.WORKSPACE_REQUIRED);
     }
 
     // slug로 채팅방 찾기
     const room = await ChatRoom.findOne({ slug, workspaceId, isPrivate: true });
     if (!room) {
-      return res.status(404).json({ message: 'Room not found or invalid invite link' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.ROOM_NOT_FOUND);
     }
 
     // 이미 멤버인지 확인
@@ -442,7 +609,7 @@ exports.joinRoomByInvite = async (req, res) => {
     res.json(roomObj);
   } catch (error) {
     console.error('Error joining room by invite:', error);
-    res.status(500).json({ message: 'Failed to join room', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_JOIN_ROOM, error: error.message });
   }
 };
 
@@ -454,13 +621,13 @@ exports.deleteRoom = async (req, res) => {
 
     const room = await ChatRoom.findById(roomId);
     if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.ROOM_NOT_FOUND);
     }
 
     // 권한 확인: 현재 사용자가 방의 멤버인지 확인
     const isMember = room.members.some((m) => m.toString() === currentUserId.toString());
     if (!isMember) {
-      return res.status(403).json({ message: 'You are not a member of this room' });
+      return res.status(403).json(ERROR_MESSAGES.CHAT.NOT_MEMBER);
     }
 
     // 모든 멤버의 UserChatRoom 레코드 삭제
@@ -475,10 +642,10 @@ exports.deleteRoom = async (req, res) => {
       socketService.notifyRoomListUpdated(memberId.toString());
     });
 
-    res.json({ message: 'Room deleted successfully' });
+    res.json(ERROR_MESSAGES.CHAT.SUCCESS_DELETE_ROOM);
   } catch (error) {
     console.error('Error deleting room:', error);
-    res.status(500).json({ message: 'Failed to delete room', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_DELETE_ROOM, error: error.message });
   }
 };
 
@@ -490,7 +657,7 @@ exports.leaveRoom = async (req, res) => {
 
     const room = await ChatRoom.findById(roomId).populate('members', 'username');
     if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.ROOM_NOT_FOUND);
     }
 
     const user = room.members.find((m) => m._id.toString() === userId.toString());
@@ -502,7 +669,12 @@ exports.leaveRoom = async (req, res) => {
     // 2. ChatRoom의 members 배열에서 사용자 제거
     room.members = room.members.filter((m) => m._id.toString() !== userId.toString());
 
-    // 3. 1:1 대화방(direct)인 경우 추가 처리
+    // 3. 팀 채팅방인 경우 UserTeam에서도 제거
+    if (room.type === 'team' && room.teamId) {
+      await UserTeam.findOneAndDelete({ userId, teamId: room.teamId });
+    }
+
+    // 4. 1:1 대화방(direct)인 경우 추가 처리
     if (room.type === 'direct') {
       room.identifier = undefined; // null 대신 undefined로 설정하여 유니크 인덱스 충돌 방지 (sparse)
       if (room.members.length === 0) {
@@ -577,10 +749,10 @@ exports.leaveRoom = async (req, res) => {
       targetUserId: userId,
     });
 
-    res.json({ message: 'Successfully left the room', roomId });
+    res.json({ ...ERROR_MESSAGES.CHAT.SUCCESS_LEFT_ROOM, roomId });
   } catch (error) {
     console.error('LeaveRoom error:', error);
-    res.status(500).json({ message: 'Failed to leave room', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_LEAVE_ROOM, error: error.message });
   }
 };
 
@@ -594,7 +766,7 @@ exports.uploadThumbnail = async (req, res) => {
     const file = req.file;
 
     if (!file || !messageId) {
-      return res.status(400).json({ message: 'Missing thumbnail file or messageId' });
+      return res.status(400).json(ERROR_MESSAGES.COMMON.INVALID_INPUT);
     }
 
     const StorageService = require('../services/storage/StorageService');
@@ -618,7 +790,7 @@ exports.uploadThumbnail = async (req, res) => {
     );
 
     if (!updatedMessage) {
-      return res.status(404).json({ message: 'Message not found' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.MESSAGE_NOT_FOUND);
     }
 
     // 4. 소켓으로 업데이트 브로드캐스트
@@ -640,7 +812,7 @@ exports.uploadThumbnail = async (req, res) => {
     });
   } catch (error) {
     console.error('UploadThumbnail error:', error);
-    res.status(500).json({ message: 'Failed to upload thumbnail', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.COMMON.FILE_UPLOAD_FAILED, error: error.message });
   }
 };
 
@@ -654,13 +826,13 @@ exports.uploadFile = async (req, res) => {
   // 타임아웃 설정
   req.setTimeout(timeout, () => {
     if (!res.headersSent) {
-      res.status(408).json({ message: '파일 업로드 타임아웃이 발생했습니다.' });
+      res.status(408).json(ERROR_MESSAGES.COMMON.FILE_UPLOAD_TIMEOUT);
     }
   });
 
   try {
     if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+      return res.status(400).json(ERROR_MESSAGES.COMMON.INVALID_INPUT);
     }
 
     const { roomId, parentMessageId } = req.body;
@@ -730,7 +902,13 @@ exports.uploadFile = async (req, res) => {
     );
 
     if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.ROOM_NOT_FOUND);
+    }
+
+    // [v2.7.1] 멤버 체크: 방의 멤버가 아니면 파일 업로드 불가
+    const sender = room.members.find((m) => m._id.toString() === senderId);
+    if (!sender) {
+      return res.status(403).json(ERROR_MESSAGES.CHAT.NOT_MEMBER);
     }
 
     const sequenceNumber = room.lastSequenceNumber;
@@ -834,7 +1012,7 @@ exports.uploadFile = async (req, res) => {
     );
 
     // 4. Socket 브로드캐스트 (파일 정보 포함)
-    const sender = room.members.find((m) => m._id.toString() === senderId);
+    // sender는 위에서 이미 멤버 체크를 위해 정의됨
 
     // DB에 저장된 파일명 사용 (이미 UTF-8로 처리됨)
     const messageData = {
@@ -894,9 +1072,18 @@ exports.uploadFile = async (req, res) => {
       }
     }
 
+    // [v2.7.3] 푸시 알림 전송 (첨부파일)
+    await sendPushNotificationHelper(
+      roomId,
+      senderId,
+      sender ? sender.username : 'Unknown',
+      newMessage.content,
+      allMemberIds
+    );
+
     res.status(201).json(newMessage);
   } catch (error) {
-    res.status(500).json({ message: 'File upload failed', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.COMMON.FILE_UPLOAD_FAILED, error: error.message });
   }
 };
 
@@ -913,7 +1100,13 @@ exports.sendMessage = async (req, res) => {
     );
 
     if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.ROOM_NOT_FOUND);
+    }
+
+    // [v2.7.1] 멤버 체크: 방의 멤버가 아니면 메시지 전송 불가
+    const sender = room.members.find((m) => m._id.toString() === senderId);
+    if (!sender) {
+      return res.status(403).json(ERROR_MESSAGES.CHAT.NOT_MEMBER);
     }
 
     const sequenceNumber = room.lastSequenceNumber;
@@ -936,10 +1129,52 @@ exports.sendMessage = async (req, res) => {
     }
 
     // 3. 멘션 파싱
-    const { mentions, mentionAll, mentionHere } = parseMentions(content, room.members);
+    const { mentions, mentionAll, mentionHere, foundUsernames } = parseMentions(content, room.members);
 
-    // [v2.4.1] sender 정보를 먼저 추출하여 저장 시 사용
-    const sender = room.members.find((m) => m._id.toString() === senderId);
+    // [요구사항 2] 채널에 없는 유저 자동 초대 로직
+    const newMembers = [];
+    if (foundUsernames && foundUsernames.length > 0) {
+      for (const username of foundUsernames) {
+        if (username === 'all' || username === 'here') continue;
+
+        // v2.7.5: 중복 초대 방지를 위해 ID와 username 모두 체크
+        const isMember = room.members.some((m) => {
+          if (!m) return false;
+          return m.username === username;
+        });
+
+        if (!isMember) {
+          const userToInvite = await User.findOne({ username }).select('username profileImage status statusText');
+          if (userToInvite) {
+            const userToInviteId = userToInvite._id.toString();
+            
+            // 메모리 상의 멤버 목록에 이미 ID가 있는지 한 번 더 확인 (경합 방지)
+            const alreadyInMem = room.members.some(m => {
+              if (!m) return false;
+              const mId = m._id?.toString() || m.toString();
+              return mId === userToInviteId;
+            });
+            
+            if (!alreadyInMem) {
+              // 1. ChatRoom 멤버 추가
+              await ChatRoom.findByIdAndUpdate(roomId, { $addToSet: { members: userToInvite._id } });
+
+              // 2. UserChatRoom 생성 (채팅 목록 활성화)
+              await UserChatRoom.findOneAndUpdate(
+                { userId: userToInvite._id, roomId },
+                { $setOnInsert: { userId: userToInvite._id, roomId, joinedAt: new Date() } },
+                { upsert: true }
+              );
+
+              // 3. 현재 메모리 상의 방 멤버 목록 업데이트
+              room.members.push(userToInvite);
+              mentions.push(userToInvite._id);
+              newMembers.push(userToInvite);
+            }
+          }
+        }
+      }
+    }
 
     // 4. DB에 메시지 저장
     const newMessageData = {
@@ -1026,60 +1261,19 @@ exports.sendMessage = async (req, res) => {
     // 5. Socket SDK를 통해 실시간 브로드캐스트 (MESSAGE_ADDED)
     await socketService.sendRoomMessage(roomId, newMessage.type, messageData, senderId);
 
-    // 6. 푸시 알림 전송 (현재 방에 있지 않은 모든 유저에게)
-    const recipientIds = [...new Set(allMemberIds.filter((id) => id !== senderId))];
-
-    if (recipientIds.length > 0) {
-      const activeRooms = await userService.getUsersActiveRooms(recipientIds);
-
-      const recipientIdsToNotify = recipientIds.filter((id) => {
-        const isNotInRoom = activeRooms[id] !== roomId.toString(); // ID 비교 안정화
-        return isNotInRoom;
-      });
-
-      if (recipientIdsToNotify.length > 0) {
-        // 각 수신자별로 알림 설정 확인하여 필터링
-        const finalRecipients = [];
-        for (const userId of recipientIdsToNotify) {
-          const userChatRoom = await UserChatRoom.findOne({ userId, roomId });
-
-          if (!userChatRoom) {
-            // UserChatRoom이 없으면 기본값으로 알림 전송
-            finalRecipients.push(userId);
-            continue;
-          }
-
-          const mode = userChatRoom.notificationMode || 'default';
-
-          if (mode === 'none') {
-            continue; // 알림 차단
-          }
-
-          if (mode === 'mention') {
-            // 멘션 체크
-            const isMentioned = mentions.some((m) => m.toString() === userId) || mentionAll || mentionHere;
-
-            if (!isMentioned) {
-              continue; // 멘션되지 않았으면 스킵
-            }
-          }
-
-          finalRecipients.push(userId);
-        }
-
-        if (finalRecipients.length > 0) {
-          notificationService.notifyNewMessage(finalRecipients, sender ? sender.username : 'Unknown', content, roomId, {
-            mentions: mentions.map((m) => m.toString()),
-            mentionAll,
-            mentionHere,
-          });
-        }
-      }
-    }
+    // [v2.7.3] 푸시 알림 전송 (공통 헬퍼 사용)
+    await sendPushNotificationHelper(
+      roomId,
+      senderId,
+      sender ? sender.username : 'Unknown',
+      content,
+      allMemberIds,
+      { mentions, mentionAll, mentionHere }
+    );
 
     res.status(201).json(newMessage);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to send message', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_SEND_MESSAGE, error: error.message });
   }
 };
 
@@ -1104,7 +1298,7 @@ exports.syncMessages = async (req, res) => {
       count: messages.length,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to sync messages', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR, error: error.message });
   }
 };
 
@@ -1117,7 +1311,7 @@ exports.getRoomNotificationSettings = async (req, res) => {
     const userChatRoom = await UserChatRoom.findOne({ userId, roomId });
 
     if (!userChatRoom) {
-      return res.status(404).json({ message: 'UserChatRoom not found' });
+      return res.status(404).json(ERROR_MESSAGES.COMMON.NOT_FOUND);
     }
 
     res.json({
@@ -1137,7 +1331,7 @@ exports.updateRoomNotificationSettings = async (req, res) => {
     const userId = req.user.id;
 
     if (!['default', 'none', 'mention'].includes(notificationMode)) {
-      return res.status(400).json({ message: 'Invalid notificationMode. Must be one of: default, none, mention' });
+      return res.status(400).json(ERROR_MESSAGES.COMMON.INVALID_INPUT);
     }
 
     const userChatRoom = await UserChatRoom.findOneAndUpdate(
@@ -1151,7 +1345,7 @@ exports.updateRoomNotificationSettings = async (req, res) => {
       notificationEnabled: userChatRoom.notificationEnabled !== false,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update notification settings', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR, error: error.message });
   }
 };
 
@@ -1164,7 +1358,7 @@ exports.markAsRead = async (req, res) => {
     // 1. 유저의 해당 방 마지막 읽은 시퀀스 갱신 (unreadCount는 이제 이 값으로 계산됨)
     const room = await ChatRoom.findById(roomId).populate('members', 'username profileImage status');
     if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.ROOM_NOT_FOUND);
     }
 
     await UserChatRoom.findOneAndUpdate(
@@ -1197,9 +1391,9 @@ exports.markAsRead = async (req, res) => {
       unreadCount: 0,
     });
 
-    res.json({ message: 'Marked as read' });
+    res.json(ERROR_MESSAGES.CHAT.MARKED_AS_READ);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to mark as read', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_MARK_READ, error: error.message });
   }
 };
 
@@ -1221,7 +1415,7 @@ exports.getMessages = async (req, res) => {
 
     res.json(messages.reverse());
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch messages', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_FETCH_MESSAGES, error: error.message });
   }
 };
 
@@ -1233,22 +1427,22 @@ exports.getMessageById = async (req, res) => {
 
     const message = await Message.findById(messageId).populate('senderId', 'username profileImage status');
     if (!message) {
-      return res.status(404).json({ message: 'Message not found' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.MESSAGE_NOT_FOUND);
     }
 
     // 권한 체크: 요청자가 해당 방 멤버인지 확인
     const room = await ChatRoom.findById(message.roomId).select('members');
     if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.ROOM_NOT_FOUND);
     }
     const isMember = room.members.some((m) => m.toString() === userId.toString());
     if (!isMember) {
-      return res.status(403).json({ message: 'You are not a member of this room' });
+      return res.status(403).json(ERROR_MESSAGES.CHAT.NOT_MEMBER);
     }
 
     res.json(message);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch message', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_FETCH_MESSAGE, error: error.message });
   }
 };
 
@@ -1259,9 +1453,9 @@ exports.setActiveRoom = async (req, res) => {
     const userId = req.user.id;
 
     await userService.setActiveRoom(userId, roomId);
-    res.json({ message: 'Active room updated' });
+    res.json(ERROR_MESSAGES.CHAT.ACTIVE_ROOM_UPDATED);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update active room', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_UPDATE_ROOM, error: error.message });
   }
 };
 
@@ -1274,7 +1468,7 @@ exports.forwardMessage = async (req, res) => {
     // 1. 원본 메시지 조회
     const originalMessage = await Message.findById(originalMessageId);
     if (!originalMessage) {
-      return res.status(404).json({ message: 'Original message not found' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.ORIGINAL_MESSAGE_NOT_FOUND);
     }
 
     // 2. 대상 방 정보 및 시퀀스 업데이트
@@ -1285,7 +1479,7 @@ exports.forwardMessage = async (req, res) => {
     ).populate('members', 'username');
 
     if (!room) {
-      return res.status(404).json({ message: 'Target room not found' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.ROOM_NOT_FOUND);
     }
 
     const sequenceNumber = room.lastSequenceNumber;
@@ -1357,10 +1551,19 @@ exports.forwardMessage = async (req, res) => {
       });
     }
 
+    // [v2.7.3] 푸시 알림 전송 (메시지 전달)
+    await sendPushNotificationHelper(
+      targetRoomId,
+      senderId,
+      sender ? sender.username : 'Unknown',
+      newMessage.content,
+      allMemberIds
+    );
+
     res.status(201).json(newMessage);
   } catch (error) {
     console.error('Error forwarding message:', error);
-    res.status(500).json({ message: 'Failed to forward message', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR, error: error.message });
   }
 };
 
@@ -1380,7 +1583,7 @@ exports.getThreadList = async (req, res) => {
 
     res.json(parentMessages);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch thread list', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR, error: error.message });
   }
 };
 
@@ -1395,7 +1598,7 @@ exports.getThreadMessages = async (req, res) => {
 
     res.json(messages);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch thread messages', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR, error: error.message });
   }
 };
 
@@ -1411,7 +1614,7 @@ exports.setActiveRoom = async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error('Error setting active room:', error);
-    res.status(500).json({ message: 'Failed to set active room', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR, error: error.message });
   }
 };
 
@@ -1423,7 +1626,7 @@ exports.removeRoomMember = async (req, res) => {
 
     const room = await ChatRoom.findById(roomId);
     if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
+      return res.status(404).json(ERROR_MESSAGES.CHAT.ROOM_NOT_FOUND);
     }
 
     // 권한 확인: 방장(createdBy)만 강퇴 가능
@@ -1432,13 +1635,13 @@ exports.removeRoomMember = async (req, res) => {
       // 하위 호환성: 첫 번째 멤버를 방장으로 간주하는 로직
       const firstMemberId = room.members[0]?.toString();
       if (firstMemberId !== currentUserId.toString()) {
-        return res.status(403).json({ message: 'Only the room owner can remove members' });
+        return res.status(403).json(ERROR_MESSAGES.CHAT.ONLY_OWNER_CAN_REMOVE);
       }
     }
 
     // 자기 자신은 강퇴할 수 없음 (나가기 기능 이용)
     if (userId === currentUserId) {
-      return res.status(400).json({ message: 'Cannot remove yourself. Use leave room instead.' });
+      return res.status(400).json(ERROR_MESSAGES.CHAT.CANNOT_REMOVE_SELF);
     }
 
     // 1. ChatRoom의 members 배열에서 사용자 제거
@@ -1454,6 +1657,9 @@ exports.removeRoomMember = async (req, res) => {
       isRemoved: true,
       targetUserId: userId,
     });
+
+    // [v2.7.1] 강퇴된 사용자에게 푸시 알림 발송
+    notificationService.notifyKickedOut(userId, room.name, roomId);
 
     // 4. 남은 멤버들에게 알림 (멤버 목록 갱신)
     const updatedRoom = await ChatRoom.findById(roomId).populate('members', 'username profileImage status statusText');
@@ -1490,9 +1696,98 @@ exports.removeRoomMember = async (req, res) => {
       timestamp: systemMessage.timestamp,
     }, currentUserId);
 
-    res.json({ message: 'Member removed successfully' });
+    res.json(ERROR_MESSAGES.CHAT.MEMBER_REMOVED);
   } catch (error) {
     console.error('RemoveRoomMember error:', error);
-    res.status(500).json({ message: 'Failed to remove member', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.MEMBER_REMOVED, error: error.message });
+  }
+};
+
+// 채팅방 참여 (공개 채널용)
+exports.joinRoom = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const currentUserId = req.user.id;
+
+    const room = await ChatRoom.findById(roomId);
+    if (!room) {
+      return res.status(404).json(ERROR_MESSAGES.CHAT.ROOM_NOT_FOUND);
+    }
+
+    // 공개 채널이 아니면 참여 불가 (초대 링크 등을 이용해야 함)
+    if (room.isPrivate || room.type === 'private' || room.type === 'direct') {
+      return res.status(403).json(ERROR_MESSAGES.CHAT.PRIVATE_ROOM_INVITE_REQUIRED);
+    }
+
+    // 이미 멤버인지 확인
+    const isMember = room.members.some((m) => m.toString() === currentUserId.toString());
+    if (isMember) {
+      const populatedRoom = await ChatRoom.findById(roomId).populate(
+        'members',
+        'username profileImage status statusText',
+      );
+      const roomObj = populatedRoom.toObject();
+      roomObj.displayName = roomObj.name;
+      return res.status(200).json(roomObj);
+    }
+
+    // 멤버 추가
+    room.members.push(currentUserId);
+    await room.save();
+
+    // UserChatRoom 레코드 생성
+    await UserChatRoom.findOneAndUpdate(
+      { userId: currentUserId, roomId: room._id },
+      {
+        userId: currentUserId,
+        roomId: room._id,
+        lastReadSequenceNumber: room.lastSequenceNumber || 0,
+        unreadCount: 0,
+      },
+      { upsert: true, new: true },
+    );
+
+    // 모든 멤버에게 방 목록 업데이트 알림
+    room.members.forEach((memberId) => {
+      socketService.notifyRoomListUpdated(memberId.toString());
+    });
+
+    // 시스템 메시지 생성 (입장 알림)
+    const user = await User.findById(currentUserId).select('username');
+    const systemMessage = new Message({
+      roomId,
+      senderId: currentUserId,
+      content: `${user?.username || 'Unknown'}님이 입장했습니다.`,
+      type: 'system',
+      sequenceNumber: (room.lastSequenceNumber || 0) + 1,
+    });
+    await systemMessage.save();
+
+    await ChatRoom.findByIdAndUpdate(roomId, {
+      $inc: { lastSequenceNumber: 1 },
+      lastMessage: systemMessage._id
+    });
+
+    await socketService.sendRoomMessage(roomId, 'system', {
+      _id: systemMessage._id,
+      roomId,
+      content: systemMessage.content,
+      senderId: currentUserId,
+      senderName: 'System',
+      sequenceNumber: systemMessage.sequenceNumber,
+      timestamp: systemMessage.timestamp,
+    }, currentUserId);
+
+    const populatedRoom = await ChatRoom.findById(room._id).populate(
+      'members',
+      'username profileImage status statusText',
+    );
+    const roomObj = populatedRoom.toObject();
+    roomObj.displayName = roomObj.name;
+
+    res.json(roomObj);
+  } catch (error) {
+    console.error('JoinRoom error:', error);
+    res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_JOIN_ROOM, error: error.message });
   }
 };

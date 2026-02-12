@@ -9,8 +9,13 @@ class NotificationService {
       const UserChatRoom = require('../models/UserChatRoom');
       const userService = require('./userService');
 
+      console.log(`[Push] Attempting to send notification to user: ${userId}, roomId: ${roomId || 'none'}`);
+
       const user = await User.findById(userId);
-      if (!user) return;
+      if (!user) {
+        console.warn(`[Push] User not found: ${userId}`);
+        return;
+      }
 
       // 1. [제거됨] 전역 알림 설정 확인 (UserChatRoom 기반 모드로 통합)
 
@@ -21,24 +26,21 @@ class NotificationService {
           const mode = userChatRoom.notificationMode || 'default';
           
           if (mode === 'none') {
+            console.log(`[Push] Notification muted for user ${userId} in room ${roomId}`);
             return; // 알림 차단
           }
           
           if (mode === 'mention') {
-            // 멘션 체크
-            if (messageData) {
-              const userIdStr = userId.toString();
-              const mentions = messageData.mentions || [];
-              const isMentioned = 
-                mentions.some(m => m.toString() === userIdStr) ||
-                messageData.mentionAll ||
-                messageData.mentionHere;
-              
-              if (!isMentioned) {
-                return; // 멘션되지 않았으면 알림 차단
-              }
-            } else {
-              return; // 메시지 데이터가 없으면 차단
+            // 멘션 체크: messageData가 없거나 isMentioned가 false면 차단
+            const userIdStr = userId.toString();
+            const mentions = (messageData && Array.isArray(messageData.mentions)) ? messageData.mentions : [];
+            const isMentioned = 
+              mentions.some(m => m.toString() === userIdStr) ||
+              (messageData && (messageData.mentionAll || messageData.mentionHere));
+            
+            if (!isMentioned) {
+              console.log(`[Push] No mention for user ${userId} in room ${roomId}, skipping (mode: mention)`);
+              return;
             }
           }
         }
@@ -48,12 +50,14 @@ class NotificationService {
       if (roomId) {
         const activeRoomId = await userService.getActiveRoom(userId);
         if (activeRoomId === roomId.toString()) {
+          console.log(`[Push] User ${userId} is already in room ${roomId}, skipping notification`);
           return;
         }
       }
 
       // 4. 해당 유저의 모든 활성 기기 구독 정보 조회
       const subscriptions = await PushSubscription.find({ userId, isActive: true });
+      console.log(`[Push] Found ${subscriptions.length} active subscriptions for user ${userId}`);
 
       if (subscriptions.length === 0) {
         return;
@@ -117,6 +121,24 @@ class NotificationService {
     );
 
     await Promise.all(pushPromises);
+  }
+
+  // 강퇴 알림 전송
+  async notifyKickedOut(userId, roomName, roomId) {
+    console.log(`[Push] notifyKickedOut called for user: ${userId}, roomName: ${roomName}`);
+    const payload = {
+      title: '채팅방 퇴장 알림',
+      body: `"${roomName}" 방에서 퇴장 처리되었습니다.`,
+      icon: '/asset/spark_icon_192.png',
+      data: {
+        url: '/chatapp',
+        roomId: roomId,
+        type: 'kicked_out',
+      },
+    };
+
+    // 방 설정을 무시하기 위해 roomId를 전달하지 않고 직접 push 알림 발송
+    await this.sendPushNotification(userId, payload);
   }
 
   // 글로벌 공지사항 알림 전송

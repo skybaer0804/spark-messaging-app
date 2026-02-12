@@ -1,4 +1,5 @@
 const Team = require('../models/Team');
+const ERROR_MESSAGES = require('../constants/errorMessages');
 const UserTeam = require('../models/UserTeam');
 const User = require('../models/User');
 const ChatRoom = require('../models/ChatRoom');
@@ -14,11 +15,11 @@ exports.createTeam = async (req, res) => {
     const workspaceId = req.headers['x-workspace-id'] || req.body.workspaceId;
 
     if (!workspaceId) {
-      return res.status(400).json({ message: 'workspaceId is required' });
+      return res.status(400).json(ERROR_MESSAGES.COMMON.WORKSPACE_REQUIRED);
     }
 
     if (!teamName || teamName.trim() === '') {
-      return res.status(400).json({ message: 'teamName is required' });
+      return res.status(400).json(ERROR_MESSAGES.TEAM.NAME_REQUIRED);
     }
 
     // 1. Team 생성
@@ -127,7 +128,7 @@ exports.createTeam = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating team:', error);
-    res.status(500).json({ message: 'Failed to create team', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.TEAM.FAILED_TO_CREATE, error: error.message });
   }
 };
 
@@ -138,7 +139,7 @@ exports.getTeams = async (req, res) => {
     const { workspaceId } = req.query;
 
     if (!workspaceId) {
-      return res.status(400).json({ message: 'workspaceId is required' });
+      return res.status(400).json(ERROR_MESSAGES.COMMON.WORKSPACE_REQUIRED);
     }
 
     // 1. 유저가 속한 팀 ID 목록 조회
@@ -177,7 +178,7 @@ exports.getTeams = async (req, res) => {
     res.json(teamsWithMembers);
   } catch (error) {
     console.error('Error fetching teams:', error);
-    res.status(500).json({ message: 'Failed to fetch teams', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.TEAM.FAILED_TO_FETCH_TEAMS, error: error.message });
   }
 };
 
@@ -190,14 +191,14 @@ exports.getTeam = async (req, res) => {
     const team = await Team.findById(teamId).populate('createdBy', 'username profileImage');
 
     if (!team) {
-      return res.status(404).json({ message: 'Team not found' });
+      return res.status(404).json(ERROR_MESSAGES.TEAM.NOT_FOUND);
     }
 
     // 비공개 팀인 경우 멤버인지 확인
     if (team.private) {
       const userTeam = await UserTeam.findOne({ userId, teamId });
       if (!userTeam) {
-        return res.status(403).json({ message: 'Access denied. This is a private team.' });
+        return res.status(403).json(ERROR_MESSAGES.TEAM.ACCESS_DENIED_PRIVATE);
       }
     }
 
@@ -216,7 +217,7 @@ exports.getTeam = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching team:', error);
-    res.status(500).json({ message: 'Failed to fetch team', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.TEAM.FAILED_TO_FETCH_TEAM, error: error.message });
   }
 };
 
@@ -229,13 +230,13 @@ exports.updateTeam = async (req, res) => {
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ message: 'Team not found' });
+      return res.status(404).json(ERROR_MESSAGES.TEAM.NOT_FOUND);
     }
 
     // 권한 체크: owner 또는 admin만 수정 가능
     const userTeam = await UserTeam.findOne({ userId: currentUserId, teamId });
     if (!userTeam || !['owner', 'admin'].includes(userTeam.role)) {
-      return res.status(403).json({ message: 'Insufficient permissions' });
+      return res.status(403).json(ERROR_MESSAGES.TEAM.INSUFFICIENT_PERMISSIONS);
     }
 
     const updateData = {};
@@ -281,7 +282,7 @@ exports.updateTeam = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating team:', error);
-    res.status(500).json({ message: 'Failed to update team', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.TEAM.FAILED_TO_UPDATE_TEAM, error: error.message });
   }
 };
 
@@ -293,13 +294,13 @@ exports.deleteTeam = async (req, res) => {
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ message: 'Team not found' });
+      return res.status(404).json(ERROR_MESSAGES.TEAM.NOT_FOUND);
     }
 
     // owner만 삭제 가능
     const userTeam = await UserTeam.findOne({ userId: currentUserId, teamId });
     if (!userTeam || userTeam.role !== 'owner') {
-      return res.status(403).json({ message: 'Only team owner can delete the team' });
+      return res.status(403).json(ERROR_MESSAGES.TEAM.ONLY_OWNER_CAN_DELETE);
     }
 
     // 팀과 연결된 ChatRoom 찾기 및 삭제
@@ -323,10 +324,10 @@ exports.deleteTeam = async (req, res) => {
     // Team 삭제
     await Team.findByIdAndDelete(teamId);
 
-    res.json({ message: 'Team deleted successfully' });
+    res.json(ERROR_MESSAGES.TEAM.SUCCESS_DELETE);
   } catch (error) {
     console.error('Error deleting team:', error);
-    res.status(500).json({ message: 'Failed to delete team', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.TEAM.FAILED_TO_DELETE_TEAM, error: error.message });
   }
 };
 
@@ -338,18 +339,18 @@ exports.inviteMembers = async (req, res) => {
     const currentUserId = req.user.id;
 
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
-      return res.status(400).json({ message: 'userIds array is required' });
+      return res.status(400).json(ERROR_MESSAGES.COMMON.INVALID_INPUT);
     }
 
     const team = await Team.findById(teamId);
     if (!team) {
-      return res.status(404).json({ message: 'Team not found' });
+      return res.status(404).json(ERROR_MESSAGES.TEAM.NOT_FOUND);
     }
 
     // 권한 체크: owner 또는 admin만 초대 가능
     const userTeam = await UserTeam.findOne({ userId: currentUserId, teamId });
     if (!userTeam || !['owner', 'admin'].includes(userTeam.role)) {
-      return res.status(403).json({ message: 'Insufficient permissions' });
+      return res.status(403).json(ERROR_MESSAGES.TEAM.INSUFFICIENT_PERMISSIONS);
     }
 
     // 이미 멤버인지 체크
@@ -361,7 +362,7 @@ exports.inviteMembers = async (req, res) => {
     const newUserIds = userIds.filter((id) => !existingUserIds.includes(id.toString()));
 
     if (newUserIds.length === 0) {
-      return res.status(400).json({ message: 'All users are already members' });
+      return res.status(400).json(ERROR_MESSAGES.COMMON.INVALID_INPUT);
     }
 
     // 새 멤버 추가
@@ -440,13 +441,13 @@ exports.removeMember = async (req, res) => {
     // 권한 체크
     const currentUserTeam = await UserTeam.findOne({ userId: currentUserId, teamId });
     if (!currentUserTeam || !['owner', 'admin'].includes(currentUserTeam.role)) {
-      return res.status(403).json({ message: 'Insufficient permissions' });
+      return res.status(403).json(ERROR_MESSAGES.TEAM.INSUFFICIENT_PERMISSIONS);
     }
 
     // owner는 자기 자신을 제거할 수 없음 (팀 삭제 필요)
     const targetUserTeam = await UserTeam.findOne({ userId, teamId });
     if (targetUserTeam?.role === 'owner') {
-      return res.status(400).json({ message: 'Cannot remove team owner' });
+      return res.status(400).json(ERROR_MESSAGES.COMMON.INVALID_INPUT);
     }
 
     await UserTeam.findOneAndDelete({ userId, teamId });
@@ -469,6 +470,9 @@ exports.removeMember = async (req, res) => {
         targetUserId: userId,
       });
 
+      // [v2.7.1] 강퇴된 사용자에게 푸시 알림 발송
+      notificationService.notifyKickedOut(userId, teamChatRoom.name, teamChatRoom._id);
+
       // 4. 남은 멤버들에게 알림 (멤버 수/목록 변경)
       const updatedRoom = await ChatRoom.findById(teamChatRoom._id);
       if (updatedRoom) {
@@ -481,9 +485,9 @@ exports.removeMember = async (req, res) => {
       }
     }
 
-    res.json({ message: 'Member removed successfully' });
+    res.json(ERROR_MESSAGES.TEAM.MEMBER_REMOVED);
   } catch (error) {
     console.error('Error removing member:', error);
-    res.status(500).json({ message: 'Failed to remove member', error: error.message });
+    res.status(500).json({ ...ERROR_MESSAGES.TEAM.FAILED_TO_REMOVE_MEMBER, error: error.message });
   }
 };

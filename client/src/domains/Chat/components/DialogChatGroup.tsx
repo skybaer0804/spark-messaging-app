@@ -5,8 +5,7 @@ import { Flex } from '@/ui-components/Layout/Flex';
 import { Button } from '@/ui-components/Button/Button';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Input } from '@/ui-components/Input/Input';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Box } from '@/ui-components/Layout/Box';
+import { Grid } from '@/ui-components/Layout/Grid';
 import { Switch } from '@/ui-components/Switch/Switch';
 import { AutocompleteMember } from './AutocompleteMember';
 import { useChat } from '../context/ChatContext';
@@ -137,7 +136,15 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
     return /^[a-zA-Z0-9가-힣_-]+$/.test(name.trim());
   };
 
-  const isFormValid = isValidGroupName(groupData.name) && !isSubmitting;
+  // 설명 유효성 검사 (Injection 방어: <, >, /, \ 등 제한)
+  const isValidDescription = (desc: string) => {
+    if (!desc) return true;
+    return /^[^<>/\\&]*$/.test(desc);
+  };
+
+  const isFormValid = isValidGroupName(groupData.name) && 
+    isValidDescription(groupData.description) && 
+    !isSubmitting;
 
   return (
     <Dialog
@@ -153,6 +160,7 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
           <Button
             onClick={handleClose}
             variant="secondary"
+            size="sm"
             style={isMobile ? { flex: 4.5 } : {}}
           >
             <Flex align="center" gap="xs" justify="center">
@@ -162,6 +170,7 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
           </Button>
           <Button
             variant="primary"
+            size="sm"
             disabled={!isFormValid}
             onClick={handleSubmit}
             style={isMobile ? { flex: 5.5 } : {}}
@@ -174,36 +183,38 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
         </Flex>
       }
     >
-      <Stack spacing="md">
-        <Box>
-          <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-            이름 *
-          </Typography>
+      <Grid container spacing="md">
+        <Grid item xs={12}>
           <Input
+            label="이름"
+            isValid={isValidGroupName(groupData.name)}
             fullWidth
             placeholder="예: 프로젝트-공지"
             value={groupData.name}
             onInput={(e) => setGroupData((prev) => ({ ...prev, name: e.currentTarget.value }))}
             error={groupData.name.length > 0 && !isValidGroupName(groupData.name)}
+            helperText={groupData.name.length > 0 && !isValidGroupName(groupData.name)
+              ? "공백이나 특수문자는 사용할 수 없습니다 (한글, 영문, 숫자, _, -만 허용)."
+              : ""}
           />
-          {groupData.name.length > 0 && !isValidGroupName(groupData.name) && (
-            <Typography variant="caption" style={{ color: 'var(--color-error)', marginTop: '4px' }}>
-              공백이나 특수문자는 사용할 수 없습니다.
-            </Typography>
-          )}
-        </Box>
-        <Box>
-          <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-            설명
-          </Typography>
+        </Grid>
+
+        <Grid item xs={12}>
           <Input
+            label="설명"
+            isValid={isValidDescription(groupData.description)}
             fullWidth
             placeholder="채널의 목적을 설명해주세요."
             value={groupData.description}
             onInput={(e) => setGroupData((prev) => ({ ...prev, description: e.currentTarget.value }))}
+            error={groupData.description.length > 0 && !isValidDescription(groupData.description)}
+            helperText={groupData.description.length > 0 && !isValidDescription(groupData.description)
+              ? "보안을 위해 일부 특수문자(<, >, /, \, &)는 사용할 수 없습니다."
+              : ""}
           />
-        </Box>
-        <Box>
+        </Grid>
+
+        <Grid item xs={12}>
           <AutocompleteMember
             userList={userList}
             selectedUsers={groupData.members}
@@ -212,8 +223,9 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
             placeholder="멤버 초대"
             label="멤버 추가"
           />
-        </Box>
-        <Box>
+        </Grid>
+
+        <Grid item xs={12}>
           <Flex justify="space-between" align="center">
             <Flex direction="column" style={{ flex: 1 }}>
               <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '4px' }}>
@@ -225,8 +237,8 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
             </Flex>
             <Switch checked={groupData.isPrivate} onChange={(checked) => setGroupData((prev) => ({ ...prev, isPrivate: checked }))} />
           </Flex>
-        </Box>
-      </Stack>
+        </Grid>
+      </Grid>
     </Dialog>
   );
 };

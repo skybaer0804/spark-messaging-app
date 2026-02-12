@@ -2,7 +2,6 @@ import { createContext } from 'preact';
 import { useContext, useState, useEffect } from 'preact/hooks';
 import { authApi } from '@/core/api/ApiService';
 import sparkMessagingClient from '@/config/sparkMessaging';
-import { useToast } from './ToastContext';
 import { getLocalStorage, setLocalStorage, removeLocalStorage } from '@/core/utils/storageCache';
 
 export interface User {
@@ -33,7 +32,6 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: any }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { showSuccess, showError } = useToast();
 
   const getToken = () => getLocalStorage('token');
 
@@ -69,39 +67,28 @@ export function AuthProvider({ children }: { children: any }) {
   }, []);
 
   const signIn = async (credentials: any) => {
-    try {
-      const response = await authApi.login(credentials);
-      const { token, user: userData } = response.data;
-      setLocalStorage('token', token);
+    const response = await authApi.login(credentials);
+    const { token, user: userData } = response.data;
+    setLocalStorage('token', token);
 
-      // v2.2.0: 워크스페이스 정보가 있으면 전역 스토어에 즉시 반영
-      if (userData.workspaces && userData.workspaces.length > 0) {
-        const { currentWorkspaceId } = await import('@/stores/chatRoomsStore');
-        if (!currentWorkspaceId.value) {
-          currentWorkspaceId.value = userData.workspaces[0];
-        }
+    // v2.2.0: 워크스페이스 정보가 있으면 전역 스토어에 즉시 반영
+    if (userData.workspaces && userData.workspaces.length > 0) {
+      const { currentWorkspaceId } = await import('@/stores/chatRoomsStore');
+      if (!currentWorkspaceId.value) {
+        currentWorkspaceId.value = userData.workspaces[0];
       }
-
-      setUser(userData);
-      return response.data;
-    } catch (error: any) {
-      showError(error.message || '로그인에 실패했습니다');
-      throw error;
     }
+
+    setUser(userData);
+    return response.data;
   };
 
   const signUp = async (userData: any) => {
-    try {
-      const response = await authApi.register(userData);
-      const { token, user: newUser } = response.data;
-      setLocalStorage('token', token);
-      setUser(newUser);
-      showSuccess('회원가입이 완료되었습니다');
-      return response.data;
-    } catch (error: any) {
-      showError(error.message || '회원가입에 실패했습니다');
-      throw error;
-    }
+    const response = await authApi.register(userData);
+    const { token, user: newUser } = response.data;
+    setLocalStorage('token', token);
+    setUser(newUser);
+    return response.data;
   };
 
   const signOut = async () => {

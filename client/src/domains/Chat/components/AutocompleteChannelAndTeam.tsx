@@ -12,6 +12,7 @@ export interface AutocompleteChannelAndTeamProps {
   label?: string;
   helperText?: string;
   error?: boolean;
+  isValid?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
 }
@@ -24,6 +25,7 @@ export function AutocompleteChannelAndTeam({
   label = '상위 채널 또는 그룹',
   helperText,
   error = false,
+  isValid = false,
   disabled = false,
   fullWidth = true,
 }: AutocompleteChannelAndTeamProps) {
@@ -89,6 +91,7 @@ export function AutocompleteChannelAndTeam({
         label={label}
         helperText={helperText}
         error={error}
+        isValid={isValid || !!selectedRoom}
         disabled={disabled}
         fullWidth={fullWidth}
         openOnFocus

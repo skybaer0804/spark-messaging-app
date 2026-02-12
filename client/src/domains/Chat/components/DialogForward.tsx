@@ -5,6 +5,7 @@ import { Typography } from '@/ui-components/Typography/Typography';
 import { Button } from '@/ui-components/Button/Button';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { chatApi } from '@/core/api/ApiService';
+import { useToast } from '@/core/context/ToastContext';
 import type { Message, ChatRoom, ChatUser } from '../types';
 import { AutocompleteAll } from './AutocompleteAll';
 
@@ -25,6 +26,7 @@ export const DialogForward = ({
   onClose, 
   onSuccess 
 }: DialogForwardProps) => {
+  const { showError } = useToast();
   const [selectedTarget, setSelectedTarget] = useState<(ChatRoom | ChatUser) | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -75,9 +77,10 @@ export const DialogForward = ({
       
       onSuccess();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to forward message:', error);
-      alert('메시지 전달에 실패했습니다: ' + (error as any).response?.data?.message || (error as any).message);
+      const errorMessage = error.response?.data?.message || error.message || '메시지 전달에 실패했습니다';
+      showError('메시지 전달에 실패했습니다: ' + errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -93,7 +96,7 @@ export const DialogForward = ({
       style={{ maxWidth: '500px' }}
       actions={
         <Flex gap="sm">
-          <Button variant="outlined" onClick={onClose} disabled={isSubmitting}>취소</Button>
+          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>취소</Button>
           <Button variant="primary" onClick={handleForward} disabled={!selectedTarget || isSubmitting}>
             {isSubmitting ? '전달 중...' : '전달하기'}
           </Button>

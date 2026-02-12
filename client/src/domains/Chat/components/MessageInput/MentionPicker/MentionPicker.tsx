@@ -12,12 +12,13 @@ interface MentionPickerProps {
   members: ChatUser[];
   roomMembers: ChatUser[];
   search: string;
+  existingMentions?: string[];
   onSelect: (user: ChatUser | 'all' | 'here') => void;
   onClose: () => void;
   anchorRef: any;
 }
 
-function MentionPickerComponent({ members, roomMembers, search, onSelect, onClose, anchorRef }: MentionPickerProps) {
+function MentionPickerComponent({ members, roomMembers, search, existingMentions = [], onSelect, onClose, anchorRef }: MentionPickerProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const position = useMentionPicker(anchorRef, true);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -27,20 +28,25 @@ function MentionPickerComponent({ members, roomMembers, search, onSelect, onClos
     { _id: 'here', username: 'here', description: '이 대화방에 있는 활성 사용자에게 알립니다.' },
   ];
 
-  // 1. 중복 제거 및 검색 필터링
-  // roomMembers에 있는 유저가 members(전체 유저)에도 있을 수 있으므로 ID 기준으로 유니크하게 합침
-  const filteredMembers = members.filter(m => 
-    m.username.toLowerCase().includes(search.toLowerCase())
-  );
-
+  // 1. 데이터 가공 및 정렬
   const filteredSpecial = specialMentions.filter(m => 
-    m.username.toLowerCase().includes(search.toLowerCase())
+    m.username.toLowerCase().includes(search.toLowerCase()) && 
+    !existingMentions.includes(m.username)
   );
 
-  const allItems = [...filteredSpecial, ...filteredMembers];
+  // v2.7.5: 멘션 리스트 중복 제거
+  const uniqueMembers = useMemo(() => {
+    if (!members) return [];
+    const seen = new Set();
+    return members.filter(m => {
+      const id = m._id || (m as any).id;
+      if (!id || seen.has(id.toString())) return false;
+      seen.add(id.toString());
+      return true;
+    });
+  }, [members]);
 
   // 방에 있는지 확인하는 헬퍼 함수
-  // Set으로 최적화: O(n) some() 대신 O(1) Set.has() 사용
   const roomMemberIds = useMemo(() => {
     return new Set(roomMembers.map(rm => rm._id));
   }, [roomMembers]);
@@ -48,6 +54,41 @@ function MentionPickerComponent({ members, roomMembers, search, onSelect, onClos
   const isInRoom = (userId: string) => {
     return roomMemberIds.has(userId);
   };
+
+  const sortedMembers = useMemo(() => {
+    // 검색어로 필터링 및 이미 멘션된 유저 제외
+    const filtered = uniqueMembers.filter(m => 
+      m.username.toLowerCase().includes(search.toLowerCase()) &&
+      !existingMentions.includes(m.username)
+    );
+
+    // 정렬 로직: 방 멤버 우선 -> 이름순
+    return [...filtered].sort((a, b) => {
+      const aInRoom = isInRoom(a._id);
+      const bInRoom = isInRoom(b._id);
+
+      if (aInRoom && !bInRoom) return -1;
+      if (!aInRoom && bInRoom) return 1;
+      
+      return a.username.localeCompare(b.username);
+    });
+  }, [members, search, isInRoom]);
+
+  // 특수 멘션(@all, @here)은 맨 마지막에 위치
+  const allItems = [...sortedMembers, ...filteredSpecial];
+
+  useEffect(() => {
+    if (pickerRef.current) {
+      const listElement = pickerRef.current.querySelector('.mention-picker__list');
+      const activeItem = listElement?.querySelector('.profile-item--active');
+      if (activeItem) {
+        activeItem.scrollIntoView({
+          block: 'nearest',
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [selectedIndex]);
 
   useEffect(() => {
     setSelectedIndex(0);
