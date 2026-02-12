@@ -112,7 +112,7 @@ export const ChatMemberPanel = ({ members = [], currentRoom, onClose }: ChatMemb
           </IconButton>
         )}
       </Box>
-      <Box className="chat-app__sidebar-panel__content">
+      <Box className="chat-app__sidebar-panel__content" style={{ overflowX: 'hidden' }}>
         <List style={{ padding: '8px 0' }}>
           {uniqueMembers.map((member) => {
             const memberId = member._id || (member as any).id;
