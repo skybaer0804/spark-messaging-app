@@ -6,6 +6,7 @@ import { MobileChatInput } from './MessageInput/MobileChatInput';
 import { Input } from '@/ui-components/Input/Input';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Stack } from '@/ui-components/Layout/Stack';
+import { Chip } from '@/ui-components/Chip/Chip';
 import { MessageInputToolbar } from './MessageInput/MessageInputToolbar';
 import { AddLinkModal } from './MessageInput/AddLinkModal';
 import { MentionPicker } from './MessageInput/MentionPicker/MentionPicker';
@@ -66,6 +67,78 @@ function ChatInputComponent({
   const [mentionSearch, setMentionSearch] = useState('');
   const [mentionPos, setMentionPos] = useState(0);
   const [selectedTextForLink, setSelectedTextForLink] = useState('');
+
+  // 멘션 텍스트를 칩으로 렌더링하는 함수
+  const renderRichText = (text: string) => {
+    if (!text) return null;
+
+    // @all, @here 및 @username 패턴 찾기
+    const parts = text.split(/((?:^|\s)@all\b|(?:^|\s)@here\b|@(?:[가-힣a-zA-Z0-9_]+))/g);
+    
+    return parts.map((part, i) => {
+      const trimmedPart = part.trim();
+      if (trimmedPart.startsWith('@')) {
+        const username = trimmedPart.substring(1);
+        const isSpecial = username === 'all' || username === 'here';
+        const member = isSpecial ? true : roomMembers.find(m => m.username === username) || members.find(m => m.username === username);
+
+        if (member) {
+          return (
+            <Chip
+              key={i}
+              label={trimmedPart}
+              size="md"
+              variant={isSpecial ? 'secondary' : 'primary'}
+              style={{ 
+                margin: '0 1px', 
+                display: 'inline-flex',
+                height: '24px',
+                fontSize: '14px',
+                verticalAlign: 'baseline',
+                pointerEvents: 'auto',
+                position: 'relative',
+                zIndex: 10
+              }}
+            />
+          );
+        }
+      }
+      return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{part}</span>;
+    });
+  };
+
+  // 활성화된 멘션들을 칩으로 보여주는 상단 바
+  const renderMentionChips = () => {
+    // 텍스트에서 모든 멘션 추출
+    const mentionPattern = /((?:^|\s)@all\b|(?:^|\s)@here\b|@(?:[가-힣a-zA-Z0-9_]+))/g;
+    const matches = input.match(mentionPattern) || [];
+    const uniqueMentions = [...new Set(matches.map(m => m.trim()))];
+
+    if (uniqueMentions.length === 0) return null;
+
+    return (
+      <div 
+        className="chat-input__mention-chips"
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '4px',
+          padding: '8px 12px',
+          borderBottom: '1px solid var(--color-border-subtle)',
+          backgroundColor: 'var(--color-bg-subtle)'
+        }}
+      >
+        {uniqueMentions.map((mention, i) => (
+          <Chip
+            key={i}
+            label={mention}
+            size="md"
+            style={{ height: '24px', fontSize: '14px' }}
+          />
+        ))}
+      </div>
+    );
+  };
 
   // 멘션 강제 트리거 핸들러
   const handleMentionTrigger = () => {
@@ -153,6 +226,7 @@ function ChatInputComponent({
           uploadProgress={uploadProgress}
           onRemove={onFileRemove}
         />
+        {renderMentionChips()}
         <div
           ref={containerRef}
           className={`chat-input-container ${isMobile ? 'chat-input-container--mobile' : ''}`}
@@ -168,6 +242,10 @@ function ChatInputComponent({
               onMentionClick={handleMentionTrigger}
               onEmojiButtonRef={(el) => { if (el) emojiButtonRef.current = el; }}
               onKeyPress={(e) => {
+                // 멘션 피커가 열려있을 때는 엔터 키로 메시지를 보내지 않음
+                if (mentionOpen && e.key === 'Enter') {
+                  return;
+                }
                 // 엔터 키는 항상 허용하여 전송 가능하게 함
                 if (e.key === 'Enter') {
                   onKeyPress(e as any);
@@ -184,74 +262,126 @@ function ChatInputComponent({
             />
           ) : (
             <>
-              <Input
-                multiline
-                value={input}
-                onCompositionStart={() => {
-                  setIsComposing(true);
-                  setFormattingComposing(true);
-                }}
-                onCompositionEnd={() => {
-                  setIsComposing(false);
-                  setFormattingComposing(false);
-                }}
-                onInput={(e) => {
-                  const target = e.target as HTMLTextAreaElement;
-                  setInput(target.value);
-                  textareaRef.current = target;
-
-                  // 높이 자동 조절
-                  target.style.height = 'auto';
-                  const scrollHeight = target.scrollHeight;
-                  const lineHeight = parseFloat(getComputedStyle(target).lineHeight) || 24;
-                  const verticalPadding = 64;
-                  const minHeight = lineHeight * 2 + verticalPadding;
-                  const maxHeight = lineHeight * 5 + verticalPadding;
-                  const targetHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
-                  target.style.height = `${targetHeight}px`;
-
-                  if (isComposing) {
-                    const inputElement = e.currentTarget;
-                    requestAnimationFrame(() => {
-                      if (document.activeElement !== inputElement) {
-                        inputElement.focus();
-                      }
-                    });
-                  }
-                }}
-                onKeyDown={(e) => {
-                  // 포맷 단축키 처리
-                  if (typeof handleFormatKeyDown === 'function') {
-                    handleFormatKeyDown(e as any);
-                  }
-
-                  // 엔터 키 전송 처리
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    const hasText = input.trim().length > 0;
-                    const hasFiles = selectedFiles.length > 0;
-
-                    if (isConnected && (hasText || hasFiles)) {
-                      // 파일이 있으면 파일 전송 핸들러, 없으면 메시지 핸들러 호출
-                      // Chat.tsx에서 두 핸들러는 handleSendAll로 통합되어 있음
-                      if (hasFiles) {
-                        onSendFile();
-                      } else {
-                        onSendMessage();
-                      }
-                    }
-                  }
-                }}
-                placeholder={placeholder || (isConnected ? '메시지를 입력하세요...' : '연결 중...')}
-                disabled={!isConnected}
-                fullWidth
-                rows={2}
+              <div 
+                className="chat-input__rich-wrapper"
                 style={{
-                  paddingBottom: '48px',
-                  borderRadius: '8px 8px 0 0',
+                  position: 'relative',
+                  width: '100%',
                   minHeight: '112px'
                 }}
-              />
+              >
+                <div
+                  className="chat-input__display"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    padding: '16px',
+                    paddingBottom: '48px',
+                    fontSize: '16px',
+                    fontFamily: 'var(--primitive-font-family)',
+                    color: 'var(--color-text-primary)',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    pointerEvents: 'none',
+                    zIndex: 1,
+                    overflowY: 'auto',
+                    lineHeight: '24px'
+                  }}
+                >
+                  {renderRichText(input)}
+                </div>
+                <Input
+                  multiline
+                  value={input}
+                  onCompositionStart={() => {
+                    setIsComposing(true);
+                    setFormattingComposing(true);
+                  }}
+                  onCompositionEnd={() => {
+                    setIsComposing(false);
+                    setFormattingComposing(false);
+                  }}
+                  onScroll={(e) => {
+                    const display = document.querySelector('.chat-input__display');
+                    if (display) {
+                      display.scrollTop = (e.target as HTMLTextAreaElement).scrollTop;
+                    }
+                  }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    setInput(target.value);
+                    textareaRef.current = target;
+
+                    // 높이 자동 조절
+                    target.style.height = 'auto';
+                    const scrollHeight = target.scrollHeight;
+                    const lineHeight = 24;
+                    const verticalPadding = 64;
+                    const minHeight = lineHeight * 2 + verticalPadding;
+                    const maxHeight = lineHeight * 5 + verticalPadding;
+                    const targetHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+                    target.style.height = `${targetHeight}px`;
+
+                    if (isComposing) {
+                      const inputElement = e.currentTarget;
+                      requestAnimationFrame(() => {
+                        if (document.activeElement !== inputElement) {
+                          inputElement.focus();
+                        }
+                      });
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // 멘션 피커가 열려있을 때는 엔터 키로 메시지를 보내지 않음
+                    if (mentionOpen && e.key === 'Enter') {
+                      // MentionPicker에서 처리하도록 함
+                      return;
+                    }
+
+                    // 포맷 단축키 처리
+                    if (typeof handleFormatKeyDown === 'function') {
+                      handleFormatKeyDown(e as any);
+                    }
+
+                    // 엔터 키 전송 처리
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      const hasText = input.trim().length > 0;
+                      const hasFiles = selectedFiles.length > 0;
+
+                      if (isConnected && (hasText || hasFiles)) {
+                        // 파일이 있으면 파일 전송 핸들러, 없으면 메시지 핸들러 호출
+                        // Chat.tsx에서 두 핸들러는 handleSendAll로 통합되어 있음
+                        if (hasFiles) {
+                          onSendFile();
+                        } else {
+                          onSendMessage();
+                        }
+                      }
+                    }
+                  }}
+                  placeholder={placeholder || (isConnected ? '메시지를 입력하세요...' : '연결 중...')}
+                  disabled={!isConnected}
+                  fullWidth
+                  rows={2}
+                  style={{
+                    paddingBottom: '48px',
+                    borderRadius: '8px 8px 0 0',
+                    minHeight: '112px',
+                    color: input ? 'transparent' : 'inherit',
+                    caretColor: 'var(--color-text-primary)',
+                    position: 'relative',
+                    zIndex: 2,
+                    background: 'transparent',
+                    fontSize: '16px',
+                    lineHeight: '24px',
+                    fontFamily: 'var(--primitive-font-family)'
+                  }}
+                />
+              </div>
               <MessageInputToolbar
                 onFormat={(type) => {
                   if (type === 'link') {

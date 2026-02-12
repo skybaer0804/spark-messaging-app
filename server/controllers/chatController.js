@@ -39,9 +39,9 @@ function parseMentions(content, roomMembers) {
     }
   }
 
-  // @all, @here 체크 (단어 경계 고려)
-  if (/\b@all\b/i.test(content)) mentionAll = true;
-  if (/\b@here\b/i.test(content)) mentionHere = true;
+  // @all, @here 체크 (단어 경계 고려, 메시지 시작 부분 또는 공백 뒤)
+  if (/(^|\s)@all\b/i.test(content)) mentionAll = true;
+  if (/(^|\s)@here\b/i.test(content)) mentionHere = true;
 
   return { mentions, mentionAll, mentionHere };
 }
@@ -62,24 +62,34 @@ async function sendPushNotificationHelper(roomId, senderId, senderName, content,
   });
   if (recipientIdsToNotify.length === 0) return;
 
-  // 3. 사용자별 알림 설정(방별 설정) 확인
+  // 3. 사용자별 알림 설정(방별 설정) 확인 및 @here/@all 필터링
   const finalRecipients = [];
+  
+  // [v2.7.4] @here 처리를 위해 사용자들의 온라인 상태 조회
+  const userStatuses = mentionHere ? await userService.getUsersStatus(recipientIdsToNotify) : {};
+
   for (const userId of recipientIdsToNotify) {
     const userChatRoom = await UserChatRoom.findOne({ userId, roomId });
 
-    if (!userChatRoom) {
-      // 설정이 없으면 기본적으로 알림 전송
-      finalRecipients.push(userId);
-      continue;
-    }
-
-    const mode = userChatRoom.notificationMode || 'default';
+    // 기본 모드 결정 (설정 없으면 default)
+    const mode = userChatRoom ? (userChatRoom.notificationMode || 'default') : 'default';
+    
     if (mode === 'none') continue; // 알림 끔
 
-    if (mode === 'mention') {
-      // 멘션 모드일 때 멘션 여부 확인
-      const isMentioned = mentions.some((m) => m.toString() === userId) || mentionAll || mentionHere;
-      if (!isMentioned) continue;
+    // 멘션 여부 확인
+    const isExplicitlyMentioned = mentions.some((m) => m.toString() === userId.toString());
+    const isMentioned = isExplicitlyMentioned || mentionAll || mentionHere;
+
+    if (mode === 'mention' && !isMentioned) {
+      continue; // 멘션 모드인데 멘션되지 않았으면 건너뜀
+    }
+
+    // [v2.7.4] @here 처리: 오프라인이 아닌 유저(online, away, busy)이거나 직접 멘션된 경우만 발송
+    if (mentionHere && !mentionAll && !isExplicitlyMentioned) {
+      const status = userStatuses[userId] || 'offline';
+      if (status === 'offline') {
+        continue;
+      }
     }
 
     finalRecipients.push(userId);

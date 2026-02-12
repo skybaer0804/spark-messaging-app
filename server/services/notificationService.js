@@ -31,21 +31,16 @@ class NotificationService {
           }
           
           if (mode === 'mention') {
-            // 멘션 체크
-            if (messageData) {
-              const userIdStr = userId.toString();
-              const mentions = messageData.mentions || [];
-              const isMentioned = 
-                mentions.some(m => m.toString() === userIdStr) ||
-                messageData.mentionAll ||
-                messageData.mentionHere;
-              
-              if (!isMentioned) {
-                console.log(`[Push] No mention for user ${userId} in room ${roomId}, skipping`);
-                return; // 멘션되지 않았으면 알림 차단
-              }
-            } else {
-              return; // 메시지 데이터가 없으면 차단
+            // 멘션 체크: messageData가 없거나 isMentioned가 false면 차단
+            const userIdStr = userId.toString();
+            const mentions = (messageData && Array.isArray(messageData.mentions)) ? messageData.mentions : [];
+            const isMentioned = 
+              mentions.some(m => m.toString() === userIdStr) ||
+              (messageData && (messageData.mentionAll || messageData.mentionHere));
+            
+            if (!isMentioned) {
+              console.log(`[Push] No mention for user ${userId} in room ${roomId}, skipping (mode: mention)`);
+              return;
             }
           }
         }

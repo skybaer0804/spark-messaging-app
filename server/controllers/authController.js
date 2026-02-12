@@ -159,6 +159,11 @@ exports.updateProfile = async (req, res) => {
 
     const updatedUser = await User.findByIdAndUpdate(userId, { $set: updateData }, { new: true }).select('-password');
 
+    // [v2.7.5] 상태가 변경된 경우 Redis 및 소켓에도 반영하여 알림 수신이 즉시 복구되도록 함
+    if (status) {
+      await userService.setUserStatus(userId, status);
+    }
+
     res.json(updatedUser);
   } catch (error) {
     console.error('UpdateProfile error:', error);
