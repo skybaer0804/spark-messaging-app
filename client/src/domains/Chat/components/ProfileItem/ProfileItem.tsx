@@ -37,6 +37,7 @@ interface ProfileItemProps {
     avatarSize?: number;
     nameSuffix?: any;
     noHover?: boolean;
+    showBadge?: boolean;
   };
 }
 
@@ -59,6 +60,7 @@ export const ProfileItem = memo(({
     showDesc: true,
     statusPosition: 'name-left',
     mode: 'list',
+    showBadge: false,
   },
 }: ProfileItemProps) => {
   const {
@@ -69,6 +71,7 @@ export const ProfileItem = memo(({
     avatarSize = 24,
     nameSuffix,
     noHover = false,
+    showBadge = false,
   } = styleOption;
 
   const fontSize = Math.floor(avatarSize * 0.45);
@@ -178,17 +181,19 @@ export const ProfileItem = memo(({
             {firstLetter}
           </Avatar>
           {renderStatus('icon')}
-          <div
-            className="profile-item__rocket-badge"
-            style={{
-              width: `${badgeSize}px`,
-              height: `${badgeSize}px`,
-              top: `-${badgeSize / 4}px`,
-              right: `-${badgeSize / 4}px`,
-            }}
-          >
-            <IconRocket size={badgeSize * 0.6} />
-          </div>
+          {showBadge && (
+            <div
+              className="profile-item__rocket-badge"
+              style={{
+                width: `${badgeSize}px`,
+                height: `${badgeSize}px`,
+                top: `-${badgeSize / 4}px`,
+                right: `-${badgeSize / 4}px`,
+              }}
+            >
+              <IconRocket size={badgeSize * 0.6} />
+            </div>
+          )}
         </div>
       ) : (
         <div className="profile-item__avatar-placeholder" style={{ width: `${avatarSize}px` }} />
