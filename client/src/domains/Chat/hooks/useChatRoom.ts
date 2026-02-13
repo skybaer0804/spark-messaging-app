@@ -12,7 +12,7 @@ export function useChatRoom(enableListener: boolean = true) {
   const { services, isConnected, currentRoom, setCurrentRoom } = useChat();
   const { chat: chatService, room: roomService } = services;
 
-  const { messages, setMessages, sendOptimisticMessage, updateMessageStatus } = useOptimisticUpdate();
+  const { messages, setMessages, sendOptimisticMessage, sendOptimisticFileMessage, updateMessageStatus } = useOptimisticUpdate();
   const { syncMessages } = useMessageSync();
 
   // v2.5.1: 방 전환 시 로딩 상태 및 Race Condition 방어
@@ -256,5 +256,7 @@ export function useChatRoom(enableListener: boolean = true) {
     handleRoomSelect,
     setCurrentRoom,
     setMessages,
+    sendOptimisticFileMessage,
+    updateMessageStatus,
   };
 }

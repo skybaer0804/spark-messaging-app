@@ -26,9 +26,10 @@ const messageSchema = new mongoose.Schema({
   fileName: { type: String },
   fileSize: { type: Number }, // 파일 크기 (bytes)
   mimeType: { type: String }, // MIME 타입
+  groupId: { type: String }, // [v2.6.0] 다중 파일 그룹화용 ID
   processingStatus: { 
     type: String, 
-    enum: ['processing', 'completed', 'failed'], 
+    enum: ['processing', 'completed', 'failed', 'cancelled'], 
     default: 'processing' 
   }, // 파일 처리 상태 (썸네일/프리뷰 생성 등)
   readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

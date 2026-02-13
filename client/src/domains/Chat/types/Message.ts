@@ -26,6 +26,8 @@ export interface Message {
   timestamp: Date;
   fileData?: FileData;
   renderUrl?: string; // 추가: 3D 렌더링용 GLB URL (최상위)
+  groupId?: string; // [v2.6.0] 다중 파일 그룹화용 ID
+  processingStatus?: 'processing' | 'completed' | 'failed' | 'cancelled';
   isDeleted?: boolean;
   deletedBy?: 'sender' | 'all';
 

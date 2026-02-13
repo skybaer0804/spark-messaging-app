@@ -116,10 +116,13 @@ export const chatApi = {
   getThreadMessages: (messageId: string) => api.get(`/chat/threads/messages/${messageId}`),
   syncMessages: (roomId: string, fromSequence: number) => api.get(`/chat/sync/${roomId}?fromSequence=${fromSequence}`),
   markAsRead: (roomId: string) => api.post(`/chat/read/${roomId}`),
-  uploadFile: (formData: FormData) =>
+  uploadFile: (formData: FormData, config?: any) =>
     api.post('/chat/upload', formData, {
+      ...config,
+      timeout: 300000, // 5분 타임아웃 (대용량 파일 대응)
       headers: {
         'Content-Type': 'multipart/form-data',
+        ...config?.headers,
       },
     }),
   setActiveRoom: (roomId: string | null) => api.post('/chat/active-room', { roomId }),

@@ -101,11 +101,11 @@ export function ModelViewer({
       setLoading(false);
     }, LOAD_TIMEOUT_MS);
 
-    const url = `${modelUrl}${modelUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+    const isBlobUrl = modelUrl.startsWith('blob:');
+    const url = isBlobUrl ? modelUrl : `${modelUrl}${modelUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
 
     (async () => {
       try {
-        const startedAt = performance.now();
         const res = await fetch(url, { signal: abortController.signal });
 
         if (!res.ok) {

@@ -20,6 +20,7 @@ interface ChatMessagesProps {
   onImageClick?: (url: string, fileName: string) => void;
   onThreadClick?: (message: Message) => void;
   onForwardClick?: (message: Message) => void;
+  onRetry?: (messageId: string) => void;
   emptyMessage?: string;
   classNamePrefix?: string;
 }
@@ -33,6 +34,7 @@ function ChatMessagesComponent({
   onImageClick,
   onThreadClick,
   onForwardClick,
+  onRetry,
   emptyMessage,
   classNamePrefix = 'chat',
 }: ChatMessagesProps) {
@@ -123,56 +125,175 @@ function ChatMessagesComponent({
           </Box>
         ) : (
           <Stack spacing="none" style={{ flex: 1, minHeight: 0 }}>
-            {groupMessagesByDate(mainMessages).map((item, index, array) => {
-              if (item.type === 'divider') {
-                return (
-                  <DateDivider
-                    key={`divider-${getSafeTime(item.date) || index}`}
-                    date={item.date!}
+        {((items) => {
+              const renderedItems = [];
+              let i = 0;
+              
+              while (i < items.length) {
+                const item = items[i];
+                
+                if (item.type === 'divider') {
+                  renderedItems.push(
+                    <DateDivider
+                      key={`divider-${getSafeTime(item.date) || i}`}
+                      date={item.date!}
+                    />
+                  );
+                  i++;
+                  continue;
+                }
+
+                // 메시지 처리
+                const currentMsg = item.message!;
+                
+                // 이미지 메시지 그룹화 로직
+                const isImage = currentMsg.fileData?.fileType === 'image';
+                const groupId = currentMsg.groupId;
+                const groupedImages: Message[] = [];
+                
+                if (isImage) {
+                  groupedImages.push(currentMsg);
+                  let j = i + 1;
+                  
+                  // 다음 메시지들도 이미지이고, 그룹 ID가 같거나 같은 sender, 같은 시간(분)인지 확인
+                  while (j < items.length) {
+                    const nextItem = items[j];
+                    if (nextItem.type === 'divider') break; // 날짜 바뀌면 그룹 중단
+                    
+                    const nextMsg = nextItem.message!;
+                    const isNextImage = nextMsg.fileData?.fileType === 'image';
+                    
+                    if (!isNextImage) break;
+                    
+                    const getSenderIdStr = (senderId: any) => 
+                      typeof senderId === 'object' ? senderId?._id?.toString() : senderId?.toString();
+                      
+                    const isSameSender = (getSenderIdStr(currentMsg.senderId) === getSenderIdStr(nextMsg.senderId));
+                    
+                    // [v2.6.0] groupId 우선순위, 없으면 기존 시간 기반 로직
+                    let shouldGroup = false;
+                    if (groupId && nextMsg.groupId === groupId) {
+                      shouldGroup = isSameSender;
+                    } else if (!groupId && !nextMsg.groupId) {
+                      const isSameMinute = 
+                        new Date(currentMsg.timestamp).getMinutes() === new Date(nextMsg.timestamp).getMinutes() &&
+                        new Date(currentMsg.timestamp).getHours() === new Date(nextMsg.timestamp).getHours();
+                      shouldGroup = isSameSender && isSameMinute;
+                    }
+
+                    if (shouldGroup) {
+                      groupedImages.push(nextMsg);
+                      j++;
+                    } else {
+                      break;
+                    }
+                  }
+                  
+                  // 그룹화된 이미지가 있으면 i를 건너뜀
+                  if (groupedImages.length > 1) {
+                    // 그룹화된 경우, 첫 번째 메시지 아이템에 groupedImages prop을 전달
+                    // 그룹화 여부(isGrouped)는 이전 메시지와의 관계를 따짐 (시각적 연결)
+                    // 하지만 그리드형태이므로 isGrouped=false로 처리하여 분리된 말풍선처럼 보이게 하거나,
+                    // 디자인 의도에 따라 조정. 여기서는 그리드 자체가 하나의 말풍선이 되므로
+                    // 이전 메시지가 텍스트이고 같은 유저여도 분리하는게 깔끔할 수 있음.
+                    // 일단 기존 로직(이전 메시지와비교)을 유지하되, 이 덩어리 자체를 하나의 아이템으로 봄.
+                  } else {
+                    // 1장뿐이면 그룹화 취소 (일반 렌더링으로 넘김, 단 groupedImages 배열은 비움)
+                    // groupedImages = []; -> const라 재할당 불가, 그냥 아래서 length check로 처리
+                  }
+                  
+                  // 만약 그룹화가 되었다면 j까지 건너뜀
+                  if (groupedImages.length > 1) {
+                    // 이전 메시지와 그룹화 여부 체크 (Optional)
+                    const prevItem = i > 0 ? items[i - 1] : null;
+                    const prevMsg = prevItem?.type === 'message' ? prevItem.message : null;
+                    let isGrouped = false;
+                     if (prevMsg) {
+                      const isSameSender = (prevMsg.senderId?.toString() === currentMsg.senderId?.toString());
+                      const isSameMinute =
+                        new Date(prevMsg.timestamp).getMinutes() === new Date(currentMsg.timestamp).getMinutes() &&
+                        new Date(prevMsg.timestamp).getHours() === new Date(currentMsg.timestamp).getHours();
+                      isGrouped = isSameSender && isSameMinute;
+                    }
+
+                    // 안읽음 카운트 (그룹의 마지막 메시지 기준? 혹은 첫번째? 보통 가장 최신(마지막) 것 기준이 좋음 but 여기선 뭉텅이)
+                    // 그냥 첫번째 메시지의 unreadCount 사용 (단순화)
+                    let unreadCount: number | undefined = undefined;
+                    if (currentRoom) {
+                      const totalMembers = currentRoom.members?.length || 0;
+                      const readCount = currentMsg.readBy?.length || 0;
+                      unreadCount = totalMembers - readCount;
+                    }
+
+                    renderedItems.push(
+                      <ChatMessageItem
+                        key={currentMsg._id || `group-${i}`}
+                        message={currentMsg}
+                        currentUser={currentUser}
+                        onImageClick={onImageClick}
+                        onThreadClick={onThreadClick}
+                        onForwardClick={onForwardClick}
+                        onRetry={onRetry}
+                        unreadCount={unreadCount && unreadCount > 0 ? unreadCount : undefined}
+                        classNamePrefix={classNamePrefix}
+                        isGrouped={isGrouped}
+                        groupedImages={groupedImages}
+                      />
+                    );
+                    
+                    i = j; // 인덱스 점프
+                    continue;
+                  }
+                } // end if isImage
+
+                // 일반 메시지 처리 (이미지 1장이거나 텍스트 등)
+                // 이전 메시지와 그룹화 여부 체크
+                const prevItem = i > 0 ? items[i - 1] : null; // 주의: i-1이 divider일 수도 있음. divider면 그룹핑 안됨 (위에서 처리됨 - divider는 type check 필요)
+                // 바로 위 루프에서 divider는 push하고 continue했으므로 items[i-1]이 divider일 수 있음.
+                
+                let isGrouped = false;
+                // prevItem이 있고 메시지 타입이어야 함
+                if (prevItem && prevItem.type === 'message') {
+                  const prevMsg = prevItem.message!;
+                   const isSameSender =
+                    (prevMsg.senderId?.toString() === currentMsg.senderId?.toString());
+
+                  const isSameMinute =
+                    new Date(prevMsg.timestamp).getMinutes() === new Date(currentMsg.timestamp).getMinutes() &&
+                    new Date(prevMsg.timestamp).getHours() === new Date(currentMsg.timestamp).getHours() &&
+                    new Date(prevMsg.timestamp).toDateString() === new Date(currentMsg.timestamp).toDateString();
+
+                  isGrouped = isSameSender && isSameMinute;
+                }
+
+                // 안읽음 카운트
+                let unreadCount: number | undefined = undefined;
+                if (currentRoom && currentMsg) {
+                  const totalMembers = currentRoom.members?.length || 0;
+                  const readCount = currentMsg.readBy?.length || 0;
+                  unreadCount = totalMembers - readCount;
+                }
+
+                renderedItems.push(
+                  <ChatMessageItem
+                    key={currentMsg._id || `msg-${i}`}
+                    message={currentMsg}
+                    currentUser={currentUser}
+                    onImageClick={onImageClick}
+                    onThreadClick={onThreadClick}
+                    onForwardClick={onForwardClick}
+                    onRetry={onRetry}
+                    unreadCount={unreadCount && unreadCount > 0 ? unreadCount : undefined}
+                    classNamePrefix={classNamePrefix}
+                    isGrouped={isGrouped}
                   />
                 );
+                
+                i++;
               }
-
-              // 메시지 그룹화 로직 (이전 메시지와 동일 사용자 & 동일 시간(분) 체크)
-              const currentMsg = item.message!;
-              const prevItem = index > 0 ? array[index - 1] : null;
-              const prevMsg = prevItem?.type === 'message' ? prevItem.message : null;
-
-              let isGrouped = false;
-              if (prevMsg) {
-                const isSameSender =
-                  (prevMsg.senderId?.toString() === currentMsg.senderId?.toString());
-
-                const isSameMinute =
-                  new Date(prevMsg.timestamp).getMinutes() === new Date(currentMsg.timestamp).getMinutes() &&
-                  new Date(prevMsg.timestamp).getHours() === new Date(currentMsg.timestamp).getHours() &&
-                  new Date(prevMsg.timestamp).toDateString() === new Date(currentMsg.timestamp).toDateString();
-
-                isGrouped = isSameSender && isSameMinute;
-              }
-
-              // 안읽음 카운트 계산 (currentRoom이 있을 때만)
-              let unreadCount: number | undefined = undefined;
-              if (currentRoom && currentMsg) {
-                const totalMembers = currentRoom.members?.length || 0;
-                const readCount = currentMsg.readBy?.length || 0;
-                unreadCount = totalMembers - readCount;
-              }
-
-              return (
-                <ChatMessageItem
-                  key={currentMsg._id || `temp-${index}`}
-                  message={currentMsg}
-                  currentUser={currentUser}
-                  onImageClick={onImageClick}
-                  onThreadClick={onThreadClick}
-                  onForwardClick={onForwardClick}
-                  unreadCount={unreadCount && unreadCount > 0 ? unreadCount : undefined}
-                  classNamePrefix={classNamePrefix}
-                  isGrouped={isGrouped}
-                />
-              );
-            })}
+              
+              return renderedItems;
+            })(groupMessagesByDate(mainMessages))}
             {/* v2.2.0: 하단 앵커 요소 (외부 ref가 있을 때만) */}
             {externalMessagesEndRef && <div ref={messagesEndRef} className="chat-app__messages-container-anchor" />}
           </Stack>
@@ -219,6 +340,7 @@ export const ChatMessages = memo(ChatMessagesComponent, (prevProps, nextProps) =
   return (
     prevData === nextData &&
     prevProps.classNamePrefix === nextProps.classNamePrefix &&
-    prevProps.currentUser === nextProps.currentUser
+    prevProps.currentUser === nextProps.currentUser &&
+    prevProps.onRetry === nextProps.onRetry
   );
 });

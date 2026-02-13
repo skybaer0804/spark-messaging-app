@@ -38,32 +38,96 @@ export class FileTransferService {
     });
   }
 
-  // 파일 전송 (v2.0.0 DB-First 방식)
-  public async sendFile(roomId: string, file: File, onProgress?: (progress: number) => void): Promise<void> {
+  // 파일 전송 (v2.8.0 Robust Upload with Retry & Abort)
+  public async sendFile(
+    roomId: string,
+    file: File,
+    onProgress?: (progress: number) => void,
+    signal?: AbortSignal,
+    groupId?: string
+  ): Promise<any> {
     // 1. 파일 검증
     const validation = this.validateFile(file);
     if (!validation.valid) {
       throw new Error(validation.error);
     }
 
-    if (onProgress) onProgress(10);
+    const MAX_RETRIES = 3;
+    let attempt = 0;
 
-    // 2. FormData 생성
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('roomId', roomId);
+    const tryUpload = async (): Promise<any> => {
+      try {
+        if (signal?.aborted) throw new Error('Upload aborted');
 
-    try {
-      if (onProgress) onProgress(30);
+        if (onProgress) onProgress(10); // 시작
 
-      // 3. 백엔드 API를 통해 파일 업로드 (DB 저장 및 소켓 브로드캐스트 포함)
-      await chatApi.uploadFile(formData);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('roomId', roomId);
+        if (groupId) formData.append('groupId', groupId);
 
-      if (onProgress) onProgress(100);
-    } catch (error) {
-      console.error('File upload failed:', error);
-      throw error;
-    }
+        // Axios request config with signal and progress
+        const response = await chatApi.uploadFile(formData, {
+          signal,
+          onUploadProgress: (progressEvent: any) => {
+            if (onProgress && progressEvent.total) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              // 10% ~ 90% 구간으로 매핑 (처음 10%는 준비, 마지막 10%는 서버 처리)
+              const mappedProgress = 10 + (percentCompleted * 0.8);
+              onProgress(mappedProgress);
+            }
+          },
+        });
+
+        if (onProgress) onProgress(100); // 완료
+        return response.data;
+
+      } catch (error: any) {
+        if (signal?.aborted || error.message === 'canceled') {
+          throw new Error('Upload aborted');
+        }
+
+        // 네트워크 에러이거나 5xx 서버 에러인 경우 재시도
+        const isNetworkError = !error.response; // 응답이 없으면 네트워크 에러
+        const isServerError = error.response && error.response.status >= 500;
+
+        if ((isNetworkError || isServerError) && attempt < MAX_RETRIES) {
+          attempt++;
+          const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s...
+          console.warn(`[FileTransfer] Upload failed. Retrying in ${delay}ms (Attempt ${attempt}/${MAX_RETRIES})`);
+          
+          if (onProgress) onProgress(0); // 에러 시 진행률 초기화 표시
+
+          // 오프라인 상태라면 온라인이 될 때까지 대기
+          if (!navigator.onLine) {
+            console.log('[FileTransfer] Offline detected. Waiting for connection...');
+            await this.waitForOnline();
+            // 스마트 재시도: 연결 회복 후 즉시 시도하지 않고 잠시 대기
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          } else {
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+
+          return tryUpload(); // 재귀 호출
+        }
+
+        console.error('File upload failed after retries:', error);
+        throw error;
+      }
+    };
+
+    return tryUpload();
+  }
+
+  // 온라인 상태 대기 헬퍼
+  private waitForOnline(): Promise<void> {
+    return new Promise((resolve) => {
+      const handleOnline = () => {
+        window.removeEventListener('online', handleOnline);
+        resolve();
+      };
+      window.addEventListener('online', handleOnline);
+    });
   }
 
   // 이미지 썸네일 생성 (현재 사용되지 않음)

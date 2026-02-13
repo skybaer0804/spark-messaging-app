@@ -23,6 +23,7 @@ import { ChatThreadPanel } from './components/ChatThreadPanel';
 import { ChatInfoPanel } from './components/ChatInfoPanel';
 import { Loading } from '@/ui-components/Loading/Loading';
 import { DialogForward } from './components/DialogForward';
+import { FileAttachmentModal } from './components/MessageInput/FileAttachmentModal';
 import type { Message } from './types';
 import { MobileHeader } from '@/components/Mobile/MobileHeader';
 import { MobileSlidePanel } from '@/components/Mobile/MobileSlidePanel';
@@ -49,13 +50,13 @@ function ChatAppContent() {
     handleRoomSelect: handleRoomSelectRaw,
     handleCreateRoom,
     leaveRoom,
-    sendFile,
-    uploadingFile,
-    uploadProgress,
+    sendFiles, // [v2.6.0] 추가
+    retryUpload,
     isRoomLoading,
   } = useChatApp();
 
   const { setCurrentRoom } = useChat();
+  const [isDragging, setIsDragging] = useState(false); // [v2.6.0] Drag & Drop 전용
 
   const view = useMemo(() => {
     if (pathname === '/chatapp/directory') return 'directory';
@@ -66,6 +67,41 @@ function ChatAppContent() {
 
   const [directoryTab, setDirectoryTab] = useState<'channel' | 'team' | 'user' | 'discussion'>('user');
   const { showSuccess, showError } = useToast();
+
+  // [v2.6.0] Drag-and-Drop 핸들러
+  const handleDragEnter = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (view === 'chat' && currentRoom) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // 오버레이 자체에서 나갈 때만 false 처리 (pointer-events: none 이슈 방어)
+    if ((e.target as HTMLElement).classList.contains('chat-app__drag-overlay')) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (view === 'chat' && currentRoom && e.dataTransfer?.files.length) {
+      const files = Array.from(e.dataTransfer.files);
+      setSelectedFiles(files);
+      setAttachmentModalOpen(true);
+    }
+  };
 
   // 초대 링크로 입장 처리
   useEffect(() => {
@@ -140,7 +176,8 @@ function ChatAppContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [imageModal, setImageModal] = useState<{ url: string; fileName: string } | null>(null);
+  const [isAttachmentModalOpen, setAttachmentModalOpen] = useState(false);
+  const [imageModal, setImageModal] = useState<{ url: string; fileName: string; groupId?: string } | null>(null);
   const [rightPanel, setRightPanel] = useState<'none' | 'members' | 'settings' | 'thread' | 'info'>('none');
   const [selectedThreadMessage, setSelectedThreadMessage] = useState<Message | null>(null);
   const [forwardModalMessage, setForwardModalMessage] = useState<Message | null>(null);
@@ -158,24 +195,20 @@ function ChatAppContent() {
     const files = Array.from(target.files || []);
     if (files.length > 0) {
       setSelectedFiles((prev) => [...prev, ...files]);
+      setAttachmentModalOpen(true); // 모달 열기
     }
+    // input value 초기화 (같은 파일 다시 선택 가능하도록)
+    target.value = '';
   };
 
-  const handleFileSend = async () => {
-    if (selectedFiles.length > 0) {
-      for (const file of selectedFiles) {
-        await sendFile(file);
-      }
-      setSelectedFiles([]);
-    }
-  };
+
 
   const handleFileRemove = (index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleImageClick = (imageUrl: string, fileName: string) => {
-    setImageModal({ url: imageUrl, fileName });
+  const handleImageClick = (imageUrl: string, fileName: string, groupId?: string) => {
+    setImageModal({ url: imageUrl, fileName, groupId });
   };
 
   const handleThreadClick = (message: Message) => {
@@ -208,7 +241,36 @@ function ChatAppContent() {
         overflow: 'hidden'
       }}
       className="chat-app__container"
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
     >
+      {/* Drag Overlay */}
+      {isDragging && (
+        <Box
+          className="chat-app__drag-overlay"
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 1000,
+            background: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'all'
+          }}
+        >
+          <Box className="chat-app__drag-overlay-box" style={{ textAlign: 'center', pointerEvents: 'none' }}>
+            <Box style={{ fontSize: '3rem', marginBottom: '1rem' }}>📁</Box>
+            <Box style={{ fontSize: '1.2rem', fontWeight: 600 }}>파일을 여기에 놓아 업로드하세요</Box>
+          </Box>
+        </Box>
+      )}
       {/* Forward Modal - Rendered at top level */}
       {forwardModalMessage && (
         <DialogForward
@@ -311,6 +373,7 @@ function ChatAppContent() {
                       onImageClick={handleImageClick}
                       onThreadClick={handleThreadClick}
                       onForwardClick={handleForwardClick}
+                      onRetry={retryUpload}
                     />
                   )}
 
@@ -320,9 +383,6 @@ function ChatAppContent() {
                     setInput={setInput}
                     members={userList}
                     roomMembers={currentRoom.members}
-                    selectedFiles={selectedFiles}
-                    uploadingFile={uploadingFile}
-                    uploadProgress={uploadProgress}
                     isConnected={isConnected}
                     placeholder={
                       !isConnected
@@ -333,9 +393,7 @@ function ChatAppContent() {
                     }
                     showFileUpload={true}
                     onSendMessage={sendMessage}
-                    onSendFile={handleFileSend}
                     onFileSelect={handleFileSelect}
-                    onFileRemove={handleFileRemove}
                     onKeyPress={handleKeyPress}
                     classNamePrefix="chat-input"
                   />
@@ -392,9 +450,26 @@ function ChatAppContent() {
         <ImageModal
           url={imageModal.url}
           fileName={imageModal.fileName}
+          groupId={imageModal.groupId}
+          allMessages={messages}
           onClose={handleCloseImageModal}
         />
       )}
+
+      {/* File Attachment Modal */}
+      <FileAttachmentModal
+        open={isAttachmentModalOpen}
+        onClose={() => {
+          setAttachmentModalOpen(false);
+          setSelectedFiles([]); // 모달 닫으면 선택 초기화
+        }}
+        files={selectedFiles}
+        onSend={async (files) => {
+          // [v2.6.0] sendFiles 사용하여 그룹화 전송
+          await sendFiles(files);
+        }}
+        onRemove={handleFileRemove}
+      />
     </Box>
   );
 }

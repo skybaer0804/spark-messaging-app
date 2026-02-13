@@ -1,4 +1,4 @@
-import { memo } from 'preact/compat';
+import { memo, useState, useEffect } from 'preact/compat';
 import { Box } from '@/ui-components/Layout/Box';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
@@ -16,17 +16,30 @@ interface Model3DMessageProps {
 }
 
 export const Model3DMessage = memo(({ message, handleDownload, setShowModelModal }: Model3DMessageProps) => {
+  const [isTimedOut, setIsTimedOut] = useState(false);
   const fileData = message.fileData;
   if (!fileData) return null;
 
   const hasRenderUrl = !!(fileData.renderUrl || message.renderUrl);
   const hasThumbnail = !!fileData.thumbnail;
   
+  // [v2.6.0] 30초 변환 대기 타임아웃
+  useEffect(() => {
+    if (!hasRenderUrl && !hasThumbnail && message.status !== 'failed') {
+      const timer = setTimeout(() => {
+        setIsTimedOut(true);
+      }, 30000); // 30초
+      return () => clearTimeout(timer);
+    } else {
+      setIsTimedOut(false);
+    }
+  }, [hasRenderUrl, hasThumbnail, message.status]);
+
   // 3D 모델의 경우 원본 URL도 뷰어에서 열 수 있으므로 가용 URL 확인
   const availableUrl = fileData.renderUrl || message.renderUrl || fileData.url || '';
   const canOpenModal = hasThumbnail || hasRenderUrl || !!fileData.url;
 
-  // 렌더링 우선순위: 썸네일(이미지) > 렌더파일(3D 뷰어) > 로딩(DotsLoading)
+  // 렌더링 우선순위: 썸네일(이미지) > 렌더파일(3D 뷰어) > 로딩/타임아웃
   const renderPreview = () => {
     if (hasThumbnail) {
       return (
@@ -51,6 +64,31 @@ export const Model3DMessage = memo(({ message, handleDownload, setShowModelModal
           height={150}
           interactive={false}
         />
+      );
+    }
+
+    if (isTimedOut) {
+      return (
+        <Flex direction="column" align="center" justify="center" gap="xs" style={{ padding: '8px', textAlign: 'center' }}>
+          <Typography variant="caption" color="text-secondary" style={{ fontSize: '11px', lineHeight: 1.2 }}>
+            변환이 지연되고 있습니다
+          </Typography>
+          <Typography 
+            variant="caption" 
+            color="primary" 
+            style={{ 
+              fontSize: '10px', 
+              cursor: 'pointer', 
+              textDecoration: 'underline' 
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsTimedOut(false);
+            }}
+          >
+            기다리기
+          </Typography>
+        </Flex>
       );
     }
 

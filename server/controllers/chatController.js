@@ -821,7 +821,12 @@ exports.uploadFile = async (req, res) => {
   // 타임아웃 설정 (파일 타입별)
   const { getFileTimeout, getFileType } = require('../config/fileConfig');
   const fileType = req.file?.fileType || getFileType(req.file?.mimetype, req.file?.originalname);
-  const timeout = getFileTimeout(req.file?.mimetype, req.file?.originalname);
+  let timeout = getFileTimeout(req.file?.mimetype, req.file?.originalname);
+
+  // [v2.8.0] 타임아웃 최소 30분 보장 (대용량 파일 대응)
+  if (timeout < 30 * 60 * 1000) {
+    timeout = 30 * 60 * 1000;
+  }
 
   // 타임아웃 설정
   req.setTimeout(timeout, () => {
@@ -830,12 +835,24 @@ exports.uploadFile = async (req, res) => {
     }
   });
 
+  // [v2.8.0] 연결 종료/취소 시 정리 로직
+  req.on('close', () => {
+    if (req.file && req.file.path && !res.finished) {
+      console.log(`[Upload] Connection closed, deleting partial file: ${req.file.path}`);
+      try {
+        require('fs').unlinkSync(req.file.path);
+      } catch (err) {
+        console.error(`[Upload] Failed to delete partial file:`, err);
+      }
+    }
+  });
+
   try {
     if (!req.file) {
       return res.status(400).json(ERROR_MESSAGES.COMMON.INVALID_INPUT);
     }
 
-    const { roomId, parentMessageId } = req.body;
+    const { roomId, parentMessageId, groupId } = req.body;
     const senderId = req.user.id;
     const file = req.file;
 
@@ -959,6 +976,7 @@ exports.uploadFile = async (req, res) => {
       fileName: fileName, // UTF-8로 디코딩된 파일명
       fileSize: file.size,
       mimeType: file.mimetype,
+      groupId, // [v2.6.0] 추가
       sequenceNumber,
       readBy: [senderId], // [v2.4.0] 보낸 사람은 자동으로 읽음 처리
       processingStatus: thumbnailUrl ? 'completed' : 'processing', // 처리 상태
@@ -1026,6 +1044,7 @@ exports.uploadFile = async (req, res) => {
       fileSize: newMessage.fileSize,
       mimeType: newMessage.mimeType, // MIME 타입 추가 (동영상/오디오 재생에 필요)
       type: type, // 메시지 타입 (image, video, audio, file)
+      groupId: newMessage.groupId, // [v2.6.0] 추가
       processingStatus: newMessage.processingStatus, // 처리 상태 추가
       senderId,
       senderName: sender ? sender.username : 'Unknown',

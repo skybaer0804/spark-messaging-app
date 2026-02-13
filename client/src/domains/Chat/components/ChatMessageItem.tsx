@@ -25,10 +25,12 @@ import { ProfileItem } from './ProfileItem/ProfileItem';
 import { areMessagesEqual } from '../utils/chatUtils';
 import './Chat.scss';
 
+import { ImageMessageGrid } from './ImageMessageGrid';
+
 interface ChatMessageItemProps {
   message: Message;
   currentUser?: ChatUser | null;
-  onImageClick?: (url: string, fileName: string) => void;
+  onImageClick?: (url: string, fileName: string, groupId?: string) => void;
   onThreadClick?: (message: Message) => void;
   onForwardClick?: (message: Message) => void;
   unreadCount?: number;
@@ -36,6 +38,8 @@ interface ChatMessageItemProps {
   isGrouped?: boolean;
   hideToolbar?: boolean;
   isParentInThread?: boolean;
+  groupedImages?: Message[];
+  onRetry?: (messageId: string) => void;
 }
 
 function ChatMessageItemComponent({ 
@@ -47,7 +51,9 @@ function ChatMessageItemComponent({
   unreadCount,
   isGrouped = false,
   hideToolbar = false,
-  isParentInThread = false
+  isParentInThread = false,
+  groupedImages,
+  onRetry
 }: ChatMessageItemProps) {
   const [showModelModal, setShowModelModal] = useState(false);
   const [isSnapshotUploading, setIsSnapshotUploading] = useState(false);
@@ -120,6 +126,19 @@ function ChatMessageItemComponent({
   };
 
   const renderContent = () => {
+    // 이미지 그룹 렌더링
+    if (groupedImages && groupedImages.length > 0) {
+      const images = groupedImages.map(m => ({
+        url: m.fileData?.url || m.fileData?.data || '',
+        fileName: m.fileData?.fileName || 'image',
+        messageId: m._id,
+        status: m.status,
+        groupId: m.groupId // [v2.6.0] 추가
+      })).filter(img => img.url);
+      
+      return <ImageMessageGrid images={images} onImageClick={onImageClick} onRetry={onRetry} />;
+    }
+
     // 로컬 프리뷰가 있는 경우 메시지 객체를 복제하여 썸네일 주입
     const displayMessage = localThumbnail ? {
       ...message,
@@ -131,11 +150,11 @@ function ChatMessageItemComponent({
     }
 
     switch (displayMessage.fileData.fileType) {
-      case 'image': return <ImageMessage message={displayMessage} handleDownload={handleDownload} onImageClick={onImageClick} />;
+      case 'image': return <ImageMessage message={displayMessage} handleDownload={handleDownload} onImageClick={onImageClick} onRetry={onRetry} />;
       case '3d': return <Model3DMessage message={displayMessage} handleDownload={handleDownload} setShowModelModal={setShowModelModal} />;
       case 'video': return <VideoMessage message={displayMessage} handleDownload={handleDownload} />;
       case 'audio': return <AudioMessage message={displayMessage} handleDownload={handleDownload} />;
-      default: return <FileMessage message={displayMessage} handleDownload={handleDownload} />;
+      default: return <FileMessage message={displayMessage} handleDownload={handleDownload} onRetry={onRetry} />;
     }
   };
 
@@ -278,6 +297,7 @@ export const ChatMessageItem = memo(ChatMessageItemComponent, (prevProps, nextPr
     areMessagesEqual(prevProps.message, nextProps.message) &&
     prevProps.unreadCount === nextProps.unreadCount &&
     prevProps.isGrouped === nextProps.isGrouped &&
-    prevProps.currentUser?.id === nextProps.currentUser?.id
+    prevProps.currentUser?._id === nextProps.currentUser?._id &&
+    prevProps.groupedImages?.length === nextProps.groupedImages?.length
   );
 });
