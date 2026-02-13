@@ -146,29 +146,6 @@ function ChatAppContent() {
   const [forwardModalMessage, setForwardModalMessage] = useState<Message | null>(null);
   const { user: currentUser } = useAuth();
 
-  // Auto-scroll to bottom (Anchor-based)
-  useEffect(() => {
-    const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({
-          behavior: 'auto',
-          block: 'end',
-        });
-      }
-    };
-
-    scrollToBottom();
-    const timer1 = setTimeout(scrollToBottom, 30);
-    const timer2 = setTimeout(scrollToBottom, 100);
-    const timer3 = setTimeout(scrollToBottom, 300); // 로딩 해제 직후 렌더링 지연 대비
-
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-    };
-  }, [messages.length, currentRoom?._id, isRoomLoading]);
-
   const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
