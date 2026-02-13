@@ -1,5 +1,6 @@
 const Queue = require('bull');
 const redisConfig = require('../../config/redis');
+const Message = require('../../models/Message'); // [v2.9.3] DB 동기화를 위해 추가
 
 /**
  * 파일 처리 큐 (Bull Queue)
@@ -14,20 +15,28 @@ class FileProcessingQueue {
     this.queue = new Queue('file-processing', {
       redis: redisUrl,
       defaultJobOptions: {
-        attempts: 3, // 최대 3번 재시도
+        attempts: 1, // [v2.9.0] 재시도 1회 (WASM 작업 재시도는 거의 무의미)
         backoff: {
           type: 'exponential',
-          delay: 2000, // 2초부터 시작하여 지수적으로 증가
+          delay: 2000,
         },
         removeOnComplete: {
-          age: 3600, // 1시간 후 완료된 작업 삭제
-          count: 100, // 최대 100개 유지
+          age: 3600,
+          count: 100,
         },
         removeOnFail: {
-          age: 86400, // 24시간 후 실패한 작업 삭제
+          age: 3600, // [v2.9.0] 1시간 후 실패 작업 삭제 (기존 24시간 → 단축)
         },
       },
     });
+
+    // [v2.9.1] 서버 시작 시점 기록
+    this.serverStartTime = Date.now();
+
+    // [v2.9.2] 초기 큐 상태 로깅
+    this.queue.getJobCounts().then(counts => {
+      console.log(`📊 [Queue Startup] Current counts: ${JSON.stringify(counts)}`);
+    }).catch(() => {});
 
     // 큐 이벤트 리스너
     this.setupEventListeners();
@@ -37,8 +46,14 @@ class FileProcessingQueue {
    * 큐 이벤트 리스너 설정
    */
   setupEventListeners() {
-    this.queue.on('completed', (job, result) => {
-      console.log(`✅ 파일 처리 완료: Job ${job.id} - ${job.data.fileType}`);
+    this.queue.on('completed', async (job) => {
+      const { fileType } = job.data;
+      console.log(`✅ 파일 처리 완료: Job ${job.id} - ${fileType}`);
+      
+      try {
+        const counts = await this.queue.getJobCounts();
+        console.log(`📊 [Queue Stats] ${JSON.stringify(counts)}`);
+      } catch(e) {}
     });
 
     this.queue.on('failed', (job, err) => {
@@ -47,6 +62,18 @@ class FileProcessingQueue {
 
     this.queue.on('error', (error) => {
       console.error('❌ 큐 에러:', error);
+    });
+
+    this.queue.on('active', (job) => {
+      console.log(`🏃 [Queue] 작업 시작: Job ${job.id}`);
+    });
+
+    this.queue.on('waiting', (jobId) => {
+      console.log(`⏳ [Queue] 작업 대기중: Job ${jobId}`);
+    });
+
+    this.queue.on('stalled', (job) => {
+      console.warn(`⚠️ [Queue] 작업 정체(Stalled) 감지: Job ${job.id}`);
     });
   }
 
@@ -64,9 +91,10 @@ class FileProcessingQueue {
    */
   async addFileProcessingJob(jobData) {
     try {
-      const job = await this.queue.add('process-file', jobData, {
-        priority: this.getPriority(jobData.fileType),
-      });
+      // [v2.9.2] 우선순위 로직이 Bull의 Sandboxed Worker와 충돌할 가능성이 있어 일단 단순화 (FIFO)
+      const job = await this.queue.add('process-file', jobData);
+      
+      console.log(`📥 [Queue] 작업 추가 성공: Job ${job.id} | ${jobData.fileType} | Msg: ${jobData.messageId}`);
       return job;
     } catch (error) {
       console.error('파일 처리 작업 추가 실패:', error);
@@ -84,7 +112,8 @@ class FileProcessingQueue {
       image: 1, // 이미지는 가장 높은 우선순위
       document: 2,
       audio: 3,
-      video: 4, // 동영상은 가장 낮은 우선순위 (처리 시간이 오래 걸림)
+      model3d: 4, // 3D 모델
+      video: 4,   // 동영상은 처리 시간이 오래 걸림
     };
     return priorities[fileType] || 5;
   }
@@ -141,6 +170,68 @@ class FileProcessingQueue {
   async clean() {
     await this.queue.clean(0, 'completed');
     await this.queue.clean(0, 'failed');
+  }
+
+  /**
+   * [v2.9.3] 데이터베이스와 큐 상태 동기화 (AutoFix)
+   * DB상태가 'queued'이나 큐에 없는 작업을 찾아 복구
+   */
+  async syncWithDatabase() {
+    console.log('🔍 [Queue] 정기 동기화 점검 시작...');
+    try {
+      const counts = await this.queue.getJobCounts();
+      
+      // 1. 'queued' 상태의 메시지 조회
+      const queuedMessages = await Message.find({
+        processingStatus: 'queued',
+        fileUrl: { $exists: true, $ne: null }
+      });
+
+      let recovered = 0;
+      for (const msg of queuedMessages) {
+        // 해당 메시지 ID를 가진 작업이 큐에 있는지 확인 (ID는 messageId로 추적)
+        // Bull의 기본 ID가 아닌 data 내의 messageId로 검색해야 함 (getJobs 활용)
+        const activeJobs = await this.queue.getActive();
+        const waitingJobs = await this.queue.getWaiting();
+        
+        const isAlreadyInQueue = [...activeJobs, ...waitingJobs].some(job => 
+          job.data && job.data.messageId === msg._id.toString()
+        );
+
+        if (!isAlreadyInQueue) {
+          console.log(`🛠️ [AutoFix] 작업 유실 감지 - 복구 중: Msg ${msg._id}`);
+          
+          await this.addFileProcessingJob({
+            messageId: msg._id.toString(),
+            roomId: msg.roomId.toString(),
+            fileType: msg.fileType || '3d', // 기본값
+            fileUrl: msg.fileUrl,
+            filePath: msg.filePath,
+            filename: msg.fileName || 'unknown',
+            mimeType: msg.mimeType
+          });
+          recovered++;
+        }
+      }
+
+      // 2. 'processing' 상태로 너무 오래 방치된 작업 점검 (15분 이상)
+      const staleTime = new Date(Date.now() - 15 * 60 * 1000);
+      const staleProcessingMessages = await Message.find({
+        processingStatus: 'processing',
+        updatedAt: { $lt: staleTime }
+      });
+
+      for (const msg of staleProcessingMessages) {
+        console.warn(`⚠️ [AutoFix] 장기 정체 작업 감지 - 초기화: Msg ${msg._id}`);
+        msg.processingStatus = 'queued'; // 다시 대기 상태로 돌려서 다음 sync에서 처리되게 함
+        await msg.save();
+      }
+
+      console.log(`✅ [Queue] 동기화 점검 완료 (복구: ${recovered}, 정체 해결: ${staleProcessingMessages.length})`);
+      return { recovered, stale: staleProcessingMessages.length, queueCounts: counts };
+    } catch (error) {
+      console.error('❌ [Queue] 동기화 점검 실패:', error);
+    }
   }
 }
 

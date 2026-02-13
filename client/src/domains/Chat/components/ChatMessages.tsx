@@ -84,8 +84,20 @@ function ChatMessagesComponent({
     }
   }, [messages.length, currentUser?._id]);
 
-  // v2.5.2: 렌더링 시점에 스레드 답글(parentMessageId가 있는 경우)이 본 채팅에 섞이지 않도록 방어 필터링 적용
-  const mainMessages = messages.filter(msg => !msg.parentMessageId);
+  // v2.5.2: 스레드 답글 필터링 + [v2.9.0] _id 기준 중복 제거 (React key 충돌 방어)
+  const mainMessages = (() => {
+    const filtered = messages.filter(msg => !msg.parentMessageId);
+    const seen = new Map<string, number>();
+    filtered.forEach((msg, idx) => {
+      const id = msg._id?.toString();
+      if (id) seen.set(id, idx); // 같은 _id면 나중 것(더 완전한 데이터)을 유지
+    });
+    return filtered.filter((msg, idx) => {
+      const id = msg._id?.toString();
+      if (!id) return true;
+      return seen.get(id) === idx;
+    });
+  })();
 
   return (
     <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative' }}>

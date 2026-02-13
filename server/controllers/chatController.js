@@ -9,6 +9,7 @@ const notificationService = require('../services/notificationService');
 const userService = require('../services/userService');
 const imageService = require('../services/imageService');
 const StorageService = require('../services/storage/StorageService');
+const FileProcessingQueue = require('../services/queue/FileProcessingQueue');
 const sharp = require('sharp');
 
 // 멘션 파싱 유틸리티 함수
@@ -996,24 +997,19 @@ exports.uploadFile = async (req, res) => {
     if (detectedFileType && !thumbnailUrl) {
       // 썸네일이 아직 생성되지 않은 경우 워커에 위임
       try {
-        const FileProcessingQueue = require('../services/queue/FileProcessingQueue');
-
-        // 워커 작업 데이터 준비
-        // S3 모드에서는 fileUrl을 사용하여 워커에서 다운로드 (메모리 효율적)
-        // 로컬 모드에서는 filePath를 사용
         const jobData = {
           messageId: newMessage._id.toString(),
-          roomId: roomId.toString(), // 추가
+          roomId: roomId.toString(), 
           fileType: detectedFileType,
-          fileUrl: fileUrl, // S3/로컬 모두 URL 제공
-          filePath: file.path || null, // 로컬 스토리지인 경우만
-          fileBuffer: null, // 메모리 효율을 위해 버퍼는 전달하지 않음 (필요시 fileUrl에서 다운로드)
+          fileUrl: fileUrl, 
+          filePath: file.path || null, 
+          fileBuffer: null, 
           filename: fileResult.filename,
           mimeType: file.mimetype,
         };
 
-        // 워커에 작업 추가
         await FileProcessingQueue.addFileProcessingJob(jobData);
+        console.log(`📥 [Queue] 작업 추가됨: ${detectedFileType} | ${fileResult.filename} | msgId: ${newMessage._id}`);
       } catch (error) {
         console.error('워커 작업 추가 실패:', error);
         // 워커 실패해도 메시지는 이미 저장되었으므로 계속 진행

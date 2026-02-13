@@ -23,21 +23,21 @@ export const Model3DMessage = memo(({ message, handleDownload, setShowModelModal
   const hasRenderUrl = !!(fileData.renderUrl || message.renderUrl);
   const hasThumbnail = !!fileData.thumbnail;
   
-  // [v2.6.0] 30초 변환 대기 타임아웃
+  // [v2.9.0] 60초 변환 대기 타임아웃 (서버 순차 처리 대기 고려)
   useEffect(() => {
     if (!hasRenderUrl && !hasThumbnail && message.status !== 'failed') {
       const timer = setTimeout(() => {
         setIsTimedOut(true);
-      }, 30000); // 30초
+      }, 60000); // 60초
       return () => clearTimeout(timer);
     } else {
       setIsTimedOut(false);
     }
   }, [hasRenderUrl, hasThumbnail, message.status]);
 
-  // 3D 모델의 경우 원본 URL도 뷰어에서 열 수 있으므로 가용 URL 확인
-  const availableUrl = fileData.renderUrl || message.renderUrl || fileData.url || '';
-  const canOpenModal = hasThumbnail || hasRenderUrl || !!fileData.url;
+  // [v2.9.0] GLB 렌더 URL만 뷰어에 사용 (원본 .ply/.stl/.obj는 GLTFLoader로 로드 불가)
+  const availableUrl = fileData.renderUrl || message.renderUrl || '';
+  const canOpenModal = hasRenderUrl;
 
   // 렌더링 우선순위: 썸네일(이미지) > 렌더파일(3D 뷰어) > 로딩/타임아웃
   const renderPreview = () => {

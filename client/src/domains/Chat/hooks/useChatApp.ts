@@ -115,8 +115,11 @@ export function useChatApp() {
 
     const currentUserId = user.id || (user as any)._id;
     
+    // [v2.9.2] 실시간 정합성을 위한 UUID 생성
+    const tempId = crypto.randomUUID ? crypto.randomUUID() : `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
     // 2. 낙관적 메시지 생성 (UI 즉시 반영) - groupId 전달
-    const tempId = sendOptimisticFileMessage(currentRoom._id, file, currentUserId, user.username, undefined, groupId);
+    sendOptimisticFileMessage(currentRoom._id, file, currentUserId, user.username, tempId, groupId);
     const abortController = new AbortController();
 
     // 3. 글로벌 스토어에 업로드 추가
@@ -139,15 +142,22 @@ export function useChatApp() {
   /**
    * 다중 파일 전송 처리 (드래그 앤 드롭 등)
    * 하나의 groupId로 묶어서 낙관적 UI 최적화
+   * [v2.9.2] 모든 파일은 서버의 정합성과 부하 분산을 위해 순차적(Sequential)으로 전송
    */
   const handleFilesSend = async (files: File[]) => {
     if (files.length === 0) return;
     
-    // 다중 파일인 경우(또는 단일 파일이어도 그룹화 가능성 대비) groupId 생성
-    const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    const groupId = `group_${crypto.randomUUID ? crypto.randomUUID() : Date.now()}`;
     
-    // 순차적 또는 병렬로 업로드 실행 (여기서는 병렬)
-    await Promise.all(files.map(file => handleFileSend(file, groupId)));
+    console.log(`[FileTransfer] Starting sequential upload for ${files.length} files. Group: ${groupId}`);
+
+    // [v2.9.2] 모든 파일에 대해 for...of를 사용하여 하나씩 완료될 때까지 기다림
+    // 서버의 InternalQueue와 맞물려 데이터 유실을 원천적으로 차단
+    for (const file of files) {
+      await handleFileSend(file, groupId);
+    }
+    
+    console.log(`[FileTransfer] All files in group ${groupId} have been sent to server.`);
   };
 
   const retryUpload = async (tempId: string) => {

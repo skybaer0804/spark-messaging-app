@@ -39,6 +39,16 @@ export function ModelViewer({
 
   useEffect(() => {
     if (!containerRef.current) return;
+    
+    // [v2.9.0] GLB/GLTF가 아닌 URL 방어 (원본 .ply/.stl/.obj 등은 GLTFLoader로 로드 불가)
+    const urlPath = modelUrl.split('?')[0].toLowerCase();
+    if (!urlPath.endsWith('.glb') && !urlPath.endsWith('.gltf') && !modelUrl.startsWith('blob:')) {
+      console.warn(`⚠️ [ModelViewer] GLB/GLTF가 아닌 URL 스킵: ${modelUrl}`);
+      setError('GLB 파일이 아닙니다.');
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     setError(null);
 

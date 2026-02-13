@@ -5,15 +5,27 @@ const notificationService = require('./notificationService');
 
 class SchedulerService {
   initialize() {
-    // 매 분마다 실행 (0초에 실행되도록 설정 가능하나 기본적으로 매 분 시작 시 실행)
+    // 매 분마다 알림 처리
     cron.schedule('* * * * *', () => {
       this.processScheduledNotifications();
     });
 
-    // 서버 시작 시 미발송된 알림(장애 복구) 체크
-    this.recoverMissedNotifications();
+    // [v2.9.3] 5분마다 파일 처리 큐 동기화 (AutoFix)
+    cron.schedule('*/5 * * * *', () => {
+      const FileProcessingQueue = require('./queue/FileProcessingQueue');
+      FileProcessingQueue.syncWithDatabase();
+    });
 
-    console.log('Scheduler Service Initialized (Every 1 minute interval)');
+    // 서버 시작 시 장애 복구
+    this.recoverMissedNotifications();
+    
+    // [v2.9.3] 서버 시작 시 즉시 파일 큐 점검
+    setTimeout(() => {
+      const FileProcessingQueue = require('./queue/FileProcessingQueue');
+      FileProcessingQueue.syncWithDatabase();
+    }, 10000); // DB 연결 안정화 대기
+
+    console.log('Scheduler Service Initialized (Email/Push & Queue Sync)');
   }
 
   async recoverMissedNotifications() {
