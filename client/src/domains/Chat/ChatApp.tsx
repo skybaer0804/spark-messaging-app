@@ -173,8 +173,8 @@ function ChatAppContent() {
   }, [handleRoomSelectRaw, isConnected, pendingJoinRoom, roomList]);
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isAttachmentModalOpen, setAttachmentModalOpen] = useState(false);
-  const [imageModal, setImageModal] = useState<{ url: string; fileName: string; groupId?: string; messageId?: string } | null>(null);
+  const [attachmentModalOpen, setAttachmentModalOpen] = useState(false);
+  const [imageModal, setImageModal] = useState<{ url: string; fileName: string; groupId?: string; messageId?: string; fileIndex?: number } | null>(null);
   const [rightPanel, setRightPanel] = useState<'none' | 'members' | 'settings' | 'thread' | 'info'>('none');
   const [selectedThreadMessage, setSelectedThreadMessage] = useState<Message | null>(null);
   const [forwardModalMessage, setForwardModalMessage] = useState<Message | null>(null);
@@ -206,7 +206,7 @@ function ChatAppContent() {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleImageClick = (imageUrl: string, fileName: string, idOrGroupId?: string) => {
+  const handleImageClick = (imageUrl: string, fileName: string, idOrGroupId?: string, fileIndex?: number) => {
     // [v2.8.0] idOrGroupId가 messageId일 수도 있고 groupId일 수도 있음
     // messageId로 먼저 매칭 시도
     const isMessageId = messages.some(m => m._id === idOrGroupId);
@@ -214,7 +214,8 @@ function ChatAppContent() {
       url: imageUrl, 
       fileName, 
       messageId: isMessageId ? idOrGroupId : undefined,
-      groupId: !isMessageId ? idOrGroupId : undefined 
+      groupId: !isMessageId ? idOrGroupId : undefined,
+      fileIndex
     });
   };
 
@@ -459,6 +460,7 @@ function ChatAppContent() {
           fileName={imageModal.fileName}
           groupId={imageModal.groupId}
           messageId={imageModal.messageId}
+          fileIndex={imageModal.fileIndex}
           allMessages={messages}
           onClose={handleCloseImageModal}
         />
@@ -466,7 +468,7 @@ function ChatAppContent() {
 
       {/* File Attachment Modal */}
       <FileAttachmentModal
-        open={isAttachmentModalOpen}
+        open={attachmentModalOpen}
         onClose={() => {
           setAttachmentModalOpen(false);
           setSelectedFiles([]); // 모달 닫으면 선택 초기화

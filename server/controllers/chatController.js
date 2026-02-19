@@ -955,6 +955,7 @@ exports.uploadFile = async (req, res) => {
         fileName: file.originalname,
         fileSize: file.size,
         mimeType: file.mimetype,
+        fileType: detectedFileType === 'model3d' ? '3d' : detectedFileType,
         processingStatus: thumbnailUrl ? 'completed' : 'processing',
         renderUrl: null,
         detectedFileType, // 임시 저장용
@@ -964,7 +965,7 @@ exports.uploadFile = async (req, res) => {
     }
 
     // 메시지 전체 타입 결정
-    if (typesFound.has('model3d')) overallType = '3d';
+    if (typesFound.has('model3d') || typesFound.has('3d')) overallType = '3d';
     else if (typesFound.has('image')) overallType = 'image';
     else if (typesFound.has('video')) overallType = 'video';
     else if (typesFound.has('audio')) overallType = 'audio';
@@ -986,6 +987,7 @@ exports.uploadFile = async (req, res) => {
         fileName: f.fileName,
         fileSize: f.fileSize,
         mimeType: f.mimeType,
+        fileType: f.fileType,
         processingStatus: f.processingStatus,
         renderUrl: null
       })),
@@ -995,6 +997,7 @@ exports.uploadFile = async (req, res) => {
       fileName: processedFiles[0].fileName,
       fileSize: processedFiles[0].fileSize,
       mimeType: processedFiles[0].mimeType,
+      fileType: processedFiles[0].fileType,
       processingStatus: processedFiles[0].processingStatus,
       groupId,
       sequenceNumber,

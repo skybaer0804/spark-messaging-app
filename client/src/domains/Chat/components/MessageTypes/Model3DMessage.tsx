@@ -11,11 +11,11 @@ import { Message } from '../../types';
 interface Model3DMessageProps {
   message: Message;
   handleDownload: (e: any) => void;
-  setShowModelModal: (show: boolean) => void;
+  onImageClick?: (url: string, fileName: string, idOrGroupId?: string, index?: number) => void;
   onSnapshot?: (base64: string) => void;
 }
 
-export const Model3DMessage = memo(({ message, handleDownload, setShowModelModal, onSnapshot }: Model3DMessageProps) => {
+export const Model3DMessage = memo(({ message, handleDownload, onImageClick, onSnapshot }: Model3DMessageProps) => {
   const [isTimedOut, setIsTimedOut] = useState(false);
   const fileData = message.fileData;
   if (!fileData) return null;
@@ -126,8 +126,8 @@ export const Model3DMessage = memo(({ message, handleDownload, setShowModelModal
           position: 'relative'
         }}
         onClick={() => {
-          if (canOpenModal) {
-            setShowModelModal(true);
+          if (canOpenModal && onImageClick) {
+            onImageClick(availableUrl, fileData.fileName, message._id, 0);
           }
         }}
       >

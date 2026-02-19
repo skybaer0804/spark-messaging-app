@@ -2,7 +2,7 @@ import { Box } from '@/ui-components/Layout/Box';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { IconButton } from '@/ui-components/Button/IconButton';
-import { IconDownload, Icon3dCubeSphere, IconClick } from '@tabler/icons-preact';
+import { IconDownload, Icon3dCubeSphere, IconClick, IconPlayerPlay } from '@tabler/icons-preact';
 import { downloadFileFromUrl } from '@/core/utils/fileUtils';
 
 interface ImageMessageGridProps {
@@ -15,7 +15,7 @@ interface ImageMessageGridProps {
     processingStatus?: 'processing' | 'completed' | 'failed' | 'cancelled';
     fileType?: string;
   }[];
-  onImageClick?: (url: string, fileName: string, groupId?: string) => void;
+  onImageClick?: (url: string, fileName: string, idOrGroupId?: string, index?: number) => void;
   onRetry?: (messageId: string) => void;
   totalCount?: number;
 }
@@ -73,8 +73,9 @@ const ImageOverlay = ({
     );
   }
 
-  // 3D 파일 완료 시 호버 효과를 위한 오버레이
-  if (fileType === '3d' && isCompleted && !isLast) {
+  // 3D/Video 파일 완료 시 호버 효과를 위한 오버레이
+  if ((fileType === '3d' || fileType === 'video') && isCompleted && !isLast) {
+    const is3D = fileType === '3d';
     return (
       <div className="image-overlay-hover" style={{
         position: 'absolute',
@@ -90,8 +91,10 @@ const ImageOverlay = ({
         color: 'white',
         gap: '4px'
       }}>
-        <Icon3dCubeSphere size={24} />
-        <Typography variant="caption" color="white" style={{ fontSize: '10px', fontWeight: 'bold' }}>3D 상세보기</Typography>
+        {is3D ? <Icon3dCubeSphere size={24} /> : <IconPlayerPlay size={24} />}
+        <Typography variant="caption" color="white" style={{ fontSize: '10px', fontWeight: 'bold' }}>
+          {is3D ? '3D 상세보기' : '비디오 재생'}
+        </Typography>
       </div>
     );
   }
@@ -146,10 +149,10 @@ const ImageOverlay = ({
 };
 
 export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: ImageMessageGridProps) {
-  const displayImages = images.slice(0, 4);
+  const displayImages = images.slice(0, 6);
   const count = images.length;
   const effectiveTotal = totalCount || count;
-  const extraCount = effectiveTotal - 4;
+  const extraCount = effectiveTotal - 6;
 
   if (count === 0) return null;
 
@@ -158,21 +161,22 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
   const isAnyLoading = isUploading; // 오직 업로드 중일 때만 로딩 상태로 간주
   const firstLoadingIndex = images.findIndex(img => img.status === 'sending');
 
-  const handleClick = (image: { url: string; fileName: string; status?: string; messageId: string; groupId?: string; processingStatus?: string }) => {
+  const handleClick = (image: { url: string; fileName: string; status?: string; messageId: string; groupId?: string; processingStatus?: string }, index: number) => {
     if (image.status === 'failed' || image.status === 'sending') return;
     if (onImageClick) {
-      // [v2.8.0] 단일 메시지 내 다중 파일의 경우 messageId를 함께 전달하여 모달에서 그룹 인식 가능하게 함
-      onImageClick(image.url, image.fileName, image.messageId);
+      // [v2.8.0] 단일 메시지 내 다중 파일의 경우 messageId와 index를 함께 전달하여 모달에서 정확한 위치 인식 가능하게 함
+      onImageClick(image.url, image.fileName, image.messageId, index);
     }
   };
 
   const renderImageBox = (img: typeof images[0], style: any, isLast = false, index: number) => {
     // 다중 파일 전송 시, 현재 화면에 보이는 이미지 중 첫 번째 로딩 중인 이미지에만 스피너 표시
-    // 만약 로딩 중인 이미지가 화면에 보이지 않는 위치(4번째 이후)에 있다면 마지막 보이는 이미지(isLast)에 표시
+    // 만약 로딩 중인 이미지가 화면에 보이지 않는 위치(6번째 이후)에 있다면 마지막 보이는 이미지(isLast)에 표시
     const shouldShowSpinner = index === firstLoadingIndex || (isLast && firstLoadingIndex > index);
 
     // 썸네일 표시 여부: 이미지 타입이거나 url이 존재하는 경우 (3D 변환 중이라도 썸네일이 있으면 표시)
-    const hasThumbnail = img.url && !img.url.startsWith('blob:');
+    // 비디오의 경우 원본 URL만 있어도 프리뷰를 보여줄 수 있으므로 조건 완화
+    const hasPreview = !!(img.url && !img.url.startsWith('blob:')) || (img.fileType === 'video' && !!img.url);
 
     return (
       <Box
@@ -186,30 +190,53 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
           position: 'relative',
           backgroundColor: 'var(--color-bg-tertiary)'
         }}
-        onClick={() => handleClick(img)}
+        onClick={() => handleClick(img, index)}
       >
-        {hasThumbnail ? (
+        {hasPreview ? (
           <Box style={{ width: '100%', height: '100%', position: 'relative' }}>
-            <img
-              src={img.url}
-              alt={img.fileName}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
+            {img.fileType === 'video' ? (
+              <video
+                src={img.url}
+                muted
+                playsInline
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onMouseEnter={(e) => (e.currentTarget as HTMLVideoElement).play().catch(() => {})}
+                onMouseLeave={(e) => {
+                  const v = e.currentTarget as HTMLVideoElement;
+                  v.pause();
+                  v.currentTime = 0;
+                }}
+              />
+            ) : (
+              <img
+                src={img.url}
+                alt={img.fileName}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            )}
             {img.fileType === '3d' && (
               <Box style={{ position: 'absolute', top: '6px', left: '6px', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: '4px', padding: '2px 6px', display: 'flex', alignItems: 'center', gap: '4px', zIndex: 1 }}>
                 <Icon3dCubeSphere size={12} color="white" />
                 <Typography variant="caption" color="white" style={{ fontSize: '9px', fontWeight: 'bold' }}>3D</Typography>
               </Box>
             )}
+            {img.fileType === 'video' && (
+              <Box style={{ position: 'absolute', top: '6px', left: '6px', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: '4px', padding: '2px 6px', display: 'flex', alignItems: 'center', gap: '4px', zIndex: 1 }}>
+                <IconPlayerPlay size={12} color="white" />
+                <Typography variant="caption" color="white" style={{ fontSize: '9px', fontWeight: 'bold' }}>VIDEO</Typography>
+              </Box>
+            )}
           </Box>
         ) : (
           <Flex align="center" justify="center" direction="column" style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-secondary)', gap: '8px', padding: '12px' }}>
             <Box style={{ color: 'var(--color-text-tertiary)', opacity: 0.6 }}>
-              {img.fileType === '3d' ? <Icon3dCubeSphere size={32} /> : '🖼️'}
+              {img.fileType === '3d' ? <Icon3dCubeSphere size={32} /> : 
+               img.fileType === 'video' ? <IconPlayerPlay size={32} /> : '🖼️'}
             </Box>
             <Flex direction="column" align="center" gap="xs">
               <Typography variant="caption" color="text-secondary" style={{ fontSize: '11px', fontWeight: 'bold', textAlign: 'center' }}>
-                {img.fileType === '3d' ? '3D 모델' : '이미지 없음'}
+                {img.fileType === '3d' ? '3D 모델' : 
+                 img.fileType === 'video' ? '비디오' : '이미지 없음'}
               </Typography>
               <Flex align="center" gap="xs" style={{ color: 'var(--color-primary-main)' }}>
                 <IconClick size={12} />
@@ -224,7 +251,7 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
           messageId={img.messageId} 
           processingStatus={img.processingStatus}
           fileType={img.fileType}
-          hasThumbnail={hasThumbnail} // 추가
+          hasThumbnail={hasPreview} // 수정
           isLast={isLast}
           extraCount={extraCount}
           showSpinner={shouldShowSpinner}
@@ -259,7 +286,7 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
           </Typography>
         ) : (
           <Typography variant="caption" color="text-tertiary">
-            이미지 {effectiveTotal}개
+            미디어 {effectiveTotal}개
           </Typography>
         )}
         
@@ -291,10 +318,21 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
           {renderImageBox(images[1], {}, false, 1)}
           {renderImageBox(images[2], {}, false, 2)}
         </Box>
-      ) : (
+      ) : count === 4 ? (
         <Box style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', width: '100%', aspectRatio: '1' }}>
           {displayImages.slice(0, 3).map((img, idx) => renderImageBox(img, {}, false, idx))}
-          {renderImageBox(displayImages[3], {}, true, 3)}
+          {renderImageBox(displayImages[3], {}, extraCount > 0, 3)}
+        </Box>
+      ) : (
+        <Box style={{ 
+          display: 'grid', 
+          gridTemplateColumns: '1fr 1fr', 
+          gap: '4px', 
+          width: '100%', 
+          aspectRatio: count === 5 ? '1' : '0.66' // 5개면 1:1에 가깝게, 6개면 가로가 더 길게
+        }}>
+          {displayImages.slice(0, count === 5 ? 4 : 5).map((img, idx) => renderImageBox(img, {}, false, idx))}
+          {renderImageBox(displayImages[count === 5 ? 4 : 5], {}, extraCount > 0, count === 5 ? 4 : 5)}
         </Box>
       )}
     </Box>

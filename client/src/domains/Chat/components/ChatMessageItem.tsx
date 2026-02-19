@@ -7,7 +7,6 @@ import { Typography } from '@/ui-components/Typography/Typography';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Box } from '@/ui-components/Layout/Box';
 import { chatApi } from '@/core/api/ApiService';
-import { ModelModal } from './ModelModal/ModelModal';
 
 // 메시지 타입별 서브 컴포넌트 임포트
 import { TextMessage } from './MessageTypes/TextMessage';
@@ -55,7 +54,6 @@ function ChatMessageItemComponent({
   groupedImages,
   onRetry
 }: ChatMessageItemProps) {
-  const [showModelModal, setShowModelModal] = useState(false);
   const [isSnapshotUploading, setIsSnapshotUploading] = useState(false);
   const [localThumbnail, setLocalPreview] = useState<string | null>(null); // 로컬 프리뷰 상태 추가
   const [isHovered, setIsHovered] = useState(false);
@@ -96,7 +94,9 @@ function ChatMessageItemComponent({
         messagesSignal.value = messagesSignal.value.map(m => 
           m._id === message._id ? { 
             ...m, 
-            fileData: { ...m.fileData!, thumbnail: base64 } 
+            fileData: m.fileData ? { ...m.fileData, thumbnail: base64 } : m.fileData,
+            // [v2.9.2] 다중 파일 배열 내의 첫 번째 3D 파일 썸네일도 업데이트 (필요시)
+            files: m.files?.map(f => f.fileType === '3d' && !f.thumbnailUrl ? { ...f, thumbnailUrl: base64 } : f)
           } : m
         );
       }
@@ -131,13 +131,13 @@ function ChatMessageItemComponent({
   };
 
   const renderContent = () => {
-    // [v2.8.0] 단일 메시지 내 다중 파일 렌더링 (이미지 + 3D)
+    // [v2.8.0] 단일 메시지 내 다중 파일 렌더링 (이미지 + 3D + 비디오)
     if (message.files && message.files.length > 0) {
       const mediaFiles = message.files
-        .filter(f => f.fileType === 'image' || f.fileType === '3d')
+        .filter(f => f.fileType === 'image' || f.fileType === '3d' || f.fileType === 'video')
         .map(f => ({
           // [v2.9.2] 3D 파일이면서 썸네일이 없는 경우, <img> 엑박 방지를 위해 url을 비움
-          url: f.fileType === '3d' ? (f.thumbnailUrl || '') : (f.thumbnailUrl || f.url || f.data || ''),
+          url: f.fileType === '3d' ? (f.thumbnailUrl || '') : (f.thumbnailUrl || f.url || (f as any).fileUrl || f.data || ''),
           fileName: f.fileName,
           messageId: message._id,
           status: message.status,
@@ -174,10 +174,19 @@ function ChatMessageItemComponent({
       return <TextMessage message={displayMessage} isOwnMessage={isOwnMessage} senderName={senderName} />;
     }
 
-    switch (displayMessage.fileData.fileType) {
+    const fileData = displayMessage.fileData;
+
+    switch (fileData.fileType) {
       case 'image': return <ImageMessage message={displayMessage} handleDownload={handleDownload} onImageClick={onImageClick} onRetry={onRetry} />;
-      case '3d': return <Model3DMessage message={displayMessage} handleDownload={handleDownload} setShowModelModal={setShowModelModal} onSnapshot={handleSnapshot} />;
-      case 'video': return <VideoMessage message={displayMessage} handleDownload={handleDownload} />;
+      case '3d': return (
+        <Model3DMessage 
+          message={displayMessage} 
+          handleDownload={handleDownload} 
+          onImageClick={onImageClick} // setShowModelModal 대신 onImageClick 전달
+          onSnapshot={handleSnapshot} 
+        />
+      );
+      case 'video': return <VideoMessage message={displayMessage} handleDownload={handleDownload} onImageClick={onImageClick} />;
       case 'audio': return <AudioMessage message={displayMessage} handleDownload={handleDownload} />;
       default: return <FileMessage message={displayMessage} handleDownload={handleDownload} onRetry={onRetry} />;
     }
@@ -303,16 +312,6 @@ function ChatMessageItemComponent({
 
       {/* 내 메시지일 때 좌측 정렬을 위한 빈 공간 확보 (flex-reverse 때문) */}
       {isOwnMessage && <Box style={{ height: isGrouped ? '0' : '1px' }} />}
-
-      {showModelModal && (message.fileData?.renderUrl || message.renderUrl || message.fileData?.url) && (
-        <ModelModal
-          modelUrl={message.fileData?.renderUrl || message.renderUrl || message.fileData?.url || ''}
-          originalUrl={message.fileData?.url || ''}
-          fileName={message.fileData?.fileName || '3D 모델'}
-          onClose={() => setShowModelModal(false)}
-          handleSnapshot={handleSnapshot}
-        />
-      )}
     </Box>
   );
 }

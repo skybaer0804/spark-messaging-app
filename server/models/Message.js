@@ -7,6 +7,7 @@ const fileSchema = new mongoose.Schema({
   fileName: { type: String, required: true },
   fileSize: { type: Number, required: true }, // 파일 크기 (bytes)
   mimeType: { type: String, required: true }, // MIME 타입
+  fileType: { type: String }, // 'image', 'video', 'audio', '3d', 'file'
   processingStatus: { 
     type: String, 
     enum: ['processing', 'completed', 'failed', 'cancelled'], 

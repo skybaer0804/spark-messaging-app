@@ -9,6 +9,7 @@ import { useChat } from '../context/ChatContext';
 import { chatApi } from '@/core/api/ApiService';
 import type { Message } from '../types';
 import { ModelViewer } from './ModelViewer/ModelViewer'; // 3D 렌더링 지원용
+import { messagesSignal } from '../hooks/useOptimisticUpdate';
 import './Chat.scss';
 
 interface ImageModalProps {
@@ -16,12 +17,13 @@ interface ImageModalProps {
   fileName: string;
   groupId?: string;
   messageId?: string; // [v2.8.0] 단일 메시지 내 다중 파일 지원을 위한 추가
+  fileIndex?: number; // [v2.9.2] 특정 파일을 식별하기 위한 인덱스
   allMessages?: Message[];
   onClose: () => void;
   classNamePrefix?: string;
 }
 
-function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = [], onClose }: ImageModalProps) {
+function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, allMessages = [], onClose }: ImageModalProps) {
   const { services } = useChat();
   const { chat: chatService } = services;
   const [imageError, setImageError] = useState(false);
@@ -37,17 +39,31 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // [v2.8.0] 그룹화된 미디어 목록 추출 (이미지 + 3D)
+  // [v2.8.0] 그룹화된 미디어 목록 추출 (이미지 + 3D + 비디오)
   const groupMedia = useMemo(() => {
+    // 헬퍼: MIME 타입이나 확장자로 파일 타입 추측
+    const guessFileType = (f: any) => {
+      if (f.fileType) return f.fileType;
+      const mime = f.mimeType || '';
+      if (mime.startsWith('image/')) return 'image';
+      if (mime.startsWith('video/')) return 'video';
+      if (mime.startsWith('model/') || f.fileName?.endsWith('.stl') || f.fileName?.endsWith('.obj') || f.fileName?.endsWith('.glb')) return '3d';
+      return 'image'; // 기본값
+    };
+
     // 1. 단일 메시지 내 다중 파일인 경우 (최우선)
     if (messageId) {
       const targetMsg = allMessages.find(m => m._id === messageId);
       if (targetMsg && targetMsg.files && targetMsg.files.length > 0) {
         return targetMsg.files
-          .filter(f => f.fileType === 'image' || f.fileType === '3d')
+          .filter(f => {
+            const type = guessFileType(f);
+            return type === 'image' || type === '3d' || type === 'video';
+          })
           .map((f, idx) => ({
             ...f,
-            url: f.url || f.data,
+            fileType: guessFileType(f),
+            url: f.url || (f as any).fileUrl || f.data,
             thumbnailUrl: f.thumbnailUrl || f.thumbnail,
             messageId: targetMsg._id, // Navigation용
             fileIndex: idx
@@ -58,14 +74,21 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
     // 2. 여러 메시지가 groupId로 묶인 경우 (레거시)
     if (groupId && allMessages.length > 0) {
       return allMessages
-        .filter(msg => msg.groupId === groupId && (msg.type === 'image' || msg.type === '3d'))
-        .map(msg => ({
-          ...msg.fileData!,
-          url: msg.fileData?.url || msg.fileData?.data,
-          thumbnailUrl: msg.fileData?.thumbnail || msg.fileData?.thumbnailUrl,
-          messageId: msg._id,
-          fileIndex: null
-        }));
+        .filter(msg => {
+          const type = msg.fileData?.fileType || msg.type;
+          return msg.groupId === groupId && (type === 'image' || type === '3d' || type === 'video');
+        })
+        .map(msg => {
+          const f = msg.fileData!;
+          return {
+            ...f,
+            fileType: f.fileType || msg.type,
+            url: f.url || (f as any).fileUrl || f.data,
+            thumbnailUrl: f.thumbnail || f.thumbnailUrl,
+            messageId: msg._id,
+            fileIndex: 0
+          };
+        });
     }
 
     return [];
@@ -73,7 +96,20 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
 
   const [currentIndex, setCurrentIndex] = useState(() => {
     if (groupMedia.length > 0) {
-      const foundIndex = groupMedia.findIndex(m => m.url === url || m.thumbnailUrl === url || (m as any).thumbnail === url);
+      // fileIndex가 제공된 경우 최우선 매칭
+      if (fileIndex !== undefined) {
+        const foundIndex = groupMedia.findIndex(m => m.fileIndex === fileIndex);
+        if (foundIndex >= 0) return foundIndex;
+      }
+      
+      // url 기반 매칭 (Fallback)
+      const foundIndex = groupMedia.findIndex(m => 
+        m.url === url || 
+        m.thumbnailUrl === url || 
+        (m as any).thumbnail === url ||
+        (m as any).data === url ||
+        (m as any).fileUrl === url
+      );
       return foundIndex >= 0 ? foundIndex : 0;
     }
     return -1;
@@ -127,10 +163,41 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
   };
 
   const handleSnapshot = useCallback(async (base64: string) => {
-    if (!currentMedia || isSnapshotUploading || currentThumbnailUrl) return;
+    if (!currentMedia || isSnapshotUploading) return;
+    
+    // 이미 썸네일이 있고 처리 완료 상태면 중복 업로드 방지 (단, 재생성 중일 때는 허용)
+    if (currentThumbnailUrl && currentStatus === 'completed') return;
     
     try {
       setIsSnapshotUploading(true);
+
+      // 즉시 로컬 UI 반영
+      if (messagesSignal.value) {
+        messagesSignal.value = messagesSignal.value.map(m => {
+          if (m._id !== currentMedia.messageId) return m;
+          
+          const newMsg = { ...m };
+          if (currentMedia.fileIndex !== null && currentMedia.fileIndex !== undefined && newMsg.files) {
+            newMsg.files = [...newMsg.files];
+            newMsg.files[currentMedia.fileIndex] = { 
+              ...newMsg.files[currentMedia.fileIndex], 
+              thumbnailUrl: base64,
+              processingStatus: 'completed'
+            };
+            // 첫 번째 파일이면 탑레벨도 업데이트
+            if (currentMedia.fileIndex === 0) {
+              newMsg.thumbnailUrl = base64;
+              if (newMsg.fileData) newMsg.fileData.thumbnail = base64;
+            }
+          } else if (newMsg.fileData) {
+            newMsg.fileData = { ...newMsg.fileData, thumbnail: base64 };
+            newMsg.thumbnailUrl = base64;
+            newMsg.processingStatus = 'completed';
+          }
+          return newMsg;
+        });
+      }
+
       const res = await fetch(base64);
       const blob = await res.blob();
       const file = new File([blob], `thumb_${currentMedia.messageId}_${currentMedia.fileIndex}.png`, { type: 'image/png' });
@@ -139,7 +206,7 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
       formData.append('thumbnail', file);
       formData.append('messageId', currentMedia.messageId!);
       // [v2.9.2] fileIndex가 있으면 함께 전송 (서버에서 해당 인덱스 업데이트용)
-      if (currentMedia.fileIndex !== null) {
+      if (currentMedia.fileIndex !== null && currentMedia.fileIndex !== undefined) {
         formData.append('fileIndex', currentMedia.fileIndex.toString());
       }
       
@@ -154,7 +221,7 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
     } finally {
       setIsSnapshotUploading(false);
     }
-  }, [currentMedia, isSnapshotUploading, currentThumbnailUrl, allMessages]);
+  }, [currentMedia, isSnapshotUploading, currentThumbnailUrl, currentStatus, allMessages]);
 
   // 키보드 네비게이션
   useEffect(() => {
@@ -336,6 +403,27 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
                     onSnapshot={handleSnapshot}
                   />
                 </Box>
+              </Box>
+            ) : currentType === 'video' ? (
+              <Box style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <video
+                  src={currentUrl}
+                  controls
+                  autoPlay
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '85vh',
+                    borderRadius: '8px',
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                  }}
+                  onError={() => {
+                    setImageError(true);
+                    setImageLoading(false);
+                  }}
+                  onLoadedData={() => {
+                    setImageLoading(false);
+                  }}
+                />
               </Box>
             ) : (
               <img
