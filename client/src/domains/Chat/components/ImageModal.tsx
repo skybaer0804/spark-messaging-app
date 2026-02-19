@@ -29,6 +29,14 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
   const [isSnapshotUploading, setIsSnapshotUploading] = useState(false);
   const [loadedUrls] = useState(() => new Set<string>());
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 600);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // [v2.8.0] 그룹화된 미디어 목록 추출 (이미지 + 3D)
   const groupMedia = useMemo(() => {
     // 1. 단일 메시지 내 다중 파일인 경우 (최우선)
@@ -159,22 +167,26 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, groupMedia.length]);
 
-  const StatusIndicator = ({ label, exists, processing }: { label: string; exists: boolean; processing?: boolean }) => (
-    <Flex align="center" gap="xs" style={{ 
-      padding: '4px 8px', 
-      borderRadius: '4px', 
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      border: `1px solid ${processing ? 'var(--color-status-warning)' : exists ? 'var(--color-status-success)' : 'var(--color-status-error)'}`
-    }}>
-      <div style={{ 
-        width: '8px', 
-        height: '8px', 
-        borderRadius: '50%', 
-        backgroundColor: processing ? 'var(--color-status-warning)' : exists ? 'var(--color-status-success)' : 'var(--color-status-error)' 
-      }} />
-      <Typography variant="caption" style={{ color: 'white', fontSize: '10px', fontWeight: 'bold' }}>{label}</Typography>
-    </Flex>
-  );
+  const StatusIndicator = ({ label, exists, processing }: { label: string; exists: boolean; processing?: boolean }) => {
+    const displayLabel = isMobile ? label.charAt(0) : label;
+    
+    return (
+      <Flex align="center" gap="xs" style={{ 
+        padding: isMobile ? '4px 6px' : '4px 8px', 
+        borderRadius: '4px', 
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        border: `1px solid ${processing ? 'var(--color-status-warning)' : exists ? 'var(--color-status-success)' : 'var(--color-status-error)'}`
+      }}>
+        <div style={{ 
+          width: '8px', 
+          height: '8px', 
+          borderRadius: '50%', 
+          backgroundColor: processing ? 'var(--color-status-warning)' : exists ? 'var(--color-status-success)' : 'var(--color-status-error)' 
+        }} />
+        <Typography variant="caption" style={{ color: 'white', fontSize: '10px', fontWeight: 'bold' }}>{displayLabel}</Typography>
+      </Flex>
+    );
+  };
 
   return (
     <Box
@@ -192,7 +204,6 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
         zIndex: 1000,
         padding: '2rem',
       }}
-      onClick={onClose}
     >
       {/* 컨트롤 버튼 */}
       <Box style={{ position: 'absolute', top: '2rem', right: '2rem', display: 'flex', gap: '1rem', zIndex: 1010 }}>
@@ -311,9 +322,9 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
                 <Box style={{ 
                   width: '100%', 
                   height: '100%', 
-                  maxWidth: '800px', 
-                  maxHeight: '600px', 
-                  aspectRatio: '4/3',
+                  maxWidth: 'min(800px, 95vw)', 
+                  maxHeight: 'min(600px, 65vh)', 
+                  aspectRatio: isMobile ? undefined : '4/3',
                   borderRadius: '8px', 
                   overflow: 'hidden',
                   boxShadow: '0 20px 50px rgba(0,0,0,0.5)',

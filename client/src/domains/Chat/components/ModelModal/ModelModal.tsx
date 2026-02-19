@@ -35,7 +35,6 @@ function ModelModalComponent({ modelUrl, originalUrl, fileName, onClose, handleS
         zIndex: 1000,
         padding: 'var(--space-padding-card-lg)',
       }}
-      onClick={onClose}
     >
       <Box
         style={{

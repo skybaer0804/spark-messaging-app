@@ -2,7 +2,7 @@ import { Box } from '@/ui-components/Layout/Box';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { IconButton } from '@/ui-components/Button/IconButton';
-import { IconDownload } from '@tabler/icons-preact';
+import { IconDownload, Icon3dCubeSphere, IconClick } from '@tabler/icons-preact';
 import { downloadFileFromUrl } from '@/core/utils/fileUtils';
 
 interface ImageMessageGridProps {
@@ -25,6 +25,7 @@ const ImageOverlay = ({
   onRetry, 
   messageId,
   processingStatus,
+  fileType, // fileType 추가
   isLast = false,
   extraCount = 0,
   showSpinner = true
@@ -33,11 +34,13 @@ const ImageOverlay = ({
   onRetry?: (id: string) => void; 
   messageId: string;
   processingStatus?: string;
+  fileType?: string; // 타입 정의 추가
   isLast?: boolean;
   extraCount?: number;
   showSpinner?: boolean;
 }) => {
   const isProcessing = processingStatus === 'processing';
+  const isCompleted = processingStatus === 'completed'; // 완료 상태 추가
   const isSending = status === 'sending';
   const isFailed = status === 'failed';
 
@@ -57,10 +60,33 @@ const ImageOverlay = ({
         {showSpinner && (
           <>
             <div className="spinner-border text-light" style={{ width: '1.5rem', height: '1.5rem', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-            {isProcessing && <Typography variant="caption" color="white" style={{ fontSize: '10px' }}>처리 중...</Typography>}
+            {isProcessing && <Typography variant="caption" color="white" style={{ fontSize: '10px' }}>{fileType === '3d' ? '3D 처리 중...' : '처리 중...'}</Typography>}
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </>
         )}
+      </div>
+    );
+  }
+
+  // 3D 파일 완료 시 호버 효과를 위한 오버레이
+  if (fileType === '3d' && isCompleted && !isLast) {
+    return (
+      <div className="image-overlay-hover" style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundColor: 'rgba(0,0,0,0)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2,
+        transition: 'background-color 0.2s',
+        opacity: 0,
+        color: 'white',
+        gap: '4px'
+      }}>
+        <Icon3dCubeSphere size={24} />
+        <Typography variant="caption" color="white" style={{ fontSize: '10px', fontWeight: 'bold' }}>3D 상세보기</Typography>
       </div>
     );
   }
@@ -158,17 +184,35 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
         onClick={() => handleClick(img)}
       >
         {hasThumbnail ? (
-          <img
-            src={img.url}
-            alt={img.fileName}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
+          <Box style={{ width: '100%', height: '100%', position: 'relative' }}>
+            <img
+              src={img.url}
+              alt={img.fileName}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+            {img.fileType === '3d' && (
+              <Box style={{ position: 'absolute', top: '6px', left: '6px', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: '4px', padding: '2px 6px', display: 'flex', alignItems: 'center', gap: '4px', zIndex: 1 }}>
+                <Icon3dCubeSphere size={12} color="white" />
+                <Typography variant="caption" color="white" style={{ fontSize: '9px', fontWeight: 'bold' }}>3D</Typography>
+              </Box>
+            )}
+          </Box>
         ) : (
-          <Flex align="center" justify="center" direction="column" style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-secondary)', gap: '4px' }}>
-            <Box style={{ fontSize: '2rem' }}>{img.fileType === '3d' ? '📦' : '🖼️'}</Box>
-            <Typography variant="caption" color="text-tertiary" style={{ fontSize: '10px', textAlign: 'center', padding: '0 4px' }}>
-              {img.fileType === '3d' ? (img.processingStatus === 'processing' ? '3D 처리 중...' : '3D 모델') : '이미지 없음'}
-            </Typography>
+          <Flex align="center" justify="center" direction="column" style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-secondary)', gap: '8px', padding: '12px' }}>
+            <Box style={{ color: 'var(--color-text-tertiary)', opacity: 0.6 }}>
+              {img.fileType === '3d' ? <Icon3dCubeSphere size={32} /> : '🖼️'}
+            </Box>
+            <Flex direction="column" align="center" gap="xs">
+              <Typography variant="caption" color="text-secondary" style={{ fontSize: '11px', fontWeight: 'bold', textAlign: 'center' }}>
+                {img.fileType === '3d' ? (img.processingStatus === 'processing' ? '' : '3D 모델') : '이미지 없음'}
+              </Typography>
+              {img.fileType === '3d' && img.processingStatus === 'completed' && (
+                <Flex align="center" gap="xs" style={{ color: 'var(--color-primary-main)' }}>
+                  <IconClick size={12} />
+                  <Typography variant="caption" color="primary" style={{ fontSize: '10px', fontWeight: 500 }}>클릭하여 보기</Typography>
+                </Flex>
+              )}
+            </Flex>
           </Flex>
         )}
         <ImageOverlay 
@@ -176,10 +220,17 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
           onRetry={onRetry} 
           messageId={img.messageId} 
           processingStatus={img.processingStatus}
+          fileType={img.fileType} // 추가
           isLast={isLast}
           extraCount={extraCount}
           showSpinner={shouldShowSpinner}
         />
+        <style>{`
+          .image-overlay-hover:hover {
+            background-color: rgba(0,0,0,0.4) !important;
+            opacity: 1 !important;
+          }
+        `}</style>
       </Box>
     );
   };
