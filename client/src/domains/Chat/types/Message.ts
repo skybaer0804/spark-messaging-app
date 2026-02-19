@@ -2,13 +2,16 @@ export type MessageType = 'text' | 'file' | 'image' | 'video' | 'audio' | '3d' |
 export type MessageStatus = 'sending' | 'sent' | 'failed';
 
 export interface FileData {
+  _id?: string;
   fileName: string;
   fileType: MessageType;
   mimeType: string;
   size: number;
   url?: string;
-  thumbnail?: string;
+  thumbnailUrl?: string; // Rename to match backend naming convention
+  thumbnail?: string; // Backward compatibility
   renderUrl?: string; // 추가: 3D 렌더링용 GLB URL
+  processingStatus?: 'processing' | 'completed' | 'failed' | 'cancelled';
   data?: string; // Base64 (for sending)
 }
 
@@ -25,6 +28,7 @@ export interface Message {
   readBy: string[];
   timestamp: Date;
   fileData?: FileData;
+  files?: FileData[]; // [v2.8.0] 다중 파일 지원
   renderUrl?: string; // 추가: 3D 렌더링용 GLB URL (최상위)
   groupId?: string; // [v2.6.0] 다중 파일 그룹화용 ID
   processingStatus?: 'processing' | 'completed' | 'failed' | 'cancelled';

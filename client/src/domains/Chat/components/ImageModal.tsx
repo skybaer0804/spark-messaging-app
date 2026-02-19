@@ -5,44 +5,68 @@ import { IconX, IconDownload, IconPhotoOff, IconChevronLeft, IconChevronRight } 
 import { downloadFileFromUrl } from '@/core/utils/fileUtils';
 import { Typography } from '@/ui-components/Typography/Typography';
 import type { Message } from '../types';
+import { ModelViewer } from './ModelViewer/ModelViewer'; // 3D 렌더링 지원용
 import './Chat.scss';
 
 interface ImageModalProps {
   url: string;
   fileName: string;
   groupId?: string;
+  messageId?: string; // [v2.8.0] 단일 메시지 내 다중 파일 지원을 위한 추가
   allMessages?: Message[];
   onClose: () => void;
   classNamePrefix?: string;
 }
 
-function ImageModalComponent({ url, fileName, groupId, allMessages = [], onClose }: ImageModalProps) {
+function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = [], onClose }: ImageModalProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
-  
-  // [v2.6.0] 캐시된 이미지 관리 (한 번 로드된 이미지는 다시 로딩을 띄우지 않음)
   const [loadedUrls] = useState(() => new Set<string>());
 
-  // [v2.6.0] 그룹화된 이미지 목록 추출
-  const groupImages = useMemo(() => {
-    if (!groupId || !allMessages.length) return [];
-    return allMessages.filter(msg => 
-      msg.groupId === groupId && msg.fileData?.fileType === 'image'
-    );
-  }, [groupId, allMessages]);
+  // [v2.8.0] 그룹화된 미디어 목록 추출 (이미지 + 3D)
+  const groupMedia = useMemo(() => {
+    // 1. 단일 메시지 내 다중 파일인 경우 (최우선)
+    if (messageId) {
+      const targetMsg = allMessages.find(m => m._id === messageId);
+      if (targetMsg && targetMsg.files && targetMsg.files.length > 0) {
+        return targetMsg.files
+          .filter(f => f.fileType === 'image' || f.fileType === '3d')
+          .map(f => ({
+            ...f,
+            url: f.url || f.data,
+            thumbnailUrl: f.thumbnailUrl || f.thumbnail,
+            messageId: targetMsg._id, // Navigation용
+          }));
+      }
+    }
+
+    // 2. 여러 메시지가 groupId로 묶인 경우 (레거시)
+    if (groupId && allMessages.length > 0) {
+      return allMessages
+        .filter(msg => msg.groupId === groupId && (msg.type === 'image' || msg.type === '3d'))
+        .map(msg => ({
+          ...msg.fileData!,
+          url: msg.fileData?.url || msg.fileData?.data,
+          thumbnailUrl: msg.fileData?.thumbnail || msg.fileData?.thumbnailUrl
+        }));
+    }
+
+    return [];
+  }, [groupId, messageId, allMessages]);
 
   const [currentIndex, setCurrentIndex] = useState(() => {
-    if (groupImages.length > 0) {
-      const foundIndex = groupImages.findIndex(img => img.fileData?.url === url || img.fileData?.thumbnail === url);
+    if (groupMedia.length > 0) {
+      const foundIndex = groupMedia.findIndex(m => m.url === url || m.thumbnailUrl === url || (m as any).thumbnail === url);
       return foundIndex >= 0 ? foundIndex : 0;
     }
     return -1;
   });
 
-  // 현재 표시할 이미지 정보
-  const currentImage = currentIndex >= 0 ? groupImages[currentIndex] : null;
-  const currentUrl = currentImage?.fileData?.url || url;
-  const currentName = currentImage?.fileData?.fileName || fileName;
+  // 현재 표시할 미디어 정보
+  const currentMedia = currentIndex >= 0 ? groupMedia[currentIndex] : null;
+  const currentUrl = currentMedia?.url || url;
+  const currentName = currentMedia?.fileName || fileName;
+  const currentType = currentMedia?.fileType || (currentMedia as any)?.type || 'image';
 
   useEffect(() => {
     if (loadedUrls.has(currentUrl)) {
@@ -62,7 +86,7 @@ function ImageModalComponent({ url, fileName, groupId, allMessages = [], onClose
 
   const handleNext = (e?: Event) => {
     e?.stopPropagation();
-    if (currentIndex < groupImages.length - 1) {
+    if (currentIndex < groupMedia.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
@@ -81,7 +105,7 @@ function ImageModalComponent({ url, fileName, groupId, allMessages = [], onClose
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, groupImages.length]);
+  }, [currentIndex, groupMedia.length]);
 
   return (
     <Box
@@ -101,7 +125,7 @@ function ImageModalComponent({ url, fileName, groupId, allMessages = [], onClose
       }}
       onClick={onClose}
     >
-      {/* 닫기 버튼 (최상단) */}
+      {/* 컨트롤 버튼 */}
       <Box style={{ position: 'absolute', top: '2rem', right: '2rem', display: 'flex', gap: '1rem', zIndex: 1010 }}>
          <IconButton
           onClick={handleDownload}
@@ -119,8 +143,8 @@ function ImageModalComponent({ url, fileName, groupId, allMessages = [], onClose
         </IconButton>
       </Box>
 
-      {/* 좌측 화살표 */}
-      {groupImages.length > 1 && currentIndex > 0 && (
+      {/* 좌우 네비게이션 */}
+      {groupMedia.length > 1 && currentIndex > 0 && (
         <IconButton
           onClick={handlePrev}
           style={{
@@ -137,8 +161,7 @@ function ImageModalComponent({ url, fileName, groupId, allMessages = [], onClose
         </IconButton>
       )}
 
-      {/* 우측 화살표 */}
-      {groupImages.length > 1 && currentIndex < groupImages.length - 1 && (
+      {groupMedia.length > 1 && currentIndex < groupMedia.length - 1 && (
         <IconButton
           onClick={handleNext}
           style={{
@@ -160,6 +183,8 @@ function ImageModalComponent({ url, fileName, groupId, allMessages = [], onClose
           position: 'relative',
           maxWidth: '85vw',
           maxHeight: '85vh',
+          width: '100%',
+          height: '100%',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -167,7 +192,6 @@ function ImageModalComponent({ url, fileName, groupId, allMessages = [], onClose
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 이미지 또는 에러 표시 */}
         {imageError ? (
           <Box
             style={{
@@ -183,59 +207,55 @@ function ImageModalComponent({ url, fileName, groupId, allMessages = [], onClose
             }}
           >
             <IconPhotoOff size={48} style={{ opacity: 0.5 }} />
-            <Typography variant="body-medium" color="text-secondary">
-              이미지를 불러올 수 없습니다
-            </Typography>
-            <Typography variant="caption" color="text-tertiary">
-              {currentName}
-            </Typography>
+            <Typography variant="body-medium" color="text-secondary">미디어를 불러올 수 없습니다</Typography>
+            <Typography variant="caption" color="text-tertiary">{currentName}</Typography>
           </Box>
         ) : (
-          <>
-            {imageLoading && (
-              <Box
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'rgba(0,0,0,0.1)',
-                  zIndex: 5
-                }}
-              >
+          <Box style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {imageLoading && currentType === 'image' && (
+              <Box style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
                 <Typography variant="body-medium" style={{ color: 'white' }}>로딩 중...</Typography>
               </Box>
             )}
-            <img
-              src={currentUrl}
-              alt={currentName}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '85vh',
-                objectFit: 'contain',
-                borderRadius: '8px',
-                opacity: imageLoading ? 0 : 1,
-                transition: 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-              }}
-              onLoad={() => {
-                loadedUrls.add(currentUrl);
-                setImageLoading(false);
-              }}
-              onError={() => {
-                setImageError(true);
-                setImageLoading(false);
-              }}
-            />
-          </>
+            
+            {currentType === '3d' ? (
+              <Box style={{ width: '100%', height: '100%', borderRadius: '8px', overflow: 'hidden' }}>
+                <ModelViewer 
+                  modelUrl={currentMedia?.renderUrl || currentUrl} 
+                  autoRotate={true}
+                />
+              </Box>
+            ) : (
+              <img
+                src={currentUrl}
+                alt={currentName}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '85vh',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  opacity: imageLoading ? 0 : 1,
+                  transition: 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                }}
+                onLoad={() => {
+                  loadedUrls.add(currentUrl);
+                  setImageLoading(false);
+                }}
+                onError={() => {
+                  setImageError(true);
+                  setImageLoading(false);
+                }}
+              />
+            )}
+          </Box>
         )}
 
-        {/* 하단 정보 (카운트 및 파일명) */}
-        <Box style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-          {groupImages.length > 1 && (
+        {/* 하단 정보 */}
+        <Box style={{ position: 'absolute', bottom: '-3rem', textAlign: 'center', width: '100%' }}>
+          {groupMedia.length > 1 && (
             <Typography variant="body-small" style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '0.25rem' }}>
-              {currentIndex + 1} / {groupImages.length}
+              {currentIndex + 1} / {groupMedia.length}
             </Typography>
           )}
           <Typography variant="body-medium" style={{ color: 'white', fontWeight: 500 }}>
@@ -247,5 +267,4 @@ function ImageModalComponent({ url, fileName, groupId, allMessages = [], onClose
   );
 }
 
-// memo로 메모이제이션하여 props 변경 시만 리렌더링
 export const ImageModal = memo(ImageModalComponent);

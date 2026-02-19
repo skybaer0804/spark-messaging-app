@@ -10,22 +10,26 @@ class FileProcessingQueue {
   constructor() {
     // Redis 연결 설정
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    
+
     // 파일 처리 큐 생성
     this.queue = new Queue('file-processing', {
       redis: redisUrl,
+      settings: {
+        lockDuration: 600000, // 1분 (대용량 3D 파일 처리 대응)
+        stalledInterval: 600000,
+      },
       defaultJobOptions: {
-        attempts: 1, // [v2.9.0] 재시도 1회 (WASM 작업 재시도는 거의 무의미)
+        attempts: 2, // 재시도 2회로 상향 (일시적 Redis 장애 등 대응)
         backoff: {
           type: 'exponential',
-          delay: 2000,
+          delay: 5000,
         },
         removeOnComplete: {
           age: 3600,
           count: 100,
         },
         removeOnFail: {
-          age: 3600, // [v2.9.0] 1시간 후 실패 작업 삭제 (기존 24시간 → 단축)
+          age: 86400, // 실패 건은 24시간 보존 (디버깅용)
         },
       },
     });
@@ -34,9 +38,12 @@ class FileProcessingQueue {
     this.serverStartTime = Date.now();
 
     // [v2.9.2] 초기 큐 상태 로깅
-    this.queue.getJobCounts().then(counts => {
-      console.log(`📊 [Queue Startup] Current counts: ${JSON.stringify(counts)}`);
-    }).catch(() => {});
+    this.queue
+      .getJobCounts()
+      .then((counts) => {
+        console.log(`📊 [Queue Startup] Current counts: ${JSON.stringify(counts)}`);
+      })
+      .catch(() => {});
 
     // 큐 이벤트 리스너
     this.setupEventListeners();
@@ -49,11 +56,11 @@ class FileProcessingQueue {
     this.queue.on('completed', async (job) => {
       const { fileType } = job.data;
       console.log(`✅ 파일 처리 완료: Job ${job.id} - ${fileType}`);
-      
+
       try {
         const counts = await this.queue.getJobCounts();
         console.log(`📊 [Queue Stats] ${JSON.stringify(counts)}`);
-      } catch(e) {}
+      } catch (e) {}
     });
 
     this.queue.on('failed', (job, err) => {
@@ -93,7 +100,7 @@ class FileProcessingQueue {
     try {
       // [v2.9.2] 우선순위 로직이 Bull의 Sandboxed Worker와 충돌할 가능성이 있어 일단 단순화 (FIFO)
       const job = await this.queue.add('process-file', jobData);
-      
+
       console.log(`📥 [Queue] 작업 추가 성공: Job ${job.id} | ${jobData.fileType} | Msg: ${jobData.messageId}`);
       return job;
     } catch (error) {
@@ -113,7 +120,7 @@ class FileProcessingQueue {
       document: 2,
       audio: 3,
       model3d: 4, // 3D 모델
-      video: 4,   // 동영상은 처리 시간이 오래 걸림
+      video: 4, // 동영상은 처리 시간이 오래 걸림
     };
     return priorities[fileType] || 5;
   }
@@ -180,11 +187,11 @@ class FileProcessingQueue {
     console.log('🔍 [Queue] 정기 동기화 점검 시작...');
     try {
       const counts = await this.queue.getJobCounts();
-      
+
       // 1. 'queued' 상태의 메시지 조회
       const queuedMessages = await Message.find({
         processingStatus: 'queued',
-        fileUrl: { $exists: true, $ne: null }
+        fileUrl: { $exists: true, $ne: null },
       });
 
       let recovered = 0;
@@ -193,22 +200,23 @@ class FileProcessingQueue {
         // Bull의 기본 ID가 아닌 data 내의 messageId로 검색해야 함 (getJobs 활용)
         const activeJobs = await this.queue.getActive();
         const waitingJobs = await this.queue.getWaiting();
-        
-        const isAlreadyInQueue = [...activeJobs, ...waitingJobs].some(job => 
-          job.data && job.data.messageId === msg._id.toString()
+
+        const isAlreadyInQueue = [...activeJobs, ...waitingJobs].some(
+          (job) => job.data && job.data.messageId === msg._id.toString() && job.data.fileIndex === (msg.fileIndex || 0),
         );
 
         if (!isAlreadyInQueue) {
           console.log(`🛠️ [AutoFix] 작업 유실 감지 - 복구 중: Msg ${msg._id}`);
-          
+
           await this.addFileProcessingJob({
             messageId: msg._id.toString(),
+            fileIndex: 0, // 기본값
             roomId: msg.roomId.toString(),
             fileType: msg.fileType || '3d', // 기본값
             fileUrl: msg.fileUrl,
             filePath: msg.filePath,
             filename: msg.fileName || 'unknown',
-            mimeType: msg.mimeType
+            mimeType: msg.mimeType,
           });
           recovered++;
         }
@@ -218,7 +226,7 @@ class FileProcessingQueue {
       const staleTime = new Date(Date.now() - 15 * 60 * 1000);
       const staleProcessingMessages = await Message.find({
         processingStatus: 'processing',
-        updatedAt: { $lt: staleTime }
+        updatedAt: { $lt: staleTime },
       });
 
       for (const msg of staleProcessingMessages) {

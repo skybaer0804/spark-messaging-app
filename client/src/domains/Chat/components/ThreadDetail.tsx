@@ -48,7 +48,23 @@ export const ThreadDetail = ({ parentMessage, currentUser }: ThreadDetailProps) 
 
       if (isReplyToCurrent) {
         setReplies(prev => {
-          if (prev.some(m => m._id?.toString() === newMsg._id?.toString())) return prev;
+          // [v2.8.0] 중복 체크 강화: _id 또는 tempId 매칭 확인
+          const hasDuplicate = prev.some(m => 
+            (m._id?.toString() === newMsg._id?.toString()) || 
+            (newMsg.tempId && m.tempId === newMsg.tempId) ||
+            (m._id?.startsWith('temp_') && m.content === newMsg.content && m.senderId === newMsg.senderId)
+          );
+
+          if (hasDuplicate) {
+            // 기존 낙관적 메시지를 서버 데이터로 업데이트
+            return prev.map(m => {
+              const isMatch = (m._id?.toString() === newMsg._id?.toString()) || 
+                              (newMsg.tempId && m.tempId === newMsg.tempId) ||
+                              (m._id?.startsWith('temp_') && m.content === newMsg.content && m.senderId === newMsg.senderId);
+              return isMatch ? { ...m, ...newMsg, status: 'sent' } : m;
+            });
+          }
+          
           return [...prev, newMsg].sort((a, b) => (a.threadSequenceNumber || 0) - (b.threadSequenceNumber || 0));
         });
       }
@@ -71,7 +87,7 @@ export const ThreadDetail = ({ parentMessage, currentUser }: ThreadDetailProps) 
     const currentUserId = (currentUser as any)?._id || (currentUser as any)?.id || 'unknown';
 
     // v2.5.0: 메인 메시지 목록의 replyCount 낙관적 업데이트 수행
-    sendOptimisticMessage(
+    const tempId = sendOptimisticMessage(
       parentMessage.roomId,
       replyInput,
       currentUserId,
@@ -79,23 +95,36 @@ export const ThreadDetail = ({ parentMessage, currentUser }: ThreadDetailProps) 
       parentId
     );
 
+    // [v2.8.0] ThreadDetail 로컬 상태에도 낙관적 업데이트 추가
+    const optimisticReply: Message = {
+      _id: tempId,
+      tempId,
+      roomId: parentMessage.roomId,
+      senderId: currentUserId,
+      senderName: currentUser?.username,
+      content: replyInput,
+      type: 'text',
+      status: 'sending',
+      timestamp: new Date(),
+      parentMessageId: parentId,
+      readBy: [currentUserId],
+      sequenceNumber: -1
+    };
+    setReplies(prev => [...prev, optimisticReply]);
+
     try {
       const response = await chatApi.sendMessage({
         roomId: parentMessage.roomId,
         content: replyInput,
+        tempId, // [v2.8.0] tempId 전달
         parentMessageId: parentId, // 문자열로 변환하여 확실히 전달
       });
 
-      const newReply = {
-        ...response.data,
-        senderName: currentUser?.username || (currentUser as any)?.name || 'Unknown',
-        timestamp: new Date(response.data.timestamp),
-        status: 'sent'
-      };
-      setReplies(prev => [...prev, newReply]);
+      setReplies(prev => prev.map(r => r.tempId === tempId ? { ...r, ...response.data, status: 'sent' } : r));
       setReplyInput('');
     } catch (error) {
       console.error('Failed to send reply:', error);
+      setReplies(prev => prev.map(r => r.tempId === tempId ? { ...r, status: 'failed' } : r));
     }
   };
 
@@ -113,25 +142,76 @@ export const ThreadDetail = ({ parentMessage, currentUser }: ThreadDetailProps) 
 
   const handleSendFile = async () => {
     if (selectedFiles.length === 0) return;
+    if (!isConnected || !currentRoom || !currentUser) return;
 
-    for (const file of selectedFiles) {
-      try {
-        setUploadingFile(file);
-        setUploadProgress(0);
+    const groupId = `group_${crypto.randomUUID ? crypto.randomUUID() : Date.now()}`;
+    const parentId = parentMessage._id.toString();
+    const currentUserId = (currentUser as any)?._id || (currentUser as any)?.id || 'unknown';
+    const tempId = crypto.randomUUID ? crypto.randomUUID() : `temp_thread_batch_${Date.now()}`;
 
-        await chatApi.uploadFile({
-          roomId: parentMessage.roomId,
-          file,
-          parentMessageId: parentMessage._id.toString(),
-          onProgress: (progress) => setUploadProgress(progress)
-        });
-      } catch (error) {
-        console.error('Failed to upload file in thread:', error);
-      }
+    // 1. 낙관적 메시지 생성 (ThreadDetail 로컬 상태에 추가)
+    const optimisticReply: Message = {
+      _id: tempId,
+      tempId,
+      roomId: parentMessage.roomId,
+      senderId: currentUserId,
+      senderName: currentUser.username,
+      content: selectedFiles.length > 1 ? `[Files] ${selectedFiles[0].name} 외 ${selectedFiles.length - 1}개` : `File: ${selectedFiles[0].name}`,
+      type: 'file', // ImageMessageGrid에서 자동 판단
+      status: 'sending',
+      timestamp: new Date(),
+      parentMessageId: parentId,
+      readBy: [currentUserId],
+      sequenceNumber: -1,
+      files: selectedFiles.map(f => ({
+        fileName: f.name,
+        fileType: f.type.startsWith('image/') ? 'image' : 'file',
+        mimeType: f.type,
+        size: f.size,
+        url: URL.createObjectURL(f),
+        processingStatus: 'processing'
+      }))
+    };
+    setReplies(prev => [...prev, optimisticReply]);
+
+    // 2. 메인 메시지 목록 replyCount 업데이트
+    sendOptimisticMessage(parentMessage.roomId, '', currentUserId, currentUser.username, parentId);
+
+    const abortController = new AbortController();
+
+    try {
+      setUploadingFile(selectedFiles[0]);
+      setUploadProgress(0);
+
+      const response = await services.fileTransfer.sendFiles(
+        parentMessage.roomId,
+        selectedFiles,
+        (progress: number) => setUploadProgress(progress),
+        abortController.signal,
+        groupId
+      );
+
+      // 3. 로컬 상태 업데이트
+      setReplies(prev => prev.map(r => r.tempId === tempId ? { 
+        ...r, 
+        ...response, 
+        status: 'sent',
+        files: response.files.map((f: any) => ({
+          ...f,
+          size: f.fileSize || f.size,
+          url: f.fileUrl || f.url,
+          thumbnailUrl: f.thumbnailUrl || f.thumbnail
+        }))
+      } : r));
+
+      setSelectedFiles([]);
+      setReplyInput('');
+    } catch (error: any) {
+      console.error('Failed to upload file in thread:', error);
+      setReplies(prev => prev.map(r => r.tempId === tempId ? { ...r, status: 'failed' } : r));
+    } finally {
+      setUploadingFile(null);
     }
-
-    setUploadingFile(null);
-    setSelectedFiles([]);
   };
 
   return (

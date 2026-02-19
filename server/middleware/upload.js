@@ -115,20 +115,25 @@ const upload = multer({
 
 // 파일 크기 검증 미들웨어 (Multer 이후 실행)
 const validateFileSize = (req, res, next) => {
-  if (!req.file) {
+  const files = req.file ? [req.file] : (req.files || []);
+  
+  if (files.length === 0) {
     return next();
   }
 
-  const validation = validateFile(req.file);
-  if (!validation.valid) {
-    return res.status(413).json({ 
-      message: validation.error,
-      code: 'FILE_TOO_LARGE'
-    });
-  }
+  for (const file of files) {
+    const validation = validateFile(file);
+    if (!validation.valid) {
+      return res.status(413).json({ 
+        message: `${file.originalname}: ${validation.error}`,
+        code: 'FILE_TOO_LARGE'
+      });
+    }
 
-  // 파일 타입 정보를 req에 추가 (컨트롤러에서 사용)
-  req.file.fileType = validation.fileType;
+    // 파일 타입 정보를 file 객체에 추가 (컨트롤러에서 사용)
+    file.fileType = validation.fileType;
+  }
+  
   next();
 };
 

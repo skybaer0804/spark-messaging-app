@@ -49,8 +49,8 @@ router.delete('/rooms/:roomId/members/:userId', workspaceAuth, removeRoomMember)
 router.get('/rooms/:roomId/notification-settings', getRoomNotificationSettings);
 router.put('/rooms/:roomId/notification-settings', updateRoomNotificationSettings);
 
-// 파일 업로드 라우트
-router.post('/upload', upload.single('file'), validateFileSize, uploadFile);
+// 파일 업로드 라우트 (다중 파일 지원)
+router.post('/upload', upload.array('files', 10), validateFileSize, uploadFile);
 // 썸네일 업로드 라우트 추가
 router.post('/upload-thumbnail', upload.single('thumbnail'), uploadThumbnail);
 

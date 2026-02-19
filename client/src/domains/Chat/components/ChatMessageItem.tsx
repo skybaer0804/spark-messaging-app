@@ -126,7 +126,26 @@ function ChatMessageItemComponent({
   };
 
   const renderContent = () => {
-    // 이미지 그룹 렌더링
+    // [v2.8.0] 단일 메시지 내 다중 파일 렌더링
+    if (message.files && message.files.length > 0) {
+      const images = message.files
+        .filter(f => f.fileType === 'image')
+        .map(f => ({
+          url: f.url || f.data || '',
+          fileName: f.fileName,
+          messageId: message._id,
+          status: message.status,
+          groupId: message.groupId,
+          processingStatus: f.processingStatus
+        }))
+        .filter(img => img.url);
+
+      if (images.length > 0) {
+        return <ImageMessageGrid images={images} onImageClick={onImageClick} onRetry={onRetry} totalCount={message.files.length} />;
+      }
+    }
+
+    // [v2.6.0] 하위 호환: 여러 메시지가 groupId로 묶인 경우 (레거시)
     if (groupedImages && groupedImages.length > 0) {
       const images = groupedImages.map(m => ({
         url: m.fileData?.url || m.fileData?.data || '',

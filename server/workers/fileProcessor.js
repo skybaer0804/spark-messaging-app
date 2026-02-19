@@ -171,24 +171,82 @@ const processModel3D = async (job, filePath, fileBuffer, fileUrl, filename, room
 
 /**
  * 메시지 업데이트 및 소켓 브로드캐스트
+ * [v2.8.0] 다중 파일 지원: fileIndex가 있으면 해당 인덱스의 파일 정보 업데이트
  */
-const updateMessage = async (messageId, updateData) => {
+const updateMessage = async (messageId, updateData, fileIndex = null) => {
   try {
-    const message = await Message.findByIdAndUpdate(messageId, { $set: updateData }, { new: true }).populate('roomId');
+    const message = await Message.findById(messageId);
     if (!message) {
       console.warn(`[Processor] 메시지 업데이트 스킵: ${messageId} (메시지를 찾을 수 없음)`);
       return;
     }
 
-    const safeUpdatePayload = {
+    let updatedMessage;
+    const socketPayload = {
       messageId: message._id.toString(),
-      processingStatus: updateData.processingStatus || message.processingStatus,
-      renderUrl: updateData.renderUrl,
-      thumbnailUrl: updateData.thumbnailUrl,
+      fileIndex,
     };
-    
-    if (message.roomId) {
-      await socketService.sendMessageUpdate(message.roomId._id ? message.roomId._id.toString() : message.roomId.toString(), safeUpdatePayload);
+
+    if (fileIndex !== null && message.files && message.files[fileIndex]) {
+      // 다중 파일 중 특정 파일 업데이트
+      const updateObj = {};
+      if (updateData.thumbnailUrl) {
+        updateObj[`files.${fileIndex}.thumbnailUrl`] = updateData.thumbnailUrl;
+        socketPayload.thumbnailUrl = updateData.thumbnailUrl;
+      }
+      if (updateData.renderUrl) {
+        updateObj[`files.${fileIndex}.renderUrl`] = updateData.renderUrl;
+        socketPayload.renderUrl = updateData.renderUrl;
+      }
+      if (updateData.processingStatus) {
+        updateObj[`files.${fileIndex}.processingStatus`] = updateData.processingStatus;
+        socketPayload.processingStatus = updateData.processingStatus;
+      }
+
+      // [v2.8.0] 하위 호환성: 첫 번째 파일이면 탑레벨 필드도 업데이트
+      if (fileIndex === 0) {
+        if (updateData.thumbnailUrl) updateObj.thumbnailUrl = updateData.thumbnailUrl;
+        if (updateData.renderUrl) updateObj.renderUrl = updateData.renderUrl;
+        if (updateData.processingStatus) updateObj.processingStatus = updateData.processingStatus;
+      }
+
+      updatedMessage = await Message.findByIdAndUpdate(
+        messageId,
+        { $set: updateObj },
+        { new: true }
+      ).populate('roomId');
+    } else {
+      // 레거시: 탑레벨 필드 업데이트
+      updatedMessage = await Message.findByIdAndUpdate(
+        messageId,
+        { $set: updateData },
+        { new: true }
+      ).populate('roomId');
+      
+      socketPayload.thumbnailUrl = updateData.thumbnailUrl;
+      socketPayload.renderUrl = updateData.renderUrl;
+      socketPayload.processingStatus = updateData.processingStatus || updatedMessage.processingStatus;
+    }
+
+    if (updatedMessage && updatedMessage.roomId) {
+      const roomIdStr = updatedMessage.roomId._id ? updatedMessage.roomId._id.toString() : updatedMessage.roomId.toString();
+      
+      // [v2.9.2] 모든 파일 처리가 완료되었는지 확인
+      const allFilesProcessed = updatedMessage.files && updatedMessage.files.every(f => 
+        f.processingStatus === 'completed' || f.processingStatus === 'failed' || f.processingStatus === 'cancelled'
+      );
+      
+      if (allFilesProcessed) {
+        socketPayload.allProcessed = true;
+        
+        // 전체 처리 완료 시 탑레벨 상태도 업데이트 (하위 호환)
+        const finalStatus = updatedMessage.files.every(f => f.processingStatus === 'completed' || f.processingStatus === 'cancelled') ? 'completed' : 'failed';
+        if (updatedMessage.processingStatus !== finalStatus) {
+          await Message.findByIdAndUpdate(messageId, { $set: { processingStatus: finalStatus } });
+        }
+      }
+
+      await socketService.sendMessageUpdate(roomIdStr, socketPayload);
     }
   } catch (err) {
     console.error(`[Processor] 메시지 업데이트 중 치명적 오류:`, err);
@@ -201,9 +259,9 @@ const updateMessage = async (messageId, updateData) => {
 module.exports = async (job) => {
   try {
     await initializeProcessor();
-    const { messageId, roomId, fileType, fileUrl, filePath, fileBuffer, filename } = job.data;
+    const { messageId, fileIndex, roomId, fileType, fileUrl, filePath, filename } = job.data;
     
-    console.log(`[Processor ${process.pid}] 🔄 작업 수신: Job ${job.id} (${fileType}) | Msg: ${messageId}`);
+    console.log(`[Processor ${process.pid}] 🔄 작업 수신: Job ${job.id} (${fileType}) | Msg: ${messageId} | Index: ${fileIndex}`);
     
     const currentMsg = await Message.findById(messageId);
     if (!currentMsg) {
@@ -211,27 +269,31 @@ module.exports = async (job) => {
       return { status: 'not_found' };
     }
 
-    if (currentMsg.processingStatus === 'cancelled') {
+    // 다중 파일 지원 체크
+    const isMultiFile = fileIndex !== null && currentMsg.files && currentMsg.files[fileIndex];
+    const targetStatus = isMultiFile ? currentMsg.files[fileIndex].processingStatus : currentMsg.processingStatus;
+
+    if (targetStatus === 'cancelled') {
         console.log(`[Processor ${process.pid}] ⏭️ 작업 취소됨: Job ${job.id}`);
         return { status: 'cancelled' };
     }
 
     let result = {};
     switch (fileType) {
-      case 'image': result = await processImage(job, filePath, fileBuffer, fileUrl, filename); break;
+      case 'image': result = await processImage(job, filePath, null, fileUrl, filename); break;
       case 'model3d':
-      case '3d': result = await processModel3D(job, filePath, fileBuffer, fileUrl, filename, roomId); break;
+      case '3d': result = await processModel3D(job, filePath, null, fileUrl, filename, roomId); break;
       default: result = { processingStatus: 'completed' };
     }
 
-    await updateMessage(messageId, result);
+    await updateMessage(messageId, result, fileIndex);
     console.log(`[Processor ${process.pid}] ✅ 작업 완료 및 DB 업데이트 완료: Job ${job.id}`);
     return result;
   } catch (error) {
     console.error(`[Processor ${process.pid}] ❌ 치명적 오류 (Job ${job.id}):`, error);
     try {
         if (job.data?.messageId) {
-            await updateMessage(job.data.messageId, { processingStatus: 'failed', error: error.message });
+            await updateMessage(job.data.messageId, { processingStatus: 'failed' }, job.data.fileIndex);
         }
     } catch (e) {}
     throw error;

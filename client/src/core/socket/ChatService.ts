@@ -140,6 +140,7 @@ export class ChatService {
         threadSequenceNumber: contentData.threadSequenceNumber,
         isForwarded: contentData.isForwarded,
         originSenderName: contentData.originSenderName,
+        files: contentData.files, // [v2.8.0] 다중 파일 지원
       };
 
       callback(message);

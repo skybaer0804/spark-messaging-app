@@ -172,16 +172,15 @@ function ChatAppContent() {
     clearPendingJoinChatRoom();
   }, [handleRoomSelectRaw, isConnected, pendingJoinRoom, roomList]);
 
-  const messagesRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isAttachmentModalOpen, setAttachmentModalOpen] = useState(false);
-  const [imageModal, setImageModal] = useState<{ url: string; fileName: string; groupId?: string } | null>(null);
+  const [imageModal, setImageModal] = useState<{ url: string; fileName: string; groupId?: string; messageId?: string } | null>(null);
   const [rightPanel, setRightPanel] = useState<'none' | 'members' | 'settings' | 'thread' | 'info'>('none');
   const [selectedThreadMessage, setSelectedThreadMessage] = useState<Message | null>(null);
   const [forwardModalMessage, setForwardModalMessage] = useState<Message | null>(null);
   const { user: currentUser } = useAuth();
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -207,8 +206,16 @@ function ChatAppContent() {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleImageClick = (imageUrl: string, fileName: string, groupId?: string) => {
-    setImageModal({ url: imageUrl, fileName, groupId });
+  const handleImageClick = (imageUrl: string, fileName: string, idOrGroupId?: string) => {
+    // [v2.8.0] idOrGroupId가 messageId일 수도 있고 groupId일 수도 있음
+    // messageId로 먼저 매칭 시도
+    const isMessageId = messages.some(m => m._id === idOrGroupId);
+    setImageModal({ 
+      url: imageUrl, 
+      fileName, 
+      messageId: isMessageId ? idOrGroupId : undefined,
+      groupId: !isMessageId ? idOrGroupId : undefined 
+    });
   };
 
   const handleThreadClick = (message: Message) => {
@@ -451,6 +458,7 @@ function ChatAppContent() {
           url={imageModal.url}
           fileName={imageModal.fileName}
           groupId={imageModal.groupId}
+          messageId={imageModal.messageId}
           allMessages={messages}
           onClose={handleCloseImageModal}
         />

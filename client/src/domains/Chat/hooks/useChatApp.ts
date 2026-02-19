@@ -28,6 +28,7 @@ export function useChatApp() {
     setCurrentRoom, 
     setMessages,
     sendOptimisticFileMessage,
+    sendOptimisticFilesMessage, // [v2.8.0]
     updateMessageStatus
   } = useChatRoom();
 
@@ -140,24 +141,92 @@ export function useChatApp() {
   };
 
   /**
-   * 다중 파일 전송 처리 (드래그 앤 드롭 등)
-   * 하나의 groupId로 묶어서 낙관적 UI 최적화
-   * [v2.9.2] 모든 파일은 서버의 정합성과 부하 분산을 위해 순차적(Sequential)으로 전송
+   * 다중 파일 업로드 프로세스 (v2.8.0 단일 메시지 처리)
+   */
+  const executeBatchUpload = async (tempId: string, files: File[], roomId: string, abortController: AbortController, groupId?: string) => {
+    const { updateUploadProgress, completeUpload, failUpload } = await import('@/stores/uploadStore');
+    
+    try {
+      updateUploadProgress(tempId, 0);
+      
+      const response = await fileTransferService.sendFiles(
+        roomId, 
+        files, 
+        (progress: number) => {
+          updateUploadProgress(tempId, progress);
+        },
+        abortController.signal,
+        groupId
+      );
+
+      // 성공 시 낙관적 메시지 업데이트
+      updateMessageStatus(tempId, {
+        _id: response._id,
+        sequenceNumber: response.sequenceNumber,
+        status: 'sent',
+        content: response.content,
+        type: response.type,
+        files: response.files.map((f: any) => ({
+          ...f,
+          size: f.fileSize || f.size,
+          url: f.fileUrl || f.url,
+          thumbnailUrl: f.thumbnailUrl || f.thumbnail,
+        })),
+        // 하위 호환 필드
+        fileUrl: response.fileUrl,
+        thumbnailUrl: response.thumbnailUrl,
+        fileName: response.fileName,
+        fileSize: response.fileSize,
+        mimeType: response.mimeType,
+      });
+
+      completeUpload(tempId);
+      showSuccess(`${files.length}개의 파일 전송 완료`);
+    } catch (error: any) {
+      console.error('Batch upload execution failed:', error);
+      
+      if (error.message === 'Upload aborted') {
+        showError('전송이 취소되었습니다.');
+        updateMessageStatus(tempId, { status: 'failed' });
+      } else {
+        const errorMessage = error?.response?.data?.message || error?.message || '파일 전송 실패';
+        failUpload(tempId, errorMessage);
+        updateMessageStatus(tempId, { status: 'failed' });
+        showError(errorMessage);
+      }
+    }
+  };
+
+  /**
+   * 다중 파일 전송 처리 (v2.8.0 단일 요청 최적화)
    */
   const handleFilesSend = async (files: File[]) => {
     if (files.length === 0) return;
-    
-    const groupId = `group_${crypto.randomUUID ? crypto.randomUUID() : Date.now()}`;
-    
-    console.log(`[FileTransfer] Starting sequential upload for ${files.length} files. Group: ${groupId}`);
+    if (!isConnected || !currentRoom || !user) return;
 
-    // [v2.9.2] 모든 파일에 대해 for...of를 사용하여 하나씩 완료될 때까지 기다림
-    // 서버의 InternalQueue와 맞물려 데이터 유실을 원천적으로 차단
-    for (const file of files) {
-      await handleFileSend(file, groupId);
-    }
-    
-    console.log(`[FileTransfer] All files in group ${groupId} have been sent to server.`);
+    const groupId = `group_${crypto.randomUUID ? crypto.randomUUID() : Date.now()}`;
+    const currentUserId = user.id || (user as any)._id;
+    const tempId = crypto.randomUUID ? crypto.randomUUID() : `temp_batch_${Date.now()}`;
+
+    // 1. 낙관적 메시지 생성
+    sendOptimisticFilesMessage(currentRoom._id, files, currentUserId, user.username, undefined, groupId);
+    const abortController = new AbortController();
+
+    // 2. 글로벌 스토어에 업로드 추가
+    const { addUpload } = await import('@/stores/uploadStore');
+    addUpload({
+      id: tempId,
+      roomId: currentRoom._id,
+      file: files[0], // 대표 파일
+      progress: 0,
+      status: 'pending',
+      retryCount: 0,
+      abortController,
+      groupId
+    });
+
+    // 3. 업로드 실행
+    await executeBatchUpload(tempId, files, currentRoom._id, abortController, groupId);
   };
 
   const retryUpload = async (tempId: string) => {

@@ -12,7 +12,7 @@ export function useChatRoom(enableListener: boolean = true) {
   const { services, isConnected, currentRoom, setCurrentRoom } = useChat();
   const { chat: chatService, room: roomService } = services;
 
-  const { messages, setMessages, sendOptimisticMessage, sendOptimisticFileMessage, updateMessageStatus } = useOptimisticUpdate();
+  const { messages, setMessages, sendOptimisticMessage, sendOptimisticFileMessage, sendOptimisticFilesMessage, updateMessageStatus } = useOptimisticUpdate();
   const { syncMessages } = useMessageSync();
 
   // v2.5.1: 방 전환 시 로딩 상태 및 Race Condition 방어
@@ -129,6 +129,7 @@ export function useChatRoom(enableListener: boolean = true) {
                     ...m,
                     processingStatus: formattedMsg.processingStatus || m.processingStatus,
                     renderUrl: formattedMsg.renderUrl || m.renderUrl,
+                    files: formattedMsg.files || m.files,
                     fileData: {
                       ...m.fileData,
                       ...(formattedMsg.fileData || {}),
@@ -223,7 +224,7 @@ export function useChatRoom(enableListener: boolean = true) {
                 || (m.fileData?.fileName && formattedNewMsg.fileData?.fileName && m.fileData.fileName === formattedNewMsg.fileData.fileName));
             
             if (isIdMatch || isTempMatch || isOptimisticMatch) {
-              // [v2.9.0] identity 필드 보존 + 서버 데이터 병합
+              // [v2.9.2] identity 필드 보존 + 서버 데이터 병합 (files 배열 포함)
               return {
                 ...m,
                 _id: formattedNewMsg._id || m._id,
@@ -231,6 +232,7 @@ export function useChatRoom(enableListener: boolean = true) {
                 status: formattedNewMsg.status || m.status,
                 processingStatus: formattedNewMsg.processingStatus || m.processingStatus,
                 renderUrl: formattedNewMsg.renderUrl || m.renderUrl,
+                files: formattedNewMsg.files || m.files,
                 fileData: formattedNewMsg.fileData ? {
                   ...m.fileData,
                   ...formattedNewMsg.fileData,
@@ -271,6 +273,7 @@ export function useChatRoom(enableListener: boolean = true) {
     setCurrentRoom,
     setMessages,
     sendOptimisticFileMessage,
+    sendOptimisticFilesMessage,
     updateMessageStatus,
   };
 }
