@@ -1,5 +1,20 @@
 const mongoose = require('mongoose');
 
+const fileSchema = new mongoose.Schema({
+  fileUrl: { type: String, required: true },
+  thumbnailUrl: { type: String }, // 썸네일/프리뷰 이미지 URL
+  renderUrl: { type: String }, // 3D 렌더링용 GLB URL
+  fileName: { type: String, required: true },
+  fileSize: { type: Number, required: true }, // 파일 크기 (bytes)
+  mimeType: { type: String, required: true }, // MIME 타입
+  fileType: { type: String }, // 'image', 'video', 'audio', '3d', 'file'
+  processingStatus: { 
+    type: String, 
+    enum: ['processing', 'completed', 'failed', 'cancelled'], 
+    default: 'processing' 
+  }
+}, { _id: true }); // 각 파일에 고유 ID 부여 (프론트엔드에서 key로 사용 가능)
+
 const messageSchema = new mongoose.Schema({
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom', required: true },
   senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -20,17 +35,23 @@ const messageSchema = new mongoose.Schema({
     default: 'sent',
   },
 
+  // 다중 파일 지원용 배열
+  files: [fileSchema],
+
+  // 하위 호환성을 위해 기존 필드 유지 (단일 파일인 경우 사용될 수 있음)
   fileUrl: { type: String },
-  thumbnailUrl: { type: String }, // 썸네일/프리뷰 이미지 URL
-  renderUrl: { type: String }, // 3D 렌더링용 GLB URL 추가
+  thumbnailUrl: { type: String }, 
+  renderUrl: { type: String }, 
   fileName: { type: String },
-  fileSize: { type: Number }, // 파일 크기 (bytes)
-  mimeType: { type: String }, // MIME 타입
+  fileSize: { type: Number }, 
+  mimeType: { type: String }, 
+  groupId: { type: String }, // 다중 메시지 그룹화 (기존 방식)
   processingStatus: { 
     type: String, 
-    enum: ['processing', 'completed', 'failed'], 
+    enum: ['processing', 'completed', 'failed', 'cancelled'], 
     default: 'processing' 
-  }, // 파일 처리 상태 (썸네일/프리뷰 생성 등)
+  }, 
+
   readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   // 멘션 정보
   mentions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // @멘션된 사용자 ID 배열

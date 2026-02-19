@@ -22,6 +22,7 @@ const {
   getThreadMessages,
   removeRoomMember, // 추가
   joinRoom, // 추가
+  reprocessFile, // 추가
 } = require('../controllers/chatController');
 const auth = require('../middleware/auth');
 const workspaceAuth = require('../middleware/workspaceAuth');
@@ -45,12 +46,13 @@ router.get('/message/:messageId', getMessageById);
 router.get('/sync/:roomId', syncMessages);
 router.post('/read/:roomId', markAsRead);
 router.post('/active-room', setActiveRoom);
+router.post('/reprocess-file', reprocessFile); // 재처리 API 추가
 router.delete('/rooms/:roomId/members/:userId', workspaceAuth, removeRoomMember); // 강퇴 API 추가
 router.get('/rooms/:roomId/notification-settings', getRoomNotificationSettings);
 router.put('/rooms/:roomId/notification-settings', updateRoomNotificationSettings);
 
-// 파일 업로드 라우트
-router.post('/upload', upload.single('file'), validateFileSize, uploadFile);
+// 파일 업로드 라우트 (다중 파일 지원)
+router.post('/upload', upload.array('files', 10), validateFileSize, uploadFile);
 // 썸네일 업로드 라우트 추가
 router.post('/upload-thumbnail', upload.single('thumbnail'), uploadThumbnail);
 

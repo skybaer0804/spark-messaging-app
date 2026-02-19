@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { groupMessagesByDate, formatServerMessage } from '../utils/chatUtils';
+import { formatServerMessage } from '../utils/chatUtils';
 import type { ChatRoom, Message } from '../types';
 import { useChat } from '../context/ChatContext';
 import { useOptimisticUpdate } from './useOptimisticUpdate';
@@ -12,7 +12,7 @@ export function useChatRoom(enableListener: boolean = true) {
   const { services, isConnected, currentRoom, setCurrentRoom } = useChat();
   const { chat: chatService, room: roomService } = services;
 
-  const { messages, setMessages, sendOptimisticMessage, updateMessageStatus } = useOptimisticUpdate();
+  const { messages, setMessages, sendOptimisticMessage, sendOptimisticFileMessage, sendOptimisticFilesMessage, updateMessageStatus } = useOptimisticUpdate();
   const { syncMessages } = useMessageSync();
 
   // v2.5.1: 방 전환 시 로딩 상태 및 Race Condition 방어
@@ -113,58 +113,47 @@ export function useChatRoom(enableListener: boolean = true) {
 
       const type = newMsg.type as string;
 
-      // 1. 메시지 업데이트 또는 진행률 이벤트인 경우
-      if (type === 'MESSAGE_UPDATED' || type === 'message-updated' || 
-          type === 'MESSAGE_PROGRESS' || type === 'message-progress') {
-        
-        // 완료 이벤트는 서버 최종본으로 단건 재조회하여 DB 상태와 완전히 동기화
-        if (type === 'MESSAGE_UPDATED' || type === 'message-updated') {
-          const messageId = newMsg._id?.toString();
-          if (messageId) {
-            chatService.getMessageById(messageId).then((serverMsg: any) => {
-              const formattedMsg = formatServerMessage(serverMsg);
-              setMessages((prev: Message[]) =>
-                prev.map((m: Message) => (m._id.toString() === messageId ? { ...m, ...formattedMsg } : m)),
-              );
-            }).catch((e) => {
-              console.error('❌ [Hook] 메시지 단건 재조회 실패:', e);
-            });
-          }
-          return;
-        }
-        
-        setMessages((prev: Message[]) => {
-          return prev.map((m: Message) => {
-            const isMatch = m._id.toString() === newMsg._id.toString() || 
-                           (newMsg.tempId && m.tempId === newMsg.tempId);
-            
-            if (isMatch) {
-              // v2.4.0: 타입 오염 방지 - 기존 메시지(m)를 기반으로 필요한 필드만 신규 메시지(newMsg)에서 가져옴
-              const updatedFileData = {
-                ...m.fileData,
-                ...(newMsg.fileData || {}),
-                thumbnail: (newMsg as any).thumbnailUrl || newMsg.fileData?.thumbnail || m.fileData?.thumbnail,
-                renderUrl: (newMsg as any).renderUrl || newMsg.fileData?.renderUrl || m.fileData?.renderUrl,
-                url: (newMsg as any).fileUrl || newMsg.fileData?.url || m.fileData?.url
-              } as any;
-
-              return {
-                ...m,
-                ...formattedNewMsg, // 포맷팅된 데이터 적용
-                fileData: updatedFileData,
-                status: newMsg.status || m.status,
-              };
-            }
-            return m;
+      // 1. 메시지 업데이트 이벤트 (파일 처리 완료 알림)
+      if (type === 'MESSAGE_UPDATED' || type === 'message-updated') {
+        // [v2.9.0] 서버에서 최종 메시지를 재조회하여 안전하게 병합
+        const messageId = (newMsg as any).messageId?.toString() || newMsg._id?.toString();
+        if (messageId) {
+          chatService.getMessageById(messageId).then((serverMsg: any) => {
+            if (!serverMsg) return;
+            const formattedMsg = formatServerMessage(serverMsg);
+            setMessages((prev: Message[]) =>
+              prev.map((m: Message) => {
+                if (m._id?.toString() === messageId) {
+                  // 기존 identity 필드 보존 + 서버 파일 데이터만 병합
+                  return {
+                    ...m,
+                    processingStatus: formattedMsg.processingStatus || m.processingStatus,
+                    renderUrl: formattedMsg.renderUrl || m.renderUrl,
+                    files: formattedMsg.files || m.files,
+                    fileData: {
+                      ...m.fileData,
+                      ...(formattedMsg.fileData || {}),
+                    } as any,
+                  };
+                }
+                return m;
+              }),
+            );
+          }).catch((e: any) => {
+            console.error('❌ [Hook] 메시지 재조회 실패:', e);
           });
-        });
+        }
+        return;
+      }
+
+      // MESSAGE_PROGRESS는 무시 (중간 소켓 이벤트 제거됨)
+      if (type === 'MESSAGE_PROGRESS' || type === 'message-progress') {
         return;
       }
 
       // 2. 신규 메시지 추가 또는 기존 메시지 업데이트
       setMessages((prev: Message[]) => {
         // [스레드 답글 처리] 만약 답글인 경우 (formattedNewMsg 사용으로 정규화된 데이터 확인)
-        // v2.4.2: formattedNewMsg.parentMessageId가 존재하면 확실히 스레드 메시지임
         const parentId = formattedNewMsg.parentMessageId;
         
         if (parentId) {
@@ -175,9 +164,6 @@ export function useChatRoom(enableListener: boolean = true) {
           if (hasParent) {
             return prev.map((m: Message) => {
               if (m._id.toString() === parentIdStr) {
-                // 부모 메시지의 새로운 객체를 생성하여 리렌더링 보장 & replyCount / lastReplyAt 갱신
-                
-                // v2.5.0: ID 비교를 문자열로 명확하게 변환하여 수행
                 const myId = (user?.id || (user as any)?._id)?.toString();
                 const senderId = formattedNewMsg.senderId?.toString();
                 const isMyMessage = myId && senderId && myId === senderId;
@@ -187,17 +173,10 @@ export function useChatRoom(enableListener: boolean = true) {
                 
                 let nextCount = currentCount;
                 
-                // 서버에서 명어적인 카운트를 줬다면 그것을 사용 (가장 정확함)
                 if (serverCount !== undefined && serverCount !== null) {
                   nextCount = serverCount;
-                } else {
-                   // 서버 카운트가 없을 때:
-                   // 내 메시지가 아니라면 +1 (내 메시지는 이미 낙관적 업데이트로 +1 됨)
-                   // 단, 중복 방지를 위해 이미 반영되었을 수 있는 시나리오(tempId 등)는 위에서 걸러지지 않음
-                   // 따라서 isMyMessage가 아닐 때만 보수적으로 증가
-                   if (!isMyMessage) {
-                      nextCount = currentCount + 1;
-                   }
+                } else if (!isMyMessage) {
+                  nextCount = currentCount + 1;
                 }
                 
                 return {
@@ -209,28 +188,65 @@ export function useChatRoom(enableListener: boolean = true) {
               return m;
             });
           }
-          // 부모가 없으면(오래된 메시지라 로드 안됨 등) 메인 목록에는 추가하지 않고 무시
           return prev;
         }
 
-        // tempId로 중복 체크 (낙관적 업데이트된 메시지)
-        if (newMsg.tempId && prev.some((m: Message) => m.tempId === newMsg.tempId)) {
-          return prev.map((m: Message) => 
-            m.tempId === newMsg.tempId ? { ...m, ...formattedNewMsg, status: 'sent' } : m
-          );
+        // [v2.9.0] 중복 체크 강화: tempId, _id, 그리고 낙관적 메시지인지까지 확인
+        const newMsgIdStr = newMsg._id?.toString();
+        const newMsgSenderId = (typeof newMsg.senderId === 'object' ? (newMsg.senderId as any)?._id : newMsg.senderId)?.toString();
+        const currentUserId = (user?.id || (user as any)?._id)?.toString();
+        
+        const hasDuplicate = prev.some((m: Message) => {
+          // tempId 매칭
+          if (newMsg.tempId && m.tempId === newMsg.tempId) return true;
+          // _id 매칭 (서버 ID 기준)
+          if (newMsgIdStr && m._id?.toString() === newMsgIdStr) return true;
+          // 낙관적 메시지 매칭: 내가 보낸 메시지이고, 아직 temp_ ID를 가진 메시지가 있으면
+          // sequenceNumber 또는 content로 매칭 시도
+          if (newMsgSenderId && currentUserId && newMsgSenderId === currentUserId && m._id?.startsWith?.('temp_')) {
+            // content + type이 동일하면 동일 메시지로 간주
+            if (m.content === formattedNewMsg.content && m.type === formattedNewMsg.type) return true;
+            // 파일 메시지의 경우 fileName으로 매칭
+            if (m.fileData?.fileName && formattedNewMsg.fileData?.fileName &&
+                m.fileData.fileName === formattedNewMsg.fileData.fileName) return true;
+          }
+          return false;
+        });
+
+        if (hasDuplicate) {
+          return prev.map((m: Message) => {
+            const isIdMatch = newMsgIdStr && m._id?.toString() === newMsgIdStr;
+            const isTempMatch = newMsg.tempId && m.tempId === newMsg.tempId;
+            // 낙관적 메시지 매칭
+            const isOptimisticMatch = newMsgSenderId && currentUserId && newMsgSenderId === currentUserId 
+              && m._id?.startsWith?.('temp_')
+              && ((m.content === formattedNewMsg.content && m.type === formattedNewMsg.type)
+                || (m.fileData?.fileName && formattedNewMsg.fileData?.fileName && m.fileData.fileName === formattedNewMsg.fileData.fileName));
+            
+            if (isIdMatch || isTempMatch || isOptimisticMatch) {
+              // [v2.9.2] identity 필드 보존 + 서버 데이터 병합 (files 배열 포함)
+              return {
+                ...m,
+                _id: formattedNewMsg._id || m._id,
+                sequenceNumber: formattedNewMsg.sequenceNumber || m.sequenceNumber,
+                status: formattedNewMsg.status || m.status,
+                processingStatus: formattedNewMsg.processingStatus || m.processingStatus,
+                renderUrl: formattedNewMsg.renderUrl || m.renderUrl,
+                files: formattedNewMsg.files || m.files,
+                fileData: formattedNewMsg.fileData ? {
+                  ...m.fileData,
+                  ...formattedNewMsg.fileData,
+                } as any : m.fileData,
+              };
+            }
+            return m;
+          });
         }
         
-        // _id로 중복 체크 (서버에서 온 메시지)
-        if (newMsg._id && prev.some((m: Message) => m._id === newMsg._id)) {
-          return prev.map((m: Message) => 
-            m._id === newMsg._id ? { ...m, ...formattedNewMsg } : m
-          );
-        }
-        
-        // sequenceNumber로도 중복 체크
+        // sequenceNumber로도 중복 체크 (방어적 코드)
         if (newMsg.sequenceNumber && prev.some((m: Message) => 
           m.sequenceNumber === newMsg.sequenceNumber && 
-          m.roomId === newMsg.roomId
+          m.roomId.toString() === newMsg.roomId.toString()
         )) {
           return prev;
         }
@@ -256,5 +272,8 @@ export function useChatRoom(enableListener: boolean = true) {
     handleRoomSelect,
     setCurrentRoom,
     setMessages,
+    sendOptimisticFileMessage,
+    sendOptimisticFilesMessage,
+    updateMessageStatus,
   };
 }

@@ -67,9 +67,11 @@ const expressStatic = express.static(fileBasePath, {
   setHeaders: (res, filePath) => {
     // 한글 파일명을 위한 Content-Disposition 헤더 설정
     const fileName = path.basename(filePath);
+    // ASCII 안전한 파일명 생성 (ASCII가 아닌 문자는 제거하거나 대체)
+    const asciiSafeName = fileName.replace(/[^\x00-\x7F]/g, '_');
     // UTF-8 인코딩된 파일명 (RFC 5987 형식)
     const encodedFileName = encodeURIComponent(fileName);
-    res.setHeader('Content-Disposition', `inline; filename="${fileName}"; filename*=UTF-8''${encodedFileName}`);
+    res.setHeader('Content-Disposition', `inline; filename="${asciiSafeName}"; filename*=UTF-8''${encodedFileName}`);
   }
 });
 app.use('/files', expressStatic);

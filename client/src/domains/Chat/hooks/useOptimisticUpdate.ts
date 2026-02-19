@@ -5,7 +5,29 @@ import { Message } from '../types';
 export interface UseOptimisticUpdateReturn {
   messages: Message[];
   setMessages: (msgs: Message[] | ((prev: Message[]) => Message[])) => void;
-  sendOptimisticMessage: (roomId: string, content: string, senderId: string, senderName?: string, parentMessageId?: string) => string;
+  sendOptimisticMessage: (
+    roomId: string,
+    content: string,
+    senderId: string,
+    senderName?: string,
+    parentMessageId?: string,
+  ) => string;
+  sendOptimisticFileMessage: (
+    roomId: string,
+    file: File,
+    senderId: string,
+    senderName?: string,
+    parentMessageId?: string,
+    groupId?: string,
+  ) => string;
+  sendOptimisticFilesMessage: (
+    roomId: string,
+    files: File[],
+    senderId: string,
+    senderName?: string,
+    parentMessageId?: string,
+    groupId?: string,
+  ) => string; // [v2.8.0]
   updateMessageStatus: (tempId: string, updatedMessage: Partial<Message>) => void;
 }
 
@@ -46,13 +68,130 @@ export function useOptimisticUpdate(): UseOptimisticUpdateReturn {
         messagesSignal.value = [...messagesSignal.value, newMessage];
       } else {
         // 스레드 답글인 경우, 메인 목록에 있는 부모 메시지의 replyCount를 증가시키는 낙관적 업데이트 수행
-        messagesSignal.value = messagesSignal.value.map(msg => 
-          msg._id === parentMessageId 
-            ? { ...msg, replyCount: (msg.replyCount || 0) + 1, lastReplyAt: new Date() } 
-            : msg
+        messagesSignal.value = messagesSignal.value.map((msg) =>
+          msg._id === parentMessageId
+            ? { ...msg, replyCount: (msg.replyCount || 0) + 1, lastReplyAt: new Date() }
+            : msg,
         );
       }
-      
+
+      return tempId;
+    },
+    [],
+  );
+
+  const sendOptimisticFileMessage = useCallback(
+    (roomId: string, file: File, senderId: string, senderName?: string, parentMessageId?: string, groupId?: string) => {
+      const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      const isImage = file.type.startsWith('image/');
+      const is3D =
+        file.name.toLowerCase().endsWith('.glb') ||
+        file.name.toLowerCase().endsWith('.gltf') ||
+        file.name.toLowerCase().endsWith('.stl') ||
+        file.name.toLowerCase().endsWith('.obj');
+      const type = isImage ? 'image' : is3D ? '3d' : 'file';
+
+      const newMessage: Message = {
+        _id: tempId,
+        roomId,
+        senderId,
+        senderName,
+        content: `File: ${file.name}`,
+        type: type as any,
+        sequenceNumber: -1,
+        tempId,
+        status: 'sending',
+        readBy: [],
+        timestamp: new Date(),
+        parentMessageId,
+        fileData: {
+          fileName: file.name,
+          fileType: type as any,
+          mimeType: file.type,
+          size: file.size,
+          url: URL.createObjectURL(file), // 로컬 프리뷰용 Blob URL
+        },
+        groupId, // [v2.6.0] 그룹화 ID 추가
+      };
+
+      if (!parentMessageId) {
+        messagesSignal.value = [...messagesSignal.value, newMessage];
+      } else {
+        messagesSignal.value = messagesSignal.value.map((msg) =>
+          msg._id === parentMessageId
+            ? { ...msg, replyCount: (msg.replyCount || 0) + 1, lastReplyAt: new Date() }
+            : msg,
+        );
+      }
+
+      return tempId;
+    },
+    [],
+  );
+
+  const sendOptimisticFilesMessage = useCallback(
+    (
+      roomId: string,
+      files: File[],
+      senderId: string,
+      senderName?: string,
+      parentMessageId?: string,
+      groupId?: string,
+    ) => {
+      const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      const processedFiles = files.map((file) => {
+        const isImage = file.type.startsWith('image/');
+        const is3D =
+          file.name.toLowerCase().endsWith('.glb') ||
+          file.name.toLowerCase().endsWith('.gltf') ||
+          file.name.toLowerCase().endsWith('.stl') ||
+          file.name.toLowerCase().endsWith('.obj');
+        const type = isImage ? 'image' : is3D ? '3d' : 'file';
+
+        return {
+          fileName: file.name,
+          fileType: type as any,
+          mimeType: file.type,
+          size: file.size,
+          url: URL.createObjectURL(file),
+          processingStatus: 'processing' as any,
+        };
+      });
+
+      const types = new Set(processedFiles.map((f) => f.fileType));
+      let overallType: any = 'file';
+      if (types.has('3d')) overallType = '3d';
+      else if (types.has('image')) overallType = 'image';
+
+      const newMessage: Message = {
+        _id: tempId,
+        roomId,
+        senderId,
+        senderName,
+        content: files.length > 1 ? `[Files] ${files[0].name} 외 ${files.length - 1}개` : `File: ${files[0].name}`,
+        type: overallType,
+        sequenceNumber: -1,
+        tempId,
+        status: 'sending',
+        readBy: [],
+        timestamp: new Date(),
+        parentMessageId,
+        files: processedFiles,
+        groupId,
+      };
+
+      if (!parentMessageId) {
+        messagesSignal.value = [...messagesSignal.value, newMessage];
+      } else {
+        messagesSignal.value = messagesSignal.value.map((msg) =>
+          msg._id === parentMessageId
+            ? { ...msg, replyCount: (msg.replyCount || 0) + 1, lastReplyAt: new Date() }
+            : msg,
+        );
+      }
+
       return tempId;
     },
     [],
@@ -60,7 +199,7 @@ export function useOptimisticUpdate(): UseOptimisticUpdateReturn {
 
   const updateMessageStatus = useCallback((tempId: string, updatedMessage: Partial<Message>) => {
     messagesSignal.value = messagesSignal.value.map((msg) =>
-      msg.tempId === tempId || msg._id === tempId ? { ...msg, ...updatedMessage } : msg
+      msg.tempId === tempId || msg._id === tempId ? { ...msg, ...updatedMessage } : msg,
     );
   }, []);
 
@@ -68,6 +207,8 @@ export function useOptimisticUpdate(): UseOptimisticUpdateReturn {
     messages: messagesSignal.value,
     setMessages,
     sendOptimisticMessage,
+    sendOptimisticFileMessage,
+    sendOptimisticFilesMessage,
     updateMessageStatus,
   };
 }

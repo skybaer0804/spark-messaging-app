@@ -7,6 +7,7 @@ import { useAuth } from '@/core/hooks/useAuth';
 import { getDirectChatName } from '../utils/chatUtils';
 import { ProfileItem } from './ProfileItem/ProfileItem';
 import type { ChatRoom } from '../types';
+import { activeUploads } from '@/stores/uploadStore';
 
 interface ChatHeaderProps {
   isMobile: boolean;
@@ -38,6 +39,13 @@ export const ChatHeader = ({
   className = '',
 }: ChatHeaderProps) => {
   const { user: currentUser } = useAuth();
+  
+  // 업로드 상태 구독 (Preact Signals)
+  const uploads = activeUploads.value;
+  const uploadCount = uploads.length;
+  const totalProgress = uploadCount > 0 
+    ? uploads.reduce((acc, item) => acc + item.progress, 0) / uploadCount 
+    : 0;
 
   return (
     <Paper
@@ -50,9 +58,30 @@ export const ChatHeader = ({
         flexShrink: 0, 
         borderBottom: '1px solid var(--color-border-default)',
         padding: '4px 12px',
-        paddingTop: isMobile ? 'calc(var(--space-gap-sm) + var(--safe-area-inset-top)' : '4px'
+        paddingTop: isMobile ? 'calc(var(--space-gap-sm) + var(--safe-area-inset-top)' : '4px',
+        position: 'relative'
       }}
     >
+      {/* Background Upload Progress Bar */}
+      {uploadCount > 0 && (
+        <div style={{ 
+          position: 'absolute', 
+          bottom: 0, 
+          left: 0, 
+          right: 0, 
+          height: '2px', 
+          backgroundColor: 'var(--color-background-secondary)',
+          zIndex: 100
+        }}>
+          <div style={{ 
+            height: '100%', 
+            width: `${totalProgress}%`, 
+            backgroundColor: 'var(--color-primary-default)', 
+            transition: 'width 0.3s ease-out' 
+          }} />
+        </div>
+      )}
+
       <Stack direction="row" align="center" spacing="md">
         {isMobile && (
           <IconButton onClick={goToHome} color="secondary">

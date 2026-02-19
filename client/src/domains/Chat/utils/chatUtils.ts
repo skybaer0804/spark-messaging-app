@@ -61,7 +61,8 @@ export const areMessagesEqual = (prev: Message, next: Message): boolean => {
     prev.fileData?.thumbnail === next.fileData?.thumbnail &&
     prev.fileData?.url === next.fileData?.url &&
     prev.fileData?.renderUrl === next.fileData?.renderUrl &&
-    prev.renderUrl === next.renderUrl
+    prev.renderUrl === next.renderUrl &&
+    JSON.stringify(prev.files) === JSON.stringify(next.files)
   );
 };
 
@@ -71,6 +72,7 @@ export const areMessagesEqual = (prev: Message, next: Message): boolean => {
 export function formatServerMessage(msg: any): Message {
   const senderObj = typeof msg.senderId === 'object' ? msg.senderId : null;
 
+  // 단일 파일 데이터 포맷팅 (하위 호환)
   let fileData: any = undefined;
   if (msg.fileUrl || msg.thumbnailUrl || msg.renderUrl || msg.fileData) {
     const rawFileData = msg.fileData || {};
@@ -80,11 +82,25 @@ export function formatServerMessage(msg: any): Message {
       mimeType: msg.mimeType || rawFileData.mimeType || 'application/octet-stream',
       size: msg.fileSize || rawFileData.size || 0,
       url: msg.fileUrl || rawFileData.url,
-      thumbnail: msg.thumbnailUrl || rawFileData.thumbnail,
+      thumbnailUrl: msg.thumbnailUrl || rawFileData.thumbnailUrl || rawFileData.thumbnail,
+      thumbnail: msg.thumbnailUrl || rawFileData.thumbnailUrl || rawFileData.thumbnail, // 호환성
       renderUrl: msg.renderUrl || rawFileData.renderUrl,
-      data: msg.thumbnailUrl || msg.renderUrl || msg.fileUrl || rawFileData.data,
+      processingStatus: msg.processingStatus || rawFileData.processingStatus,
     };
   }
+
+  // 다중 파일 데이터 포맷팅 (v2.8.0)
+  const files = (msg.files || []).map((f: any) => ({
+    _id: f._id,
+    fileName: f.fileName,
+    fileType: f.fileType || (msg.type === '3d' || msg.type === 'image' ? msg.type : 'file'),
+    mimeType: f.mimeType,
+    size: f.fileSize || f.size || 0,
+    url: f.fileUrl || f.url,
+    thumbnailUrl: f.thumbnailUrl || f.thumbnail,
+    renderUrl: f.renderUrl,
+    processingStatus: f.processingStatus || 'completed',
+  }));
 
   return {
     ...msg,
@@ -93,6 +109,7 @@ export function formatServerMessage(msg: any): Message {
     timestamp: getSafeDate(msg.timestamp),
     status: msg.status || 'sent',
     fileData,
+    files: files.length > 0 ? files : undefined,
     parentMessageId: msg.parentMessageId,
     replyCount: msg.replyCount || 0,
     lastReplyAt: msg.lastReplyAt ? getSafeDate(msg.lastReplyAt) : undefined,

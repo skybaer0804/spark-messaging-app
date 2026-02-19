@@ -978,3 +978,22 @@
     transform: translateY(0);
   }
 }
+// [v2.6.0] Drag & Drop Overlay
+.chat-app__drag-overlay {
+  animation: fade-in 0.2s ease-in-out;
+  display: flex !important;
+  
+  &-box {
+    border: 3px dashed var(--color-interactive-primary) !important;
+    background-color: var(--color-background-primary) !important;
+    padding: 3rem !important;
+    border-radius: 1.5rem !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2) !important;
+    pointer-events: none;
+    
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+  }
+}

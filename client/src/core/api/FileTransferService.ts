@@ -38,83 +38,106 @@ export class FileTransferService {
     });
   }
 
-  // 파일 전송 (v2.0.0 DB-First 방식)
-  public async sendFile(roomId: string, file: File, onProgress?: (progress: number) => void): Promise<void> {
+  // 파일 전송 (v2.8.0 다중 파일 지원)
+  public async sendFiles(
+    roomId: string,
+    files: File[],
+    onProgress?: (progress: number) => void,
+    signal?: AbortSignal,
+    groupId?: string,
+  ): Promise<any> {
     // 1. 파일 검증
-    const validation = this.validateFile(file);
-    if (!validation.valid) {
-      throw new Error(validation.error);
+    for (const file of files) {
+      const validation = this.validateFile(file);
+      if (!validation.valid) {
+        throw new Error(`${file.name}: ${validation.error}`);
+      }
     }
 
-    if (onProgress) onProgress(10);
+    const MAX_RETRIES = 3;
+    let attempt = 0;
 
-    // 2. FormData 생성
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('roomId', roomId);
+    const tryUpload = async (): Promise<any> => {
+      try {
+        if (signal?.aborted) throw new Error('Upload aborted');
 
-    try {
-      if (onProgress) onProgress(30);
+        if (onProgress) onProgress(5); // 시작
 
-      // 3. 백엔드 API를 통해 파일 업로드 (DB 저장 및 소켓 브로드캐스트 포함)
-      await chatApi.uploadFile(formData);
+        const formData = new FormData();
+        files.forEach((file) => {
+          formData.append('files', file);
+        });
+        formData.append('roomId', roomId);
+        if (groupId) formData.append('groupId', groupId);
 
-      if (onProgress) onProgress(100);
-    } catch (error) {
-      console.error('File upload failed:', error);
-      throw error;
-    }
+        // Axios request config with signal and progress
+        const response = await chatApi.uploadFile(formData, {
+          signal,
+          onUploadProgress: (progressEvent: any) => {
+            if (onProgress && progressEvent.total) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              // 5% ~ 95% 구간으로 매핑
+              const mappedProgress = 5 + percentCompleted * 0.9;
+              onProgress(mappedProgress);
+            }
+          },
+        });
+
+        if (onProgress) onProgress(100); // 완료
+        return response.data;
+      } catch (error: any) {
+        if (signal?.aborted || error.message === 'canceled') {
+          throw new Error('Upload aborted');
+        }
+
+        const isNetworkError = !error.response;
+        const isServerError = error.response && error.response.status >= 500;
+
+        if ((isNetworkError || isServerError) && attempt < MAX_RETRIES) {
+          attempt++;
+          const delay = Math.pow(2, attempt) * 1000;
+          console.warn(`[FileTransfer] Upload failed. Retrying in ${delay}ms (Attempt ${attempt}/${MAX_RETRIES})`);
+
+          if (onProgress) onProgress(0);
+
+          if (!navigator.onLine) {
+            console.log('[FileTransfer] Offline detected. Waiting for connection...');
+            await this.waitForOnline();
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          }
+
+          return tryUpload();
+        }
+
+        console.error('Files upload failed after retries:', error);
+        throw error;
+      }
+    };
+
+    return tryUpload();
   }
 
-  // 이미지 썸네일 생성 (현재 사용되지 않음)
-  // private generateThumbnail(file: File, maxWidth: number, maxHeight: number): Promise<string> {
-  //   return new Promise((resolve, reject) => {
-  //     const img = new Image();
-  //     const canvas = document.createElement('canvas');
-  //     const ctx = canvas.getContext('2d');
+  // 기존 단일 파일 전송 (하위 호환성을 위해 유지하되 내부적으로 sendFiles 호출)
+  public async sendFile(
+    roomId: string,
+    file: File,
+    onProgress?: (progress: number) => void,
+    signal?: AbortSignal,
+    groupId?: string,
+  ): Promise<any> {
+    return this.sendFiles(roomId, [file], onProgress, signal, groupId);
+  }
 
-  //     if (!ctx) {
-  //       reject(new Error('Canvas context를 가져올 수 없습니다.'));
-  //       return;
-  //     }
-
-  //     img.onload = () => {
-  //       // 비율 유지하며 리사이징
-  //       let width = img.width;
-  //       let height = img.height;
-
-  //       if (width > height) {
-  //         if (width > maxWidth) {
-  //           height = (height * maxWidth) / width;
-  //           width = maxWidth;
-  //         }
-  //       } else {
-  //         if (height > maxHeight) {
-  //           width = (width * maxHeight) / height;
-  //           height = maxHeight;
-  //         }
-  //       }
-
-  //       canvas.width = width;
-  //       canvas.height = height;
-  //       ctx.drawImage(img, 0, 0, width, height);
-
-  //       const thumbnail = canvas.toDataURL('image/jpeg', 0.8);
-  //       resolve(thumbnail);
-  //     };
-
-  //     img.onerror = () => {
-  //       reject(new Error('이미지 로드 실패'));
-  //     };
-
-  //     const reader = new FileReader();
-  //     reader.onload = (e) => {
-  //       img.src = e.target?.result as string;
-  //     };
-  //     reader.onerror = () => {
-  //       reject(new Error('파일 읽기 실패'));
-  //     };
-  //     reader.readAsDataURL(file);
-  //   });
-  // }
+  // 온라인 상태 대기 헬퍼
+  private waitForOnline(): Promise<void> {
+    return new Promise((resolve) => {
+      const handleOnline = () => {
+        window.removeEventListener('online', handleOnline);
+        resolve();
+      };
+      window.addEventListener('online', handleOnline);
+    });
+  }
 }

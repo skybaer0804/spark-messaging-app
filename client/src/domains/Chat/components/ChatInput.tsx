@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect, useMemo } from 'preact/hooks';
 import { memo, lazy, Suspense } from 'preact/compat';
 import { useTheme } from '@/core/context/ThemeProvider';
-import { FilePreview } from './FilePreview';
 import { MobileChatInput } from './MessageInput/MobileChatInput';
 import { Input } from '@/ui-components/Input/Input';
 import { Paper } from '@/ui-components/Paper/Paper';
@@ -20,17 +19,13 @@ interface ChatInputProps {
   input: string;
   setInput: (value: string) => void;
   members?: any[];
+  rooms?: any[];
   roomMembers?: any[];
-  selectedFiles: File[];
-  uploadingFile?: File | null;
-  uploadProgress?: number;
   isConnected: boolean;
   placeholder?: string;
   showFileUpload?: boolean;
   onSendMessage: () => void;
-  onSendFile: () => void;
   onFileSelect: (e: Event) => void;
-  onFileRemove: (index: number) => void;
   onKeyPress: (e: KeyboardEvent) => void;
   classNamePrefix?: string;
 }
@@ -40,16 +35,11 @@ function ChatInputComponent({
   setInput,
   members = [],
   roomMembers = [],
-  selectedFiles,
-  uploadingFile,
-  uploadProgress = 0,
   isConnected,
   placeholder,
   showFileUpload = true,
   onSendMessage,
-  onSendFile,
   onFileSelect,
-  onFileRemove,
   onKeyPress,
   classNamePrefix,
 }: ChatInputProps) {
@@ -196,12 +186,6 @@ function ChatInputComponent({
       className={`${baseClass}__input-paper`}
     >
       <Stack spacing="sm">
-        <FilePreview
-          files={selectedFiles}
-          uploadingFile={uploadingFile}
-          uploadProgress={uploadProgress}
-          onRemove={onFileRemove}
-        />
         <div
           ref={containerRef}
           className={`chat-input-container ${isMobile ? 'chat-input-container--mobile' : ''}`}
@@ -230,7 +214,7 @@ function ChatInputComponent({
               }}
               isConnected={isConnected}
               placeholder={placeholder}
-              canSend={input.trim().length > 0 || selectedFiles.length > 0}
+              canSend={input.trim().length > 0}
               isComposing={isComposing}
               setIsComposing={setIsComposing}
               setFormattingComposing={setFormattingComposing}
@@ -325,16 +309,9 @@ function ChatInputComponent({
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       const hasText = input.trim().length > 0;
-                      const hasFiles = selectedFiles.length > 0;
 
-                      if (isConnected && (hasText || hasFiles)) {
-                        // 파일이 있으면 파일 전송 핸들러, 없으면 메시지 핸들러 호출
-                        // Chat.tsx에서 두 핸들러는 handleSendAll로 통합되어 있음
-                        if (hasFiles) {
-                          onSendFile();
-                        } else {
-                          onSendMessage();
-                        }
+                      if (isConnected && hasText) {
+                        onSendMessage();
                       }
                     }
                   }}
@@ -378,10 +355,10 @@ function ChatInputComponent({
                 onEmojiClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
                 onEmojiButtonRef={(el) => { if (el) emojiButtonRef.current = el; }}
                 onFileClick={() => fileInputRef.current?.click()}
-                onSendClick={selectedFiles.length > 0 ? onSendFile : onSendMessage}
+                onSendClick={onSendMessage}
                 disabled={!isConnected}
                 showFileUpload={showFileUpload}
-                canSend={input.trim().length > 0 || selectedFiles.length > 0}
+                canSend={input.trim().length > 0}
               />
             </>
           )}
