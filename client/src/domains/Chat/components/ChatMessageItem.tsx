@@ -79,7 +79,12 @@ function ChatMessageItemComponent({
 
   // 3D 스냅샷 업로드 핸들러
   const handleSnapshot = async (base64: string) => {
-    if (message.fileData?.thumbnail || isSnapshotUploading) return;
+    // [v2.9.2] 썸네일이 이미 있더라도, processing 상태이거나 새로 촬영이 필요한 경우 업로드 허용
+    if (isSnapshotUploading) return;
+    
+    // 이미 썸네일이 있고, 현재 메시지가 처리 완료 상태라면 중복 업로드 방지
+    if (message.fileData?.thumbnail && message.processingStatus === 'completed') return;
+
     try {
       setIsSnapshotUploading(true);
       
@@ -171,7 +176,7 @@ function ChatMessageItemComponent({
 
     switch (displayMessage.fileData.fileType) {
       case 'image': return <ImageMessage message={displayMessage} handleDownload={handleDownload} onImageClick={onImageClick} onRetry={onRetry} />;
-      case '3d': return <Model3DMessage message={displayMessage} handleDownload={handleDownload} setShowModelModal={setShowModelModal} />;
+      case '3d': return <Model3DMessage message={displayMessage} handleDownload={handleDownload} setShowModelModal={setShowModelModal} onSnapshot={handleSnapshot} />;
       case 'video': return <VideoMessage message={displayMessage} handleDownload={handleDownload} />;
       case 'audio': return <AudioMessage message={displayMessage} handleDownload={handleDownload} />;
       default: return <FileMessage message={displayMessage} handleDownload={handleDownload} onRetry={onRetry} />;

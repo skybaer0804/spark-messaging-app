@@ -3,7 +3,6 @@ import { Box } from '@/ui-components/Layout/Box';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { IconButton } from '@/ui-components/Button/IconButton';
-import { DotsLoading } from '@/ui-components/Loading';
 import { IconDownload, Icon3dCubeSphere, IconClick } from '@tabler/icons-preact';
 import { formatFileSize } from '@/core/utils/fileUtils';
 import { ModelViewer } from '../ModelViewer/ModelViewer';
@@ -13,9 +12,10 @@ interface Model3DMessageProps {
   message: Message;
   handleDownload: (e: any) => void;
   setShowModelModal: (show: boolean) => void;
+  onSnapshot?: (base64: string) => void;
 }
 
-export const Model3DMessage = memo(({ message, handleDownload, setShowModelModal }: Model3DMessageProps) => {
+export const Model3DMessage = memo(({ message, handleDownload, setShowModelModal, onSnapshot }: Model3DMessageProps) => {
   const [isTimedOut, setIsTimedOut] = useState(false);
   const fileData = message.fileData;
   if (!fileData) return null;
@@ -62,6 +62,7 @@ export const Model3DMessage = memo(({ message, handleDownload, setShowModelModal
           width={150}
           height={150}
           interactive={false}
+          onSnapshot={onSnapshot}
         />
       );
     }

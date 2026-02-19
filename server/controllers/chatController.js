@@ -1517,12 +1517,19 @@ exports.reprocessFile = async (req, res) => {
     const { getFileType } = require('../config/fileConfig');
     const detectedFileType = getFileType(targetFile.mimeType, targetFile.fileName);
 
-    // 상태 업데이트: processing으로 변경
+    // 상태 업데이트: processing으로 변경 및 기존 썸네일 초기화 (재촬영 유도)
     const updateObj = {};
     if (finalFileIndex !== null) {
       updateObj[`files.${finalFileIndex}.processingStatus`] = 'processing';
+      updateObj[`files.${finalFileIndex}.thumbnailUrl`] = null;
+      
+      // 첫 번째 파일이면 탑레벨도 초기화
+      if (finalFileIndex === 0) {
+        updateObj.thumbnailUrl = null;
+      }
     } else {
       updateObj.processingStatus = 'processing';
+      updateObj.thumbnailUrl = null;
     }
     await Message.findByIdAndUpdate(messageId, { $set: updateObj });
 
