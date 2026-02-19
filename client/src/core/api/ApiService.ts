@@ -169,6 +169,13 @@ export const notificationApi = {
     targetId?: string;
   }) => api.post('/notification', data),
   deleteNotification: (notificationId: string) => api.delete(`/notification/${notificationId}`),
+  updateNotification: (notificationId: string, data: {
+    title?: string;
+    content?: string;
+    scheduledAt?: string;
+    targetType?: 'all' | 'workspace';
+    targetId?: string;
+  }) => api.put(`/notification/${notificationId}`, data),
 };
 
 export const videoMeetingApi = {

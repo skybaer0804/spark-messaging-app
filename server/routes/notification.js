@@ -6,6 +6,7 @@ const {
   syncNotifications,
   deleteNotification,
   getNotification,
+  updateNotification,
 } = require('../controllers/notificationController');
 const auth = require('../middleware/auth');
 
@@ -16,5 +17,6 @@ router.get('/', getNotifications);
 router.get('/sync', syncNotifications);
 router.get('/:notificationId', getNotification);
 router.delete('/:notificationId', deleteNotification);
+router.put('/:notificationId', updateNotification);
 
 module.exports = router;

@@ -1,5 +1,7 @@
 import { JSX } from 'preact';
 import { useTheme } from '@/core/context/ThemeProvider';
+import { Flex } from '@/ui-components/Layout/Flex';
+import { IconCircleCheckFilled } from '@tabler/icons-preact';
 import './Select.scss';
 
 export interface SelectOption {
@@ -15,10 +17,22 @@ export interface SelectProps extends Omit<JSX.HTMLAttributes<HTMLSelectElement>,
   fullWidth?: boolean;
   value?: string | number;
   disabled?: boolean;
+  isValid?: boolean;
   onChange?: JSX.GenericEventHandler<HTMLSelectElement>;
 }
 
-export function Select({ label, options, error, helperText, fullWidth = true, className = '', ...props }: SelectProps) {
+const ValidationBadge = ({ isValid }: { isValid: boolean }) => (
+  <span style={{ 
+    color: isValid ? 'var(--color-status-success)' : 'var(--color-text-tertiary)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    marginLeft: '4px'
+  }}>
+    <IconCircleCheckFilled size={14} />
+  </span>
+);
+
+export function Select({ label, options, error, helperText, fullWidth = true, isValid = false, className = '', ...props }: SelectProps) {
   const { theme, contrast } = useTheme();
   const selectId = props.id || `select-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -29,7 +43,10 @@ export function Select({ label, options, error, helperText, fullWidth = true, cl
     <div className={wrapperClasses} data-theme={theme} data-contrast={contrast}>
       {label && (
         <label htmlFor={selectId} className="select-label">
-          {label}
+          <Flex align="center" gap="xs">
+            <span>{label}</span>
+            <ValidationBadge isValid={isValid} />
+          </Flex>
         </label>
       )}
       <div className="select-wrapper">

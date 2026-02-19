@@ -86,8 +86,8 @@ export const DialogChatOne = ({
     return /^[a-zA-Z0-9가-힣\s_-]+$/.test(name.trim());
   };
 
-  const isCreateDisabled = selectedUserIds.length === 0 || 
-    (selectedUserIds.length > 1 && (!roomName.trim() || !isValidRoomName(roomName)));
+  const isCreateDisabled =
+    selectedUserIds.length === 0 || (selectedUserIds.length > 1 && (!roomName.trim() || !isValidRoomName(roomName)));
 
   return (
     <Dialog
@@ -100,11 +100,7 @@ export const DialogChatOne = ({
       className="dialog--mobile-overlay"
       actions={
         <Flex gap="sm" style={isMobile ? { width: '100%' } : {}}>
-          <Button
-            onClick={handleClose}
-            variant="secondary"
-            style={isMobile ? { flex: 4.5 } : {}}
-          >
+          <Button onClick={handleClose} variant="secondary" size="sm" style={isMobile ? { flex: 4.5 } : {}}>
             <Flex align="center" gap="xs" justify="center">
               <IconX size={18} />
               <span>취소</span>
@@ -112,6 +108,7 @@ export const DialogChatOne = ({
           </Button>
           <Button
             variant="primary"
+            size="sm"
             disabled={isCreateDisabled}
             onClick={handleCreate}
             style={isMobile ? { flex: 5.5 } : {}}
@@ -152,9 +149,11 @@ export const DialogChatOne = ({
               value={roomName}
               onInput={(e) => setRoomName(e.currentTarget.value)}
               error={roomName.length > 0 && !isValidRoomName(roomName)}
-              helperText={roomName.length > 0 && !isValidRoomName(roomName)
-                ? "특수문자는 사용할 수 없습니다 (한글, 영문, 숫자, 공백, _, -만 허용)"
-                : ""}
+              helperText={
+                roomName.length > 0 && !isValidRoomName(roomName)
+                  ? '특수문자는 사용할 수 없습니다 (한글, 영문, 숫자, 공백, _, -만 허용)'
+                  : ''
+              }
             />
           </Grid>
         )}

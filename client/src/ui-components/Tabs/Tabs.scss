@@ -23,7 +23,9 @@
     cursor: pointer;
     position: relative;
     white-space: nowrap;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
 
     &:hover {
       background-color: var(--tabs-tab-hover-bg);
@@ -73,7 +75,7 @@
   }
 
   &__panel {
-    padding: var(--tabs-panel-padding);
+    padding: 0px;
   }
 
   &--scrollable {

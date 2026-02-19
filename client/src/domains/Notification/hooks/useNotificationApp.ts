@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { useToast } from '@/core/context/ToastContext';
 import { useConfirm } from '@/core/context/ConfirmContext';
+import { useAuth } from '@/core/hooks/useAuth';
 import sparkMessagingClient from '../../../config/sparkMessaging';
 import { ConnectionService } from '@/core/socket/ConnectionService';
 import { NotificationService } from '@/core/socket/NotificationService';
@@ -24,6 +25,7 @@ export function useNotificationApp() {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [scheduledDate, setScheduledAt] = useState('');
+  const [isImmediateSend, setIsImmediateSend] = useState(true);
 
   const getDefaultScheduledDate = () => {
     const now = new Date();
@@ -36,6 +38,7 @@ export function useNotificationApp() {
     setTitle('');
     setMessage('');
     setScheduledAt(getDefaultScheduledDate());
+    setIsImmediateSend(true);
     setTargetType('all');
   };
   const [targetType, setTargetType] = useState<'all' | 'workspace'>('all');
@@ -45,10 +48,13 @@ export function useNotificationApp() {
   const [notifications, setNotifications] = useState<FormattedNotification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'create' | 'view'>('create');
+  const [dialogMode, setDialogMode] = useState<'create' | 'view' | 'edit'>('create');
   const [selectedNotification, setSelectedNotification] = useState<FormattedNotification | null>(null);
 
   const { showSuccess, showError } = useToast();
+  const { user } = useAuth(); // 권한 체크용
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
+  
   const { confirm } = useConfirm();
   const notificationServiceRef = useRef<NotificationService | null>(null);
 
@@ -59,9 +65,7 @@ export function useNotificationApp() {
   };
 
   const handleOpenViewDialog = async (notification: FormattedNotification) => {
-    setDialogMode('view');
-    setIsDrawerOpen(true);
-    // 상세 정보 로딩 시작 (낙관적으로 목록 데이터 먼저 표시 후 업데이트)
+    // 1. 기본 정보 설정
     setSelectedNotification(notification);
     setTitle(notification.title);
     setMessage(notification.content);
@@ -72,10 +76,18 @@ export function useNotificationApp() {
     if (date) {
       const localISO = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       setScheduledAt(localISO);
+      setIsImmediateSend(!notification.scheduledAt);
     } else {
       setScheduledAt('');
+      setIsImmediateSend(true);
     }
 
+    // 2. 모드 결정 (대기중이고 권한이 있으면 수정 모드, 아니면 보기 모드)
+    const canEdit = !notification.isSent && (isAdmin || notification.senderId === user?._id);
+    setDialogMode(canEdit ? 'edit' : 'view');
+    setIsDrawerOpen(true);
+
+    // 3. 상세 정보 로딩
     try {
       const res = await notificationApi.getNotification(notification._id);
       const data = formatNotificationData(res.data);
@@ -90,10 +102,14 @@ export function useNotificationApp() {
       if (detailDate) {
         const localISO = new Date(detailDate.getTime() - detailDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
         setScheduledAt(localISO);
+        setIsImmediateSend(!data.scheduledAt);
       }
+      
+      // 상세 정보 로드 후에도 모드 재확인 (상태가 변했을 수 있음)
+      const updatedCanEdit = !data.isSent && (isAdmin || data.senderId === user?._id);
+      setDialogMode(updatedCanEdit ? 'edit' : 'view');
     } catch (err) {
       console.error('Failed to fetch notification detail:', err);
-      // 목록에 이미 데이터가 있으므로 에러 무시 가능하지만 로그는 남김
     }
   };
 
@@ -144,21 +160,33 @@ export function useNotificationApp() {
 
   const handleSend = async () => {
     try {
-      await notificationApi.createNotification({
-        title,
-        content: message,
-        scheduledAt: scheduledDate || undefined,
-        targetType,
-        targetId: targetType === 'workspace' ? targetId : undefined,
-      });
+      if (dialogMode === 'edit' && selectedNotification) {
+        await notificationApi.updateNotification(selectedNotification._id, {
+          title,
+          content: message,
+          scheduledAt: isImmediateSend ? undefined : (scheduledDate || undefined),
+          targetType,
+          targetId: targetType === 'workspace' ? targetId : undefined,
+        });
+        showSuccess('알림이 수정되었습니다.');
+      } else {
+        await notificationApi.createNotification({
+          title,
+          content: message,
+          scheduledAt: isImmediateSend ? undefined : (scheduledDate || undefined),
+          targetType,
+          targetId: targetType === 'workspace' ? targetId : undefined,
+        });
+        showSuccess('알림이 생성되었습니다.');
+      }
 
       resetForm();
       setIsDrawerOpen(false);
-      // showSuccess('알림이 생성되었습니다.');
       fetchNotifications();
-    } catch (error) {
-      console.error('Notification creation failed:', error);
-      showError('알림 생성에 실패했습니다.');
+    } catch (error: any) {
+      console.error('Notification action failed:', error);
+      const errorMsg = error.response?.data?.message || '알림 처리에 실패했습니다.';
+      showError(errorMsg);
     }
   };
 
@@ -205,6 +233,8 @@ export function useNotificationApp() {
     setMessage,
     scheduledDate,
     setScheduledAt,
+    isImmediateSend,
+    setIsImmediateSend,
     targetType,
     setTargetType,
     targetId,

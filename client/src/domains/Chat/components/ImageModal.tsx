@@ -2,7 +2,14 @@ import { memo, useState, useMemo, useEffect, useCallback } from 'preact/compat';
 import { Box } from '@/ui-components/Layout/Box';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { IconButton } from '@/ui-components/Button/IconButton';
-import { IconX, IconDownload, IconPhotoOff, IconChevronLeft, IconChevronRight, IconRefresh } from '@tabler/icons-preact';
+import {
+  IconX,
+  IconDownload,
+  IconPhotoOff,
+  IconChevronLeft,
+  IconChevronRight,
+  IconRefresh,
+} from '@tabler/icons-preact';
 import { downloadFileFromUrl } from '@/core/utils/fileUtils';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { useChat } from '../context/ChatContext';
@@ -23,7 +30,15 @@ interface ImageModalProps {
   classNamePrefix?: string;
 }
 
-function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, allMessages = [], onClose }: ImageModalProps) {
+function ImageModalComponent({
+  url,
+  fileName,
+  groupId,
+  messageId,
+  fileIndex,
+  allMessages = [],
+  onClose,
+}: ImageModalProps) {
   const { services } = useChat();
   const { chat: chatService } = services;
   const [imageError, setImageError] = useState(false);
@@ -47,16 +62,22 @@ function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, all
       const mime = f.mimeType || '';
       if (mime.startsWith('image/')) return 'image';
       if (mime.startsWith('video/')) return 'video';
-      if (mime.startsWith('model/') || f.fileName?.endsWith('.stl') || f.fileName?.endsWith('.obj') || f.fileName?.endsWith('.glb')) return '3d';
+      if (
+        mime.startsWith('model/') ||
+        f.fileName?.endsWith('.stl') ||
+        f.fileName?.endsWith('.obj') ||
+        f.fileName?.endsWith('.glb')
+      )
+        return '3d';
       return 'image'; // 기본값
     };
 
     // 1. 단일 메시지 내 다중 파일인 경우 (최우선)
     if (messageId) {
-      const targetMsg = allMessages.find(m => m._id === messageId);
+      const targetMsg = allMessages.find((m) => m._id === messageId);
       if (targetMsg && targetMsg.files && targetMsg.files.length > 0) {
         return targetMsg.files
-          .filter(f => {
+          .filter((f) => {
             const type = guessFileType(f);
             return type === 'image' || type === '3d' || type === 'video';
           })
@@ -66,7 +87,7 @@ function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, all
             url: f.url || (f as any).fileUrl || f.data,
             thumbnailUrl: f.thumbnailUrl || f.thumbnail,
             messageId: targetMsg._id, // Navigation용
-            fileIndex: idx
+            fileIndex: idx,
           }));
       }
     }
@@ -74,11 +95,11 @@ function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, all
     // 2. 여러 메시지가 groupId로 묶인 경우 (레거시)
     if (groupId && allMessages.length > 0) {
       return allMessages
-        .filter(msg => {
+        .filter((msg) => {
           const type = msg.fileData?.fileType || msg.type;
           return msg.groupId === groupId && (type === 'image' || type === '3d' || type === 'video');
         })
-        .map(msg => {
+        .map((msg) => {
           const f = msg.fileData!;
           return {
             ...f,
@@ -86,7 +107,7 @@ function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, all
             url: f.url || (f as any).fileUrl || f.data,
             thumbnailUrl: f.thumbnail || f.thumbnailUrl,
             messageId: msg._id,
-            fileIndex: 0
+            fileIndex: 0,
           };
         });
     }
@@ -98,17 +119,18 @@ function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, all
     if (groupMedia.length > 0) {
       // fileIndex가 제공된 경우 최우선 매칭
       if (fileIndex !== undefined) {
-        const foundIndex = groupMedia.findIndex(m => m.fileIndex === fileIndex);
+        const foundIndex = groupMedia.findIndex((m) => m.fileIndex === fileIndex);
         if (foundIndex >= 0) return foundIndex;
       }
-      
+
       // url 기반 매칭 (Fallback)
-      const foundIndex = groupMedia.findIndex(m => 
-        m.url === url || 
-        m.thumbnailUrl === url || 
-        (m as any).thumbnail === url ||
-        (m as any).data === url ||
-        (m as any).fileUrl === url
+      const foundIndex = groupMedia.findIndex(
+        (m) =>
+          m.url === url ||
+          m.thumbnailUrl === url ||
+          (m as any).thumbnail === url ||
+          (m as any).data === url ||
+          (m as any).fileUrl === url,
       );
       return foundIndex >= 0 ? foundIndex : 0;
     }
@@ -162,66 +184,71 @@ function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, all
     }
   };
 
-  const handleSnapshot = useCallback(async (base64: string) => {
-    if (!currentMedia || isSnapshotUploading) return;
-    
-    // 이미 썸네일이 있고 처리 완료 상태면 중복 업로드 방지 (단, 재생성 중일 때는 허용)
-    if (currentThumbnailUrl && currentStatus === 'completed') return;
-    
-    try {
-      setIsSnapshotUploading(true);
+  const handleSnapshot = useCallback(
+    async (base64: string) => {
+      if (!currentMedia || isSnapshotUploading) return;
 
-      // 즉시 로컬 UI 반영
-      if (messagesSignal.value) {
-        messagesSignal.value = messagesSignal.value.map(m => {
-          if (m._id !== currentMedia.messageId) return m;
-          
-          const newMsg = { ...m };
-          if (currentMedia.fileIndex !== null && currentMedia.fileIndex !== undefined && newMsg.files) {
-            newMsg.files = [...newMsg.files];
-            newMsg.files[currentMedia.fileIndex] = { 
-              ...newMsg.files[currentMedia.fileIndex], 
-              thumbnailUrl: base64,
-              processingStatus: 'completed'
-            };
-            // 첫 번째 파일이면 탑레벨도 업데이트
-            if (currentMedia.fileIndex === 0) {
+      // 이미 썸네일이 있고 처리 완료 상태면 중복 업로드 방지 (단, 재생성 중일 때는 허용)
+      if (currentThumbnailUrl && currentStatus === 'completed') return;
+
+      try {
+        setIsSnapshotUploading(true);
+
+        // 즉시 로컬 UI 반영
+        if (messagesSignal.value) {
+          messagesSignal.value = messagesSignal.value.map((m) => {
+            if (m._id !== currentMedia.messageId) return m;
+
+            const newMsg = { ...m };
+            if (currentMedia.fileIndex !== null && currentMedia.fileIndex !== undefined && newMsg.files) {
+              newMsg.files = [...newMsg.files];
+              newMsg.files[currentMedia.fileIndex] = {
+                ...newMsg.files[currentMedia.fileIndex],
+                thumbnailUrl: base64,
+                processingStatus: 'completed',
+              };
+              // 첫 번째 파일이면 탑레벨도 업데이트
+              if (currentMedia.fileIndex === 0) {
+                newMsg.thumbnailUrl = base64;
+                if (newMsg.fileData) newMsg.fileData.thumbnail = base64;
+              }
+            } else if (newMsg.fileData) {
+              newMsg.fileData = { ...newMsg.fileData, thumbnail: base64 };
               newMsg.thumbnailUrl = base64;
-              if (newMsg.fileData) newMsg.fileData.thumbnail = base64;
+              newMsg.processingStatus = 'completed';
             }
-          } else if (newMsg.fileData) {
-            newMsg.fileData = { ...newMsg.fileData, thumbnail: base64 };
-            newMsg.thumbnailUrl = base64;
-            newMsg.processingStatus = 'completed';
-          }
-          return newMsg;
+            return newMsg;
+          });
+        }
+
+        const res = await fetch(base64);
+        const blob = await res.blob();
+        const file = new File([blob], `thumb_${currentMedia.messageId}_${currentMedia.fileIndex}.png`, {
+          type: 'image/png',
         });
-      }
 
-      const res = await fetch(base64);
-      const blob = await res.blob();
-      const file = new File([blob], `thumb_${currentMedia.messageId}_${currentMedia.fileIndex}.png`, { type: 'image/png' });
-      
-      const formData = new FormData();
-      formData.append('thumbnail', file);
-      formData.append('messageId', currentMedia.messageId!);
-      // [v2.9.2] fileIndex가 있으면 함께 전송 (서버에서 해당 인덱스 업데이트용)
-      if (currentMedia.fileIndex !== null && currentMedia.fileIndex !== undefined) {
-        formData.append('fileIndex', currentMedia.fileIndex.toString());
-      }
-      
-      const targetMsg = allMessages.find(m => m._id === currentMedia.messageId);
-      if (targetMsg) {
-        formData.append('roomId', targetMsg.roomId);
-      }
+        const formData = new FormData();
+        formData.append('thumbnail', file);
+        formData.append('messageId', currentMedia.messageId!);
+        // [v2.9.2] fileIndex가 있으면 함께 전송 (서버에서 해당 인덱스 업데이트용)
+        if (currentMedia.fileIndex !== null && currentMedia.fileIndex !== undefined) {
+          formData.append('fileIndex', currentMedia.fileIndex.toString());
+        }
 
-      await chatApi.uploadThumbnail(formData);
-    } catch (err) {
-      console.error('Failed to upload snapshot:', err);
-    } finally {
-      setIsSnapshotUploading(false);
-    }
-  }, [currentMedia, isSnapshotUploading, currentThumbnailUrl, currentStatus, allMessages]);
+        const targetMsg = allMessages.find((m) => m._id === currentMedia.messageId);
+        if (targetMsg) {
+          formData.append('roomId', targetMsg.roomId);
+        }
+
+        await chatApi.uploadThumbnail(formData);
+      } catch (err) {
+        console.error('Failed to upload snapshot:', err);
+      } finally {
+        setIsSnapshotUploading(false);
+      }
+    },
+    [currentMedia, isSnapshotUploading, currentThumbnailUrl, currentStatus, allMessages],
+  );
 
   // 키보드 네비게이션
   useEffect(() => {
@@ -236,21 +263,33 @@ function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, all
 
   const StatusIndicator = ({ label, exists, processing }: { label: string; exists: boolean; processing?: boolean }) => {
     const displayLabel = isMobile ? label.charAt(0) : label;
-    
+
     return (
-      <Flex align="center" gap="xs" style={{ 
-        padding: isMobile ? '4px 6px' : '4px 8px', 
-        borderRadius: '4px', 
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        border: `1px solid ${processing ? 'var(--color-status-warning)' : exists ? 'var(--color-status-success)' : 'var(--color-status-error)'}`
-      }}>
-        <div style={{ 
-          width: '8px', 
-          height: '8px', 
-          borderRadius: '50%', 
-          backgroundColor: processing ? 'var(--color-status-warning)' : exists ? 'var(--color-status-success)' : 'var(--color-status-error)' 
-        }} />
-        <Typography variant="caption" style={{ color: 'white', fontSize: '10px', fontWeight: 'bold' }}>{displayLabel}</Typography>
+      <Flex
+        align="center"
+        gap="xs"
+        style={{
+          padding: isMobile ? '4px 6px' : '4px 8px',
+          borderRadius: '4px',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          border: `1px solid ${processing ? 'var(--color-status-warning)' : exists ? 'var(--color-status-success)' : 'var(--color-status-error)'}`,
+        }}
+      >
+        <div
+          style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: processing
+              ? 'var(--color-status-warning)'
+              : exists
+                ? 'var(--color-status-success)'
+                : 'var(--color-status-error)',
+          }}
+        />
+        <Typography variant="caption" style={{ color: 'white', fontSize: '10px', fontWeight: 'bold' }}>
+          {displayLabel}
+        </Typography>
       </Flex>
     );
   };
@@ -309,46 +348,11 @@ function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, all
         </Box>
       )}
 
-      {/* 좌우 네비게이션 */}
-      {groupMedia.length > 1 && currentIndex > 0 && (
-        <IconButton
-          onClick={handlePrev}
-          style={{
-            position: 'absolute',
-            left: '2rem',
-            zIndex: 1010,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            color: 'white',
-            width: '48px',
-            height: '48px'
-          }}
-        >
-          <IconChevronLeft size={32} />
-        </IconButton>
-      )}
-
-      {groupMedia.length > 1 && currentIndex < groupMedia.length - 1 && (
-        <IconButton
-          onClick={handleNext}
-          style={{
-            position: 'absolute',
-            right: '2rem',
-            zIndex: 1010,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            color: 'white',
-            width: '48px',
-            height: '48px'
-          }}
-        >
-          <IconChevronRight size={32} />
-        </IconButton>
-      )}
-
       <Box
         style={{
           position: 'relative',
           maxWidth: '85vw',
-          maxHeight: '85vh',
+          maxHeight: isMobile ? '70vh' : '80vh',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -373,48 +377,90 @@ function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, all
             }}
           >
             <IconPhotoOff size={48} style={{ opacity: 0.5 }} />
-            <Typography variant="body-medium" color="text-secondary">미디어를 불러올 수 없습니다</Typography>
-            <Typography variant="caption" color="text-tertiary">{currentName}</Typography>
+            <Typography variant="body-medium" color="text-secondary">
+              미디어를 불러올 수 없습니다
+            </Typography>
+            <Typography variant="caption" color="text-tertiary">
+              {currentName}
+            </Typography>
           </Box>
         ) : (
-          <Box style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Box
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             {imageLoading && currentType === 'image' && (
-              <Box style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
-                <Typography variant="body-medium" style={{ color: 'white' }}>로딩 중...</Typography>
+              <Box
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 5,
+                }}
+              >
+                <Typography variant="body-medium" style={{ color: 'white' }}>
+                  로딩 중...
+                </Typography>
               </Box>
             )}
-            
+
             {currentType === '3d' ? (
-              <Box style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Box style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  maxWidth: 'min(800px, 95vw)', 
-                  maxHeight: 'min(600px, 65vh)', 
-                  aspectRatio: isMobile ? undefined : '4/3',
-                  borderRadius: '8px', 
-                  overflow: 'hidden',
-                  boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-                  backgroundColor: '#f5f5f5'
-                }}>
-                  <ModelViewer 
-                    modelUrl={currentRenderUrl || currentUrl} 
-                    autoRotate={true}
+              <Box
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Box
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    maxWidth: 'min(800px, 95vw)',
+                    maxHeight: 'min(600px, 65vh)',
+                    aspectRatio: isMobile ? undefined : '4/3',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                    backgroundColor: '#f5f5f5',
+                  }}
+                >
+                  <ModelViewer
+                    modelUrl={currentRenderUrl || currentUrl}
+                    autoRotate={false}
                     onSnapshot={handleSnapshot}
                   />
                 </Box>
               </Box>
             ) : currentType === 'video' ? (
-              <Box style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Box
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <video
                   src={currentUrl}
                   controls
                   autoPlay
                   style={{
                     maxWidth: '100%',
-                    maxHeight: '85vh',
+                    maxHeight: isMobile ? '70vh' : '80vh',
                     borderRadius: '8px',
-                    boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
                   }}
                   onError={() => {
                     setImageError(true);
@@ -431,12 +477,12 @@ function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, all
                 alt={currentName}
                 style={{
                   maxWidth: '100%',
-                  maxHeight: '85vh',
+                  maxHeight: isMobile ? '70vh' : '80vh',
                   objectFit: 'contain',
                   borderRadius: '8px',
                   opacity: imageLoading ? 0 : 1,
                   transition: 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
                 }}
                 onLoad={() => {
                   loadedUrls.add(currentUrl);
@@ -451,17 +497,72 @@ function ImageModalComponent({ url, fileName, groupId, messageId, fileIndex, all
           </Box>
         )}
 
-        {/* 하단 정보 */}
-        <Box style={{ position: 'absolute', bottom: '-3rem', textAlign: 'center', width: '100%' }}>
-          {groupMedia.length > 1 && (
-            <Typography variant="body-small" style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '0.25rem' }}>
-              {currentIndex + 1} / {groupMedia.length}
+        {/* 하단 네비게이션 및 정보 */}
+        <Flex
+          align="center"
+          justify="space-between"
+          style={{
+            position: 'absolute',
+            bottom: isMobile ? '-4rem' : '-4.5rem',
+            width: isMobile ? '95%' : '90%',
+            maxWidth: isMobile ? '360px' : '600px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            gap: isMobile ? '1rem' : '2.5rem',
+          }}
+        >
+          <Box style={{ width: '48px', flexShrink: 0 }}>
+            {groupMedia.length > 1 && currentIndex > 0 && (
+              <IconButton
+                onClick={handlePrev}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  width: '48px',
+                  height: '48px',
+                }}
+              >
+                <IconChevronLeft size={24} />
+              </IconButton>
+            )}
+          </Box>
+
+          <Box style={{ flex: 1, textAlign: 'center', overflow: 'hidden' }}>
+            {groupMedia.length > 1 && (
+              <Typography variant="body-small" style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '0.25rem' }}>
+                {currentIndex + 1} / {groupMedia.length}
+              </Typography>
+            )}
+            <Typography
+              variant="body-medium"
+              style={{
+                color: 'white',
+                fontWeight: 500,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {currentName}
             </Typography>
-          )}
-          <Typography variant="body-medium" style={{ color: 'white', fontWeight: 500 }}>
-            {currentName}
-          </Typography>
-        </Box>
+          </Box>
+
+          <Box style={{ width: '48px', flexShrink: 0 }}>
+            {groupMedia.length > 1 && currentIndex < groupMedia.length - 1 && (
+              <IconButton
+                onClick={handleNext}
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  width: '48px',
+                  height: '48px',
+                }}
+              >
+                <IconChevronRight size={24} />
+              </IconButton>
+            )}
+          </Box>
+        </Flex>
       </Box>
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
