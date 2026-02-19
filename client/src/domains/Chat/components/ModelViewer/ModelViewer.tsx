@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { Box } from '@/ui-components/Layout/Box';
 import { Typography } from '@/ui-components/Typography/Typography';
@@ -40,11 +43,16 @@ export function ModelViewer({
   useEffect(() => {
     if (!containerRef.current) return;
     
-    // [v2.9.0] GLB/GLTF가 아닌 URL 방어 (원본 .ply/.stl/.obj 등은 GLTFLoader로 로드 불가)
+    // [v2.9.0] 지원 형식 확장 (.glb, .gltf, .stl, .obj, .ply)
     const urlPath = modelUrl.split('?')[0].toLowerCase();
-    if (!urlPath.endsWith('.glb') && !urlPath.endsWith('.gltf') && !modelUrl.startsWith('blob:')) {
-      console.warn(`⚠️ [ModelViewer] GLB/GLTF가 아닌 URL 스킵: ${modelUrl}`);
-      setError('GLB 파일이 아닙니다.');
+    const isGLB = urlPath.endsWith('.glb') || urlPath.endsWith('.gltf') || modelUrl.startsWith('blob:');
+    const isSTL = urlPath.endsWith('.stl');
+    const isOBJ = urlPath.endsWith('.obj');
+    const isPLY = urlPath.endsWith('.ply');
+
+    if (!isGLB && !isSTL && !isOBJ && !isPLY) {
+      console.warn(`⚠️ [ModelViewer] 지원하지 않는 형식 스킵: ${modelUrl}`);
+      setError('지원하지 않는 3D 파일 형식입니다.');
       setLoading(false);
       return;
     }
@@ -124,54 +132,71 @@ export function ModelViewer({
 
         const arrayBuffer = await res.arrayBuffer();
 
-        loader.parse(
-          arrayBuffer,
-          '',
-          (gltf: any) => {
-            window.clearTimeout(timeoutId);
+        const handleModelLoad = (model: THREE.Object3D) => {
+          window.clearTimeout(timeoutId);
 
-            const model = gltf.scene;
+          // 바운딩박스 계산 후 자동 카메라 조정
+          const box = new THREE.Box3().setFromObject(model);
+          const size = box.getSize(new THREE.Vector3());
+          const center = box.getCenter(new THREE.Vector3());
 
-            // 바운딩박스 계산 후 자동 카메라 조정
-            const box = new THREE.Box3().setFromObject(model);
-            const size = box.getSize(new THREE.Vector3());
-            const center = box.getCenter(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          if (maxDim === 0) {
+            console.warn('⚠️ 모델의 크기가 0입니다.');
+          }
 
-            const maxDim = Math.max(size.x, size.y, size.z);
-            if (maxDim === 0) {
-              console.warn('⚠️ 모델의 크기가 0입니다.');
-            }
+          const fov = camera.fov * (Math.PI / 180);
+          let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+          cameraZ *= 2.0;
+          camera.position.set(center.x, center.y, center.z + cameraZ);
+          camera.lookAt(center);
 
-            const fov = camera.fov * (Math.PI / 180);
-            let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-            cameraZ *= 2.0;
-            camera.position.set(center.x, center.y, center.z + cameraZ);
-            camera.lookAt(center);
+          scene.add(model);
+          setLoading(false);
+          onLoad?.();
 
-            scene.add(model);
-            setLoading(false);
-            onLoad?.();
+          // 스냅샷 생성 (렌더링 직후)
+          if (onSnapshot) {
+            setTimeout(() => {
+              if (rendererRef.current && sceneRef.current) {
+                rendererRef.current.render(sceneRef.current, camera);
+                const base64 = rendererRef.current.domElement.toDataURL('image/png');
+                onSnapshot(base64);
+              }
+            }, 500); // 모델이 완전히 그려질 시간을 잠깐 줌
+          }
+        };
 
-            // 스냅샷 생성 (렌더링 직후)
-            if (onSnapshot) {
-              setTimeout(() => {
-                if (rendererRef.current && sceneRef.current) {
-                  rendererRef.current.render(sceneRef.current, camera);
-                  const base64 = rendererRef.current.domElement.toDataURL('image/png');
-                  onSnapshot(base64);
-                }
-              }, 500); // 모델이 완전히 그려질 시간을 잠깐 줌
-            }
-          },
-          (err: any) => {
-            window.clearTimeout(timeoutId);
-            console.error(`❌ [ModelViewer] GLB 파싱 실패`, err);
-            const errorMsg = `3D 모델 파싱 실패 (${(err as any)?.message || '알 수 없는 오류'})`;
-            setError(errorMsg);
-            setLoading(false);
-            onError?.(new Error(errorMsg));
-          },
-        );
+        const handleLoadError = (err: any) => {
+          window.clearTimeout(timeoutId);
+          console.error(`❌ [ModelViewer] 모델 파싱 실패`, err);
+          const errorMsg = `3D 모델 파싱 실패 (${(err as any)?.message || '알 수 없는 오류'})`;
+          setError(errorMsg);
+          setLoading(false);
+          onError?.(new Error(errorMsg));
+        };
+
+        if (isGLB) {
+          loader.parse(arrayBuffer, '', (gltf: any) => handleModelLoad(gltf.scene), handleLoadError);
+        } else if (isSTL) {
+          const stlLoader = new STLLoader();
+          const geometry = stlLoader.parse(arrayBuffer);
+          const material = new THREE.MeshPhongMaterial({ color: 0x999999, specular: 0x111111, shininess: 200 });
+          const mesh = new THREE.Mesh(geometry, material);
+          handleModelLoad(mesh);
+        } else if (isPLY) {
+          const plyLoader = new PLYLoader();
+          const geometry = plyLoader.parse(arrayBuffer);
+          geometry.computeVertexNormals();
+          const material = new THREE.MeshStandardMaterial({ color: 0x0055ff, flatShining: true });
+          const mesh = new THREE.Mesh(geometry, material);
+          handleModelLoad(mesh);
+        } else if (isOBJ) {
+          const objLoader = new OBJLoader();
+          const text = new TextDecoder().decode(arrayBuffer);
+          const object = objLoader.parse(text);
+          handleModelLoad(object);
+        }
       } catch (err: any) {
         window.clearTimeout(timeoutId);
         if (err?.name === 'AbortError') {

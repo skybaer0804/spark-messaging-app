@@ -135,6 +135,8 @@ export const chatApi = {
         'Content-Type': 'multipart/form-data',
       },
     }),
+  reprocessFile: (data: { messageId: string; fileIndex?: number | null }) =>
+    api.post('/chat/reprocess-file', data),
 };
 
 export const workspaceApi = {

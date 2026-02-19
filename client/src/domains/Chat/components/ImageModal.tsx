@@ -1,9 +1,12 @@
-import { memo, useState, useMemo, useEffect } from 'preact/compat';
+import { memo, useState, useMemo, useEffect, useCallback } from 'preact/compat';
 import { Box } from '@/ui-components/Layout/Box';
+import { Flex } from '@/ui-components/Layout/Flex';
 import { IconButton } from '@/ui-components/Button/IconButton';
-import { IconX, IconDownload, IconPhotoOff, IconChevronLeft, IconChevronRight } from '@tabler/icons-preact';
+import { IconX, IconDownload, IconPhotoOff, IconChevronLeft, IconChevronRight, IconRefresh } from '@tabler/icons-preact';
 import { downloadFileFromUrl } from '@/core/utils/fileUtils';
 import { Typography } from '@/ui-components/Typography/Typography';
+import { useChat } from '../context/ChatContext';
+import { chatApi } from '@/core/api/ApiService';
 import type { Message } from '../types';
 import { ModelViewer } from './ModelViewer/ModelViewer'; // 3D 렌더링 지원용
 import './Chat.scss';
@@ -19,8 +22,11 @@ interface ImageModalProps {
 }
 
 function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = [], onClose }: ImageModalProps) {
+  const { services } = useChat();
+  const { chat: chatService } = services;
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [isSnapshotUploading, setIsSnapshotUploading] = useState(false);
   const [loadedUrls] = useState(() => new Set<string>());
 
   // [v2.8.0] 그룹화된 미디어 목록 추출 (이미지 + 3D)
@@ -31,11 +37,12 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
       if (targetMsg && targetMsg.files && targetMsg.files.length > 0) {
         return targetMsg.files
           .filter(f => f.fileType === 'image' || f.fileType === '3d')
-          .map(f => ({
+          .map((f, idx) => ({
             ...f,
             url: f.url || f.data,
             thumbnailUrl: f.thumbnailUrl || f.thumbnail,
             messageId: targetMsg._id, // Navigation용
+            fileIndex: idx
           }));
       }
     }
@@ -47,7 +54,9 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
         .map(msg => ({
           ...msg.fileData!,
           url: msg.fileData?.url || msg.fileData?.data,
-          thumbnailUrl: msg.fileData?.thumbnail || msg.fileData?.thumbnailUrl
+          thumbnailUrl: msg.fileData?.thumbnail || msg.fileData?.thumbnailUrl,
+          messageId: msg._id,
+          fileIndex: null
         }));
     }
 
@@ -67,6 +76,9 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
   const currentUrl = currentMedia?.url || url;
   const currentName = currentMedia?.fileName || fileName;
   const currentType = currentMedia?.fileType || (currentMedia as any)?.type || 'image';
+  const currentRenderUrl = currentMedia?.renderUrl;
+  const currentThumbnailUrl = currentMedia?.thumbnailUrl;
+  const currentStatus = currentMedia?.processingStatus;
 
   useEffect(() => {
     if (loadedUrls.has(currentUrl)) {
@@ -96,6 +108,46 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
     await downloadFileFromUrl(currentUrl, currentName);
   };
 
+  const handleReprocess = async (e: Event) => {
+    e.stopPropagation();
+    if (!currentMedia) return;
+    try {
+      await chatService.reprocessFile(currentMedia.messageId!, currentMedia.fileIndex);
+    } catch (err) {
+      console.error('Failed to trigger reprocess:', err);
+    }
+  };
+
+  const handleSnapshot = useCallback(async (base64: string) => {
+    if (!currentMedia || isSnapshotUploading || currentThumbnailUrl) return;
+    
+    try {
+      setIsSnapshotUploading(true);
+      const res = await fetch(base64);
+      const blob = await res.blob();
+      const file = new File([blob], `thumb_${currentMedia.messageId}_${currentMedia.fileIndex}.png`, { type: 'image/png' });
+      
+      const formData = new FormData();
+      formData.append('thumbnail', file);
+      formData.append('messageId', currentMedia.messageId!);
+      // [v2.9.2] fileIndex가 있으면 함께 전송 (서버에서 해당 인덱스 업데이트용)
+      if (currentMedia.fileIndex !== null) {
+        formData.append('fileIndex', currentMedia.fileIndex.toString());
+      }
+      
+      const targetMsg = allMessages.find(m => m._id === currentMedia.messageId);
+      if (targetMsg) {
+        formData.append('roomId', targetMsg.roomId);
+      }
+
+      await chatApi.uploadThumbnail(formData);
+    } catch (err) {
+      console.error('Failed to upload snapshot:', err);
+    } finally {
+      setIsSnapshotUploading(false);
+    }
+  }, [currentMedia, isSnapshotUploading, currentThumbnailUrl, allMessages]);
+
   // 키보드 네비게이션
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -106,6 +158,23 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, groupMedia.length]);
+
+  const StatusIndicator = ({ label, exists, processing }: { label: string; exists: boolean; processing?: boolean }) => (
+    <Flex align="center" gap="xs" style={{ 
+      padding: '4px 8px', 
+      borderRadius: '4px', 
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      border: `1px solid ${processing ? 'var(--color-status-warning)' : exists ? 'var(--color-status-success)' : 'var(--color-status-error)'}`
+    }}>
+      <div style={{ 
+        width: '8px', 
+        height: '8px', 
+        borderRadius: '50%', 
+        backgroundColor: processing ? 'var(--color-status-warning)' : exists ? 'var(--color-status-success)' : 'var(--color-status-error)' 
+      }} />
+      <Typography variant="caption" style={{ color: 'white', fontSize: '10px', fontWeight: 'bold' }}>{label}</Typography>
+    </Flex>
+  );
 
   return (
     <Box
@@ -127,7 +196,17 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
     >
       {/* 컨트롤 버튼 */}
       <Box style={{ position: 'absolute', top: '2rem', right: '2rem', display: 'flex', gap: '1rem', zIndex: 1010 }}>
-         <IconButton
+        {currentType === '3d' && (
+          <IconButton
+            onClick={handleReprocess}
+            disabled={currentStatus === 'processing'}
+            title="렌더링 재생성"
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}
+          >
+            <IconRefresh size={24} className={currentStatus === 'processing' ? 'spin' : ''} />
+          </IconButton>
+        )}
+        <IconButton
           onClick={handleDownload}
           title="다운로드"
           style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white' }}
@@ -142,6 +221,15 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
           <IconX size={24} />
         </IconButton>
       </Box>
+
+      {/* 좌측 상단 상태 인디케이터 */}
+      {currentType === '3d' && (
+        <Box style={{ position: 'absolute', top: '2rem', left: '2rem', display: 'flex', gap: '0.5rem', zIndex: 1010 }}>
+          <StatusIndicator label="ORIGIN" exists={!!currentUrl} />
+          <StatusIndicator label="RENDER" exists={!!currentRenderUrl} processing={currentStatus === 'processing'} />
+          <StatusIndicator label="THUMB" exists={!!currentThumbnailUrl} processing={isSnapshotUploading} />
+        </Box>
+      )}
 
       {/* 좌우 네비게이션 */}
       {groupMedia.length > 1 && currentIndex > 0 && (
@@ -221,8 +309,9 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
             {currentType === '3d' ? (
               <Box style={{ width: '100%', height: '100%', borderRadius: '8px', overflow: 'hidden' }}>
                 <ModelViewer 
-                  modelUrl={currentMedia?.renderUrl || currentUrl} 
+                  modelUrl={currentRenderUrl || currentUrl} 
                   autoRotate={true}
+                  onSnapshot={handleSnapshot}
                 />
               </Box>
             ) : (
@@ -263,6 +352,10 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
           </Typography>
         </Box>
       </Box>
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spin { animation: spin 2s linear infinite; }
+      `}</style>
     </Box>
   );
 }

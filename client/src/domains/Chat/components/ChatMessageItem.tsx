@@ -126,22 +126,22 @@ function ChatMessageItemComponent({
   };
 
   const renderContent = () => {
-    // [v2.8.0] 단일 메시지 내 다중 파일 렌더링
+    // [v2.8.0] 단일 메시지 내 다중 파일 렌더링 (이미지 + 3D)
     if (message.files && message.files.length > 0) {
-      const images = message.files
-        .filter(f => f.fileType === 'image')
+      const mediaFiles = message.files
+        .filter(f => f.fileType === 'image' || f.fileType === '3d')
         .map(f => ({
-          url: f.url || f.data || '',
+          url: f.thumbnailUrl || f.url || f.data || '',
           fileName: f.fileName,
           messageId: message._id,
           status: message.status,
           groupId: message.groupId,
-          processingStatus: f.processingStatus
-        }))
-        .filter(img => img.url);
+          processingStatus: f.processingStatus,
+          fileType: f.fileType
+        }));
 
-      if (images.length > 0) {
-        return <ImageMessageGrid images={images} onImageClick={onImageClick} onRetry={onRetry} totalCount={message.files.length} />;
+      if (mediaFiles.length > 0) {
+        return <ImageMessageGrid images={mediaFiles as any} onImageClick={onImageClick} onRetry={onRetry} totalCount={message.files.length} />;
       }
     }
 

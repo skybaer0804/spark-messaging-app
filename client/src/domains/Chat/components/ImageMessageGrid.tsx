@@ -13,6 +13,7 @@ interface ImageMessageGridProps {
     status?: 'sending' | 'sent' | 'failed' | 'read' | 'delivered';
     groupId?: string;
     processingStatus?: 'processing' | 'completed' | 'failed' | 'cancelled';
+    fileType?: string;
   }[];
   onImageClick?: (url: string, fileName: string, groupId?: string) => void;
   onRetry?: (messageId: string) => void;
@@ -139,6 +140,9 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
     // 만약 로딩 중인 이미지가 화면에 보이지 않는 위치(4번째 이후)에 있다면 마지막 보이는 이미지(isLast)에 표시
     const shouldShowSpinner = index === firstLoadingIndex || (isLast && firstLoadingIndex > index);
 
+    // 썸네일 표시 여부: 이미지 타입이거나 처리가 완료된 3D 파일의 경우 썸네일 사용
+    const hasThumbnail = img.url && !img.url.startsWith('blob:') && (img.fileType === 'image' || img.processingStatus === 'completed');
+
     return (
       <Box
         key={img.messageId + (img.url || img.fileName) + index}
@@ -153,15 +157,18 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
         }}
         onClick={() => handleClick(img)}
       >
-        {img.url ? (
+        {hasThumbnail ? (
           <img
             src={img.url}
             alt={img.fileName}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
-          <Flex align="center" justify="center" style={{ width: '100%', height: '100%' }}>
-            <Typography variant="caption" color="text-tertiary">이미지 없음</Typography>
+          <Flex align="center" justify="center" direction="column" style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-secondary)', gap: '4px' }}>
+            <Box style={{ fontSize: '2rem' }}>{img.fileType === '3d' ? '📦' : '🖼️'}</Box>
+            <Typography variant="caption" color="text-tertiary" style={{ fontSize: '10px', textAlign: 'center', padding: '0 4px' }}>
+              {img.fileType === '3d' ? (img.processingStatus === 'processing' ? '3D 처리 중...' : '3D 모델') : '이미지 없음'}
+            </Typography>
           </Flex>
         )}
         <ImageOverlay 

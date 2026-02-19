@@ -763,7 +763,7 @@ exports.leaveRoom = async (req, res) => {
  */
 exports.uploadThumbnail = async (req, res) => {
   try {
-    const { messageId, roomId } = req.body;
+    const { messageId, roomId, fileIndex } = req.body;
     const file = req.file;
 
     if (!file || !messageId) {
@@ -773,20 +773,42 @@ exports.uploadThumbnail = async (req, res) => {
     const StorageService = require('../services/storage/StorageService');
     const sharp = require('sharp');
 
-    // 1. 이미지 리사이징 (한 번 더 확인) 및 WebP 변환
+    // 1. 이미지 리사이징 및 WebP 변환
     const thumbnailBuffer = await sharp(file.path)
       .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
       .toFormat('webp')
       .toBuffer();
 
     // 2. 썸네일 저장
-    const filename = `thumb_${messageId}_${Date.now()}.webp`;
+    const filename = `thumb_${messageId}_${fileIndex !== undefined ? fileIndex : 'main'}_${Date.now()}.webp`;
     const storageResult = await StorageService.saveThumbnail(thumbnailBuffer, filename);
 
     // 3. DB 업데이트
+    const updateObj = {};
+    const socketPayload = {
+      messageId,
+      thumbnailUrl: storageResult.url,
+      processingStatus: 'completed'
+    };
+
+    if (fileIndex !== undefined && fileIndex !== null) {
+      const idx = parseInt(fileIndex);
+      updateObj[`files.${idx}.thumbnailUrl`] = storageResult.url;
+      updateObj[`files.${idx}.processingStatus`] = 'completed';
+      socketPayload.fileIndex = idx;
+      
+      // 첫 번째 파일이면 탑레벨도 업데이트
+      if (idx === 0) {
+        updateObj.thumbnailUrl = storageResult.url;
+      }
+    } else {
+      updateObj.thumbnailUrl = storageResult.url;
+      updateObj.processingStatus = 'completed';
+    }
+
     const updatedMessage = await Message.findByIdAndUpdate(
       messageId,
-      { $set: { thumbnailUrl: storageResult.url } },
+      { $set: updateObj },
       { new: true }
     );
 
@@ -795,13 +817,9 @@ exports.uploadThumbnail = async (req, res) => {
     }
 
     // 4. 소켓으로 업데이트 브로드캐스트
-    await socketService.sendMessageUpdate(roomId, {
-      messageId,
-      thumbnailUrl: storageResult.url,
-      processingStatus: 'completed'
-    });
+    await socketService.sendMessageUpdate(roomId, socketPayload);
 
-    // 5. 임시 파일 삭제 (multer diskStorage 사용 시)
+    // 5. 임시 파일 삭제
     const fs = require('fs');
     if (file.path && fs.existsSync(file.path)) {
       fs.unlinkSync(file.path);
@@ -1454,6 +1472,84 @@ exports.getMessageById = async (req, res) => {
     res.json(message);
   } catch (error) {
     res.status(500).json({ ...ERROR_MESSAGES.CHAT.FAILED_TO_FETCH_MESSAGE, error: error.message });
+  }
+};
+
+/**
+ * 3D 파일 수동 재처리 요청
+ * [v2.9.2] messageId와 fileIndex를 받아 해당 파일을 다시 변환 큐에 넣음
+ */
+exports.reprocessFile = async (req, res) => {
+  try {
+    const { messageId, fileIndex } = req.body;
+    const userId = req.user.id;
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json(ERROR_MESSAGES.CHAT.MESSAGE_NOT_FOUND);
+    }
+
+    // 권한 체크
+    const room = await ChatRoom.findById(message.roomId).select('members');
+    if (!room || !room.members.some(m => m.toString() === userId.toString())) {
+      return res.status(403).json(ERROR_MESSAGES.CHAT.NOT_MEMBER);
+    }
+
+    let targetFile;
+    let finalFileIndex = fileIndex !== undefined ? parseInt(fileIndex) : null;
+
+    if (finalFileIndex !== null && message.files && message.files[finalFileIndex]) {
+      targetFile = message.files[finalFileIndex];
+    } else {
+      // 레거시 대응 (탑레벨 필드)
+      targetFile = {
+        fileUrl: message.fileUrl,
+        fileName: message.fileName,
+        mimeType: message.mimeType
+      };
+      finalFileIndex = null;
+    }
+
+    if (!targetFile.fileUrl) {
+      return res.status(400).json({ success: false, message: '재처리할 파일 URL이 없습니다.' });
+    }
+
+    const { getFileType } = require('../config/fileConfig');
+    const detectedFileType = getFileType(targetFile.mimeType, targetFile.fileName);
+
+    // 상태 업데이트: processing으로 변경
+    const updateObj = {};
+    if (finalFileIndex !== null) {
+      updateObj[`files.${finalFileIndex}.processingStatus`] = 'processing';
+    } else {
+      updateObj.processingStatus = 'processing';
+    }
+    await Message.findByIdAndUpdate(messageId, { $set: updateObj });
+
+    // 워커 작업 추가
+    const jobData = {
+      messageId: message._id.toString(),
+      fileIndex: finalFileIndex,
+      roomId: message.roomId.toString(),
+      fileType: detectedFileType,
+      fileUrl: targetFile.fileUrl,
+      filename: targetFile.fileName,
+      mimeType: targetFile.mimeType,
+    };
+
+    await FileProcessingQueue.addFileProcessingJob(jobData);
+
+    // 소켓으로 상태 업데이트 브로드캐스트
+    await socketService.sendMessageUpdate(message.roomId.toString(), {
+      messageId: message._id.toString(),
+      fileIndex: finalFileIndex,
+      processingStatus: 'processing'
+    });
+
+    res.json({ success: true, message: '파일 재처리가 시작되었습니다.' });
+  } catch (error) {
+    console.error('ReprocessFile error:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 

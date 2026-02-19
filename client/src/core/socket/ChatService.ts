@@ -203,6 +203,11 @@ export class ChatService {
     return response.data;
   }
 
+  public async reprocessFile(messageId: string, fileIndex?: number | null) {
+    const response = await chatApi.reprocessFile({ messageId, fileIndex });
+    return response.data;
+  }
+
   public cleanup() {
     this.unsubscribeCallbacks.forEach((unsubscribe) => unsubscribe());
     this.unsubscribeCallbacks = [];
