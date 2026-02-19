@@ -131,7 +131,8 @@ function ChatMessageItemComponent({
       const mediaFiles = message.files
         .filter(f => f.fileType === 'image' || f.fileType === '3d')
         .map(f => ({
-          url: f.thumbnailUrl || f.url || f.data || '',
+          // [v2.9.2] 3D 파일이면서 썸네일이 없는 경우, <img> 엑박 방지를 위해 url을 비움
+          url: f.fileType === '3d' ? (f.thumbnailUrl || '') : (f.thumbnailUrl || f.url || f.data || ''),
           fileName: f.fileName,
           messageId: message._id,
           status: message.status,

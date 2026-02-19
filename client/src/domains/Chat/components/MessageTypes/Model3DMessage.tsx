@@ -35,9 +35,8 @@ export const Model3DMessage = memo(({ message, handleDownload, setShowModelModal
     }
   }, [hasRenderUrl, hasThumbnail, message.status]);
 
-  // [v2.9.0] GLB 렌더 URL만 뷰어에 사용 (원본 .ply/.stl/.obj는 GLTFLoader로 로드 불가)
-  const availableUrl = fileData.renderUrl || message.renderUrl || '';
-  const canOpenModal = hasRenderUrl;
+  const availableUrl = fileData.renderUrl || message.renderUrl || fileData.url || '';
+  const canOpenModal = !!availableUrl;
 
   // 렌더링 우선순위: 썸네일(이미지) > 렌더파일(3D 뷰어) > 로딩/타임아웃
   const renderPreview = () => {
@@ -97,10 +96,13 @@ export const Model3DMessage = memo(({ message, handleDownload, setShowModelModal
       <Flex direction="column" align="center" justify="center" gap="sm" style={{ padding: '12px' }}>
         <Icon3dCubeSphere size={32} color="var(--color-text-tertiary)" style={{ opacity: 0.5 }} />
         <Flex direction="column" align="center" gap="xs">
-          <DotsLoading />
           <Typography variant="caption" style={{ fontSize: '10px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-            3D 변환 중...
+            3D 모델
           </Typography>
+          <Flex align="center" gap="xs" style={{ color: 'var(--color-primary-main)' }}>
+            <IconClick size={12} />
+            <Typography variant="caption" color="primary" style={{ fontSize: '10px', fontWeight: 500 }}>클릭하여 확인</Typography>
+          </Flex>
         </Flex>
       </Flex>
     );

@@ -25,7 +25,8 @@ const ImageOverlay = ({
   onRetry, 
   messageId,
   processingStatus,
-  fileType, // fileType 추가
+  fileType,
+  hasThumbnail, // hasThumbnail 추가
   isLast = false,
   extraCount = 0,
   showSpinner = true
@@ -34,17 +35,21 @@ const ImageOverlay = ({
   onRetry?: (id: string) => void; 
   messageId: string;
   processingStatus?: string;
-  fileType?: string; // 타입 정의 추가
+  fileType?: string;
+  hasThumbnail?: boolean; // 타입 추가
   isLast?: boolean;
   extraCount?: number;
   showSpinner?: boolean;
 }) => {
   const isProcessing = processingStatus === 'processing';
-  const isCompleted = processingStatus === 'completed'; // 완료 상태 추가
+  const isCompleted = processingStatus === 'completed';
   const isSending = status === 'sending';
   const isFailed = status === 'failed';
 
   if (isSending || isProcessing) {
+    // [v2.9.2] 썸네일이 이미 있는 경우, 오버레이("처리 중")를 숨겨서 이미지를 보여줌
+    if (hasThumbnail && isProcessing) return null;
+
     return (
       <div style={{
         position: 'absolute',
@@ -59,8 +64,8 @@ const ImageOverlay = ({
       }}>
         {showSpinner && (
           <>
-            <div className="spinner-border text-light" style={{ width: '1.5rem', height: '1.5rem', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-            {isProcessing && <Typography variant="caption" color="white" style={{ fontSize: '10px' }}>{fileType === '3d' ? '3D 처리 중...' : '처리 중...'}</Typography>}
+            <div className="spinner-border text-light" style={{ width: '1.2rem', height: '1.2rem', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: isProcessing ? 'var(--color-primary-main)' : '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+            {isSending && <Typography variant="caption" color="white" style={{ fontSize: '10px' }}>전송 중...</Typography>}
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </>
         )}
@@ -148,10 +153,10 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
 
   if (count === 0) return null;
 
-  const readyCount = images.filter(img => img.status === 'sent' && img.processingStatus === 'completed').length;
+  const readyCount = images.filter(img => img.status === 'sent').length;
   const isUploading = images.some(img => img.status === 'sending');
-  const isAnyLoading = images.some(img => img.status === 'sending' || img.processingStatus === 'processing');
-  const firstLoadingIndex = images.findIndex(img => img.status === 'sending' || img.processingStatus === 'processing');
+  const isAnyLoading = isUploading; // 오직 업로드 중일 때만 로딩 상태로 간주
+  const firstLoadingIndex = images.findIndex(img => img.status === 'sending');
 
   const handleClick = (image: { url: string; fileName: string; status?: string; messageId: string; groupId?: string; processingStatus?: string }) => {
     if (image.status === 'failed' || image.status === 'sending') return;
@@ -166,8 +171,8 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
     // 만약 로딩 중인 이미지가 화면에 보이지 않는 위치(4번째 이후)에 있다면 마지막 보이는 이미지(isLast)에 표시
     const shouldShowSpinner = index === firstLoadingIndex || (isLast && firstLoadingIndex > index);
 
-    // 썸네일 표시 여부: 이미지 타입이거나 처리가 완료된 3D 파일의 경우 썸네일 사용
-    const hasThumbnail = img.url && !img.url.startsWith('blob:') && (img.fileType === 'image' || img.processingStatus === 'completed');
+    // 썸네일 표시 여부: 이미지 타입이거나 url이 존재하는 경우 (3D 변환 중이라도 썸네일이 있으면 표시)
+    const hasThumbnail = img.url && !img.url.startsWith('blob:');
 
     return (
       <Box
@@ -204,14 +209,12 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
             </Box>
             <Flex direction="column" align="center" gap="xs">
               <Typography variant="caption" color="text-secondary" style={{ fontSize: '11px', fontWeight: 'bold', textAlign: 'center' }}>
-                {img.fileType === '3d' ? (img.processingStatus === 'processing' ? '' : '3D 모델') : '이미지 없음'}
+                {img.fileType === '3d' ? '3D 모델' : '이미지 없음'}
               </Typography>
-              {img.fileType === '3d' && img.processingStatus === 'completed' && (
-                <Flex align="center" gap="xs" style={{ color: 'var(--color-primary-main)' }}>
-                  <IconClick size={12} />
-                  <Typography variant="caption" color="primary" style={{ fontSize: '10px', fontWeight: 500 }}>클릭하여 보기</Typography>
-                </Flex>
-              )}
+              <Flex align="center" gap="xs" style={{ color: 'var(--color-primary-main)' }}>
+                <IconClick size={12} />
+                <Typography variant="caption" color="primary" style={{ fontSize: '10px', fontWeight: 500 }}>클릭하여 확인</Typography>
+              </Flex>
             </Flex>
           </Flex>
         )}
@@ -220,7 +223,8 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
           onRetry={onRetry} 
           messageId={img.messageId} 
           processingStatus={img.processingStatus}
-          fileType={img.fileType} // 추가
+          fileType={img.fileType}
+          hasThumbnail={hasThumbnail} // 추가
           isLast={isLast}
           extraCount={extraCount}
           showSpinner={shouldShowSpinner}
@@ -251,7 +255,7 @@ export function ImageMessageGrid({ images, onImageClick, onRetry, totalCount }: 
       <Flex align="center" justify="space-between" style={{ marginBottom: '8px', padding: '0 4px' }}>
         {isAnyLoading ? (
           <Typography variant="caption" color="primary" style={{ fontWeight: 'bold' }}>
-            {isUploading ? '전송 중...' : '처리 중...'} ({readyCount}/{effectiveTotal})
+            전송 중... ({readyCount}/{effectiveTotal})
           </Typography>
         ) : (
           <Typography variant="caption" color="text-tertiary">
