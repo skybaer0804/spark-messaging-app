@@ -105,23 +105,26 @@ exports.syncNotifications = async (req, res) => {
   }
 };
 
-// v2.4.0: 알림 삭제 기능 추가
 exports.deleteNotification = async (req, res) => {
   try {
     const { notificationId } = req.params;
-    const senderId = req.user.id;
+    const userId = req.user.id;
 
-    // Admin 권한 체크
-    const user = await User.findById(senderId);
-    if (!user || user.role.toLowerCase() !== 'admin') {
-      return res.status(403).json({ message: 'Only Admins can delete notifications' });
-    }
-
-    const deletedNotification = await Notification.findByIdAndDelete(notificationId);
-
-    if (!deletedNotification) {
+    const notification = await Notification.findById(notificationId);
+    if (!notification) {
       return res.status(404).json({ message: 'Notification not found' });
     }
+
+    // Admin 또는 작성자 권한 체크
+    const user = await User.findById(userId);
+    const isSender = notification.senderId.toString() === userId.toString();
+    const isAdmin = user && user.role.toLowerCase() === 'admin';
+    
+    if (!isAdmin && !isSender) {
+      return res.status(403).json({ message: 'No permission to delete this notification' });
+    }
+
+    await Notification.findByIdAndDelete(notificationId);
 
     res.json({ message: 'Notification deleted successfully', id: notificationId });
   } catch (error) {
@@ -143,5 +146,54 @@ exports.getNotification = async (req, res) => {
   } catch (error) {
     console.error('GetNotification error:', error);
     res.status(500).json({ message: 'Failed to fetch notification', error: error.message });
+  }
+};
+
+exports.updateNotification = async (req, res) => {
+  try {
+    const { notificationId } = req.params;
+    const { title, content, scheduledAt, targetType, targetId, actionUrl, metadata } = req.body;
+    const senderId = req.user.id;
+
+    // 알림 존재 여부 및 권한 체크를 위해 먼저 조회
+    const notification = await Notification.findById(notificationId);
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+
+    // Admin 또는 작성자 권한 체크
+    const user = await User.findById(senderId);
+    const isSender = notification.senderId.toString() === senderId.toString();
+    const isAdmin = user && user.role.toLowerCase() === 'admin';
+    
+    if (!isAdmin && !isSender) {
+      return res.status(403).json({ message: 'No permission to update this notification' });
+    }
+
+    // 이미 발송된 경우 수정 불가
+    if (notification.isSent) {
+      return res.status(400).json({ message: 'Cannot edit already sent notification' });
+    }
+
+    // 필드 업데이트
+    if (title !== undefined) notification.title = title;
+    if (content !== undefined) notification.content = content;
+    if (scheduledAt !== undefined) notification.scheduledAt = scheduledAt ? new Date(scheduledAt) : null;
+    if (targetType !== undefined) notification.targetType = targetType;
+    if (targetId !== undefined) notification.targetId = targetId;
+    if (actionUrl !== undefined) notification.actionUrl = actionUrl;
+    if (metadata !== undefined) notification.metadata = metadata;
+
+    await notification.save();
+
+    // 수정 결과가 즉시 발송인 경우 (scheduledAt이 없는 경우) 즉시 발송 처리
+    if (!notification.scheduledAt && !notification.isSent) {
+      await sendNotificationImmediately(notification);
+    }
+
+    res.json(notification);
+  } catch (error) {
+    console.error('UpdateNotification error:', error);
+    res.status(500).json({ message: 'Failed to update notification', error: error.message });
   }
 };
