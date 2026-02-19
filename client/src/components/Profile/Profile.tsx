@@ -278,7 +278,7 @@ export function Profile() {
                   알림 설정
                 </Typography>
               </Flex>
-              <Box style={{ padding: '12px', backgroundColor: 'var(--color-background-secondary)', borderRadius: '12px' }}>
+              <Box style={{ padding: '12px', backgroundColor: 'var(--color-background-secondary)', borderRadius: 'var(--primitive-radius-md)' }}>
                 <Flex justify="space-between" align="center">
                   <Box>
                     <Typography variant="body-medium" style={{ fontWeight: 500 }}>웹 푸시 알림</Typography>
@@ -330,7 +330,7 @@ export function Profile() {
             />
           ))
         ) : (
-          <Box style={{ padding: '40px', textAlign: 'center', backgroundColor: 'var(--color-background-primary)', borderRadius: '16px', border: '1px dashed var(--color-border-default)' }}>
+          <Box style={{ padding: '40px', textAlign: 'center', backgroundColor: 'var(--color-background-primary)', borderRadius: 'var(--primitive-radius-md)', border: '1px dashed var(--color-border-default)' }}>
             <Typography variant="body-medium" color="text-secondary">
               소속된 워크스페이스가 없습니다.
             </Typography>

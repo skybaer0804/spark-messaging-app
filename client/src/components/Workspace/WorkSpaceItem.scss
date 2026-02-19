@@ -2,8 +2,8 @@
 
 .workspace-item {
   padding: 12px;
-  background-color: var(--color-bg-secondary);
-  border-radius: 8px;
+  background-color: var(--color-background-primary);
+  border-radius: var(--primitive-radius-md);
   display: flex;
   align-items: center;
   gap: 12px;

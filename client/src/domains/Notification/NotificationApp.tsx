@@ -7,7 +7,7 @@ import { Stack } from '@/ui-components/Layout/Stack';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Typography } from '@/ui-components/Typography/Typography';
-import { IconSend, IconPlus, IconRefresh, IconHistory, IconTrash, IconRocket } from '@tabler/icons-preact';
+import { IconSend, IconPlus, IconRefresh, IconHistory, IconTrash, IconRocket, IconPencil } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
 import { DialogNotification } from './components/DialogNotification';
 import { Chip } from '@/ui-components/Chip/Chip';
@@ -151,19 +151,27 @@ export function NotificationApp() {
                 <Paper
                   key={notif._id}
                   elevation={1}
-                  padding="md"
+                  padding="sm"
                   className="notification-item-card"
                   onClick={() => handleOpenViewDialog(notif)}
                 >
-                  <Flex justify="space-between" align="center" gap="lg" className="notification-item-card__container">
-                    <Stack spacing="xs" className="notification-item-card__main">
-                      <Typography
-                        variant="body-medium"
-                        className="notification-item-card__title"
-                        style={{ fontWeight: 700 }}
-                      >
-                        {notif.title}
-                      </Typography>
+                  <div className="notification-item-card__grid">
+                    <Stack spacing="4px" className="grid-area-header">
+                      <Flex align="center" gap="xs">
+                        <Typography
+                          variant="body-medium"
+                          className="notification-item-card__title"
+                          style={{ fontWeight: 700 }}
+                        >
+                          {notif.title}
+                        </Typography>
+                        <Chip
+                          label={notif.isSent ? '발송완료' : '대기중'}
+                          variant={notif.isSent ? 'primary' : 'default'}
+                          size="sm"
+                          style={{ flexShrink: 0 }}
+                        />
+                      </Flex>
                       <Typography
                         variant="body-small"
                         color="text-secondary"
@@ -173,40 +181,39 @@ export function NotificationApp() {
                       </Typography>
                     </Stack>
 
-                    <Flex align="center" gap="xl" className="notification-item-card__meta">
-                      <Flex align="center" gap="md" className="meta-info-group">
-                        <Stack spacing="xs" className="meta-target">
-                          <Typography variant="body-medium" color="text-primary" style={{ fontWeight: 700 }}>
-                            대상 유형
-                          </Typography>
-                          <Typography variant="body-small" color="text-secondary" className="text-truncate">
-                            {getTargetLabel(notif.targetType, notif.targetId)}
-                          </Typography>
-                        </Stack>
+                    <div className="grid-area-target">
+                      <Typography variant="caption" color="text-secondary" className="text-truncate">
+                        {getTargetLabel(notif.targetType, notif.targetId)}
+                      </Typography>
+                    </div>
 
-                        <Stack spacing="xs" className="meta-time">
-                          <Typography variant="body-medium" color="text-primary" style={{ fontWeight: 700 }}>
-                            발송 시간
-                          </Typography>
-                          <Flex align="center" gap="xs">
-                            <Typography variant="caption" color="text-secondary" className="text-nowrap">
-                              {formatDate(notif.createdAt).date}
-                            </Typography>
-                            <Typography variant="caption" color="text-secondary" className="text-nowrap">
-                              {formatDate(notif.createdAt).time}
-                            </Typography>
-                          </Flex>
-                        </Stack>
+                    <div className="grid-area-time">
+                      <Flex align="center" gap="xs">
+                        <Typography variant="caption" color="text-tertiary" className="text-nowrap">
+                          {formatDate(notif.scheduledAt || notif.createdAt).date}
+                        </Typography>
+                        <Typography variant="caption" color="text-tertiary" className="text-nowrap">
+                          {formatDate(notif.scheduledAt || notif.createdAt).time}
+                        </Typography>
                       </Flex>
+                    </div>
 
-                      <div className="meta-status">
-                        <Chip
-                          label={notif.isSent ? '발송완료' : '대기중'}
-                          variant={notif.isSent ? 'primary' : 'default'}
-                          size="sm"
-                        />
-                      </div>
-                      <Flex gap="xs" className="meta-actions">
+                    <Flex gap="xs" align="center" className="grid-area-actions">
+                      <Flex gap="4px">
+                        {!notif.isSent && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenViewDialog(notif);
+                            }}
+                            style={{ borderRadius: 'var(--primitive-radius-sm)', padding: '4px' }}
+                            title="수정"
+                          >
+                            <IconPencil size={16} />
+                          </Button>
+                        )}
                         <Button
                           variant="secondary"
                           size="sm"
@@ -214,10 +221,10 @@ export function NotificationApp() {
                             e.stopPropagation();
                             handleResend(notif);
                           }}
-                          style={{ borderRadius: 'var(--primitive-radius-sm)', padding: '6px' }}
+                          style={{ borderRadius: 'var(--primitive-radius-sm)', padding: '4px' }}
                           title="재발송"
                         >
-                          <IconSend size={18} />
+                          <IconSend size={16} />
                         </Button>
                         <Button
                           variant="secondary"
@@ -226,17 +233,14 @@ export function NotificationApp() {
                             e.stopPropagation();
                             handleDelete(notif._id);
                           }}
-                          style={{
-                            borderRadius: 'var(--primitive-radius-sm)',
-                            padding: '6px',
-                          }}
+                          style={{ borderRadius: 'var(--primitive-radius-sm)', padding: '4px' }}
                           title="삭제"
                         >
-                          <IconTrash size={18} />
+                          <IconTrash size={16} />
                         </Button>
                       </Flex>
                     </Flex>
-                  </Flex>
+                  </div>
                 </Paper>
               ))
             )}
