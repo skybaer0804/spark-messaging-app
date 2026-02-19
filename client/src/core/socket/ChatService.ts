@@ -56,14 +56,17 @@ export class ChatService {
     const unsubscribe = this.client.onRoomMessage((msg: RoomMessageData) => {
       this.logDebug('Received Room Message:', msg);
 
-      // 현재 Room의 메시지만 처리
-      if (msg.room !== this.currentRoomRef) {
-        return;
-      }
-
       const payload = msg.content as any;
       const contentData = payload.content || payload;
       
+      // [v2.9.2] 룸 필터링 강화: SDK의 room 필드 또는 페이로드의 roomId 모두 확인
+      const msgRoomId = msg.room || contentData.roomId;
+
+      // 현재 Room의 메시지만 처리
+      if (msgRoomId !== this.currentRoomRef) {
+        return;
+      }
+
       this.logDebug('Parsed Data:', contentData);
       
       // 시스템 이벤트 타입 필터링 (순수 데이터만 있는 경우 제외)
@@ -118,7 +121,7 @@ export class ChatService {
 
       const message: Message = {
         _id: contentData._id || contentData.messageId || `${msg.timestamp}-${Math.random()}`,
-        roomId: msg.room,
+        roomId: msgRoomId,
         senderId: contentData.senderId || payload.senderId || msg.senderId,
         senderName: contentData.senderName,
         content:

@@ -65,8 +65,13 @@ export function ModelViewer({
     scene.background = new THREE.Color(0xf5f5f5);
     sceneRef.current = scene;
 
+    // 부모 컨테이너 크기 측정
+    const rect = containerRef.current.getBoundingClientRect();
+    const currentWidth = rect.width || width;
+    const currentHeight = rect.height || height;
+
     // Camera
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 10000);
+    const camera = new THREE.PerspectiveCamera(75, currentWidth / currentHeight, 0.1, 10000);
     camera.position.set(0, 0, 100);
 
     // Renderer
@@ -75,7 +80,7 @@ export function ModelViewer({
       alpha: true,
       preserveDrawingBuffer: true // 추가: 스냅샷 캡처를 위해 필요
     });
-    renderer.setSize(width, height);
+    renderer.setSize(currentWidth, currentHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 성능 최적화
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
@@ -291,8 +296,8 @@ export function ModelViewer({
     <div
       ref={containerRef}
       style={{
-        width,
-        height,
+        width: '100%',
+        height: '100%',
         position: 'relative',
         backgroundColor: '#f5f5f5',
         borderRadius: 'var(--shape-radius-md)',

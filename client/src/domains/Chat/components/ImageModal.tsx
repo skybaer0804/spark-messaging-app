@@ -307,12 +307,24 @@ function ImageModalComponent({ url, fileName, groupId, messageId, allMessages = 
             )}
             
             {currentType === '3d' ? (
-              <Box style={{ width: '100%', height: '100%', borderRadius: '8px', overflow: 'hidden' }}>
-                <ModelViewer 
-                  modelUrl={currentRenderUrl || currentUrl} 
-                  autoRotate={true}
-                  onSnapshot={handleSnapshot}
-                />
+              <Box style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  maxWidth: '800px', 
+                  maxHeight: '600px', 
+                  aspectRatio: '4/3',
+                  borderRadius: '8px', 
+                  overflow: 'hidden',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                  backgroundColor: '#f5f5f5'
+                }}>
+                  <ModelViewer 
+                    modelUrl={currentRenderUrl || currentUrl} 
+                    autoRotate={true}
+                    onSnapshot={handleSnapshot}
+                  />
+                </Box>
               </Box>
             ) : (
               <img

@@ -172,6 +172,7 @@ class SocketService {
     try {
       await this.client.sendRoomMessage(roomId, 'MESSAGE_UPDATED', {
         ...updateData,
+        roomId, // 명시적으로 roomId 추가
         timestamp: Date.now(),
       });
     } catch (error) {
