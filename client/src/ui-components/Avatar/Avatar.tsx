@@ -1,6 +1,10 @@
 import { JSX } from 'preact';
-import { useTheme } from '@/core/context/ThemeProvider';
-import './Avatar.scss';
+import { cn } from '@/lib/utils';
+import {
+  Avatar as ShadcnAvatar,
+  AvatarImage,
+  AvatarFallback,
+} from '@/components/ui/avatar';
 
 export interface AvatarProps extends JSX.HTMLAttributes<HTMLDivElement> {
   src?: string;
@@ -10,6 +14,19 @@ export interface AvatarProps extends JSX.HTMLAttributes<HTMLDivElement> {
   children?: preact.ComponentChildren;
 }
 
+const sizeClasses: Record<string, string> = {
+  sm: 'h-8 w-8',
+  md: 'h-10 w-10',
+  lg: 'h-12 w-12',
+  xl: 'h-14 w-14',
+};
+
+const variantClasses: Record<string, string> = {
+  circular: 'rounded-full',
+  rounded: 'rounded-md',
+  square: 'rounded-none',
+};
+
 export function Avatar({
   src,
   alt,
@@ -17,38 +34,17 @@ export function Avatar({
   size = 'md',
   className = '',
   children,
-  style,
   ...props
 }: AvatarProps) {
-  const { theme, contrast } = useTheme();
-
-  const classes = ['avatar', `avatar--${variant}`, `avatar--${size}`, className].filter(Boolean).join(' ');
-
-  // size에 따른 기본 크기 (px) - SCSS와 일치
-  const sizeMap: Record<string, number> = {
-    sm: 32,
-    md: 40,
-    lg: 48,
-    xl: 56,
-  };
-
-  const avatarSize = sizeMap[size] || 40;
-
   return (
-    <div className={classes} style={style} data-theme={theme} data-contrast={contrast} {...props}>
-      {src ? (
-        <img
-          src={src}
-          alt={alt}
-          className="avatar__img"
-          loading="lazy"
-          width={avatarSize}
-          height={avatarSize}
-          style={{ aspectRatio: '1 / 1', objectFit: 'cover' }}
-        />
-      ) : (
-        children
-      )}
-    </div>
+    <ShadcnAvatar
+      className={cn(sizeClasses[size], variantClasses[variant], className)}
+      {...(props as JSX.HTMLAttributes<HTMLDivElement>)}
+    >
+      {src && <AvatarImage src={src} alt={alt} />}
+      <AvatarFallback className={variantClasses[variant]}>
+        {children}
+      </AvatarFallback>
+    </ShadcnAvatar>
   );
 }

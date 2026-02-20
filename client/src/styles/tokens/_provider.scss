@@ -1,6 +1,7 @@
 // ============================================
 // Token Provider SCSS
 // Overriding CSS variables by theme & contrast
+// shadcn/ui Zinc 다크 테마 기반으로 업데이트
 // ============================================
 
 @use 'sass:meta';
@@ -16,62 +17,101 @@
 // Theme: Dark
 // ============================================
 :root[data-theme='dark'] {
-  // *** Background ***
-  --color-background-primary: #14171a; // Dark Navy
-  --color-background-secondary: #1f2329; // Slightly lighter
-  --color-background-tertiary: #2b3039;
+  // *** Background (shadcn Zinc dark) ***
+  --color-background-primary: hsl(240, 10%, 3.9%);       // zinc-950 (#09090b)
+  --color-background-secondary: hsl(240, 3.7%, 15.9%);   // zinc-800 (#27272a)
+  --color-background-tertiary: hsl(240, 5.3%, 26.1%);    // zinc-700 (#3f3f46)
+  --color-background-overlay: rgba(9, 9, 11, 0.8);
 
-  // *** Text *** - 기본 프리셋(없거나 'default')일 때만 기본값 사용
+  // *** Text ***
   &:not([data-preset-color]),
   &[data-preset-color='default'] {
-    --color-text-primary: #f0f4f8;
-    --color-text-secondary: #cbd5e1; // 더 밝게 조정 (#949bb2 -> #cbd5e1)
-    --color-text-tertiary: #94a3b8; // 더 밝게 조정 (#656d82 -> #94a3b8)
-    --color-text-disabled: #64748b; // 더 밝게 조정 (#434a59 -> #64748b)
+    --color-text-primary: hsl(0, 0%, 98%);               // zinc-50 (#fafafa)
+    --color-text-secondary: hsl(240, 5%, 64.9%);         // zinc-400 (#a1a1aa)
+    --color-text-tertiary: hsl(240, 3.8%, 46.1%);        // zinc-500 (#71717a)
+    --color-text-disabled: hsl(240, 5.3%, 26.1%);        // zinc-700 (#3f3f46)
   }
 
-  // *** Border *** - 기본 프리셋(없거나 'default')일 때만 기본값 사용
+  // *** Border ***
   &:not([data-preset-color]),
   &[data-preset-color='default'] {
-    --color-border-default: #2b3039;
-    --color-border-light: #1f2329;
+    --color-border-default: hsl(240, 3.7%, 15.9%);       // zinc-800 (#27272a) — with opacity
+    --color-border-light: hsl(240, 5.9%, 10%);           // zinc-900
+    --color-border-focus: hsl(240, 4.8%, 95.9%);         // zinc-100 (near white focus ring)
   }
 
   // *** Surface ***
-  --color-surface-base: #1f2329;
-  --color-surface-level-1: #2b3039;
-  --color-surface-level-2: #363c48;
-  --color-surface-level-3: #434a59;
-  --color-surface-overlay: #1f2329; // Dropdown backgrounds
+  --color-surface-base: hsl(240, 5.9%, 10%);             // zinc-900 (#18181b)
+  --color-surface-level-1: hsl(240, 3.7%, 15.9%);        // zinc-800 (#27272a)
+  --color-surface-level-2: hsl(240, 5.3%, 26.1%);        // zinc-700 (#3f3f46)
+  --color-surface-level-3: hsl(240, 5.2%, 33.9%);        // zinc-600 (#52525b)
+  --color-surface-overlay: hsl(240, 3.7%, 15.9%);        // Dropdown backgrounds
 
-  // *** Sidebar *** (Chat-specific sidebar backgrounds)
-  --color-bg-sidebar: #1e2329;
-  --color-text-sidebar: #f0f4f8;
-  --color-bg-workspace-sidebar: #14171a;
+  // *** Sidebar ***
+  --color-bg-sidebar: hsl(240, 5.9%, 10%);               // zinc-900
+  --color-text-sidebar: hsl(0, 0%, 98%);
+  --color-bg-workspace-sidebar: hsl(240, 10%, 3.9%);     // zinc-950
 
-  // *** Icon Colors *** - 기본 프리셋(없거나 'default')일 때만 기본값 사용
+  // *** Icon Colors ***
   &:not([data-preset-color]),
   &[data-preset-color='default'] {
-    --color-icon-primary: #cbd5e1;
-    --color-icon-secondary: #94a3b8;
+    --color-icon-primary: hsl(0, 0%, 98%);               // near white
+    --color-icon-secondary: hsl(240, 5%, 64.9%);         // zinc-400
   }
 
-  // *** Interactive ***
-  // 기본 프리셋(없거나 'default')일 때만 기본값 사용
+  // *** Interactive (shadcn dark: primary = near white) ***
   &:not([data-preset-color]),
   &[data-preset-color='default'] {
-    --color-interactive-primary: hsl(210, 70%, 60%); // Brighter Blue for Dark Mode
-    --color-interactive-secondary: hsl(210, 12%, 97%); // Light Blue for Dark Mode (배경색 느낌)
+    --color-interactive-primary: hsl(0, 0%, 98%);        // near white (dark mode primary)
+    --color-interactive-secondary: hsl(240, 4.8%, 95.9%);
   }
 
   // *** Action/State Colors ***
-  --color-action-hover: rgba(255, 255, 255, 0.12);
-  --color-action-selected: rgba(255, 255, 255, 0.2);
+  --color-action-hover: rgba(255, 255, 255, 0.08);
+  --color-action-selected: rgba(255, 255, 255, 0.16);
   --color-bg-hover: var(--color-action-hover);
   --color-bg-active: var(--color-action-selected);
 
-  // *** Status Colors ***
-  --color-status-error: hsl(0, 90%, 70%);
+  // *** Status Colors (dark mode 밝기 조정) ***
+  --color-status-error: hsl(0, 72%, 51%);
+
+  // *** shadcn/ui 표준 변수 다크 오버라이드 ***
+  --background: hsl(240, 10%, 3.9%);                     // zinc-950
+  --foreground: hsl(0, 0%, 98%);                         // zinc-50
+
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+
+  --primary: hsl(0, 0%, 98%);                            // near white in dark
+  --primary-foreground: hsl(240, 5.9%, 10%);             // zinc-900
+
+  --secondary: hsl(240, 3.7%, 15.9%);                    // zinc-800
+  --secondary-foreground: hsl(0, 0%, 98%);
+
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);               // zinc-400
+
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: hsl(240, 4.9%, 83.9%);                         // zinc-300
+
+  --sidebar: hsl(240, 5.9%, 10%);
+  --sidebar-foreground: hsl(0, 0%, 98%);
+  --sidebar-primary: hsl(224, 71.4%, 4.1%);
+  --sidebar-primary-foreground: hsl(210, 20%, 98%);
+  --sidebar-accent: hsl(240, 3.7%, 15.9%);
+  --sidebar-accent-foreground: hsl(0, 0%, 98%);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: hsl(217.2, 91.2%, 59.8%);
 }
 
 // ============================================
@@ -83,11 +123,11 @@
     --color-text-primary: black;
     --color-text-secondary: #222;
     --color-border-default: #666;
-    --elevation-shadow-1: 0 0 0 2px #000; // Borders instead of shadows
+    --elevation-shadow-1: 0 0 0 2px #000;
 
-    // 프리셋 컬러가 없을 때만 기본값 사용
     &:not([data-preset-color]) {
-      --color-interactive-primary: #0056b3; // Darker Blue
+      --color-interactive-primary: #18181b; // zinc-900
+      --primary: #18181b;
     }
   }
 
@@ -98,9 +138,9 @@
     --color-border-default: #aaa;
     --elevation-shadow-1: 0 0 0 2px #fff;
 
-    // 프리셋 컬러가 없을 때만 기본값 사용
     &:not([data-preset-color]) {
-      --color-interactive-primary: #66b3ff; // Bright Blue
+      --color-interactive-primary: hsl(0, 0%, 98%);
+      --primary: hsl(0, 0%, 98%);
     }
   }
 }

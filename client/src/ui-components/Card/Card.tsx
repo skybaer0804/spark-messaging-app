@@ -1,6 +1,13 @@
 import { JSX } from 'preact';
-import { useTheme } from '@/core/context/ThemeProvider';
-import './Card.scss';
+import { cn } from '@/lib/utils';
+import {
+  Card as ShadcnCard,
+  CardHeader as ShadcnCardHeader,
+  CardContent,
+  CardFooter as ShadcnCardFooter,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 
 export interface CardProps extends JSX.HTMLAttributes<HTMLDivElement> {
   interactive?: boolean;
@@ -8,14 +15,13 @@ export interface CardProps extends JSX.HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({ interactive = false, className = '', children, ...props }: CardProps) {
-  const { theme, contrast } = useTheme();
-
-  const classes = ['card', interactive ? 'interactive' : '', className].filter(Boolean).join(' ');
-
   return (
-    <div className={classes} data-theme={theme} data-contrast={contrast} {...props}>
+    <ShadcnCard
+      className={cn(interactive && 'hover:shadow-md cursor-pointer transition-shadow', className)}
+      {...(props as JSX.HTMLAttributes<HTMLDivElement>)}
+    >
       {children}
-    </div>
+    </ShadcnCard>
   );
 }
 
@@ -25,9 +31,12 @@ export interface CardHeaderProps extends JSX.HTMLAttributes<HTMLDivElement> {
 
 export function CardHeader({ className = '', children, ...props }: CardHeaderProps) {
   return (
-    <div className={`card__header ${className}`} {...props}>
+    <ShadcnCardHeader
+      className={className}
+      {...(props as JSX.HTMLAttributes<HTMLDivElement>)}
+    >
       {children}
-    </div>
+    </ShadcnCardHeader>
   );
 }
 
@@ -37,9 +46,12 @@ export interface CardBodyProps extends JSX.HTMLAttributes<HTMLDivElement> {
 
 export function CardBody({ className = '', children, ...props }: CardBodyProps) {
   return (
-    <div className={`card__body ${className}`} {...props}>
+    <CardContent
+      className={className}
+      {...(props as JSX.HTMLAttributes<HTMLDivElement>)}
+    >
       {children}
-    </div>
+    </CardContent>
   );
 }
 
@@ -49,8 +61,13 @@ export interface CardFooterProps extends JSX.HTMLAttributes<HTMLDivElement> {
 
 export function CardFooter({ className = '', children, ...props }: CardFooterProps) {
   return (
-    <div className={`card__footer ${className}`} {...props}>
+    <ShadcnCardFooter
+      className={className}
+      {...(props as JSX.HTMLAttributes<HTMLDivElement>)}
+    >
       {children}
-    </div>
+    </ShadcnCardFooter>
   );
 }
+
+export { CardTitle, CardDescription };

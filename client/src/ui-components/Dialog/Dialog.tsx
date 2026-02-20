@@ -24,7 +24,7 @@ export interface DialogProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 't
   ariaDescribedby?: string;
 }
 
-export function Dialog({
+function Dialog({
   open,
   onClose,
   title,

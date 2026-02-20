@@ -998,6 +998,68 @@
   --layout-z-modal: 1300;
   --layout-z-popover: 1400;
   --layout-z-tooltip: 1500;
+
+  // ============================================
+  // 4. SHADCN/UI 표준 CSS 변수 브릿지 레이어
+  // components/ui/*.tsx 에서 참조하는 표준 변수명
+  // ============================================
+
+  // Base
+  --background: var(--color-background-primary);
+  --foreground: var(--color-text-primary);
+
+  // Card
+  --card: var(--color-background-primary);
+  --card-foreground: var(--color-text-primary);
+
+  // Popover
+  --popover: var(--color-background-primary);
+  --popover-foreground: var(--color-text-primary);
+
+  // Primary (shadcn default: near-black in light, near-white in dark)
+  --primary: #{semantic-color.$color-interactive-primary};
+  --primary-foreground: #{color.$primitive-gray-0};
+
+  // Secondary
+  --secondary: var(--color-background-secondary);
+  --secondary-foreground: var(--color-text-primary);
+
+  // Muted
+  --muted: var(--color-background-tertiary);
+  --muted-foreground: var(--color-text-secondary);
+
+  // Accent
+  --accent: var(--color-background-tertiary);
+  --accent-foreground: var(--color-text-primary);
+
+  // Destructive
+  --destructive: #{semantic-color.$color-status-error};
+  --destructive-foreground: #{color.$primitive-gray-0};
+
+  // Border / Input / Ring
+  --border: var(--color-border-default);
+  --input: var(--color-border-default);
+  --ring: var(--color-border-focus);
+
+  // Radius (shadcn 기준: 0.5rem = lg radius)
+  --radius: #{shape.$primitive-radius-lg};
+
+  // Sidebar (shadcn sidebar 변수)
+  --sidebar: var(--color-bg-sidebar);
+  --sidebar-foreground: var(--color-text-sidebar);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--color-background-secondary);
+  --sidebar-accent-foreground: var(--color-text-primary);
+  --sidebar-border: var(--color-border-default);
+  --sidebar-ring: var(--ring);
+
+  // Chart colors (shadcn 기준)
+  --chart-1: hsl(221, 83%, 53%);
+  --chart-2: hsl(142, 71%, 45%);
+  --chart-3: hsl(38, 92%, 50%);
+  --chart-4: hsl(260, 70%, 60%);
+  --chart-5: hsl(0, 84%, 60%);
 }
 
 // ============================================

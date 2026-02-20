@@ -1,20 +1,20 @@
 // ============================================
 // SCSS Variables - Primitive Shape Tokens
-// 컴파일 타임에 값이 치환되어 성능 최적화
+// shadcn/ui 기준으로 값 교체 (--radius: 0.5rem 기준)
 // ============================================
 
-// Radius Scale
+// Radius Scale (shadcn/ui 기준 상대 단위)
 $primitive-radius-none: 0px;
-$primitive-radius-xs: 2px;
-$primitive-radius-sm: 4px;
-$primitive-radius-md: 6px;
-$primitive-radius-lg: 10px;
-$primitive-radius-xl: 12px;
-$primitive-radius-max: 50%;
+$primitive-radius-xs: 0.125rem;    // 2px
+$primitive-radius-sm: 0.25rem;     // 4px  (shadcn: calc(var(--radius) - 4px))
+$primitive-radius-md: 0.375rem;    // 6px  (shadcn: calc(var(--radius) - 2px))
+$primitive-radius-lg: 0.5rem;      // 8px  (shadcn: var(--radius))
+$primitive-radius-xl: 0.625rem;    // 10px (shadcn: 0.625rem)
+$primitive-radius-max: 9999px;     // pill (이전: 50%)
 
-// Level Radius
-$primitive-radius-xsmall: 2px;
-$primitive-radius-small: 4px;
-$primitive-radius-medium: 6px;
-$primitive-radius-large: 10px;
-$primitive-radius-xlarge: 12px;
+// Level Radius (semantic alias)
+$primitive-radius-xsmall: 0.125rem;    // 2px
+$primitive-radius-small: 0.25rem;      // 4px
+$primitive-radius-medium: 0.375rem;    // 6px  (컴포넌트 기본)
+$primitive-radius-large: 0.5rem;       // 8px  (카드, 패널)
+$primitive-radius-xlarge: 0.75rem;     // 12px (모달, 다이얼로그)

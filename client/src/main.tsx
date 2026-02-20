@@ -1,9 +1,9 @@
 import { render } from 'preact';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './app';
-import { AuthProvider } from '@/core/context/AuthProvider';
-import { ToastProvider } from '@/core/context/ToastProvider';
-import { ConfirmProvider } from '@/core/context/ConfirmProvider';
+import { AuthProvider } from '@/core/context/AuthContext';
+import { ToastProvider } from '@/core/context/ToastContext';
+import { ConfirmProvider } from '@/core/context/ConfirmContext';
 import { ThemeProvider } from '@/core/context/ThemeProvider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import './index.css';

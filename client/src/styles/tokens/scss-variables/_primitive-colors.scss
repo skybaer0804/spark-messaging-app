@@ -1,30 +1,30 @@
 // ============================================
 // SCSS Variables - Primitive Color Tokens
-// 컴파일 타임에 값이 치환되어 성능 최적화
+// shadcn/ui Zinc 테마 기반으로 전면 교체
 // ============================================
 
-// HSL Base Values (런타임 테마 변경을 위해 CSS 변수로도 정의됨)
-$hue-primary: 210; // Metabase Blue
-$saturation-primary: 80%;
+// HSL Base Values
+$hue-primary: 240; // Zinc 기반 (이전: 210 Metabase Blue)
+$saturation-primary: 5%;
 $hue-secondary: 260; // Purple accent
 $saturation-secondary: 60%;
 
-// Primary Color Palette (Blue)
-// Note: HSL 변수를 사용하는 색상은 _variables-unified.scss에서 CSS 변수로 생성됨
-$primitive-primary-0: hsl($hue-primary, 100%, 98%); // Very Light Blue
-$primitive-primary-5: hsl($hue-primary, 100%, 95%);
-$primitive-primary-10: hsl($hue-primary, 100%, 90%);
-$primitive-primary-15: hsl($hue-primary, 90%, 85%);
-$primitive-primary-20: hsl($hue-primary, 90%, 80%);
-$primitive-primary-25: hsl($hue-primary, 85%, 75%);
-$primitive-primary-30: hsl($hue-primary, 85%, 70%);
-$primitive-primary-40: hsl($hue-primary, 80%, 60%);
-$primitive-primary-50: hsl($hue-primary, 75%, 50%); // Base Blue (#509EE3 approx)
-$primitive-primary-60: hsl($hue-primary, 80%, 45%);
-$primitive-primary-70: hsl($hue-primary, 85%, 35%);
-$primitive-primary-80: hsl($hue-primary, 90%, 25%);
-$primitive-primary-90: hsl($hue-primary, 95%, 15%);
-$primitive-primary-100: hsl($hue-primary, 100%, 5%); // Very Dark Blue
+// Primary Color Palette (Zinc-based near-black system)
+// shadcn/ui "Zinc" theme 기준
+$primitive-primary-0: hsl(0, 0%, 100%);           // White
+$primitive-primary-5: hsl(240, 4.8%, 95.9%);      // zinc-100 상당
+$primitive-primary-10: hsl(240, 5.9%, 90%);       // zinc-200 상당
+$primitive-primary-15: hsl(240, 4.9%, 83.9%);     // zinc-300 상당
+$primitive-primary-20: hsl(240, 5%, 64.9%);       // zinc-400 상당
+$primitive-primary-25: hsl(240, 3.8%, 46.1%);     // zinc-500 상당
+$primitive-primary-30: hsl(240, 5.2%, 33.9%);     // zinc-600 상당
+$primitive-primary-40: hsl(240, 5.3%, 26.1%);     // zinc-700 상당
+$primitive-primary-50: hsl(240, 3.7%, 15.9%);     // zinc-800 상당 (shadcn primary light mode)
+$primitive-primary-60: hsl(240, 5.9%, 10%);       // zinc-900 상당
+$primitive-primary-70: hsl(240, 10%, 3.9%);       // zinc-950 상당
+$primitive-primary-80: hsl(0, 0%, 98%);           // 역방향(dark mode primary) - near white
+$primitive-primary-90: hsl(240, 4.8%, 95.9%);
+$primitive-primary-100: hsl(0, 0%, 100%);
 
 // Secondary Color Palette (Purple)
 $primitive-secondary-0: hsl($hue-secondary, 100%, 98%);
@@ -32,32 +32,37 @@ $primitive-secondary-10: hsl($hue-secondary, 90%, 90%);
 $primitive-secondary-20: hsl($hue-secondary, 85%, 80%);
 $primitive-secondary-30: hsl($hue-secondary, 80%, 70%);
 $primitive-secondary-40: hsl($hue-secondary, 75%, 60%);
-$primitive-secondary-50: hsl($hue-secondary, 70%, 50%); // 더 진한 보라색
+$primitive-secondary-50: hsl($hue-secondary, 70%, 50%);
 $primitive-secondary-60: hsl($hue-secondary, 75%, 40%);
 $primitive-secondary-70: hsl($hue-secondary, 80%, 30%);
 $primitive-secondary-80: hsl($hue-secondary, 85%, 20%);
 $primitive-secondary-90: hsl($hue-secondary, 90%, 10%);
 $primitive-secondary-100: hsl($hue-secondary, 95%, 5%);
 
-// Gray Color Palette (Cool Grey for cleaner look)
-// 성능 최적화: HSL 값을 직접 계산 (hue: 210, saturation: 15% 고정)
-$primitive-gray-0: hsl(0, 0%, 100%); // White
-$primitive-gray-5: hsl(210, 15%, 97%); // Very Light BG
-$primitive-gray-10: hsl(210, 15%, 94%); // Light Border
-$primitive-gray-15: hsl(210, 15%, 90%);
-$primitive-gray-20: hsl(210, 15%, 85%); // Border
-$primitive-gray-25: hsl(210, 15%, 80%);
-$primitive-gray-30: hsl(210, 15%, 70%);
-$primitive-gray-40: hsl(210, 15%, 60%); // Tertiary Text
-$primitive-gray-50: hsl(210, 15%, 50%);
-$primitive-gray-60: hsl(210, 15%, 40%); // Secondary Text
-$primitive-gray-70: hsl(210, 15%, 30%);
-$primitive-gray-80: hsl(210, 15%, 20%); // Primary Text
-$primitive-gray-90: hsl(210, 15%, 10%);
-$primitive-gray-100: hsl(210, 15%, 5%); // Black
+// Gray Color Palette (Zinc — hue: 240, low saturation)
+// shadcn/ui Zinc 테마 기준으로 정렬
+$primitive-gray-0: hsl(0, 0%, 100%);              // White (#ffffff)
+$primitive-gray-5: hsl(0, 0%, 98%);               // zinc-50 (#fafafa)
+$primitive-gray-10: hsl(240, 4.8%, 95.9%);        // zinc-100 (#f4f4f5)
+$primitive-gray-15: hsl(240, 5.9%, 90%);          // zinc-200 (#e4e4e7)
+$primitive-gray-20: hsl(240, 4.9%, 83.9%);        // zinc-300 (#d4d4d8)
+$primitive-gray-25: hsl(240, 5%, 64.9%);          // zinc-400 (#a1a1aa)
+$primitive-gray-30: hsl(240, 3.8%, 46.1%);        // zinc-500 (#71717a)
+$primitive-gray-40: hsl(240, 5.2%, 33.9%);        // zinc-600 (#52525b)
+$primitive-gray-50: hsl(240, 5.3%, 26.1%);        // zinc-700 (#3f3f46)
+$primitive-gray-60: hsl(240, 3.7%, 15.9%);        // zinc-800 (#27272a)
+$primitive-gray-70: hsl(240, 5.9%, 10%);          // zinc-900 (#18181b)
+$primitive-gray-80: hsl(240, 10%, 3.9%);          // zinc-950 (#09090b)
+$primitive-gray-90: hsl(240, 5.9%, 10%);          // zinc-900 (alias)
+$primitive-gray-100: hsl(240, 10%, 3.9%);         // zinc-950 (darkest)
 
-// System Colors
-$primitive-success-50: hsl(100, 60%, 50%); // Green
-$primitive-warning-50: hsl(40, 90%, 60%); // Yellow/Orange
-$primitive-error-50: hsl(0, 70%, 60%); // Red
-$primitive-info-50: hsl(200, 90%, 60%); // Sky Blue
+// System Colors (shadcn/ui 기준으로 조정)
+$primitive-success-50: hsl(142, 71%, 45%);        // green-500
+$primitive-warning-50: hsl(38, 92%, 50%);         // amber-500
+$primitive-error-50: hsl(0, 84.2%, 60.2%);        // red-500
+$primitive-info-50: hsl(199, 89%, 48%);           // sky-500
+
+// Interactive Blue (앱 브랜드 컬러 - 프리셋 테마용)
+$primitive-brand-50: hsl(221, 83%, 53%);          // blue-600 (#2563eb)
+$primitive-brand-40: hsl(213, 93%, 68%);          // blue-400
+$primitive-brand-60: hsl(224, 76%, 48%);          // blue-700

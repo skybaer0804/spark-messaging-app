@@ -1,11 +1,18 @@
 import { JSX } from 'preact';
-import './Divider.scss';
+import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
-export interface DividerProps extends JSX.HTMLAttributes<HTMLHRElement> {
+export interface DividerProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children'> {
   variant?: 'fullWidth' | 'inset' | 'middle';
   orientation?: 'horizontal' | 'vertical';
   flexItem?: boolean;
 }
+
+const variantClasses: Record<string, string> = {
+  fullWidth: '',
+  inset: 'ml-16',
+  middle: 'mx-4',
+};
 
 export function Divider({
   variant = 'fullWidth',
@@ -14,15 +21,15 @@ export function Divider({
   className = '',
   ...props
 }: DividerProps) {
-  const classes = [
-    'divider',
-    `divider--${variant}`,
-    `divider--${orientation}`,
-    flexItem ? 'divider--flexItem' : '',
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
-
-  return <hr className={classes} {...props} />;
+  return (
+    <Separator
+      orientation={orientation}
+      className={cn(
+        variantClasses[variant],
+        flexItem && orientation === 'vertical' && 'self-stretch h-auto',
+        className,
+      )}
+      {...(props as JSX.HTMLAttributes<HTMLDivElement>)}
+    />
+  );
 }

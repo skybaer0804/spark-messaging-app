@@ -1,9 +1,7 @@
 import { JSX } from 'preact';
+import { cn } from '@/lib/utils';
 import { Switch, SwitchProps } from '../Switch/Switch';
 import { Typography } from '../Typography/Typography';
-import { Stack } from '../Layout/Stack';
-import { Flex } from '../Layout/Flex';
-import './SettingSwitch.scss';
 
 export interface SettingSwitchProps extends SwitchProps {
   title: string;
@@ -20,23 +18,25 @@ export function SettingSwitch({
   ...switchProps
 }: SettingSwitchProps) {
   return (
-    <div className={`setting-switch ${containerClassName} ${switchProps.disabled ? 'setting-switch--disabled' : ''}`}>
-      <Flex align="center" justify="space-between" gap="md" fullWidth>
-        <Flex align="flex-start" gap="sm" style={{ flex: 1 }}>
-          {icon && <div className="setting-switch__icon">{icon}</div>}
-          <Stack spacing="none" style={{ flex: 1 }}>
-            <Typography variant="body-small" className="setting-switch__title">
-              {title}
+    <div
+      className={cn(
+        'flex items-center justify-between gap-4 w-full',
+        switchProps.disabled && 'opacity-50',
+        containerClassName,
+      )}
+    >
+      <div className="flex items-start gap-2 flex-1">
+        {icon && <div className="flex items-center mt-0.5">{icon}</div>}
+        <div className="flex flex-col flex-1">
+          <Typography variant="body-small">{title}</Typography>
+          {description && (
+            <Typography variant="caption" color="text-secondary">
+              {description}
             </Typography>
-            {description && (
-              <Typography variant="caption" color="text-secondary" className="setting-switch__description">
-                {description}
-              </Typography>
-            )}
-          </Stack>
-        </Flex>
-        <Switch {...switchProps} />
-      </Flex>
+          )}
+        </div>
+      </div>
+      <Switch {...switchProps} />
     </div>
   );
 }
