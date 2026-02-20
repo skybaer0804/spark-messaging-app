@@ -3,9 +3,9 @@ import { memo } from 'preact/compat';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
 import { useRouterState } from '@/routes/RouterState';
-import { TextField } from '@/components/ui/text-field';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Grid } from '@/components/ui/layout';
 import { AuthLayout } from '../components/AuthLayout/AuthLayout';
 import { IconCircleCheckFilled, IconUser, IconMail, IconLock, IconEye, IconEyeOff } from '@tabler/icons-preact';
 import './Signup.scss';
@@ -29,7 +29,10 @@ interface ValidationBadgeProps {
 
 const ValidationBadge = memo(({ isValid }: ValidationBadgeProps) => (
   <span 
-    className={`signup-form__validation-badge ${isValid ? 'is-valid' : ''}`} 
+    className={cn(
+      "inline-flex items-center ml-1 transition-colors",
+      isValid ? "text-success" : "text-muted-foreground/30"
+    )}
     title={isValid ? '입력 완료' : '필수 입력 항목'}
   >
     <IconCircleCheckFilled size={14} />
@@ -161,124 +164,138 @@ export function Signup() {
 
   return (
     <AuthLayout title="계정 만들기" subtitle="Spark Messaging의 회원이 되어보세요.">
-      <form onSubmit={handleSubmit} className="signup-form">
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <div className="signup-form__field-header">
-              <label className="signup-form__label">사용자 이름</label>
+      <form onSubmit={handleSubmit} className="signup-form space-y-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="username" className="flex items-center">
+              사용자 이름
               <ValidationBadge isValid={debouncedStatus.username} />
+            </Label>
+          </div>
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              <IconUser size={20} />
             </div>
-            <TextField
+            <Input
+              id="username"
               name="username"
               value={formData.username}
               onInput={handleInputChange}
               placeholder="영어, 한글, 숫자 허용 3자 이상"
-              error={!!errors.username}
-              helperText={errors.username}
-              fullWidth
-              startAdornment={<IconUser size={20} />}
+              className={cn("pl-10", errors.username && "border-destructive")}
             />
-          </Grid>
+          </div>
+          {errors.username && <p className="text-xs text-destructive">{errors.username}</p>}
+        </div>
 
-          <Grid item xs={12}>
-            <div className="signup-form__field-header">
-              <label className="signup-form__label">이메일 주소</label>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="email" className="flex items-center">
+              이메일 주소
               <ValidationBadge isValid={debouncedStatus.email} />
+            </Label>
+          </div>
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              <IconMail size={20} />
             </div>
-            <TextField
+            <Input
+              id="email"
               name="email"
               type="email"
               value={formData.email}
               onInput={handleInputChange}
               placeholder="example@spark.com"
-              error={!!errors.email}
-              helperText={errors.email}
-              fullWidth
-              startAdornment={<IconMail size={20} />}
+              className={cn("pl-10", errors.email && "border-destructive")}
             />
-          </Grid>
+          </div>
+          {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+        </div>
 
-          <Grid item xs={12} sm={6}>
-            <div className="signup-form__field-header">
-              <label className="signup-form__label">비밀번호</label>
-              <ValidationBadge isValid={debouncedStatus.password} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="flex items-center">
+                비밀번호
+                <ValidationBadge isValid={debouncedStatus.password} />
+              </Label>
             </div>
-            <TextField
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              value={formData.password}
-              onInput={handleInputChange}
-              placeholder="영문/숫자/특수문자 2종 이상(10자+) 또는 3종 이상(8자+)"
-              error={!!errors.password}
-              helperText={errors.password}
-              fullWidth
-              startAdornment={
-                <div onClick={togglePasswordVisibility} className="signup-form__icon-toggle" title="비밀번호 보기/숨기기">
-                  <IconLock size={20} color={debouncedStatus.password ? 'var(--color-status-success)' : 'currentColor'} />
-                </div>
-              }
-              endAdornment={
-                <div onClick={togglePasswordVisibility} className="signup-form__icon-toggle">
-                  {showPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
-                </div>
-              }
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <div className="signup-form__field-header">
-              <label className="signup-form__label">비밀번호 확인</label>
-              <ValidationBadge isValid={debouncedStatus.confirmPassword} />
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                <IconLock size={20} className={cn(debouncedStatus.password && "text-success")} />
+              </div>
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onInput={handleInputChange}
+                placeholder="영문/숫자/특수문자 조합"
+                className={cn("pl-10 pr-10", errors.password && "border-destructive")}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={togglePasswordVisibility}
+              >
+                {showPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+              </button>
             </div>
-            <TextField
-              name="confirmPassword"
-              type={showConfirmPassword ? 'text' : 'password'}
-              value={formData.confirmPassword}
-              onInput={handleInputChange}
-              placeholder="다시 입력"
-              error={!!errors.confirmPassword}
-              helperText={errors.confirmPassword}
-              fullWidth
-              startAdornment={
-                <div onClick={toggleConfirmPasswordVisibility} className="signup-form__icon-toggle" title="비밀번호 보기/숨기기">
-                  <IconLock size={20} color={debouncedStatus.confirmPassword ? 'var(--color-status-success)' : 'currentColor'} />
-                </div>
-              }
-              endAdornment={
-                <div onClick={toggleConfirmPasswordVisibility} className="signup-form__icon-toggle">
-                  {showConfirmPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
-                </div>
-              }
-            />
-          </Grid>
+          </div>
 
-          <Grid item xs={12}>
-            <p className="signup-form__password-hint">
-              비밀번호는 연속적인 숫자나 생일, 전화번호 등 추측하기 쉬운 개인정보 및 아이디와 비슷한 비밀번호는 사용하지 마세요.
-            </p>
-          </Grid>
-
-          <Grid item xs={12}>
-            <Button 
-              type="submit" 
-              variant="primary" 
-              fullWidth 
-              disabled={loading}
-              className="signup-form__submit"
-            >
-              {loading ? '처리 중...' : '회원가입 완료'}
-            </Button>
-          </Grid>
-
-          <Grid item xs={12}>
-            <div className="signup-form__footer">
-              <span>이미 계정이 있으신가요?</span>
-              <Button variant="text" onClick={() => navigate('/login')}>
-                로그인
-              </Button>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="confirmPassword" className="flex items-center">
+                비밀번호 확인
+                <ValidationBadge isValid={debouncedStatus.confirmPassword} />
+              </Label>
             </div>
-          </Grid>
-        </Grid>
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                <IconLock size={20} className={cn(debouncedStatus.confirmPassword && "text-success")} />
+              </div>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={formData.confirmPassword}
+                onInput={handleInputChange}
+                placeholder="다시 입력"
+                className={cn("pl-10 pr-10", errors.confirmPassword && "border-destructive")}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={toggleConfirmPasswordVisibility}
+              >
+                {showConfirmPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+        {errors.confirmPassword && !errors.password && <p className="text-xs text-destructive">{errors.confirmPassword}</p>}
+
+        <p className="text-xs text-muted-foreground opacity-70 py-2">
+          비밀번호는 연속적인 숫자나 생일, 전화번호 등 추측하기 쉬운 개인정보 및 아이디와 비슷한 비밀번호는 사용하지 마세요.
+        </p>
+
+        <Button 
+          type="submit" 
+          variant="default" 
+          className="w-full" 
+          disabled={loading}
+        >
+          {loading ? '처리 중...' : '회원가입 완료'}
+        </Button>
+
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground pt-2">
+          <span>이미 계정이 있으신가요?</span>
+          <Button variant="link" className="h-auto p-0 font-semibold" onClick={() => navigate('/login')}>
+            로그인
+          </Button>
+        </div>
       </form>
     </AuthLayout>
   );

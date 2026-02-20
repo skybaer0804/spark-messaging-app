@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'preact/hooks';
 import { IconX, IconPlus, IconEdit } from '@tabler/icons-preact';
-import { Dialog } from '@/components/ui/dialog';
-import { Flex, Grid } from '@/components/ui/layout';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Typography } from '@/components/ui/typography';
-import { TextField as Input } from '@/components/ui/text-field';
-import { SettingSwitch } from '@/components/ui/setting-switch';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { AutocompleteMember } from './AutocompleteMember';
 import { AutocompleteChannelAndTeam } from './AutocompleteChannelAndTeam';
 import { useChat } from '../context/ChatContext';
@@ -14,6 +20,7 @@ import { useTheme } from '@/core/context/ThemeProvider';
 import { useToast } from '@/core/context/ToastContext';
 import { currentWorkspaceId } from '@/stores/chatRoomsStore';
 import type { ChatUser, ChatRoom } from '../types';
+import { cn } from '@/lib/utils';
 
 interface DialogChatDiscussionProps {
   open: boolean;
@@ -145,111 +152,89 @@ export const DialogChatDiscussion = ({
     !isSubmitting;
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      title={isEdit ? '토론 수정' : '새 토론 만들기'}
-      maxWidth={false}
-      style={{ maxWidth: '600px' }}
-      fullWidth
-      className="dialog--mobile-overlay"
-      actions={
-        <Flex gap="sm" style={isMobile ? { width: '100%' } : {}}>
-          <Button onClick={handleClose} variant="secondary" size="sm" style={isMobile ? { flex: 4.5 } : {}}>
-            <Flex align="center" gap="xs" justify="center">
-              <IconX size={18} />
-              <span>취소</span>
-            </Flex>
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={!isFormValid}
-            onClick={handleSubmit}
-            style={isMobile ? { flex: 5.5 } : {}}
-          >
-            <Flex align="center" gap="xs" justify="center">
-              {isEdit ? <IconEdit size={18} /> : <IconPlus size={18} />}
-              <span>{isEdit ? '수정' : '개설'}</span>
-            </Flex>
-          </Button>
-        </Flex>
-      }
-    >
-      <Grid container spacing="lg">
-        <Grid item xs={12}>
-          <Typography variant="body-small" color="text-secondary">
+    <Dialog open={open} onOpenChange={(val) => !val && handleClose()}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? '토론 수정' : '새 토론 만들기'}</DialogTitle>
+          <DialogDescription>
             {isEdit
               ? '토론 정보를 수정합니다. 상위 채널이나 참여자를 변경할 수 있습니다.'
               : '토론을 생성하면 선택한 채널의 하위 채널이 만들어지고 둘 다 연결됩니다.'}
-          </Typography>
-        </Grid>
+          </DialogDescription>
+        </DialogHeader>
 
-        <Grid item xs={12}>
-          <AutocompleteChannelAndTeam
-            roomList={roomList}
-            selectedRoom={discussionData.parentRoom}
-            onRoomChange={(room) => setDiscussionData((prev) => ({ ...prev, parentRoom: room }))}
-            error={open && !discussionData.parentRoom}
-            helperText={!discussionData.parentRoom ? '상위 채널 또는 그룹을 선택해주세요.' : ''}
-            disabled={isEdit} // 수정 모드에서는 상위 방 변경 불가하도록 설정 (일반적인 정책)
-          />
-        </Grid>
+        <div className="grid gap-6 py-4">
+          <div className="grid gap-2">
+            <AutocompleteChannelAndTeam
+              roomList={roomList}
+              selectedRoom={discussionData.parentRoom}
+              onRoomChange={(room) => setDiscussionData((prev) => ({ ...prev, parentRoom: room }))}
+              error={open && !discussionData.parentRoom}
+              helperText={!discussionData.parentRoom ? '상위 채널 또는 그룹을 선택해주세요.' : ''}
+              disabled={isEdit}
+            />
+          </div>
 
-        <Grid item xs={12}>
-          <Input
-            label="이름"
-            isValid={isValidDiscussionName(discussionData.name)}
-            fullWidth
-            placeholder="예: 프로젝트-마일스톤-논의"
-            value={discussionData.name}
-            onInput={(e) => setDiscussionData((prev) => ({ ...prev, name: e.currentTarget.value }))}
-            error={discussionData.name.length > 0 && !isValidDiscussionName(discussionData.name)}
-            helperText={
-              discussionData.name.length > 0 && !isValidDiscussionName(discussionData.name)
-                ? '공백이나 특수문자는 사용할 수 없습니다 (한글, 영문, 숫자, _, -만 허용).'
-                : ''
-            }
-          />
-        </Grid>
+          <div className="grid gap-2">
+            <Label htmlFor="name">이름</Label>
+            <Input
+              id="name"
+              placeholder="예: 프로젝트-마일스톤-논의"
+              value={discussionData.name}
+              onInput={(e: any) => setDiscussionData((prev) => ({ ...prev, name: e.currentTarget.value }))}
+              className={cn(discussionData.name.length > 0 && !isValidDiscussionName(discussionData.name) && "border-destructive")}
+            />
+            {discussionData.name.length > 0 && !isValidDiscussionName(discussionData.name) && (
+              <p className="text-xs text-destructive">공백이나 특수문자는 사용할 수 없습니다.</p>
+            )}
+          </div>
 
-        <Grid item xs={12}>
-          <Input
-            label="설명"
-            isValid={isValidDescription(discussionData.description)}
-            fullWidth
-            placeholder="이름 옆에 표시될 간단한 설명"
-            value={discussionData.description}
-            onInput={(e) => setDiscussionData((prev) => ({ ...prev, description: e.currentTarget.value }))}
-            error={discussionData.description.length > 0 && !isValidDescription(discussionData.description)}
-            helperText={
-              discussionData.description.length > 0 && !isValidDescription(discussionData.description)
-                ? '보안을 위해 일부 특수문자(<, >, /, \, &)는 사용할 수 없습니다.'
-                : ''
-            }
-          />
-        </Grid>
+          <div className="grid gap-2">
+            <Label htmlFor="description">설명</Label>
+            <Input
+              id="description"
+              placeholder="이름 옆에 표시될 간단한 설명"
+              value={discussionData.description}
+              onInput={(e: any) => setDiscussionData((prev) => ({ ...prev, description: e.currentTarget.value }))}
+              className={cn(discussionData.description.length > 0 && !isValidDescription(discussionData.description) && "border-destructive")}
+            />
+          </div>
 
-        <Grid item xs={12}>
-          <AutocompleteMember
-            userList={userList}
-            selectedUsers={discussionData.members}
-            onUsersChange={(users) => setDiscussionData((prev) => ({ ...prev, members: users }))}
-            currentUserId={user?.id}
-            placeholder="참여자 추가"
-            label="참여자"
-          />
-        </Grid>
+          <div className="grid gap-2">
+            <AutocompleteMember
+              userList={userList}
+              selectedUsers={discussionData.members}
+              onUsersChange={(users) => setDiscussionData((prev) => ({ ...prev, members: users }))}
+              currentUserId={user?.id}
+              placeholder="참여자 추가"
+              label="참여자"
+            />
+          </div>
 
-        <Grid item xs={12}>
-          <SettingSwitch
-            title="비공개"
-            description="초대된 사람만 가입할 수 있습니다."
-            checked={discussionData.isPrivate}
-            onChange={(checked) => setDiscussionData((prev) => ({ ...prev, isPrivate: checked }))}
-          />
-        </Grid>
-      </Grid>
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <Label>비공개</Label>
+              <p className="text-xs text-muted-foreground">
+                초대된 사람만 가입할 수 있습니다.
+              </p>
+            </div>
+            <Switch
+              checked={discussionData.isPrivate}
+              onCheckedChange={(checked) => setDiscussionData((prev) => ({ ...prev, isPrivate: checked }))}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose}>
+            <IconX size={18} className="mr-2" /> 취소
+          </Button>
+          <Button disabled={!isFormValid} onClick={handleSubmit}>
+            {isEdit ? <IconEdit size={18} className="mr-2" /> : <IconPlus size={18} className="mr-2" />}
+            {isEdit ? '수정' : '개설'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 };

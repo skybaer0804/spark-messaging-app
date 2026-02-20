@@ -2,11 +2,11 @@
 
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { IconX } from "@tabler/icons-preact"
+import { X } from "lucide-preact"
 
 import { cn } from "@/lib/utils"
 
-const DialogRoot = DialogPrimitive.Root
+const Dialog = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger
 
@@ -21,7 +21,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -45,7 +45,7 @@ const DialogContent = React.forwardRef<
     >
       {children}
       <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <IconX className="h-4 w-4" />
+        <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -107,58 +107,6 @@ const DialogDescription = React.forwardRef<
   />
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
-
-export interface DialogProps extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root> {
-  open?: boolean;
-  onClose?: () => void;
-  title?: React.ReactNode;
-  description?: React.ReactNode;
-  actions?: React.ReactNode;
-  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  fullWidth?: boolean;
-  className?: string;
-}
-
-const Dialog = ({ 
-  open, 
-  onClose, 
-  title, 
-  description, 
-  actions, 
-  maxWidth, 
-  fullWidth, 
-  className,
-  children,
-  ...props 
-}: DialogProps) => {
-  if (open !== undefined || title || actions) {
-    const maxWidthClasses = {
-      xs: 'max-w-xs',
-      sm: 'max-w-sm',
-      md: 'max-w-md',
-      lg: 'max-w-lg',
-      xl: 'max-w-xl',
-    };
-
-    return (
-      <DialogRoot open={open} onOpenChange={(val) => !val && onClose?.()} {...props}>
-        <DialogContent className={cn(maxWidth && maxWidthClasses[maxWidth], fullWidth && "w-full", className)}>
-          {(title || description) && (
-            <DialogHeader>
-              {title && <DialogTitle>{title}</DialogTitle>}
-              {description && <DialogDescription>{description}</DialogDescription>}
-            </DialogHeader>
-          )}
-          <div className="py-4">
-            {children}
-          </div>
-          {actions && <DialogFooter>{actions}</DialogFooter>}
-        </DialogContent>
-      </DialogRoot>
-    )
-  }
-  return <DialogRoot {...props}>{children}</DialogRoot>
-}
 
 export {
   Dialog,

@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Box } from '@/components/ui/layout';
-import { Typography } from '@/components/ui/typography';
-import { Paper } from '@/components/ui/paper';
-import { IconButton } from '@/components/ui/icon-button';
+import { Button } from '@/components/ui/button';
 import { IconChevronLeft, IconX } from '@tabler/icons-preact';
 import { ThreadList } from './ThreadList';
 import { ThreadDetail } from './ThreadDetail';
 import type { Message, ChatRoom, ChatUser } from '../types';
 import { useTheme } from '@/core/context/ThemeProvider';
+import { cn } from '@/lib/utils';
 
 interface ChatThreadPanelProps {
   roomId: string;
@@ -41,31 +39,28 @@ export const ChatThreadPanel = ({
   };
 
   return (
-    <Paper
-      elevation={0}
-      square
-      padding="none"
-      className="chat-app__sidebar-panel"
+    <div
+      className="chat-app__sidebar-panel h-full flex flex-col bg-background border-l border-border"
     >
-      <Box className="chat-app__sidebar-panel__header">
-        <Box style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+      <div className="chat-app__sidebar-panel__header flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center gap-2 flex-1">
           {(selectedMessage || isMobile) && (
-            <IconButton onClick={handleBack} size="small" style={{ marginLeft: isMobile ? '-8px' : '0' }}>
+            <Button variant="ghost" size="icon" onClick={handleBack} className={cn(isMobile ? "-ml-2" : "ml-0", "h-8 w-8")}>
               <IconChevronLeft size={isMobile ? 24 : 18} />
-            </IconButton>
+            </Button>
           )}
-          <Typography variant="h4" style={{ flex: 1 }}>
+          <h4 className="text-lg font-bold flex-1">
             {selectedMessage ? '스레드 상세' : '스레드'}
-          </Typography>
-        </Box>
+          </h4>
+        </div>
         {!isMobile && (
-          <IconButton onClick={onClose} size="small">
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
             <IconX size={18} />
-          </IconButton>
+          </Button>
         )}
-      </Box>
+      </div>
 
-      <Box className="chat-app__sidebar-panel__content">
+      <div className="chat-app__sidebar-panel__content flex-1 overflow-hidden">
         {selectedMessage ? (
           <ThreadDetail 
             parentMessage={selectedMessage} 
@@ -77,7 +72,7 @@ export const ChatThreadPanel = ({
             onThreadSelect={setSelectedMessage} 
           />
         )}
-      </Box>
-    </Paper>
+      </div>
+    </div>
   );
 };

@@ -18,8 +18,6 @@ const DesignSystemDemo = lazy(() =>
     default: module.DesignSystemDemo,
   })),
 );
-import { Flex } from '@/components/ui/layout';
-import { Typography } from '@/components/ui/typography';
 import { Button } from '@/components/ui/button';
 import { ChatProvider } from './domains/Chat/context/ChatContext';
 import './app.scss';
@@ -185,24 +183,19 @@ export function App() {
 
     if (!hasWorkspaces && !isAllowedPath) {
       return (
-        <Flex
-          direction="column"
-          align="center"
-          justify="center"
-          style={{ height: '80vh', textAlign: 'center', padding: '20px' }}
-        >
-          <Typography variant="h2" style={{ marginBottom: '16px' }}>
+        <div className="flex flex-col items-center justify-center h-[80vh] text-center p-5">
+          <h2 className="text-3xl font-semibold tracking-tight first:mt-0 mb-4">
             워크스페이스 참여가 필요합니다
-          </Typography>
-          <Typography variant="body-large" color="text-secondary" style={{ marginBottom: '32px' }}>
+          </h2>
+          <p className="text-lg text-muted-foreground mb-8">
             현재 소속된 워크스페이스가 없습니다.
             <br />
             새로운 워크스페이스를 생성하거나 기존 워크스페이스에 초대받아야 합니다.
-          </Typography>
+          </p>
           <Button variant="primary" onClick={() => handleNavigate('/workspace')}>
             워크스페이스 생성하러 가기
           </Button>
-        </Flex>
+        </div>
       );
     }
 

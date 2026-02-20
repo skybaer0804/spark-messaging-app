@@ -5,9 +5,7 @@ import { ChatInput } from './ChatInput';
 import { ImageModal } from './ImageModal';
 import { useChatCore } from './hooks/useChatCore';
 import { useAuth } from '@/core/hooks/useAuth';
-import { Box, Flex } from '@/components/ui/layout';
-import { Typography } from '@/components/ui/typography';
-import { IconButton } from '@/components/ui/icon-button';
+import { Button } from '@/components/ui/button';
 import { IconVideo, IconUsers, IconSettings } from '@tabler/icons-preact';
 import './Chat.scss';
 
@@ -99,32 +97,26 @@ function ChatComponent({ adapter, config = {}, classNamePrefix = 'chat', roomNam
   };
 
   return (
-    <Box className={baseClass} style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+    <div className={cn(baseClass, "flex flex-col h-full min-h-0")}>
       {roomName && (
-        <Flex
-          className={`${baseClass}__header`}
-          align="center"
-          justify="space-between"
-          style={{
-            padding: 'var(--primitive-space-4) var(--primitive-space-6)',
-            borderBottom: '1px solid var(--color-border-default)',
-          }}
+        <div
+          className={cn(`${baseClass}__header flex items-center justify-between p-4 border-b border-border`)}
         >
-          <Flex align="center" gap="md">
-            <Typography variant="h4">{roomName}</Typography>
-          </Flex>
-          <Flex align="center" gap="sm">
-            <IconButton onClick={onVideoMeetingClick} title="화상회의 시작">
+          <div className="flex items-center gap-4">
+            <h4 className="text-lg font-bold">{roomName}</h4>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={onVideoMeetingClick} title="화상회의 시작">
               <IconVideo size={20} />
-            </IconButton>
-            <IconButton title="멤버 목록">
+            </Button>
+            <Button variant="ghost" size="icon" title="멤버 목록">
               <IconUsers size={20} />
-            </IconButton>
-            <IconButton title="방 설정">
+            </Button>
+            <Button variant="ghost" size="icon" title="방 설정">
               <IconSettings size={20} />
-            </IconButton>
-          </Flex>
-        </Flex>
+            </Button>
+          </div>
+        </div>
       )}
       <ChatMessages
         messages={messages}
@@ -159,7 +151,7 @@ function ChatComponent({ adapter, config = {}, classNamePrefix = 'chat', roomNam
           classNamePrefix={baseClass}
         />
       )}
-    </Box>
+    </div>
   );
 }
 

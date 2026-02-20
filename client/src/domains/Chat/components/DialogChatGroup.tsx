@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'preact/hooks';
 import { IconX, IconCheck, IconPlus } from '@tabler/icons-preact';
-import { Dialog } from '@/components/ui/dialog';
-import { Flex, Grid } from '@/components/ui/layout';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { TextField as Input } from '@/components/ui/text-field';
-import { SettingSwitch } from '@/components/ui/setting-switch';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { AutocompleteMember } from './AutocompleteMember';
 import { useChat } from '../context/ChatContext';
 import { useAuth } from '@/core/hooks/useAuth';
@@ -13,6 +20,7 @@ import { useToast } from '@/core/context/ToastContext';
 import { chatApi } from '@/core/api/ApiService';
 import { currentWorkspaceId } from '@/stores/chatRoomsStore';
 import type { ChatUser } from '../types';
+import { cn } from '@/lib/utils';
 
 interface Group {
   _id: string;
@@ -97,7 +105,6 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
         });
 
         await refreshRoomList();
-        // showSuccess('채널이 생성되었습니다.');
       }
 
       // 성공 시 초기화 및 닫기
@@ -145,93 +152,76 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
     !isSubmitting;
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      title={isEditMode ? '채널 수정' : '채널 생성'}
-      maxWidth={false}
-      style={{ maxWidth: '600px' }}
-      fullWidth
-      className="dialog--mobile-overlay"
-      actions={
-        <Flex gap="sm" style={isMobile ? { width: '100%' } : {}}>
-          <Button
-            onClick={handleClose}
-            variant="secondary"
-            size="sm"
-            style={isMobile ? { flex: 4.5 } : {}}
-          >
-            <Flex align="center" gap="xs" justify="center">
-              <IconX size={18} />
-              <span>취소</span>
-            </Flex>
+    <Dialog open={open} onOpenChange={(val) => !val && handleClose()}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>{isEditMode ? '채널 수정' : '채널 생성'}</DialogTitle>
+          <DialogDescription>
+            {isEditMode ? '채널 정보를 수정합니다.' : '새로운 채널을 만들어 팀원들과 소통하세요.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-6 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="channel-name">이름</Label>
+            <Input
+              id="channel-name"
+              placeholder="예: 프로젝트-공지"
+              value={groupData.name}
+              onInput={(e: any) => setGroupData((prev) => ({ ...prev, name: e.currentTarget.value }))}
+              className={cn(groupData.name.length > 0 && !isValidGroupName(groupData.name) && "border-destructive")}
+            />
+            {groupData.name.length > 0 && !isValidGroupName(groupData.name) && (
+              <p className="text-xs text-destructive">공백이나 특수문자는 사용할 수 없습니다.</p>
+            )}
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="channel-desc">설명</Label>
+            <Input
+              id="channel-desc"
+              placeholder="채널의 목적을 설명해주세요."
+              value={groupData.description}
+              onInput={(e: any) => setGroupData((prev) => ({ ...prev, description: e.currentTarget.value }))}
+              className={cn(groupData.description.length > 0 && !isValidDescription(groupData.description) && "border-destructive")}
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <AutocompleteMember
+              userList={userList}
+              selectedUsers={groupData.members}
+              onUsersChange={(users) => setGroupData((prev) => ({ ...prev, members: users }))}
+              currentUserId={user?.id}
+              placeholder="멤버 초대"
+              label="멤버 추가"
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <Label>비공개</Label>
+              <p className="text-xs text-muted-foreground">
+                초대된 사람만 채널에 참여할 수 있습니다.
+              </p>
+            </div>
+            <Switch
+              checked={groupData.isPrivate}
+              onCheckedChange={(checked) => setGroupData((prev) => ({ ...prev, isPrivate: checked }))}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose}>
+            <IconX size={18} className="mr-2" /> 취소
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={!isFormValid}
-            onClick={handleSubmit}
-            style={isMobile ? { flex: 5.5 } : {}}
-          >
-            <Flex align="center" gap="xs" justify="center">
-              {isEditMode ? <IconCheck size={18} /> : <IconPlus size={18} />}
-              <span>{isEditMode ? '저장' : '개설'}</span>
-            </Flex>
+          <Button disabled={!isFormValid} onClick={handleSubmit}>
+            {isEditMode ? <IconCheck size={18} className="mr-2" /> : <IconPlus size={18} className="mr-2" />}
+            {isEditMode ? '저장' : '개설'}
           </Button>
-        </Flex>
-      }
-    >
-      <Grid container spacing="md">
-        <Grid item xs={12}>
-          <Input
-            label="이름"
-            isValid={isValidGroupName(groupData.name)}
-            fullWidth
-            placeholder="예: 프로젝트-공지"
-            value={groupData.name}
-            onInput={(e) => setGroupData((prev) => ({ ...prev, name: e.currentTarget.value }))}
-            error={groupData.name.length > 0 && !isValidGroupName(groupData.name)}
-            helperText={groupData.name.length > 0 && !isValidGroupName(groupData.name)
-              ? "공백이나 특수문자는 사용할 수 없습니다 (한글, 영문, 숫자, _, -만 허용)."
-              : ""}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Input
-            label="설명"
-            isValid={isValidDescription(groupData.description)}
-            fullWidth
-            placeholder="채널의 목적을 설명해주세요."
-            value={groupData.description}
-            onInput={(e) => setGroupData((prev) => ({ ...prev, description: e.currentTarget.value }))}
-            error={groupData.description.length > 0 && !isValidDescription(groupData.description)}
-            helperText={groupData.description.length > 0 && !isValidDescription(groupData.description)
-              ? "보안을 위해 일부 특수문자(<, >, /, \, &)는 사용할 수 없습니다."
-              : ""}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <AutocompleteMember
-            userList={userList}
-            selectedUsers={groupData.members}
-            onUsersChange={(users) => setGroupData((prev) => ({ ...prev, members: users }))}
-            currentUserId={user?.id}
-            placeholder="멤버 초대"
-            label="멤버 추가"
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <SettingSwitch
-            title="비공개"
-            description="초대된 사람만 채널에 참여할 수 있습니다."
-            checked={groupData.isPrivate}
-            onChange={(checked) => setGroupData((prev) => ({ ...prev, isPrivate: checked }))}
-          />
-        </Grid>
-      </Grid>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 };

@@ -1,22 +1,11 @@
+"use client"
+
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 
 import { cn } from "@/lib/utils"
 
 const Tabs = TabsPrimitive.Root
-
-export interface TabsItem {
-  value: string;
-  label: React.ReactNode;
-  content: React.ReactNode;
-  disabled?: boolean;
-}
-
-export interface TabsProps extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root> {
-  items?: TabsItem[];
-  onChange?: (value: string) => void;
-  variant?: 'standard' | 'fullWidth';
-}
 
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
@@ -63,39 +52,4 @@ const TabsContent = React.forwardRef<
 ))
 TabsContent.displayName = TabsPrimitive.Content.displayName
 
-const TabsWrapper = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Root>,
-  TabsProps
->(({ items, onChange, variant, children, ...props }, ref) => {
-  if (items) {
-    return (
-      <Tabs 
-        ref={ref} 
-        onValueChange={onChange} 
-        {...props}
-      >
-        <TabsList className={cn(variant === 'fullWidth' && "w-full")}>
-          {items.map((item) => (
-            <TabsTrigger 
-              key={item.value} 
-              value={item.value} 
-              disabled={item.disabled}
-              className={cn(variant === 'fullWidth' && "flex-1")}
-            >
-              {item.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        {items.map((item) => (
-          <TabsContent key={item.value} value={item.value}>
-            {item.content}
-          </TabsContent>
-        ))}
-      </Tabs>
-    )
-  }
-  return <Tabs ref={ref} onValueChange={onChange} {...props}>{children}</Tabs>
-})
-TabsWrapper.displayName = "TabsWrapper"
-
-export { TabsWrapper as Tabs, TabsList, TabsTrigger, TabsContent }
+export { Tabs, TabsList, TabsTrigger, TabsContent }

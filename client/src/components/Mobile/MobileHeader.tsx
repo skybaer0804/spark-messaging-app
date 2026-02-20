@@ -1,15 +1,9 @@
-import { Flex, Box } from '@/components/ui/layout';
-import { Typography } from '@/components/ui/typography';
-import { IconMenu2 } from '@tabler/icons-preact';
-import { useSidebarLayout } from '@/layouts/SidebarLayout/SidebarLayoutContext';
-import { IconButton } from '@/components/ui/icon-button';
-import { Paper } from '@/components/ui/paper';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useRouterState } from '@/routes/RouterState';
 import { findRouteTitleByPath } from '@/routes/appRoutes';
 import { useTheme } from '@/core/context/ThemeProvider';
 
 export function MobileHeader() {
-  const { openMobileSidebar } = useSidebarLayout();
   const { pathname } = useRouterState();
   const { deviceSize } = useTheme();
   const title = findRouteTitleByPath(pathname);
@@ -17,29 +11,16 @@ export function MobileHeader() {
   if (deviceSize !== 'mobile') return null;
 
   return (
-    <Paper
-      square
-      elevation={1}
-      padding="sm"
-      className="mobile-header"
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        backgroundColor: 'var(--color-bg-default)',
-        borderBottom: '1px solid var(--color-border-default)',
-        paddingTop: 'calc(var(--space-gap-sm) + var(--safe-area-inset-top))',
-      }}
+    <div
+      className="mobile-header sticky top-0 z-50 bg-background border-b border-border shadow-sm p-4 pt-[calc(1rem+var(--safe-area-inset-top))]"
     >
-      <Flex align="center" gap="xs">
-        <IconButton onClick={openMobileSidebar} color="default">
-          <IconMenu2 size={24} />
-        </IconButton>
+      <div className="flex items-center gap-2">
+        <SidebarTrigger className="h-10 w-10 hover:bg-muted rounded-md flex items-center justify-center transition-colors" />
         
-        <Typography variant="h4" style={{ fontWeight: 700, marginLeft: '4px', fontSize: '1.1rem' }}>
+        <h4 className="text-lg font-bold ml-1">
           {title}
-        </Typography>
-      </Flex>
-    </Paper>
+        </h4>
+      </div>
+    </div>
   );
 }

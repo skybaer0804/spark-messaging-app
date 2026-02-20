@@ -1,21 +1,26 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useTheme, PresetColor } from '@/core/context/ThemeProvider';
 import { MobileHeader } from '@/components/Mobile/MobileHeader';
-import { Typography } from '@/components/ui/typography';
-import { Card, CardBody } from '@/components/ui/card';
-import { Flex, Box, Stack } from '@/components/ui/layout';
-import { Paper } from '@/components/ui/paper';
-import { Divider } from '@/components/ui/divider';
-import { Avatar } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { TextField as Input } from '@/components/ui/text-field';
-import { Select } from '@/components/ui/select';
-import { Tabs } from '@/components/ui/tabs';
-import { SettingSwitch } from '@/components/ui/setting-switch';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useRouterState } from '@/routes/RouterState';
 import { useToast } from '@/core/context/ToastContext';
 import { authApi, workspaceApi } from '@/core/api/ApiService';
+import { cn } from '@/lib/utils';
 import {
   IconUser,
   IconMail,
@@ -28,9 +33,11 @@ import {
   IconPalette,
   IconColorSwatch,
   IconShape,
+  IconExternalLink,
+  IconChevronRight,
 } from '@tabler/icons-preact';
 import { PushService } from '@/core/api/PushService';
-import { WorkSpaceItem } from '../Workspace/WorkSpaceItem';
+import { Badge } from '@/components/ui/badge';
 import './Profile.scss';
 
 const PRESET_COLORS: { value: PresetColor; label: string }[] = [
@@ -57,8 +64,6 @@ export function Profile() {
     setPresetColor,
     borderRadius,
     setBorderRadius,
-    sidebarConfig,
-    setSidebarConfig,
     resetToDefaults,
     deviceSize,
   } = useTheme();
@@ -159,361 +164,408 @@ export function Profile() {
     { value: 'guest', label: 'Guest (게스트)' },
   ];
 
-  const profileInfoContent = (
-    <Box className="profile-tab-content fade-up">
-      <Stack spacing="lg">
-        <Paper elevation={0} className="profile__info-card">
-          <Stack spacing="xl">
-            {/* 이름 섹션 */}
-            <div className="profile__field">
-              <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                <IconUser size={16} color="var(--color-interactive-primary)" />
-                <Typography variant="body-small" color="secondary" style={{ fontWeight: 600 }}>
-                  이름
-                </Typography>
-              </Flex>
-              {isEditing ? (
-                <Input
-                  fullWidth
-                  value={formData.username}
-                  onInput={(e) => setFormData({ ...formData, username: e.currentTarget.value })}
-                  placeholder="이름을 입력하세요"
-                />
-              ) : (
-                <Typography variant="body-medium" className="profile__value">
-                  {formData.username}
-                </Typography>
-              )}
-            </div>
-
-            <Divider />
-
-            {/* 상태 섹션 */}
-            <div className="profile__field">
-              <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                <IconMessageCircle size={16} color="var(--color-interactive-primary)" />
-                <Typography variant="body-small" color="secondary" style={{ fontWeight: 600 }}>
-                  상태 및 메시지
-                </Typography>
-              </Flex>
-              {isEditing ? (
-                <Stack spacing="xs">
-                  <Select
-                    fullWidth
-                    options={statusOptions}
-                    value={formData.status}
-                    onChange={(e) =>
-                      setFormData({ ...formData, status: (e.currentTarget as HTMLSelectElement).value as any })
-                    }
-                  />
-                  <Input
-                    fullWidth
-                    placeholder="상태 메시지 입력"
-                    value={formData.statusText}
-                    onInput={(e) => setFormData({ ...formData, statusText: e.currentTarget.value })}
-                  />
-                </Stack>
-              ) : (
-                <Box>
-                  <Typography variant="body-medium" className="profile__value">
-                    {statusOptions.find((s) => s.value === formData.status)?.label}
-                  </Typography>
-                  {formData.statusText && (
-                    <Typography variant="body-small" color="text-secondary" style={{ marginTop: '4px' }}>
-                      {formData.statusText}
-                    </Typography>
-                  )}
-                </Box>
-              )}
-            </div>
-
-            <Divider />
-
-            {/* 권한 섹션 */}
-            <div className="profile__field">
-              <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                <IconShieldLock size={16} color="var(--color-interactive-primary)" />
-                <Typography variant="body-small" color="secondary" style={{ fontWeight: 600 }}>
-                  권한
-                </Typography>
-              </Flex>
-              {isEditing ? (
-                <Select
-                  fullWidth
-                  options={roleOptions}
-                  value={formData.role}
-                  onChange={(e) =>
-                    setFormData({ ...formData, role: (e.currentTarget as HTMLSelectElement).value as any })
-                  }
-                />
-              ) : (
-                <Typography variant="body-medium" className="profile__value">
-                  {roleOptions.find((r) => r.value === formData.role)?.label || formData.role}
-                </Typography>
-              )}
-            </div>
-
-            <Divider />
-
-            {/* 이메일 섹션 (수정 불가) */}
-            <div className="profile__field">
-              <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                <IconMail size={16} color="var(--color-interactive-primary)" />
-                <Typography variant="body-small" color="secondary" style={{ fontWeight: 600 }}>
-                  이메일 (수정 불가)
-                </Typography>
-              </Flex>
-              <Typography variant="body-medium" className="profile__value" color="text-tertiary">
-                {formData.email}
-              </Typography>
-            </div>
-
-            <Divider />
-
-            {/* 알림 설정 섹션 */}
-            <div className="profile__field">
-              <Flex align="center" gap="sm" style={{ marginBottom: '8px' }}>
-                <IconBell size={16} color="var(--color-interactive-primary)" />
-                <Typography variant="body-small" color="secondary" style={{ fontWeight: 600 }}>
-                  알림 설정
-                </Typography>
-              </Flex>
-              <SettingSwitch
-                title="웹 푸시 알림"
-                description={pushEnabled ? '활성화됨' : '비활성화됨'}
-                checked={pushEnabled}
-                onChange={handleTogglePush}
-              />
-            </div>
-          </Stack>
-        </Paper>
-
-        {/* 수정 버튼 - 탭 하단에 위치 */}
-        <Box className="profile__tab-actions">
-          {!isEditing ? (
-            <Button variant="primary" fullWidth onClick={() => setIsEditing(true)}>
-              <IconEdit size={18} style={{ marginRight: '8px' }} /> 프로필 수정하기
-            </Button>
-          ) : (
-            <Flex gap="sm">
-              <Button variant="secondary" style={{ flex: 1 }} onClick={() => setIsEditing(false)}>
-                취소
-              </Button>
-              <Button variant="primary" style={{ flex: 1 }} onClick={handleSave} disabled={loading}>
-                <IconDeviceFloppy size={18} style={{ marginRight: '8px' }} /> 저장하기
-              </Button>
-            </Flex>
-          )}
-        </Box>
-      </Stack>
-    </Box>
-  );
-
-  const workspacesContent = (
-    <Box className="profile-tab-content fade-up">
-      <Stack spacing="md">
-        {workspaces.length > 0 ? (
-          workspaces.map((ws) => (
-            <WorkSpaceItem
-              key={ws._id}
-              id={ws._id}
-              name={ws.name}
-              description={ws.description}
-              color={ws.color}
-              initials={ws.initials}
-              onClick={() => navigate(`/workspace/${ws._id}`)}
-            />
-          ))
-        ) : (
-          <Box
-            style={{
-              padding: '40px',
-              textAlign: 'center',
-              backgroundColor: 'var(--color-background-primary)',
-              borderRadius: 'var(--primitive-radius-md)',
-              border: '1px dashed var(--color-border-default)',
-            }}
-          >
-            <Typography variant="body-medium" color="text-secondary">
-              소속된 워크스페이스가 없습니다.
-            </Typography>
-          </Box>
-        )}
-      </Stack>
-    </Box>
-  );
-
-  const themeSettingsContent = (
-    <Box className="profile-tab-content fade-up">
-      <Stack spacing="lg">
-        {/* 테마 모드 */}
-        <Paper elevation={0} className="theme-settings-card">
-          <Stack spacing="md">
-            <Flex align="center" gap="sm">
-              <IconPalette size={20} color="var(--color-interactive-primary)" />
-              <Typography variant="h4">테마 모드</Typography>
-            </Flex>
-            <Divider />
-            <Stack spacing="sm">
-              <SettingSwitch
-                title="다크 모드"
-                description="어두운 환경에서 눈의 피로를 줄여줍니다."
-                checked={theme === 'dark'}
-                onChange={(checked) => checked !== (theme === 'dark') && toggleTheme()}
-              />
-              <SettingSwitch
-                title="고대비 모드"
-                description="텍스트와 요소의 구분을 명확하게 합니다."
-                checked={contrast === 'high'}
-                onChange={(checked) => checked !== (contrast === 'high') && toggleContrast()}
-              />
-            </Stack>
-          </Stack>
-        </Paper>
-
-        {/* 강조 색상 */}
-        <Paper elevation={0} className="theme-settings-card">
-          <Stack spacing="md">
-            <Flex align="center" gap="sm">
-              <IconColorSwatch size={20} color="var(--color-interactive-primary)" />
-              <Typography variant="h4">강조 색상</Typography>
-            </Flex>
-            <Divider />
-            <div className="theme-preset-grid">
-              {PRESET_COLORS.map((preset) => (
-                <button
-                  key={preset.value}
-                  className={`theme-preset-btn ${presetColor === preset.value ? 'is-active' : ''}`}
-                  onClick={() => setPresetColor(preset.value)}
-                >
-                  <div className={`theme-preset-circle theme-preset-circle--${preset.value}`} />
-                  <Typography variant="caption">{preset.label}</Typography>
-                </button>
-              ))}
-            </div>
-          </Stack>
-        </Paper>
-
-        {/* 레이아웃 설정 */}
-        <Paper elevation={0} className="theme-settings-card">
-          <Stack spacing="md">
-            <Flex align="center" gap="sm">
-              <IconShape size={20} color="var(--color-interactive-primary)" />
-              <Typography variant="h4">레이아웃 및 모양</Typography>
-            </Flex>
-            <Divider />
-            <Box>
-              <Flex align="center" justify="space-between" style={{ marginBottom: '12px' }}>
-                <Typography variant="body-medium" style={{ fontWeight: 600 }}>
-                  모서리 둥글기
-                </Typography>
-                <Typography variant="body-small">{localBorderRadius}px</Typography>
-              </Flex>
-              <input
-                type="range"
-                min="0"
-                max="16"
-                value={localBorderRadius}
-                onInput={(e) => handleBorderRadiusChange(Number((e.target as HTMLInputElement).value))}
-                className="theme-radius-slider"
-              />
-              <div className="theme-radius-preview" style={{ borderRadius: `${localBorderRadius}px` }}>
-                <Typography variant="body-small">버튼 모양 미리보기</Typography>
-              </div>
-            </Box>
-            <Divider />
-            {/* <SettingSwitch
-              title="미니 사이드바"
-              description="아이콘만 표시하여 더 넓은 화면을 사용합니다."
-              checked={sidebarConfig.miniDrawer}
-              onChange={(checked) => setSidebarConfig({ miniDrawer: checked })}
-            /> */}
-          </Stack>
-        </Paper>
-
-        {/* 초기화 */}
-        <Box style={{ marginTop: '8px' }}>
-          <Button variant="secondary" fullWidth onClick={resetToDefaults}>
-            테마 초기화
-          </Button>
-        </Box>
-      </Stack>
-    </Box>
-  );
-
-  const tabItems = [
-    { value: 'info', label: '프로필 정보', content: profileInfoContent },
-    { value: 'workspaces', label: '워크스페이스', content: workspacesContent },
-    { value: 'theme', label: '테마 설정', content: themeSettingsContent },
-  ];
-
   return (
-    <div className="profile-app">
+    <div className="flex-1 flex flex-col min-h-0 bg-background overflow-y-auto animate-in fade-in duration-500">
       {deviceSize === 'mobile' && <MobileHeader />}
 
-      <div className="profile-app__scroll-container">
-        <div className="profile-app__container">
-          {/* Hero Section */}
-          <header className="profile-app__hero">
-            <Box className="profile-app__badge">Account Settings</Box>
-            <Typography variant="h1" className="profile-app__title">
-              사용자 <span className="highlight">설정</span>
-            </Typography>
-            <Typography variant="body-large" color="text-secondary" className="profile-app__desc">
-              개인 프로필과 워크스페이스, 그리고 나만의 테마를 여기서 관리하세요.
-            </Typography>
-          </header>
+      <div className="max-w-4xl mx-auto w-full p-6 md:p-10 space-y-10">
+        <header className="space-y-2">
+          <Badge variant="outline" className="mb-2">Account Settings</Badge>
+          <h1 className="text-3xl font-extrabold tracking-tight">사용자 설정</h1>
+          <p className="text-lg text-muted-foreground opacity-80">
+            개인 프로필과 워크스페이스, 그리고 나만의 테마를 여기서 관리하세요.
+          </p>
+        </header>
 
-          {/* Profile Header (Basic Info) */}
-          <Card className="profile-app__header-card">
-            <CardBody>
-              <Flex align="center" gap="lg">
-                <div style={{ position: 'relative' }}>
-                  <Avatar size="xl" variant="rounded" className="profile-app__avatar" src={user?.profileImage}>
+        {/* Profile Hero Card */}
+        <Card className="relative overflow-hidden border-none shadow-xl bg-card">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+          <CardContent className="p-8 relative z-10">
+            <div className="flex items-center gap-8 flex-wrap">
+              <div className="relative group">
+                <Avatar className="w-24 h-24 text-3xl font-bold ring-4 ring-background shadow-2xl transition-transform group-hover:scale-105 duration-300">
+                  <AvatarImage src={user?.profileImage} />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
                     {formData.username.substring(0, 1)}
-                  </Avatar>
-                  <div className={`avatar-status-dot avatar-status-dot--${formData.status}`} />
-                </div>
-                <Box>
-                  <Typography variant="h2" style={{ fontSize: '1.75rem', fontWeight: 700 }}>
-                    {formData.username}
-                  </Typography>
-                  <Typography variant="body-medium" color="text-secondary">
+                  </AvatarFallback>
+                </Avatar>
+                <div className={cn(
+                  "absolute bottom-1 right-1 w-6 h-6 rounded-full border-4 border-background shadow-lg",
+                  formData.status === 'online' ? "bg-green-500" :
+                  formData.status === 'away' ? "bg-amber-500" :
+                  formData.status === 'busy' ? "bg-red-500" : "bg-slate-400"
+                )} />
+              </div>
+              <div className="space-y-1">
+                <h2 className="text-3xl font-black">
+                  {formData.username}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg text-muted-foreground font-medium">
                     {formData.email}
-                  </Typography>
-                </Box>
-              </Flex>
-            </CardBody>
-          </Card>
+                  </span>
+                  <Badge className="bg-green-500 text-white border-transparent">Verified</Badge>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Main Content (Tabs) */}
-          <div className="profile-app__tabs-wrapper">
-            <Tabs items={tabItems} defaultValue="info" />
-          </div>
+        {/* Main Tabs */}
+        <Tabs defaultValue="info" className="w-full">
+          <TabsList className="w-full justify-start h-auto p-1 bg-muted/50 rounded-xl mb-6">
+            <TabsTrigger value="info" className="flex-1 py-3 rounded-lg text-base font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              프로필 정보
+            </TabsTrigger>
+            <TabsTrigger value="workspaces" className="flex-1 py-3 rounded-lg text-base font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              워크스페이스
+            </TabsTrigger>
+            <TabsTrigger value="theme" className="flex-1 py-3 rounded-lg text-base font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              테마 설정
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Footer (Logout) */}
-          <footer className="profile-app__footer">
-            <Divider style={{ marginBottom: '24px' }} />
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={async () => {
-                await signOut();
-                navigate('/login');
-              }}
-              className="logout-btn"
-            >
-              <IconLogout size={18} style={{ marginRight: '8px' }} /> 로그아웃
-            </Button>
-            <Typography
-              variant="caption"
-              color="text-tertiary"
-              style={{ display: 'block', textAlign: 'center', marginTop: '16px' }}
-            >
-              © 2026 Spark Messaging. All rights reserved.
-            </Typography>
-          </footer>
-        </div>
+          <TabsContent value="info" className="space-y-6">
+            <Card className="border-none shadow-sm bg-muted/30">
+              <CardContent className="p-0">
+                <div className="flex flex-col">
+                  {/* 이름 섹션 */}
+                  <div className="p-5 hover:bg-muted/50 transition-colors">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                          <IconUser size={20} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                            이름
+                          </p>
+                          {isEditing ? (
+                            <Input
+                              id="username"
+                              value={formData.username}
+                              onInput={(e: any) => setFormData({ ...formData, username: e.currentTarget.value })}
+                              placeholder="이름을 입력하세요"
+                              className="max-w-[300px]"
+                            />
+                          ) : (
+                            <p className="text-lg font-bold">
+                              {formData.username}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {!isEditing && <IconChevronRight size={18} className="text-muted-foreground/30" />}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* 상태 섹션 */}
+                  <div className="p-5 hover:bg-muted/50 transition-colors">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                          <IconMessageCircle size={20} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                            상태 및 메시지
+                          </p>
+                          {isEditing ? (
+                            <div className="flex flex-col gap-2 mt-2 max-w-[300px]">
+                              <Select
+                                value={formData.status}
+                                onValueChange={(value: any) =>
+                                  setFormData({ ...formData, status: value })
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {statusOptions.map(opt => (
+                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                placeholder="상태 메시지 입력"
+                                value={formData.statusText}
+                                onInput={(e: any) => setFormData({ ...formData, statusText: e.currentTarget.value })}
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Badge variant={formData.status === 'online' ? 'default' : 'secondary'}>
+                                {statusOptions.find((s) => s.value === formData.status)?.label}
+                              </Badge>
+                              {formData.statusText && (
+                                <p className="font-medium">
+                                  {formData.statusText}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {!isEditing && <IconChevronRight size={18} className="text-muted-foreground/30" />}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* 권한 섹션 */}
+                  <div className="p-5 hover:bg-muted/50 transition-colors">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                          <IconShieldLock size={20} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                            권한
+                          </p>
+                          {isEditing ? (
+                            <Select
+                              value={formData.role}
+                              onValueChange={(value: any) =>
+                                setFormData({ ...formData, role: value })
+                              }
+                            >
+                              <SelectTrigger className="w-[300px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {roleOptions.map(opt => (
+                                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge variant="outline">
+                              {roleOptions.find((r) => r.value === formData.role)?.label || formData.role}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      {!isEditing && <IconChevronRight size={18} className="text-muted-foreground/30" />}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* 이메일 섹션 (수정 불가) */}
+                  <div className="p-5 opacity-70">
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-muted rounded-lg text-muted-foreground">
+                        <IconMail size={20} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                          이메일 (수정 불가)
+                        </p>
+                        <p className="font-medium text-muted-foreground">
+                          {formData.email}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* 알림 설정 섹션 */}
+                  <div className="p-5">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                          <IconBell size={20} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                            알림 설정
+                          </p>
+                          <p className="font-medium">
+                            웹 푸시 알림
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={pushEnabled}
+                        onCheckedChange={handleTogglePush}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="pt-2">
+              {!isEditing ? (
+                <Button variant="default" className="w-full h-12 text-lg shadow-md hover:shadow-lg transition-all rounded-xl" onClick={() => setIsEditing(true)}>
+                  <IconEdit size={18} className="mr-2" /> 프로필 수정하기
+                </Button>
+              ) : (
+                <div className="flex gap-4">
+                  <Button variant="outline" className="flex-1 h-12 text-lg rounded-xl" onClick={() => setIsEditing(false)}>
+                    취소
+                  </Button>
+                  <Button variant="default" className="flex-1 h-12 text-lg shadow-md hover:shadow-lg transition-all rounded-xl" onClick={handleSave} disabled={loading}>
+                    <IconDeviceFloppy size={18} className="mr-2" /> 저장하기
+                  </Button>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="workspaces" className="space-y-4">
+            {workspaces.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4">
+                {workspaces.map((ws) => (
+                  <Card key={ws._id} className="hover:shadow-md transition-all">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                          <Avatar className="w-10 h-10 ring-2 ring-background shadow-sm" style={{ backgroundColor: ws.color }}>
+                            <AvatarFallback>{ws.initials}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-bold text-lg">{ws.name}</p>
+                            <p className="text-sm text-muted-foreground">{ws.description || '워크스페이스 설명이 없습니다.'}</p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => navigate(`/workspace`)}>
+                          <IconExternalLink size={18} className="text-muted-foreground" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="p-10 text-center bg-muted/30 rounded-2xl border border-dashed border-border/60">
+                <p className="text-muted-foreground">
+                  소속된 워크스페이스가 없습니다.
+                </p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="theme" className="space-y-6">
+            <Card className="border-none bg-muted/30 overflow-hidden">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-primary/10 rounded-md text-primary">
+                    <IconPalette size={18} />
+                  </div>
+                  <h4 className="font-bold text-lg">테마 모드</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-background rounded-lg p-4 flex justify-between items-center shadow-sm">
+                    <div>
+                      <p className="font-bold">다크 모드</p>
+                      <p className="text-xs text-muted-foreground">어두운 환경에서 눈의 피로 감소</p>
+                    </div>
+                    <Switch
+                      checked={theme === 'dark'}
+                      onCheckedChange={(checked) => checked !== (theme === 'dark') && toggleTheme()}
+                    />
+                  </div>
+                  <div className="bg-background rounded-lg p-4 flex justify-between items-center shadow-sm">
+                    <div>
+                      <p className="font-bold">고대비 모드</p>
+                      <p className="text-xs text-muted-foreground">요소의 구분을 명확하게 표시</p>
+                    </div>
+                    <Switch
+                      checked={contrast === 'high'}
+                      onCheckedChange={(checked) => checked !== (contrast === 'high') && toggleContrast()}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-none bg-muted/30 overflow-hidden">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-primary/10 rounded-md text-primary">
+                    <IconColorSwatch size={18} />
+                  </div>
+                  <h4 className="font-bold text-lg">강조 색상</h4>
+                </div>
+                <div className="theme-preset-grid mt-2">
+                  {PRESET_COLORS.map((preset) => (
+                    <button
+                      key={preset.value}
+                      className={cn(
+                        "theme-preset-btn transition-all flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-background/50",
+                        presetColor === preset.value ? "is-active ring-2 ring-primary ring-offset-2 bg-background" : ""
+                      )}
+                      onClick={() => setPresetColor(preset.value)}
+                    >
+                      <div className={`w-10 h-10 rounded-full theme-preset-circle--${preset.value} shadow-inner`} />
+                      <span className="text-xs font-bold">{preset.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-none bg-muted/30 overflow-hidden">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-primary/10 rounded-md text-primary">
+                    <IconShape size={18} />
+                  </div>
+                  <h4 className="font-bold text-lg">레이아웃 및 모양</h4>
+                </div>
+                <div className="mt-2 p-6 bg-background rounded-xl shadow-sm border border-border/10">
+                  <div className="flex items-center justify-between mb-4">
+                    <Label className="font-bold">모서리 둥글기</Label>
+                    <Badge variant="secondary">{localBorderRadius}px</Badge>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="16"
+                    value={localBorderRadius}
+                    onInput={(e) => handleBorderRadiusChange(Number((e.target as HTMLInputElement).value))}
+                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                  />
+                  <div 
+                    className="transition-all duration-300 rounded-lg mt-8 bg-primary flex items-center justify-center h-14 text-white font-bold shadow-lg"
+                    style={{ borderRadius: `${localBorderRadius}px` }}
+                  >
+                    버튼 모양 미리보기
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="pt-2">
+              <Button variant="outline" className="w-full h-12 text-lg rounded-xl border-dashed hover:border-solid transition-all" onClick={resetToDefaults}>
+                테마 초기화
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Footer */}
+        <footer className="pt-10 pb-10 border-t border-border/40 space-y-6">
+          <Button
+            variant="outline"
+            className="w-full h-14 text-lg rounded-xl border-destructive/20 text-destructive hover:bg-destructive hover:text-white hover:border-destructive shadow-sm transition-all font-extrabold"
+            onClick={async () => {
+              await signOut();
+              navigate('/login');
+            }}
+          >
+            <IconLogout size={20} className="mr-2" /> 로그아웃
+          </Button>
+          <p className="text-center text-sm text-muted-foreground opacity-60 font-medium">
+            © 2026 Spark Messaging. All rights reserved.
+          </p>
+        </footer>
       </div>
     </div>
   );

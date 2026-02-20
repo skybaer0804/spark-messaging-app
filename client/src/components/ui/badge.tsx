@@ -15,10 +15,6 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
-        success:
-          "border-transparent bg-success text-success-foreground hover:bg-success/80",
-        warning:
-          "border-transparent bg-warning text-warning-foreground hover:bg-warning/80",
       },
     },
     defaultVariants: {
@@ -29,46 +25,11 @@ const badgeVariants = cva(
 
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {
-  badgeContent?: React.ReactNode;
-  color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info' | 'default';
-}
+    VariantProps<typeof badgeVariants> {}
 
-function Badge({ className, variant, badgeContent, color, children, ...props }: BadgeProps) {
-  const colorMap = {
-    primary: 'default',
-    secondary: 'secondary',
-    success: 'success',
-    error: 'destructive',
-    warning: 'warning',
-    info: 'outline',
-    default: 'default',
-  };
-
-  const finalVariant = (color ? colorMap[color] : variant) as any;
-
-  if (badgeContent !== undefined) {
-    return (
-      <div className="relative inline-flex">
-        {children}
-        <div 
-          className={cn(
-            badgeVariants({ variant: finalVariant }),
-            "absolute -top-2 -right-2 min-w-[1.25rem] h-5 px-1 flex items-center justify-center text-[10px] border-2 border-background",
-            className
-          )}
-          {...props}
-        >
-          {badgeContent}
-        </div>
-      </div>
-    )
-  }
-
+function Badge({ className, variant, ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant: finalVariant }), className)} {...props}>
-      {children}
-    </div>
+    <div className={cn(badgeVariants({ variant }), className)} {...props} />
   )
 }
 
