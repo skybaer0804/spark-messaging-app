@@ -1,13 +1,5 @@
 import { useTheme } from '@/core/context/ThemeProvider';
-import { Dialog } from '@/ui-components/Dialog/Dialog';
-import { Button } from '@/ui-components/Button/Button';
-import { Input } from '@/ui-components/Input/Input';
-import { Select } from '@/ui-components/Select/Select';
-import { Grid } from '@/ui-components/Layout/Grid';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Box } from '@/ui-components/Layout/Box';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Switch } from '@/ui-components/Switch/Switch';
+import { Dialog, Button, Input, Select, Grid, Flex, Typography, SettingSwitch } from '@/ui-components';
 import { IconSend, IconX, IconCircleCheckFilled } from '@tabler/icons-preact';
 import type { Workspace } from '../../Chat/types/ChatRoom';
 
@@ -73,7 +65,7 @@ export function DialogNotification({
 
   // 대상 정보 유효성 검사
   const isValidTarget = targetType === 'all' || (targetType === 'workspace' && !!targetId);
-  
+
   // 일정 정보 유효성 검사
   const isValidSchedule = isImmediateSend || !!scheduledDate;
 
@@ -196,27 +188,25 @@ export function DialogNotification({
         )}
 
         <Grid item xs={12}>
-          <Typography variant="body-medium" style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+          <Typography
+            variant="body-medium"
+            style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}
+          >
             {isReadOnly ? '전송 일시' : '전송 일정'}
             {!isReadOnly && (
-              <span style={{ 
-                color: isValidSchedule ? 'var(--color-status-success)' : 'var(--color-text-tertiary)',
-                display: 'inline-flex',
-                alignItems: 'center'
-              }}>
+              <span
+                style={{
+                  color: isValidSchedule ? 'var(--color-status-success)' : 'var(--color-text-tertiary)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+              >
                 <IconCircleCheckFilled size={14} />
               </span>
             )}
           </Typography>
-          {!isReadOnly && (
-            <Box style={{ padding: '12px', borderRadius: 'var(--primitive-radius-md)', backgroundColor: 'var(--color-bg-subtle)', marginBottom: '8px' }}>
-              <Flex justify="space-between" align="center">
-                <Typography variant="body-small">즉시 발송</Typography>
-                <Switch checked={isImmediateSend} onChange={(checked) => setIsImmediateSend(checked)} />
-              </Flex>
-            </Box>
-          )}
-          <Flex gap="sm" align="center">
+
+          <Flex gap="sm" align="center" style={{ marginBottom: '12px' }}>
             {isReadOnly ? (
               <Input
                 value={
@@ -255,6 +245,15 @@ export function DialogNotification({
               />
             )}
           </Flex>
+          {!isReadOnly && (
+            <SettingSwitch
+              title="즉시 발송"
+              description="알림을 즉시 발송합니다. 비활성화 시 하단에서 예약 일시를 선택할 수 있습니다."
+              checked={isImmediateSend}
+              onChange={(checked) => setIsImmediateSend(checked)}
+              style={{ marginBottom: '8px' }}
+            />
+          )}
         </Grid>
       </Grid>
     </Dialog>

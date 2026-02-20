@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { MobileHeader } from '@/components/Mobile/MobileHeader';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Card, CardBody } from '@/ui-components/Card/Card';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Box } from '@/ui-components/Layout/Box';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
-import { Button } from '@/ui-components/Button/Button';
-import { Input } from '@/ui-components/Input/Input';
-import { Switch } from '@/ui-components/Switch/Switch';
-import { Chip } from '@/ui-components/Chip/Chip';
-import { Grid } from '@/ui-components/Layout/Grid';
-import { Dialog } from '@/ui-components/Dialog/Dialog';
+import {
+  Typography,
+  Card,
+  CardBody,
+  Flex,
+  Box,
+  Avatar,
+  Button,
+  Input,
+  SettingSwitch,
+  Chip,
+  Grid,
+  Dialog
+} from '@/ui-components';
 import { useToast } from '@/core/context/ToastContext';
 import { useAuth } from '@/core/hooks/useAuth';
 import { workspaceApi, authApi } from '@/core/api/ApiService';
@@ -326,20 +329,12 @@ export function Workspace() {
                   </Flex>
                 </Box>
                 <Box>
-                  <Flex justify="space-between" align="center">
-                    <Box>
-                      <Typography variant="body-medium" style={{ display: 'block' }}>
-                        누구나 참여 허용
-                      </Typography>
-                      <Typography variant="caption" color="text-secondary" style={{ display: 'block', marginTop: '4px' }}>
-                        체크하면 다른 사용자가 초대 없이 워크스페이스에 참여할 수 있습니다.
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={newWorkspaceAllowPublicJoin}
-                      onChange={(checked) => setNewWorkspaceAllowPublicJoin(checked)}
-                    />
-                  </Flex>
+                  <SettingSwitch
+                    title="누구나 참여 허용"
+                    description="체크하면 다른 사용자가 초대 없이 워크스페이스에 참여할 수 있습니다."
+                    checked={newWorkspaceAllowPublicJoin}
+                    onChange={(checked) => setNewWorkspaceAllowPublicJoin(checked)}
+                  />
                 </Box>
               </Flex>
             </Box>
@@ -397,20 +392,12 @@ export function Workspace() {
                   </Flex>
                 </Box>
                 <Box>
-                  <Flex justify="space-between" align="center">
-                    <Box>
-                      <Typography variant="body-medium" style={{ display: 'block' }}>
-                        누구나 참여 허용
-                      </Typography>
-                      <Typography variant="caption" color="text-secondary" style={{ display: 'block', marginTop: '4px' }}>
-                        체크하면 다른 사용자가 초대 없이 워크스페이스에 참여할 수 있습니다.
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={editWorkspaceData.allowPublicJoin}
-                      onChange={(checked) => setEditWorkspaceData({ ...editWorkspaceData, allowPublicJoin: checked })}
-                    />
-                  </Flex>
+                  <SettingSwitch
+                    title="누구나 참여 허용"
+                    description="체크하면 다른 사용자가 초대 없이 워크스페이스에 참여할 수 있습니다."
+                    checked={editWorkspaceData.allowPublicJoin}
+                    onChange={(checked) => setEditWorkspaceData({ ...editWorkspaceData, allowPublicJoin: checked })}
+                  />
                 </Box>
               </Flex>
             </Box>

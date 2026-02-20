@@ -115,6 +115,7 @@
   --primitive-font-size-body-md: #{typo.$primitive-font-size-body-md};
   --primitive-font-size-body-sm: #{typo.$primitive-font-size-body-sm};
   --primitive-font-size-body-xs: #{typo.$primitive-font-size-body-xs};
+  --primitive-font-size-caption: #{typo.$primitive-font-size-caption};
 
   // Line Height
   --primitive-line-height-tight: #{typo.$primitive-line-height-tight};
@@ -455,6 +456,13 @@
   --typo-label-xsmall-weight: #{semantic-typo.$typo-label-xsmall-weight};
   --typo-label-xsmall-line-height: #{semantic-typo.$typo-label-xsmall-line-height};
   --typo-label-xsmall-letter-spacing: #{semantic-typo.$typo-label-xsmall-letter-spacing};
+
+  // Caption
+  --typo-caption-size: #{semantic-typo.$typo-caption-size};
+  --typo-caption-weight: #{semantic-typo.$typo-caption-weight};
+  --typo-caption-weight-bold: #{semantic-typo.$typo-caption-weight-bold};
+  --typo-caption-line-height: #{semantic-typo.$typo-caption-line-height};
+  --typo-caption-letter-spacing: #{semantic-typo.$typo-caption-letter-spacing};
 
   // --- Semantic Elevation & Shadow Tokens ---
   // *** Surface (Background Color) by Elevation ***

@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { IconX, IconPlus, IconEdit } from '@tabler/icons-preact';
-import { Dialog } from '@/ui-components/Dialog/Dialog';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Button } from '@/ui-components/Button/Button';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Input } from '@/ui-components/Input/Input';
-import { Grid } from '@/ui-components/Layout/Grid';
-import { Switch } from '@/ui-components/Switch/Switch';
+import { Dialog, Flex, Button, Typography, Input, Grid, SettingSwitch } from '@/ui-components';
 import { AutocompleteMember } from './AutocompleteMember';
 import { AutocompleteChannelAndTeam } from './AutocompleteChannelAndTeam';
 import { useChat } from '../context/ChatContext';
@@ -52,14 +46,14 @@ export const DialogChatDiscussion = ({
     if (open) {
       if (discussion) {
         // 수정 모드인 경우 상위 방 찾기
-        const parentRoom = roomList.find(r => r._id === discussion.parentId) || null;
-        
+        const parentRoom = roomList.find((r) => r._id === discussion.parentId) || null;
+
         // 멤버 데이터 처리
         let currentMembers: ChatUser[] = [];
         if (discussion.members) {
-          currentMembers = discussion.members.map(m => 
-            typeof m === 'string' ? userList.find(u => u._id === m) : m
-          ).filter(Boolean) as ChatUser[];
+          currentMembers = discussion.members
+            .map((m) => (typeof m === 'string' ? userList.find((u) => u._id === m) : m))
+            .filter(Boolean) as ChatUser[];
         }
 
         setDiscussionData({
@@ -89,7 +83,7 @@ export const DialogChatDiscussion = ({
     try {
       // 상위 채널/그룹의 멤버와 추가 선택된 멤버를 합침
       const parentMemberIds = (discussionData.parentRoom.members || []).map((m: any) =>
-        typeof m === 'string' ? m : m._id
+        typeof m === 'string' ? m : m._id,
       );
       const additionalMemberIds = discussionData.members.map((m) => m._id);
 
@@ -139,9 +133,10 @@ export const DialogChatDiscussion = ({
     return /^[^<>/\\&]*$/.test(desc);
   };
 
-  const isFormValid = discussionData.parentRoom && 
-    isValidDiscussionName(discussionData.name) && 
-    isValidDescription(discussionData.description) && 
+  const isFormValid =
+    discussionData.parentRoom &&
+    isValidDiscussionName(discussionData.name) &&
+    isValidDescription(discussionData.description) &&
     !isSubmitting;
 
   return (
@@ -155,12 +150,7 @@ export const DialogChatDiscussion = ({
       className="dialog--mobile-overlay"
       actions={
         <Flex gap="sm" style={isMobile ? { width: '100%' } : {}}>
-          <Button
-            onClick={handleClose}
-            variant="secondary"
-            size="sm"
-            style={isMobile ? { flex: 4.5 } : {}}
-          >
+          <Button onClick={handleClose} variant="secondary" size="sm" style={isMobile ? { flex: 4.5 } : {}}>
             <Flex align="center" gap="xs" justify="center">
               <IconX size={18} />
               <span>취소</span>
@@ -184,8 +174,8 @@ export const DialogChatDiscussion = ({
       <Grid container spacing="lg">
         <Grid item xs={12}>
           <Typography variant="body-small" color="text-secondary">
-            {isEdit 
-              ? '토론 정보를 수정합니다. 상위 채널이나 참여자를 변경할 수 있습니다.' 
+            {isEdit
+              ? '토론 정보를 수정합니다. 상위 채널이나 참여자를 변경할 수 있습니다.'
               : '토론을 생성하면 선택한 채널의 하위 채널이 만들어지고 둘 다 연결됩니다.'}
           </Typography>
         </Grid>
@@ -210,9 +200,11 @@ export const DialogChatDiscussion = ({
             value={discussionData.name}
             onInput={(e) => setDiscussionData((prev) => ({ ...prev, name: e.currentTarget.value }))}
             error={discussionData.name.length > 0 && !isValidDiscussionName(discussionData.name)}
-            helperText={discussionData.name.length > 0 && !isValidDiscussionName(discussionData.name)
-              ? "공백이나 특수문자는 사용할 수 없습니다 (한글, 영문, 숫자, _, -만 허용)."
-              : ""}
+            helperText={
+              discussionData.name.length > 0 && !isValidDiscussionName(discussionData.name)
+                ? '공백이나 특수문자는 사용할 수 없습니다 (한글, 영문, 숫자, _, -만 허용).'
+                : ''
+            }
           />
         </Grid>
 
@@ -225,27 +217,12 @@ export const DialogChatDiscussion = ({
             value={discussionData.description}
             onInput={(e) => setDiscussionData((prev) => ({ ...prev, description: e.currentTarget.value }))}
             error={discussionData.description.length > 0 && !isValidDescription(discussionData.description)}
-            helperText={discussionData.description.length > 0 && !isValidDescription(discussionData.description)
-              ? "보안을 위해 일부 특수문자(<, >, /, \, &)는 사용할 수 없습니다."
-              : ""}
+            helperText={
+              discussionData.description.length > 0 && !isValidDescription(discussionData.description)
+                ? '보안을 위해 일부 특수문자(<, >, /, \, &)는 사용할 수 없습니다.'
+                : ''
+            }
           />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Flex justify="space-between" align="center">
-            <Flex direction="column" style={{ flex: 1 }}>
-              <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                비공개
-              </Typography>
-              <Typography variant="caption" style={{ color: 'var(--color-text-secondary)' }}>
-                초대된 사람만 가입할 수 있습니다.
-              </Typography>
-            </Flex>
-            <Switch
-              checked={discussionData.isPrivate}
-              onChange={(checked) => setDiscussionData((prev) => ({ ...prev, isPrivate: checked }))}
-            />
-          </Flex>
         </Grid>
 
         <Grid item xs={12}>
@@ -256,6 +233,15 @@ export const DialogChatDiscussion = ({
             currentUserId={user?.id}
             placeholder="참여자 추가"
             label="참여자"
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <SettingSwitch
+            title="비공개"
+            description="초대된 사람만 가입할 수 있습니다."
+            checked={discussionData.isPrivate}
+            onChange={(checked) => setDiscussionData((prev) => ({ ...prev, isPrivate: checked }))}
           />
         </Grid>
       </Grid>

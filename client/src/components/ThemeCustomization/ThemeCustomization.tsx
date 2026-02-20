@@ -7,7 +7,7 @@ import { Stack } from '@/ui-components/Layout/Stack';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { Typography } from '@/ui-components/Typography/Typography';
 import { Button } from '@/ui-components/Button/Button';
-import { Switch } from '@/ui-components/Switch/Switch';
+import { SettingSwitch } from '@/ui-components';
 import { Paper } from '@/ui-components/Paper/Paper';
 import { Divider } from '@/ui-components/Divider/Divider';
 import { IconPalette, IconShape, IconColorSwatch, IconLogout } from '@tabler/icons-preact';
@@ -82,20 +82,18 @@ export function ThemeCustomization({ open, onClose }: ThemeCustomizationProps) {
               <IconPalette size={18} />
               <Typography variant="body-large">테마 모드</Typography>
             </Flex>
-            <Flex align="center" justify="space-between">
-              <Typography variant="body-small">다크 모드</Typography>
-              <Switch
-                checked={theme === 'dark'}
-                onChange={(checked) => checked !== (theme === 'dark') && toggleTheme()}
-              />
-            </Flex>
-            <Flex align="center" justify="space-between">
-              <Typography variant="body-small">고대비 모드</Typography>
-              <Switch
-                checked={contrast === 'high'}
-                onChange={(checked) => checked !== (contrast === 'high') && toggleContrast()}
-              />
-            </Flex>
+            <SettingSwitch
+              title="다크 모드"
+              description="어두운 환경에서 눈의 피로를 줄여줍니다."
+              checked={theme === 'dark'}
+              onChange={(checked) => checked !== (theme === 'dark') && toggleTheme()}
+            />
+            <SettingSwitch
+              title="고대비 모드"
+              description="텍스트와 요소의 구분을 명확하게 합니다."
+              checked={contrast === 'high'}
+              onChange={(checked) => checked !== (contrast === 'high') && toggleContrast()}
+            />
           </Stack>
         </Paper>
 
@@ -180,17 +178,18 @@ export function ThemeCustomization({ open, onClose }: ThemeCustomizationProps) {
         <Paper elevation={2} padding="md">
           <Stack spacing="md">
             <Typography variant="body-large">사이드바 설정</Typography>
-            <Flex align="center" justify="space-between">
-              <Typography variant="body-small">미니 드로우</Typography>
-              <Switch
-                checked={sidebarConfig.miniDrawer}
-                onChange={(checked) => setSidebarConfig({ miniDrawer: checked })}
-              />
-            </Flex>
-            <Flex align="center" justify="space-between">
-              <Typography variant="body-small">고정</Typography>
-              <Switch checked={sidebarConfig.pinned} onChange={(checked) => setSidebarConfig({ pinned: checked })} />
-            </Flex>
+            <SettingSwitch
+              title="미니 드로우"
+              description="사이드바를 작게 표시합니다."
+              checked={sidebarConfig.miniDrawer}
+              onChange={(checked) => setSidebarConfig({ miniDrawer: checked })}
+            />
+            <SettingSwitch
+              title="고정"
+              description="사이드바를 화면에 고정합니다."
+              checked={sidebarConfig.pinned}
+              onChange={(checked) => setSidebarConfig({ pinned: checked })}
+            />
           </Stack>
         </Paper>
 
