@@ -1,12 +1,20 @@
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
   IconAlertCircle,
   IconInfoCircle,
   IconCheck,
   IconAlertTriangle
 } from '@tabler/icons-preact';
-import { createPortal } from 'preact/compat';
-import { Button } from '../Button/Button';
-import './Confirm.scss';
+import { cn } from '@/lib/utils';
 
 export interface ConfirmOptions {
   title?: string;
@@ -34,14 +42,12 @@ export function Confirm({
   onCancel,
   onClose
 }: ConfirmProps) {
-  if (!isOpen) return null;
-
   const getIcon = () => {
     switch (type) {
-      case 'success': return <IconCheck size={20} stroke={2.5} />;
-      case 'warning': return <IconAlertTriangle size={20} stroke={2.5} />;
-      case 'error': return <IconAlertCircle size={20} stroke={2.5} />;
-      default: return <IconInfoCircle size={20} />;
+      case 'success': return <IconCheck className="h-5 w-5 text-success" />;
+      case 'warning': return <IconAlertTriangle className="h-5 w-5 text-warning" />;
+      case 'error': return <IconAlertCircle className="h-5 w-5 text-destructive" />;
+      default: return <IconInfoCircle className="h-5 w-5 text-info" />;
     }
   };
 
@@ -62,40 +68,32 @@ export function Confirm({
     onClose();
   };
 
-  return createPortal(
-    <div className="confirm-root">
-      <div className="confirm-root__backdrop" onClick={handleCancel} />
-      <div className="confirm-dialog" role="alertdialog" aria-modal="true">
-        <div className="confirm-dialog__header">
-          <div className={`confirm-dialog__icon confirm-dialog__icon--${type}`}>
+  return (
+    <AlertDialog open={isOpen} onOpenChange={(open) => !open && handleCancel()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <div className="flex items-center gap-2">
             {getIcon()}
+            {title && <AlertDialogTitle>{title}</AlertDialogTitle>}
           </div>
-          {title && <div className="confirm-dialog__title">{title}</div>}
-        </div>
-        <div className="confirm-dialog__content">
-          <div className="confirm-dialog__message">{message}</div>
-        </div>
-        <div className="confirm-dialog__actions">
-          <Button
-            variant="text"
-            size="sm"
-            onClick={handleCancel}
-            className="confirm-dialog__button"
-          >
+          <AlertDialogDescription>
+            {message}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleCancel}>
             {cancelText}
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
+          </AlertDialogCancel>
+          <AlertDialogAction
             onClick={handleConfirm}
-            className="confirm-dialog__button"
-            style={type === 'error' ? { backgroundColor: 'var(--color-status-error)' } : undefined}
+            className={cn(
+              type === 'error' && "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            )}
           >
             {confirmText}
-          </Button>
-        </div>
-      </div>
-    </div>,
-    document.body
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

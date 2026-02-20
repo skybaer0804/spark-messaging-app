@@ -1,7 +1,13 @@
 import { JSX } from 'preact';
-import { useMemo, useRef, useState } from 'preact/hooks';
+import { useMemo, useState } from 'preact/hooks';
 import { useTheme } from '@/core/context/ThemeProvider';
-import './Tabs.scss';
+import {
+  Tabs as ShadcnTabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
+import { cn } from '@/lib/utils';
 
 export type TabsValue = string | number;
 
@@ -24,11 +30,6 @@ export interface TabsProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onC
   keepMounted?: boolean;
 }
 
-const toDomIdPart = (value: TabsValue) =>
-  String(value)
-    .trim()
-    .replace(/[^a-zA-Z0-9_-]+/g, '-');
-
 export function Tabs({
   items,
   value,
@@ -44,130 +45,54 @@ export function Tabs({
 }: TabsProps) {
   const { theme, contrast } = useTheme();
 
-  const idPrefix = useMemo(() => `tabs-${Math.random().toString(36).slice(2, 9)}`, []);
-
-  const getFirstEnabledValue = () => {
-    const firstEnabled = items.find((t) => !t.disabled);
-    return firstEnabled?.value ?? items[0]?.value;
-  };
-
-  const [uncontrolledValue, setUncontrolledValue] = useState<TabsValue | undefined>(() => {
-    if (defaultValue !== undefined) return defaultValue;
-    return getFirstEnabledValue();
-  });
-
-  const selectedValue = value !== undefined ? value : uncontrolledValue;
-
-  const tabButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
-
-  const setSelected = (nextValue: TabsValue, event: Event) => {
-    if (value === undefined) setUncontrolledValue(nextValue);
-    onChange?.(nextValue, event);
-  };
-
-  const focusTabIndex = (idx: number) => {
-    const el = tabButtonRefs.current[idx];
-    el?.focus();
-  };
-
-  const findNextEnabledIndex = (from: number, delta: 1 | -1) => {
-    if (!items.length) return from;
-    let idx = from;
-    for (let i = 0; i < items.length; i += 1) {
-      idx = (idx + delta + items.length) % items.length;
-      if (!items[idx]?.disabled) return idx;
-    }
-    return from;
-  };
-
-  const handleKeyDown = (event: KeyboardEvent, currentIdx: number) => {
-    const isHorizontal = orientation === 'horizontal';
-    const prevKey = isHorizontal ? 'ArrowLeft' : 'ArrowUp';
-    const nextKey = isHorizontal ? 'ArrowRight' : 'ArrowDown';
-
-    let nextIdx: number | null = null;
-
-    if (event.key === prevKey) nextIdx = findNextEnabledIndex(currentIdx, -1);
-    if (event.key === nextKey) nextIdx = findNextEnabledIndex(currentIdx, 1);
-    if (event.key === 'Home') nextIdx = findNextEnabledIndex(-1, 1);
-    if (event.key === 'End') nextIdx = findNextEnabledIndex(0, -1);
-
-    if (nextIdx === null) return;
-
-    event.preventDefault();
-    focusTabIndex(nextIdx);
-
-    if (selectionFollowsFocus) {
-      const nextValue = items[nextIdx]?.value;
-      if (nextValue !== undefined) setSelected(nextValue, event as unknown as Event);
+  const handleValueChange = (val: string) => {
+    if (onChange) {
+      onChange(val, {} as any);
     }
   };
-
-  const classes = ['tabs', `tabs--${orientation}`, `tabs--${variant}`, className].filter(Boolean).join(' ');
 
   return (
-    <div className={classes} data-theme={theme} data-contrast={contrast} {...props}>
-      <div className="tabs__list" role="tablist" aria-label={ariaLabel} aria-orientation={orientation}>
-        {items.map((item, idx) => {
-          const isSelected = item.value === selectedValue;
-          const tabId = `${idPrefix}-tab-${toDomIdPart(item.value)}`;
-          const panelId = `${idPrefix}-panel-${toDomIdPart(item.value)}`;
-
-          return (
-            <button
-              key={String(item.value)}
-              type="button"
-              role="tab"
-              id={tabId}
-              aria-selected={isSelected}
-              aria-controls={panelId}
-              tabIndex={isSelected ? 0 : -1}
-              disabled={item.disabled}
-              className={[
-                'tabs__tab',
-                isSelected ? 'tabs__tab--active' : '',
-                item.disabled ? 'tabs__tab--disabled' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              ref={(el) => {
-                tabButtonRefs.current[idx] = el;
-              }}
-              onClick={(e) => {
-                if (item.disabled) return;
-                setSelected(item.value, e);
-              }}
-              onKeyDown={(e) => handleKeyDown(e as unknown as KeyboardEvent, idx)}
-            >
-              <span className="tabs__tab-label">{item.label}</span>
-              <span className="tabs__indicator" aria-hidden="true" />
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="tabs__panels">
-        {items.map((item) => {
-          const isSelected = item.value === selectedValue;
-          const tabId = `${idPrefix}-tab-${toDomIdPart(item.value)}`;
-          const panelId = `${idPrefix}-panel-${toDomIdPart(item.value)}`;
-
-          if (!keepMounted && !isSelected) return null;
-
-          return (
-            <div
-              key={String(item.value)}
-              role="tabpanel"
-              id={panelId}
-              aria-labelledby={tabId}
-              className={['tabs__panel', isSelected ? 'tabs__panel--active' : ''].filter(Boolean).join(' ')}
-              hidden={!isSelected}
-            >
-              {item.content}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <ShadcnTabs
+      value={value?.toString()}
+      defaultValue={defaultValue?.toString()}
+      onValueChange={handleValueChange}
+      orientation={orientation}
+      className={cn("w-full", className)}
+      data-theme={theme}
+      data-contrast={contrast}
+      {...(props as any)}
+    >
+      <TabsList
+        className={cn(
+          "w-full justify-start rounded-none border-b bg-transparent p-0",
+          variant === 'fullWidth' && "grid w-full grid-cols-2", // grid-cols dynamic is hard, but usually 2 or more
+          orientation === 'vertical' && "flex-col h-auto"
+        )}
+        aria-label={ariaLabel}
+      >
+        {items.map((item) => (
+          <TabsTrigger
+            key={item.value}
+            value={item.value.toString()}
+            disabled={item.disabled}
+            className={cn(
+              "relative h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none",
+              variant === 'fullWidth' && "w-full"
+            )}
+          >
+            {item.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {items.map((item) => (
+        <TabsContent
+          key={item.value}
+          value={item.value.toString()}
+          className="mt-4"
+        >
+          {item.content}
+        </TabsContent>
+      ))}
+    </ShadcnTabs>
   );
 }

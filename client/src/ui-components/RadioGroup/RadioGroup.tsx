@@ -2,7 +2,8 @@ import { JSX } from 'preact';
 import { useMemo, useState } from 'preact/hooks';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { Radio } from '../Radio/Radio';
-import './RadioGroup.scss';
+import { RadioGroup as ShadcnRadioGroup } from '@/components/ui/radio-group';
+import { cn } from '@/lib/utils';
 
 export type RadioGroupValue = string | number;
 
@@ -64,44 +65,43 @@ export function RadioGroup({
     onChange?.(next, event);
   };
 
-  const classes = ['radio-group', `radio-group--${direction}`, disabled ? 'radio-group--disabled' : '', className]
-    .filter(Boolean)
-    .join(' ');
-
   return (
-    <div className={classes} data-theme={theme} data-contrast={contrast} role="radiogroup" {...props}>
-      {label && <div className="radio-group__label">{label}</div>}
-      <div className="radio-group__options">
+    <div className={cn("grid gap-3", className)} data-theme={theme} data-contrast={contrast}>
+      {label && <div className="text-sm font-medium leading-none">{label}</div>}
+      <ShadcnRadioGroup
+        name={groupName}
+        value={selectedValue?.toString()}
+        onValueChange={(val) => {
+          const opt = options.find(o => o.value.toString() === val);
+          if (opt) {
+            setSelected(opt.value, {} as any);
+          }
+        }}
+        disabled={disabled}
+        className={cn(
+          direction === 'row' ? "flex flex-row space-x-4" : "flex flex-column space-y-2"
+        )}
+        {...(props as any)}
+      >
         {options.map((opt) => {
           const optDisabled = disabled || !!opt.disabled;
-          const isChecked = opt.value === selectedValue;
-
           return (
             <Radio
               key={String(opt.value)}
-              name={groupName}
               value={opt.value}
               label={opt.label}
               disabled={optDisabled}
               color={color}
               size={size}
-              checked={isChecked}
-              onChange={(checked, e) => {
-                if (!checked) return;
-                setSelected(opt.value, e);
-              }}
             />
           );
         })}
-      </div>
-      {helperText && <div className="radio-group__helper">{helperText}</div>}
+      </ShadcnRadioGroup>
+      {helperText && (
+        <p className="text-xs text-muted-foreground">
+          {helperText}
+        </p>
+      )}
     </div>
   );
 }
-
-
-
-
-
-
-

@@ -1,10 +1,14 @@
 import { JSX } from 'preact';
-import { useEffect } from 'preact/hooks';
 import { IconX } from '@tabler/icons-preact';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Flex } from '@/ui-components/Layout/Flex';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { Typography } from '@/ui-components/Typography/Typography';
-import './Drawer.scss';
+import { cn } from '@/lib/utils';
+import { Button } from '@/ui-components/Button/Button';
 
 export interface DrawerProps extends JSX.HTMLAttributes<HTMLDivElement> {
   open: boolean;
@@ -20,47 +24,32 @@ export function Drawer({
   onClose,
   anchor = 'right',
   title,
-  width = '400px',
+  width,
   className = '',
   children,
   ...props
 }: DrawerProps) {
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
-
-  if (!open) return null;
-
   return (
-    <>
-      <div className="drawer__backdrop" onClick={onClose} />
-      <div
-        className={`drawer drawer--${anchor} ${className}`}
-        style={{ width: anchor === 'left' || anchor === 'right' ? width : 'auto' }}
-        {...props}
+    <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <SheetContent
+        side={anchor}
+        className={cn(className)}
+        style={width ? { width } : undefined}
+        {...(props as any)}
       >
         {title && (
-          <div className="drawer__header">
-            <Flex align="center" justify="space-between" style={{ flex: 1 }}>
+          <SheetHeader className="mb-4">
+            <SheetTitle>
               <Typography variant="h3" className="drawer__title">
                 {title}
               </Typography>
-              <IconButton size="small" color="default" onClick={onClose} title="닫기">
-                <IconX size={20} />
-              </IconButton>
-            </Flex>
-          </div>
+            </SheetTitle>
+          </SheetHeader>
         )}
-        <div className="drawer__content">{children}</div>
-      </div>
-    </>
+        <div className="drawer__content h-full overflow-y-auto">
+          {children}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

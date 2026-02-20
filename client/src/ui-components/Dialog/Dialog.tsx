@@ -1,14 +1,17 @@
 import { JSX } from 'preact';
-import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
-import { createPortal } from 'preact/compat';
-import { IconX, IconChevronLeft } from '@tabler/icons-preact';
-import { IconButton } from '../Button/IconButton';
-import { useTheme } from '@/core/context/ThemeProvider';
-import './Dialog.scss';
+import {
+  Dialog as ShadcnDialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { cn } from '@/lib/utils';
 
 export interface DialogProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'title'> {
   open: boolean;
-  onClose: (event?: Event) => void;
+  onClose: (event?: any) => void;
   title?: preact.ComponentChildren;
   children: preact.ComponentChildren;
   actions?: preact.ComponentChildren;
@@ -20,12 +23,6 @@ export interface DialogProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 't
   ariaLabelledby?: string;
   ariaDescribedby?: string;
 }
-
-const getFocusableElements = (root: HTMLElement) => {
-  const selector =
-    'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter((el) => !el.hasAttribute('disabled'));
-};
 
 export function Dialog({
   open,
@@ -43,148 +40,120 @@ export function Dialog({
   className = '',
   ...props
 }: DialogProps) {
-  const { deviceSize } = useTheme();
-  const isMobile = deviceSize === 'mobile';
-  const isMobileOverlay = className.includes('dialog--mobile-overlay');
-  const needsSlideAnimation = isMobile && isMobileOverlay;
-
-  const idPrefix = useMemo(() => `dialog-${Math.random().toString(36).slice(2, 9)}`, []);
-  const titleId = ariaLabelledby ?? (title ? `${idPrefix}-title` : undefined);
-  const contentId = ariaDescribedby ?? `${idPrefix}-content`;
-
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-  const lastFocused = useRef<HTMLElement | null>(null);
-
-  // 모바일 오버레이: exit 애니메이션을 위한 딜레이드 언마운트
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setVisible(true);
-    } else if (needsSlideAnimation) {
-      const timer = setTimeout(() => setVisible(false), 300);
-      return () => clearTimeout(timer);
-    } else {
-      setVisible(false);
-    }
-  }, [open, needsSlideAnimation]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    lastFocused.current = document.activeElement as HTMLElement | null;
-    document.body.style.overflow = 'hidden';
-
-    // Focus dialog or first focusable
-    const node = dialogRef.current;
-    if (node) {
-      const focusables = getFocusableElements(node);
-      (focusables[0] ?? node).focus();
-    }
-
-    return () => {
-      document.body.style.overflow = '';
-      lastFocused.current?.focus?.();
-      lastFocused.current = null;
-    };
-  }, [open]);
-
-  if (!open && !visible) return null;
-
-  const rootClasses = [
-    'dialog-root',
-    needsSlideAnimation ? 'dialog-root--mobile-slide' : '',
-    open ? 'dialog-root--open' : '',
-  ].filter(Boolean).join(' ');
-
-  const classes = [
-    'dialog',
-    maxWidth ? `dialog--max-${maxWidth}` : 'dialog--max-false',
-    fullWidth ? 'dialog--full-width' : '',
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && !disableEscapeKeyDown) {
-      e.preventDefault();
-      onClose(e as unknown as Event);
-      return;
-    }
-
-    if (e.key !== 'Tab') return;
-
-    const node = dialogRef.current;
-    if (!node) return;
-
-    const focusables = getFocusableElements(node);
-    if (focusables.length === 0) {
-      e.preventDefault();
-      node.focus();
-      return;
-    }
-
-    const currentIndex = focusables.indexOf(document.activeElement as HTMLElement);
-    const lastIndex = focusables.length - 1;
-
-    if (e.shiftKey) {
-      if (currentIndex <= 0) {
-        e.preventDefault();
-        focusables[lastIndex]?.focus();
-      }
-    } else {
-      if (currentIndex === lastIndex) {
-        e.preventDefault();
-        focusables[0]?.focus();
-      }
-    }
+  // Mapping maxWidth to tailwind classes
+  const maxWidthClasses = {
+    sm: 'sm:max-w-lg',
+    md: 'sm:max-w-2xl',
+    lg: 'sm:max-w-4xl',
+    false: 'sm:max-w-none',
   };
 
-  return createPortal(
-    <div className={rootClasses}>
-      <div
-        className="dialog-root__backdrop"
-        onClick={(e) => {
-          if (disableBackdropClick) return;
-          onClose(e);
+  return (
+    <ShadcnDialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <ShadcnDialog
+        open={open}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) onClose();
         }}
-      />
-
-      <div
-        className={classes}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={contentId}
-        tabIndex={-1}
-        ref={dialogRef}
-        onKeyDown={(e) => handleKeyDown(e as unknown as KeyboardEvent)}
-        onClick={(e) => e.stopPropagation()}
-        {...props}
       >
-        {(title || !hideCloseButton) && (
-          <div className="dialog__header">
-            {title && (
-              <div className="dialog__title" id={titleId}>
-                {title}
-              </div>
-            )}
-            {!hideCloseButton && (
-              <IconButton size="small" color="default" onClick={(e) => onClose(e)} title="닫기">
-                {isMobile && isMobileOverlay ? <IconChevronLeft size={24} /> : <IconX size={20} />}
-              </IconButton>
-            )}
+        <DialogContent
+          className={cn(
+            maxWidthClasses[maxWidth as keyof typeof maxWidthClasses],
+            fullWidth && "w-full",
+            className
+          )}
+          onPointerDownOutside={(e) => {
+            if (disableBackdropClick) e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            if (disableEscapeKeyDown) e.preventDefault();
+          }}
+          {...(props as any)}
+        >
+          {(title || !hideCloseButton) && (
+            <DialogHeader>
+              {title && (
+                <DialogTitle id={ariaLabelledby}>
+                  {title}
+                </DialogTitle>
+              )}
+            </DialogHeader>
+          )}
+          <div id={ariaDescribedby} className="py-4">
+            {children}
           </div>
-        )}
-
-        <div className="dialog__content" id={contentId}>
-          {children}
-        </div>
-
-        {actions && <div className="dialog__actions">{actions}</div>}
-      </div>
-    </div>,
-    document.body
+          {actions && (
+            <DialogFooter>
+              {actions}
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </ShadcnDialog>
+    </ShadcnDialog>
   );
 }
+
+// Fixed nested Dialog issue in implementation
+export function DialogWrapper({
+  open,
+  onClose,
+  title,
+  children,
+  actions,
+  maxWidth = 'sm',
+  fullWidth = false,
+  disableEscapeKeyDown = false,
+  disableBackdropClick = false,
+  hideCloseButton = false,
+  ariaLabelledby,
+  ariaDescribedby,
+  className = '',
+  ...props
+}: DialogProps) {
+  const maxWidthClasses = {
+    sm: 'sm:max-w-lg',
+    md: 'sm:max-w-2xl',
+    lg: 'sm:max-w-4xl',
+    false: 'sm:max-w-none',
+  };
+
+  return (
+    <ShadcnDialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent
+        className={cn(
+          maxWidthClasses[maxWidth as keyof typeof maxWidthClasses],
+          fullWidth && "w-full",
+          className
+        )}
+        onPointerDownOutside={(e) => {
+          if (disableBackdropClick) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (disableEscapeKeyDown) e.preventDefault();
+        }}
+        {...(props as any)}
+      >
+        {(title || !hideCloseButton) && (
+          <DialogHeader>
+            {title && (
+              <DialogTitle id={ariaLabelledby}>
+                {title}
+              </DialogTitle>
+            )}
+          </DialogHeader>
+        )}
+        <div id={ariaDescribedby} className="py-4">
+          {children}
+        </div>
+        {actions && (
+          <DialogFooter>
+            {actions}
+          </DialogFooter>
+        )}
+      </DialogContent>
+    </ShadcnDialog>
+  );
+}
+
+// Export the wrapper version as the main Dialog
+export { DialogWrapper as Dialog };

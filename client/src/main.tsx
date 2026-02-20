@@ -1,10 +1,11 @@
 import { render } from 'preact';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './app';
-import { AuthProvider } from '@/core/context/AuthContext';
-import { ToastProvider } from '@/core/context/ToastContext';
-import { ConfirmProvider } from '@/core/context/ConfirmContext';
+import { AuthProvider } from '@/core/context/AuthProvider';
+import { ToastProvider } from '@/core/context/ToastProvider';
+import { ConfirmProvider } from '@/core/context/ConfirmProvider';
 import { ThemeProvider } from '@/core/context/ThemeProvider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import './index.css';
 
 // Vite PWA 서비스 워커 등록 (Lifecycle 관리 자동화)
@@ -28,13 +29,15 @@ if ('requestIdleCallback' in window) {
 
 render(
   <ThemeProvider>
-    <ToastProvider>
-      <ConfirmProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </ConfirmProvider>
-    </ToastProvider>
+    <TooltipProvider>
+      <ToastProvider>
+        <ConfirmProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </ConfirmProvider>
+      </ToastProvider>
+    </TooltipProvider>
   </ThemeProvider>,
   document.getElementById('app')!,
 );

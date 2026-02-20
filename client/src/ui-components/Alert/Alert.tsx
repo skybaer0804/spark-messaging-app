@@ -1,6 +1,7 @@
 import { JSX } from 'preact';
 import { IconInfoCircle, IconCheck, IconAlertTriangle, IconAlertCircle, IconX } from '@tabler/icons-preact';
-import './Alert.scss';
+import { Alert as ShadcnAlert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 
 export interface AlertProps extends JSX.HTMLAttributes<HTMLDivElement> {
   severity?: 'success' | 'info' | 'warning' | 'error';
@@ -19,29 +20,36 @@ export function Alert({
   ...props
 }: AlertProps) {
   const defaultIcon = {
-    success: <IconCheck size={22} />,
-    info: <IconInfoCircle size={22} />,
-    warning: <IconAlertTriangle size={22} />,
-    error: <IconAlertCircle size={22} />,
+    success: <IconCheck className="h-4 w-4" />,
+    info: <IconInfoCircle className="h-4 w-4" />,
+    warning: <IconAlertTriangle className="h-4 w-4" />,
+    error: <IconAlertCircle className="h-4 w-4" />,
   };
 
-  const renderIcon = () => {
-    if (icon === false) return null;
-    if (icon) return <div className="alert__icon">{icon}</div>;
-    return <div className="alert__icon">{defaultIcon[severity]}</div>;
-  };
+  const shadcnVariant = severity === 'error' ? 'destructive' : severity;
 
   return (
-    <div className={`alert alert--${severity} alert--${variant} ${className}`} role="alert" {...props}>
-      {renderIcon()}
-      <div className="alert__message">{children}</div>
-      {onClose && (
-        <div className="alert__action">
-          <button className="alert__close-btn" onClick={onClose} aria-label="Close">
-            <IconX size={20} />
-          </button>
-        </div>
+    <ShadcnAlert
+      variant={shadcnVariant as any}
+      className={cn(
+        variant === 'outlined' ? 'border' : variant === 'filled' ? 'bg-primary text-primary-foreground' : '',
+        className
       )}
-    </div>
+      {...props}
+    >
+      {icon !== false && (icon || defaultIcon[severity])}
+      <AlertDescription className="flex items-center justify-between w-full">
+        <span>{children}</span>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="ml-auto rounded-md p-1 hover:bg-black/10 transition-colors"
+            aria-label="Close"
+          >
+            <IconX size={16} />
+          </button>
+        )}
+      </AlertDescription>
+    </ShadcnAlert>
   );
 }

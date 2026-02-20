@@ -1,8 +1,13 @@
 import { JSX } from 'preact';
 import { useMemo, useState } from 'preact/hooks';
-import { IconChevronDown } from '@tabler/icons-preact';
 import { useTheme } from '@/core/context/ThemeProvider';
-import './Accordion.scss';
+import {
+  Accordion as ShadcnAccordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import { cn } from '@/lib/utils';
 
 export type AccordionValue = string | number;
 
@@ -23,16 +28,10 @@ export interface AccordionProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>,
   disableGutters?: boolean;
 }
 
-const normalizeExpanded = (expanded: AccordionProps['expanded'], allowMultiple: boolean): AccordionValue[] => {
-  if (expanded == null) return [];
-  if (Array.isArray(expanded)) return allowMultiple ? expanded : expanded.slice(0, 1);
-  return [expanded];
-};
-
 export function Accordion({
   items,
   expanded,
-  defaultExpanded = null,
+  defaultExpanded,
   onChange,
   allowMultiple = false,
   ariaLabel = 'accordion',
@@ -41,88 +40,41 @@ export function Accordion({
   ...props
 }: AccordionProps) {
   const { theme, contrast } = useTheme();
-  const idPrefix = useMemo(() => `accordion-${Math.random().toString(36).slice(2, 9)}`, []);
 
-  const [uncontrolledExpanded, setUncontrolledExpanded] = useState<AccordionValue[]>(
-    normalizeExpanded(defaultExpanded, allowMultiple),
-  );
-
-  const currentExpanded = expanded !== undefined ? normalizeExpanded(expanded, allowMultiple) : uncontrolledExpanded;
-
-  const setExpanded = (next: AccordionValue[] | null, event: Event) => {
-    const normalized = next ?? [];
-    if (expanded === undefined) setUncontrolledExpanded(normalized);
-    onChange?.(allowMultiple ? normalized : normalized[0] ?? null, event);
-  };
-
-  const toggle = (value: AccordionValue, event: Event) => {
-    const isOpen = currentExpanded.includes(value);
-    if (allowMultiple) {
-      const next = isOpen ? currentExpanded.filter((v) => v !== value) : [...currentExpanded, value];
-      setExpanded(next, event);
-      return;
+  const handleValueChange = (val: string | string[]) => {
+    if (onChange) {
+      onChange(val as any, {} as any);
     }
-    setExpanded(isOpen ? [] : [value], event);
   };
 
-  const classes = [
-    'accordion',
-    disableGutters ? 'accordion--no-gutters' : '',
-    allowMultiple ? 'accordion--multiple' : 'accordion--single',
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const type = allowMultiple ? "multiple" : "single";
 
   return (
-    <div className={classes} data-theme={theme} data-contrast={contrast} aria-label={ariaLabel} {...props}>
-      {items.map((item, index) => {
-        const isOpen = currentExpanded.includes(item.value);
-        const isDisabled = !!item.disabled;
-        const summaryId = `${idPrefix}-summary-${index}`;
-        const detailsId = `${idPrefix}-details-${index}`;
-
-        return (
-          <div
-            key={String(item.value)}
-            className={[
-              'accordion__item',
-              isOpen ? 'accordion__item--expanded' : '',
-              isDisabled ? 'accordion__item--disabled' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          >
-            <button
-              type="button"
-              className="accordion__summary"
-              id={summaryId}
-              aria-expanded={isOpen}
-              aria-controls={detailsId}
-              disabled={isDisabled}
-              onClick={(e) => {
-                if (isDisabled) return;
-                toggle(item.value, e);
-              }}
-            >
-              <span className="accordion__summary-text">{item.summary}</span>
-              <span className="accordion__icon" aria-hidden="true">
-                <IconChevronDown size={18} />
-              </span>
-            </button>
-
-            <div
-              id={detailsId}
-              className="accordion__details"
-              role="region"
-              aria-labelledby={summaryId}
-              hidden={!isOpen}
-            >
-              {item.details}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+    <ShadcnAccordion
+      type={type as any}
+      value={expanded as any}
+      defaultValue={defaultExpanded as any}
+      onValueChange={handleValueChange}
+      className={cn("w-full", className)}
+      data-theme={theme}
+      data-contrast={contrast}
+      {...(props as any)}
+    >
+      {items.map((item) => (
+        <AccordionItem
+          key={item.value}
+          value={item.value.toString()}
+          disabled={item.disabled}
+          className={cn(disableGutters && "border-none")}
+        >
+          <AccordionTrigger className="hover:no-underline">
+            {item.summary}
+          </AccordionTrigger>
+          <AccordionContent>
+            {item.details}
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </ShadcnAccordion>
   );
 }

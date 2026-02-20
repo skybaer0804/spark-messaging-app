@@ -1,5 +1,7 @@
 import { JSX } from 'preact';
-import './Radio.scss';
+import { RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 export interface RadioProps extends Omit<JSX.HTMLAttributes<HTMLInputElement>, 'onChange'> {
   checked?: boolean;
@@ -25,30 +27,45 @@ export function Radio({
   className = '',
   ...props
 }: RadioProps) {
-  const handleChange = (e: Event) => {
-    if (disabled) return;
-    const target = e.target as HTMLInputElement;
-    onChange?.(target.checked, e);
+  const radioId = props.id || `radio-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Mapping color to tailwind classes
+  const colorClasses = {
+    primary: 'border-primary text-primary',
+    secondary: 'border-secondary text-secondary',
+    success: 'border-success text-success',
+    error: 'border-destructive text-destructive',
+    warning: 'border-warning text-warning',
+    info: 'border-info text-info',
+  };
+
+  // Mapping size to tailwind classes
+  const sizeClasses = {
+    small: 'h-4 w-4',
+    medium: 'h-5 w-5',
   };
 
   return (
-    <label className={`radio radio--${color} radio--${size} ${disabled ? 'radio--disabled' : ''} ${className}`}>
-      <span className="radio__input-wrapper">
-        <input
-          type="radio"
-          className="radio__input"
-          checked={checked}
-          disabled={disabled}
-          onChange={handleChange}
-          value={value}
-          name={name}
-          {...props}
-        />
-        <span className="radio__control">
-          <span className="radio__dot" />
-        </span>
-      </span>
-      {label && <span className="radio__label">{label}</span>}
-    </label>
+    <div className={cn("flex items-center space-x-2", className)}>
+      <RadioGroupItem
+        id={radioId}
+        value={value?.toString() || ''}
+        checked={checked}
+        disabled={disabled}
+        className={cn(colorClasses[color], sizeClasses[size])}
+        {...(props as any)}
+      />
+      {label && (
+        <Label
+          htmlFor={radioId}
+          className={cn(
+            "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+            size === 'small' ? 'text-xs' : 'text-sm'
+          )}
+        >
+          {label}
+        </Label>
+      )}
+    </div>
   );
 }

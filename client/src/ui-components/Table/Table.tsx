@@ -1,6 +1,15 @@
 import { JSX } from 'preact';
 import { useTheme } from '@/core/context/ThemeProvider';
-import './Table.scss';
+import {
+  Table as ShadcnTable,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { cn } from '@/lib/utils';
 
 export type TableAlign = 'left' | 'center' | 'right';
 
@@ -41,72 +50,57 @@ export function Table<Row>({
 }: TableProps<Row>) {
   const { theme, contrast } = useTheme();
 
-  const classes = [
-    'table',
-    stickyHeader ? 'table--sticky-header' : '',
-    striped ? 'table--striped' : '',
-    hover ? 'table--hover' : '',
-    `table--${size}`,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
-
   return (
-    <div className={classes} data-theme={theme} data-contrast={contrast} {...props}>
-      <div className="table__container" role="region" aria-label="table">
-        <table className="table__table">
-          {caption && <caption className="table__caption">{caption}</caption>}
-          <thead className="table__head">
-            <tr className="table__row table__row--head">
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  className={`table__cell table__cell--head table__cell--align-${col.align ?? 'left'}`}
-                  style={{ width: col.width, minWidth: col.minWidth }}
-                  scope="col"
+    <div className={cn("w-full", className)} data-theme={theme} data-contrast={contrast} {...(props as any)}>
+      <ShadcnTable className={cn(stickyHeader && "relative")}>
+        {caption && <TableCaption>{caption}</TableCaption>}
+        <TableHeader className={cn(stickyHeader && "sticky top-0 z-10 bg-background")}>
+          <TableRow>
+            {columns.map((col) => (
+              <TableHead
+                key={col.key}
+                className={cn(
+                  col.align === 'center' ? "text-center" : col.align === 'right' ? "text-right" : "text-left"
+                )}
+                style={{ width: col.width, minWidth: col.minWidth }}
+              >
+                {col.header}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                {emptyText}
+              </TableCell>
+            </TableRow>
+          ) : (
+            rows.map((row, rowIndex) => {
+              const key = rowKey?.(row, rowIndex) ?? rowIndex;
+              return (
+                <TableRow 
+                  key={String(key)}
+                  className={cn(striped && rowIndex % 2 === 1 && "bg-muted/50")}
                 >
-                  {col.header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          <tbody className="table__body">
-            {rows.length === 0 ? (
-              <tr className="table__row table__row--empty">
-                <td className="table__cell table__cell--empty" colSpan={columns.length}>
-                  {emptyText}
-                </td>
-              </tr>
-            ) : (
-              rows.map((row, rowIndex) => {
-                const key = rowKey?.(row, rowIndex) ?? rowIndex;
-                return (
-                  <tr key={String(key)} className="table__row">
-                    {columns.map((col) => (
-                      <td
-                        key={col.key}
-                        className={`table__cell table__cell--align-${col.align ?? 'left'}`}
-                        style={{ width: col.width, minWidth: col.minWidth }}
-                      >
-                        {col.render?.(row, rowIndex) ?? col.value?.(row, rowIndex) ?? (row as any)?.[col.key]}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                  {columns.map((col) => (
+                    <TableCell
+                      key={col.key}
+                      className={cn(
+                        col.align === 'center' ? "text-center" : col.align === 'right' ? "text-right" : "text-left"
+                      )}
+                      style={{ width: col.width, minWidth: col.minWidth }}
+                    >
+                      {col.render?.(row, rowIndex) ?? col.value?.(row, rowIndex) ?? (row as any)?.[col.key]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
+            })
+          )}
+        </TableBody>
+      </ShadcnTable>
     </div>
   );
 }
-
-
-
-
-
-
-
