@@ -2,7 +2,15 @@ import { JSX } from 'preact';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { IconCircleCheckFilled } from '@tabler/icons-preact';
-import './Select.scss';
+import {
+  Select as ShadcnSelect,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 export interface SelectOption {
   value: string | number;
@@ -18,48 +26,73 @@ export interface SelectProps extends Omit<JSX.HTMLAttributes<HTMLSelectElement>,
   value?: string | number;
   disabled?: boolean;
   isValid?: boolean;
-  onChange?: JSX.GenericEventHandler<HTMLSelectElement>;
+  onChange?: (e: any) => void; // modified to be more flexible
 }
 
 const ValidationBadge = ({ isValid }: { isValid: boolean }) => (
-  <span style={{ 
-    color: isValid ? 'var(--color-status-success)' : 'var(--color-text-tertiary)',
-    display: 'inline-flex',
-    alignItems: 'center',
-    marginLeft: '4px'
-  }}>
+  <span className={cn(
+    "inline-flex items-center ml-1",
+    isValid ? "text-[var(--color-status-success)]" : "text-[var(--color-text-tertiary)]"
+  )}>
     <IconCircleCheckFilled size={14} />
   </span>
 );
 
-export function Select({ label, options, error, helperText, fullWidth = true, isValid = false, className = '', ...props }: SelectProps) {
+export function Select({
+  label,
+  options,
+  error,
+  helperText,
+  fullWidth = true,
+  isValid = false,
+  className = '',
+  value,
+  onChange,
+  disabled,
+  ...props
+}: SelectProps) {
   const { theme, contrast } = useTheme();
   const selectId = props.id || `select-${Math.random().toString(36).substr(2, 9)}`;
 
-  const wrapperClasses = ['select-group', fullWidth ? 'fullWidth' : '', className].filter(Boolean).join(' ');
-  const selectClasses = ['select', error ? 'error' : ''].filter(Boolean).join(' ');
-
   return (
-    <div className={wrapperClasses} data-theme={theme} data-contrast={contrast}>
+    <div className={cn("grid w-full items-center gap-1.5", fullWidth ? "w-full" : "w-auto", className)} data-theme={theme} data-contrast={contrast}>
       {label && (
-        <label htmlFor={selectId} className="select-label">
-          <Flex align="center" gap="xs">
-            <span>{label}</span>
-            <ValidationBadge isValid={isValid} />
-          </Flex>
-        </label>
+        <Label htmlFor={selectId} className="flex items-center gap-1">
+          <span>{label}</span>
+          <ValidationBadge isValid={isValid} />
+        </Label>
       )}
-      <div className="select-wrapper">
-        <select id={selectId} className={selectClasses} {...props}>
+      <ShadcnSelect
+        value={value?.toString()}
+        onValueChange={(val) => {
+          if (onChange) {
+            onChange({ target: { value: val } } as any);
+          }
+        }}
+        disabled={disabled}
+      >
+        <SelectTrigger
+          id={selectId}
+          className={cn(
+            error && "border-destructive focus:ring-destructive",
+            !fullWidth && "w-auto"
+          )}
+        >
+          <SelectValue placeholder="선택해주세요" />
+        </SelectTrigger>
+        <SelectContent>
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
+            <SelectItem key={option.value} value={option.value.toString()}>
               {option.label}
-            </option>
+            </SelectItem>
           ))}
-        </select>
-        {/* Custom arrow icon can be added here if needed via CSS or SVG */}
-      </div>
-      {helperText && <span className={`select-helper-text ${error ? 'error' : ''}`}>{helperText}</span>}
+        </SelectContent>
+      </ShadcnSelect>
+      {helperText && (
+        <p className={cn("text-xs", error ? "text-destructive" : "text-muted-foreground")}>
+          {helperText}
+        </p>
+      )}
     </div>
   );
 }

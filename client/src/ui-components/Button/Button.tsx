@@ -1,6 +1,7 @@
 import { JSX } from 'preact';
 import { useTheme } from '@/core/context/ThemeProvider';
-import './Button.scss';
+import { Button as ShadcnButton } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export interface ButtonProps extends JSX.HTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'text';
@@ -21,11 +22,22 @@ export function Button({
 }: ButtonProps) {
   const { theme, contrast } = useTheme();
 
-  const classes = ['button', variant, size, fullWidth ? 'fullWidth' : '', className].filter(Boolean).join(' ');
+  // shadcn variant mapping
+  const shadcnVariant = variant === 'primary' ? 'default' : variant === 'text' ? 'ghost' : 'secondary';
+  
+  // shadcn size mapping
+  const shadcnSize = size === 'lg' ? 'lg' : size === 'sm' ? 'sm' : 'default';
 
   return (
-    <button className={classes} data-theme={theme} data-contrast={contrast} {...props}>
+    <ShadcnButton
+      variant={shadcnVariant as any}
+      size={shadcnSize as any}
+      className={cn(fullWidth && 'w-full', className)}
+      data-theme={theme}
+      data-contrast={contrast}
+      {...props}
+    >
       {children}
-    </button>
+    </ShadcnButton>
   );
 }

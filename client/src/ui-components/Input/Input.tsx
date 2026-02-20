@@ -2,7 +2,9 @@ import { JSX } from 'preact';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { Flex } from '@/ui-components/Layout/Flex';
 import { IconCircleCheckFilled } from '@tabler/icons-preact';
-import './Input.scss';
+import { Input as ShadcnInput } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 export interface InputProps extends Omit<JSX.HTMLAttributes<HTMLInputElement | HTMLTextAreaElement>, 'size'> {
   label?: preact.ComponentChildren;
@@ -22,12 +24,10 @@ export interface InputProps extends Omit<JSX.HTMLAttributes<HTMLInputElement | H
 }
 
 const ValidationBadge = ({ isValid }: { isValid: boolean }) => (
-  <span style={{ 
-    color: isValid ? 'var(--color-status-success)' : 'var(--color-text-tertiary)',
-    display: 'inline-flex',
-    alignItems: 'center',
-    marginLeft: '4px'
-  }}>
+  <span className={cn(
+    "inline-flex items-center ml-1",
+    isValid ? "text-[var(--color-status-success)]" : "text-[var(--color-text-tertiary)]"
+  )}>
     <IconCircleCheckFilled size={14} />
   </span>
 );
@@ -47,38 +47,54 @@ export function Input({
   const { theme, contrast } = useTheme();
   const inputId = props.id || `input-${Math.random().toString(36).substr(2, 9)}`;
 
-  const wrapperClasses = ['input-group', fullWidth ? 'fullWidth' : '', className].filter(Boolean).join(' ');
-
-  const inputClasses = [
-    'input',
-    multiline ? 'input-textarea' : '',
-    error ? 'error' : '',
-    startAdornment ? 'has-start' : '',
-    endAdornment ? 'has-end' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
   return (
-    <div className={wrapperClasses} data-theme={theme} data-contrast={contrast}>
+    <div className={cn("grid w-full items-center gap-1.5", fullWidth ? "w-full" : "w-auto", className)} data-theme={theme} data-contrast={contrast}>
       {label && (
-        <label htmlFor={inputId} className="input-label">
-          <Flex align="center" gap="xs">
-            {typeof label === 'string' ? <span>{label}</span> : label}
-            <ValidationBadge isValid={isValid} />
-          </Flex>
-        </label>
+        <Label htmlFor={inputId} className="flex items-center gap-1">
+          {typeof label === 'string' ? <span>{label}</span> : label}
+          <ValidationBadge isValid={isValid} />
+        </Label>
       )}
-      <div className="input-container">
-        {startAdornment && <div className="input-adornment start">{startAdornment}</div>}
-        {multiline ? (
-          <textarea id={inputId} className={inputClasses} {...(props as JSX.HTMLAttributes<HTMLTextAreaElement>)} />
-        ) : (
-          <input id={inputId} className={inputClasses} {...(props as JSX.HTMLAttributes<HTMLInputElement>)} />
+      <div className="relative flex items-center">
+        {startAdornment && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            {startAdornment}
+          </div>
         )}
-        {endAdornment && <div className="input-adornment end">{endAdornment}</div>}
+        {multiline ? (
+          <textarea
+            id={inputId}
+            className={cn(
+              "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+              error && "border-destructive focus-visible:ring-destructive",
+              startAdornment && "pl-10",
+              endAdornment && "pr-10",
+              className
+            )}
+            {...(props as any)}
+          />
+        ) : (
+          <ShadcnInput
+            id={inputId}
+            className={cn(
+              error && "border-destructive focus-visible:ring-destructive",
+              startAdornment && "pl-10",
+              endAdornment && "pr-10"
+            )}
+            {...(props as any)}
+          />
+        )}
+        {endAdornment && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            {endAdornment}
+          </div>
+        )}
       </div>
-      {helperText && <span className={`input-helper-text ${error ? 'error' : ''}`}>{helperText}</span>}
+      {helperText && (
+        <p className={cn("text-xs", error ? "text-destructive" : "text-muted-foreground")}>
+          {helperText}
+        </p>
+      )}
     </div>
   );
 }

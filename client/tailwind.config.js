@@ -41,6 +41,18 @@ export default {
           DEFAULT: "var(--color-bg-secondary, #f1f5f9)",
           foreground: "var(--color-text-primary, #0f172a)",
         },
+        success: {
+          DEFAULT: "var(--color-status-success, #10b981)",
+          foreground: "#ffffff",
+        },
+        warning: {
+          DEFAULT: "var(--color-status-warning, #f59e0b)",
+          foreground: "#ffffff",
+        },
+        info: {
+          DEFAULT: "var(--color-status-info, #3b82f6)",
+          foreground: "#ffffff",
+        },
       },
       borderRadius: {
         lg: "var(--primitive-radius-lg, 0.5rem)",

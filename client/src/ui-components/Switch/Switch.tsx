@@ -1,5 +1,6 @@
 import { JSX } from 'preact';
-import './Switch.scss';
+import { Switch as ShadcnSwitch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 
 export interface SwitchProps extends Omit<JSX.HTMLAttributes<HTMLInputElement>, 'onChange'> {
   checked?: boolean;
@@ -20,26 +21,33 @@ export function Switch({
   className = '',
   ...props
 }: SwitchProps) {
-  const handleChange = (e: Event) => {
-    if (disabled) return;
-    const target = e.target as HTMLInputElement;
-    onChange?.(target.checked, e);
+  // Color mapping
+  const colorClasses = {
+    primary: 'data-[state=checked]:bg-primary',
+    secondary: 'data-[state=checked]:bg-secondary',
+    success: 'data-[state=checked]:bg-success',
+    error: 'data-[state=checked]:bg-destructive',
+    warning: 'data-[state=checked]:bg-warning',
+    info: 'data-[state=checked]:bg-info',
+  };
+
+  // Size mapping
+  const sizeClasses = {
+    small: 'h-5 w-9 scale-75',
+    medium: 'h-6 w-11',
   };
 
   return (
-    <span className={`switch switch--${color} switch--${size} ${disabled ? 'switch--disabled' : ''} ${className}`}>
-      <input
-        type="checkbox"
-        className="switch__input"
-        checked={checked}
-        defaultChecked={defaultChecked}
-        disabled={disabled}
-        onChange={handleChange}
-        {...props}
-      />
-      <span className="switch__track">
-        <span className="switch__thumb" />
-      </span>
-    </span>
+    <ShadcnSwitch
+      checked={checked}
+      disabled={disabled}
+      onCheckedChange={(checkedState) => {
+        if (onChange) {
+          onChange(checkedState, {} as any);
+        }
+      }}
+      className={cn(colorClasses[color], sizeClasses[size], className)}
+      {...(props as any)}
+    />
   );
 }
