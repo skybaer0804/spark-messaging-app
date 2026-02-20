@@ -6,7 +6,7 @@ import { IconX } from "@tabler/icons-preact"
 
 import { cn } from "@/lib/utils"
 
-const Dialog = DialogPrimitive.Root
+const DialogRoot = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger
 
@@ -107,6 +107,58 @@ const DialogDescription = React.forwardRef<
   />
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
+
+export interface DialogProps extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root> {
+  open?: boolean;
+  onClose?: () => void;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  actions?: React.ReactNode;
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  fullWidth?: boolean;
+  className?: string;
+}
+
+const Dialog = ({ 
+  open, 
+  onClose, 
+  title, 
+  description, 
+  actions, 
+  maxWidth, 
+  fullWidth, 
+  className,
+  children,
+  ...props 
+}: DialogProps) => {
+  if (open !== undefined || title || actions) {
+    const maxWidthClasses = {
+      xs: 'max-w-xs',
+      sm: 'max-w-sm',
+      md: 'max-w-md',
+      lg: 'max-w-lg',
+      xl: 'max-w-xl',
+    };
+
+    return (
+      <DialogRoot open={open} onOpenChange={(val) => !val && onClose?.()} {...props}>
+        <DialogContent className={cn(maxWidth && maxWidthClasses[maxWidth], fullWidth && "w-full", className)}>
+          {(title || description) && (
+            <DialogHeader>
+              {title && <DialogTitle>{title}</DialogTitle>}
+              {description && <DialogDescription>{description}</DialogDescription>}
+            </DialogHeader>
+          )}
+          <div className="py-4">
+            {children}
+          </div>
+          {actions && <DialogFooter>{actions}</DialogFooter>}
+        </DialogContent>
+      </DialogRoot>
+    )
+  }
+  return <DialogRoot {...props}>{children}</DialogRoot>
+}
 
 export {
   Dialog,

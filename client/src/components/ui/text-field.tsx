@@ -2,7 +2,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Input as ShadcnInput } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { CircleCheckFilled } from "lucide-preact"
+import { IconCircleCheckFilled } from "@tabler/icons-preact"
 
 export interface TextFieldProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement> {
   label?: React.ReactNode;
@@ -21,7 +21,7 @@ const ValidationBadge = ({ isValid }: { isValid: boolean }) => (
     "inline-flex items-center ml-1",
     isValid ? "text-success" : "text-muted-foreground"
   )}>
-    <CircleCheckFilled size={14} />
+    <IconCircleCheckFilled size={14} />
   </span>
 );
 

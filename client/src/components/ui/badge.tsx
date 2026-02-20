@@ -29,11 +29,46 @@ const badgeVariants = cva(
 
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+    VariantProps<typeof badgeVariants> {
+  badgeContent?: React.ReactNode;
+  color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info' | 'default';
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({ className, variant, badgeContent, color, children, ...props }: BadgeProps) {
+  const colorMap = {
+    primary: 'default',
+    secondary: 'secondary',
+    success: 'success',
+    error: 'destructive',
+    warning: 'warning',
+    info: 'outline',
+    default: 'default',
+  };
+
+  const finalVariant = (color ? colorMap[color] : variant) as any;
+
+  if (badgeContent !== undefined) {
+    return (
+      <div className="relative inline-flex">
+        {children}
+        <div 
+          className={cn(
+            badgeVariants({ variant: finalVariant }),
+            "absolute -top-2 -right-2 min-w-[1.25rem] h-5 px-1 flex items-center justify-center text-[10px] border-2 border-background",
+            className
+          )}
+          {...props}
+        >
+          {badgeContent}
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <div className={cn(badgeVariants({ variant: finalVariant }), className)} {...props}>
+      {children}
+    </div>
   )
 }
 

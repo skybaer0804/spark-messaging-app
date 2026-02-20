@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from 'preact/hooks';
 import { memo } from 'preact/compat';
-import { IconSparkles, IconUser, IconPalette } from '@tabler/icons-preact';
+import { IconSparkles, IconUser } from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes, type AppRouteNode } from '@/routes/appRoutes';
 import { currentWorkspaceId, setCurrentWorkspaceId, totalUnreadCount, workspacesList } from '@/stores/chatRoomsStore';
@@ -11,29 +11,31 @@ import { Avatar } from '@/components/ui/avatar';
 import './Sidebar.scss';
 
 // v2.4.0: 뱃지 렌더링 최적화를 위한 개별 컴포넌트 분리
-const NavItem = memo(({ route, isActive, onClick }: { route: AppRouteNode; isActive: boolean; onClick: () => void }) => {
-  const isChat = route.id === 'chatapp';
-  const unread = totalUnreadCount.value;
+const NavItem = memo(
+  ({ route, isActive, onClick }: { route: AppRouteNode; isActive: boolean; onClick: () => void }) => {
+    const isChat = route.id === 'chatapp';
+    const unread = totalUnreadCount.value;
 
-  return (
-    <button
-      type="button"
-      className={`lnb__item ${isActive ? 'lnb__item--active' : ''}`}
-      onClick={onClick}
-      title={route.label}
-    >
-      <div className="lnb__item-icon">
-        {isChat && unread > 0 ? (
-          <Badge badgeContent={unread} color="error">
-            {route.icon}
-          </Badge>
-        ) : (
-          route.icon
-        )}
-      </div>
-    </button>
-  );
-});
+    return (
+      <button
+        type="button"
+        className={`lnb__item ${isActive ? 'lnb__item--active' : ''}`}
+        onClick={onClick}
+        title={route.label}
+      >
+        <div className="lnb__item-icon">
+          {isChat && unread > 0 ? (
+            <Badge badgeContent={unread} color="error">
+              {route.icon}
+            </Badge>
+          ) : (
+            route.icon
+          )}
+        </div>
+      </button>
+    );
+  },
+);
 
 export const Sidebar = memo(() => {
   const { pathname, navigate } = useRouterState();
@@ -147,4 +149,3 @@ export const Sidebar = memo(() => {
     </aside>
   );
 });
-
