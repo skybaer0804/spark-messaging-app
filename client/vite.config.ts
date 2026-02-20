@@ -135,6 +135,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'react': 'preact/compat',
+      'react-dom': 'preact/compat',
+      'react-dom/test-utils': 'preact/compat',
+      'react/jsx-runtime': 'preact/jsx-runtime',
     },
   },
   optimizeDeps: {
