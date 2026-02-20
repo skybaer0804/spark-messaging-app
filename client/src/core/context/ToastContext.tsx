@@ -1,81 +1,79 @@
 import { createContext } from 'preact';
-import { useContext, useState, useCallback, useEffect } from 'preact/hooks';
-import { ToastContainer } from '@/components/Toast/ToastContainer';
-import { ToastProps, ToastAction } from '@/components/Toast/Toast';
+import { useContext, useEffect } from 'preact/hooks';
+import { toast, Toaster } from 'sonner';
+
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
+export interface ToastProps {
+  type?: 'success' | 'error' | 'info' | 'warning';
+}
 
 interface ToastContextType {
-  showToast: (message: string, type?: ToastProps['type'], duration?: number, action?: ToastAction) => number;
-  showSuccess: (message: string, duration?: number) => number;
-  showError: (message: string, duration?: number) => number;
-  showInfo: (message: string, duration?: number, action?: ToastAction) => number;
-  showWarning: (message: string, duration?: number) => number;
-  hideToast: (id: number) => void;
+  showToast: (message: string, type?: ToastProps['type'], duration?: number, action?: ToastAction) => string | number;
+  showSuccess: (message: string, duration?: number) => string | number;
+  showError: (message: string, duration?: number) => string | number;
+  showInfo: (message: string, duration?: number, action?: ToastAction) => string | number;
+  showWarning: (message: string, duration?: number) => string | number;
+  hideToast: (id: string | number) => void;
 }
 
 const ToastContext = createContext<ToastContextType | null>(null);
-
-let toastIdCounter = 0;
 
 /**
  * Toast Provider 컴포넌트
  */
 export function ToastProvider({ children }: { children: any }) {
-  const [toasts, setToasts] = useState<(Omit<ToastProps, 'onClose'> & { id: number })[]>([]);
+  const showToast = (
+    message: string,
+    type: ToastProps['type'] = 'info',
+    duration = 3000,
+    action: ToastAction | undefined = undefined,
+  ) => {
+    const options = {
+      duration,
+      action: action
+        ? {
+            label: action.label,
+            onClick: action.onClick,
+          }
+        : undefined,
+    };
 
-  const showToast = useCallback(
-    (
-      message: string,
-      type: ToastProps['type'] = 'info',
-      duration = 3000,
-      action: ToastAction | undefined = undefined,
-    ) => {
-      const id = ++toastIdCounter;
-      const newToast = {
-        id,
-        message,
-        type,
-        duration,
-        action,
-        isOpen: true,
-      };
+    switch (type) {
+      case 'success':
+        return toast.success(message, options);
+      case 'error':
+        return toast.error(message, options);
+      case 'warning':
+        return toast.warning(message, options);
+      case 'info':
+      default:
+        return toast(message, options);
+    }
+  };
 
-      setToasts((prev) => [...prev, newToast]);
-      return id;
-    },
-    [],
-  );
+  const hideToast = (id: string | number) => {
+    toast.dismiss(id);
+  };
 
-  const hideToast = useCallback((id: number) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  }, []);
+  const showSuccess = (message: string, duration?: number) => {
+    return showToast(message, 'success', duration);
+  };
 
-  const showSuccess = useCallback(
-    (message: string, duration?: number) => {
-      return showToast(message, 'success', duration);
-    },
-    [showToast],
-  );
+  const showError = (message: string, duration?: number) => {
+    return showToast(message, 'error', duration);
+  };
 
-  const showError = useCallback(
-    (message: string, duration?: number) => {
-      return showToast(message, 'error', duration);
-    },
-    [showToast],
-  );
+  const showInfo = (message: string, duration?: number, action?: ToastAction) => {
+    return showToast(message, 'info', duration, action);
+  };
 
-  const showInfo = useCallback(
-    (message: string, duration?: number, action?: ToastAction) => {
-      return showToast(message, 'info', duration, action);
-    },
-    [showToast],
-  );
-
-  const showWarning = useCallback(
-    (message: string, duration?: number) => {
-      return showToast(message, 'warning', duration);
-    },
-    [showToast],
-  );
+  const showWarning = (message: string, duration?: number) => {
+    return showToast(message, 'warning', duration);
+  };
 
   // 전역 API 에러 및 알림 이벤트 리스너
   useEffect(() => {
@@ -108,12 +106,12 @@ export function ToastProvider({ children }: { children: any }) {
       window.removeEventListener('api-error', handleApiError);
       window.removeEventListener('api-info', handleApiInfo);
     };
-  }, [showError, showInfo]);
+  }, []);
 
   return (
     <ToastContext.Provider value={{ showToast, showSuccess, showError, showInfo, showWarning, hideToast }}>
       {children}
-      <ToastContainer toasts={toasts} onClose={hideToast} />
+      <Toaster richColors position="top-center" />
     </ToastContext.Provider>
   );
 }
