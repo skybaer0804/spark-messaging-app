@@ -1,5 +1,5 @@
-import { Accordion } from '@/ui-components/Accordion/Accordion';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Accordion } from '@/components/ui/accordion';
+import { Typography } from '@/components/ui/typography';
 import type { DesignSystemExampleDefinition } from './types';
 
 const exampleData = {
@@ -10,7 +10,7 @@ const exampleData = {
   ] as const,
 };
 
-const usageCode = `import { Accordion } from '@/ui-components/Accordion/Accordion';
+const usageCode = `import { Accordion } from '@/components/ui/accordion';
 
 <Accordion
   allowMultiple

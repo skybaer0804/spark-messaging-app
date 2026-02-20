@@ -1,9 +1,8 @@
 import { useState } from 'preact/hooks';
-import { Dialog } from '@/ui-components/Dialog/Dialog';
-import { Box } from '@/ui-components/Layout/Box';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Button } from '@/ui-components/Button/Button';
-import { Flex } from '@/ui-components/Layout/Flex';
+import { Dialog } from '@/components/ui/dialog';
+import { Box, Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Button } from '@/components/ui/button';
 import { chatApi } from '@/core/api/ApiService';
 import { useToast } from '@/core/context/ToastContext';
 import type { Message, ChatRoom, ChatUser } from '../types';

@@ -1,7 +1,5 @@
-import { Box } from '@/ui-components/Layout/Box';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Box, Flex, Stack } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
 import { IconMessageCircle, IconRocket } from '@tabler/icons-preact';
 
 export const ChatEmptyState = () => (

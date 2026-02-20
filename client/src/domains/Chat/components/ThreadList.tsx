@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Box } from '@/ui-components/Layout/Box';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { List, ListItem, ListItemText, ListItemAvatar } from '@/ui-components/List/List';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
-import { Flex } from '@/ui-components/Layout/Flex';
+import { Box, Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { List, ListItem, ListItemText, ListItemAvatar } from '@/components/ui/list';
+import { Avatar } from '@/components/ui/avatar';
 import { chatApi } from '@/core/api/ApiService';
 import { formatTimestamp } from '@/core/utils/messageUtils';
 import { useChat } from '../context/ChatContext';

@@ -1,8 +1,7 @@
 import { useMemo } from 'preact/hooks';
-import { Grid } from '@/ui-components/Layout/Grid';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Button } from '@/ui-components/Button/Button';
+import { Grid, Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Button } from '@/components/ui/button';
 import { IconHash, IconEdit, IconTrash } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
 import { DirectoryItemCard } from '../DirectoryItemCard';

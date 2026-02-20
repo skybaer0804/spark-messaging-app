@@ -1,6 +1,6 @@
-import { Badge } from '@/ui-components/Badge/Badge';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Badge } from '@/components/ui/badge';
+import { Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
 import { IconMail, IconBell } from '@tabler/icons-preact';
 import type { DesignSystemExampleDefinition } from './types';
 
@@ -9,7 +9,7 @@ const exampleData = {
   total: 120,
 };
 
-const usageCode = `import { Badge } from '@/ui-components/Badge/Badge';
+const usageCode = `import { Badge } from '@/components/ui/badge';
 import { IconMail } from '@tabler/icons-preact';
 
 <Badge badgeContent={4} color="error">

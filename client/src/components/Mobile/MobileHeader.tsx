@@ -1,9 +1,9 @@
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Flex, Box } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
 import { IconMenu2 } from '@tabler/icons-preact';
 import { useSidebarLayout } from '@/layouts/SidebarLayout/SidebarLayoutContext';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Paper } from '@/ui-components/Paper/Paper';
+import { IconButton } from '@/components/ui/icon-button';
+import { Paper } from '@/components/ui/paper';
 import { useRouterState } from '@/routes/RouterState';
 import { findRouteTitleByPath } from '@/routes/appRoutes';
 import { useTheme } from '@/core/context/ThemeProvider';

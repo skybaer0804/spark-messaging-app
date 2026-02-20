@@ -1,7 +1,7 @@
 import { memo, useState } from 'preact/compat';
-import { Box } from '@/ui-components/Layout/Box';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { IconButton } from '@/ui-components/Button/IconButton';
+import { Box } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { IconButton } from '@/components/ui/icon-button';
 import { IconDownload, IconPhotoOff } from '@tabler/icons-preact';
 import { Message } from '../../types';
 

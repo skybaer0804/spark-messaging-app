@@ -1,5 +1,4 @@
-import { Box } from '@/ui-components/Layout/Box';
-import { Flex } from '@/ui-components/Layout/Flex';
+import { Box, Flex } from '@/components/ui/layout';
 import { IconMessageCircle2, IconShare } from '@tabler/icons-preact';
 import type { Message } from '../types';
 

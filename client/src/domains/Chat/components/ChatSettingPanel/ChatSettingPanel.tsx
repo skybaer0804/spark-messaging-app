@@ -1,10 +1,9 @@
-import { Box } from '@/ui-components/Layout/Box';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Button } from '@/ui-components/Button/Button';
-import { Select } from '@/ui-components/Select/Select';
-import { IconButton } from '@/ui-components/Button/IconButton';
+import { Box, Stack } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Paper } from '@/components/ui/paper';
+import { Button } from '@/components/ui/button';
+import { Select } from '@/components/ui/select';
+import { IconButton } from '@/components/ui/icon-button';
 import { IconChevronLeft, IconX } from '@tabler/icons-preact';
 import { useChatNotificationSettings, type NotificationMode } from './hooks/useChatNotificationSettings';
 import type { ChatRoom } from '../../types';

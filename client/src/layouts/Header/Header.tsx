@@ -1,11 +1,11 @@
 import './Header.scss';
 import { useState } from 'preact/hooks';
 import { useTheme } from '@/core/context/ThemeProvider';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { IconButton } from '@/components/ui/icon-button';
+import { Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
 import { ThemeCustomization } from '@/components/ThemeCustomization/ThemeCustomization';
-import { Select, SelectOption } from '@/ui-components/Select/Select';
+import { Select, SelectOption } from '@/components/ui/select';
 import {
   IconMoon,
   IconSun,
@@ -20,8 +20,8 @@ import {
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes } from '@/routes/appRoutes';
 import { useAuth } from '@/core/hooks/useAuth';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { List, ListItem, ListItemText } from '@/ui-components/List/List';
+import { Paper } from '@/components/ui/paper';
+import { List, ListItem, ListItemText } from '@/components/ui/list';
 
 interface HeaderProps {
   title: string;

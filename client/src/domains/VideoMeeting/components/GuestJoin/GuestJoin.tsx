@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'preact/hooks';
 import { videoMeetingApi } from '@/core/api/ApiService';
-import { Box } from '@/ui-components/Layout/Box';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Input } from '@/ui-components/Input/Input';
-import { Button } from '@/ui-components/Button/Button';
-import { Paper } from '@/ui-components/Paper/Paper';
+import { Box, Stack } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { TextField as Input } from '@/components/ui/text-field';
+import { Button } from '@/components/ui/button';
+import { Paper } from '@/components/ui/paper';
 import { IconLock, IconUser, IconVideo } from '@tabler/icons-preact';
 import { useToast } from '@/core/context/ToastContext';
 import { route } from 'preact-router';

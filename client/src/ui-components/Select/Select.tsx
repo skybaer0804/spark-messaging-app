@@ -1,6 +1,6 @@
 import { JSX } from 'preact';
 import { useTheme } from '@/core/context/ThemeProvider';
-import { Flex } from '@/ui-components/Layout/Flex';
+import { Flex } from '@/components/ui/layout';
 import { IconCircleCheckFilled } from '@tabler/icons-preact';
 import {
   Select as ShadcnSelect,

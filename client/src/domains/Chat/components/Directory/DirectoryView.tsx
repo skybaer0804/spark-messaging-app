@@ -1,10 +1,8 @@
 import { useState } from 'preact/hooks';
-import { Box } from '@/ui-components/Layout/Box';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Button } from '@/ui-components/Button/Button';
-import { IconButton } from '@/ui-components/Button/IconButton';
+import { Box, Flex, Stack } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import {
   IconSearch,
   IconCopy,
@@ -16,9 +14,9 @@ import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
 import { useConfirm } from '@/core/context/ConfirmContext';
 import { useChat } from '../../context/ChatContext';
-import { Dialog } from '@/ui-components/Dialog/Dialog';
-import { Input } from '@/ui-components/Input/Input';
-import { Tabs, TabsItem } from '@/ui-components/Tabs/Tabs';
+import { Dialog } from '@/components/ui/dialog';
+import { TextField as Input } from '@/components/ui/text-field';
+import { Tabs, TabsItem } from '@/components/ui/tabs';
 import { DialogChatTeam } from '../DialogChatTeam';
 import { DialogChatGroup } from '../DialogChatGroup';
 import { DialogChatDiscussion } from '../DialogChatDiscussion';

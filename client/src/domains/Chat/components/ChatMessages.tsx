@@ -1,8 +1,7 @@
 import { useRef, useEffect, useState } from 'preact/hooks';
 import { memo } from 'preact/compat';
-import { Box } from '@/ui-components/Layout/Box';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Box, Stack } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
 import { IconArrowDown } from '@tabler/icons-preact';
 import { ChatMessageItem } from './ChatMessageItem';
 import { DateDivider } from './DateDivider/DateDivider';

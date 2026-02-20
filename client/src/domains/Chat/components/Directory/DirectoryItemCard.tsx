@@ -1,7 +1,6 @@
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Paper } from '@/components/ui/paper';
+import { Flex, Stack } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
 import { IconLock } from '@tabler/icons-preact';
 
 interface DirectoryItemCardProps {

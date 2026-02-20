@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Box } from '@/ui-components/Layout/Box';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { IconButton } from '@/ui-components/Button/IconButton';
+import { Box } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Paper } from '@/components/ui/paper';
+import { IconButton } from '@/components/ui/icon-button';
 import { IconChevronLeft, IconX } from '@tabler/icons-preact';
 import { ThreadList } from './ThreadList';
 import { ThreadDetail } from './ThreadDetail';

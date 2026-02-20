@@ -1,7 +1,6 @@
-import { Box } from '@/ui-components/Layout/Box';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Box, Flex } from '@/components/ui/layout';
+import { Paper } from '@/components/ui/paper';
+import { Typography } from '@/components/ui/typography';
 import { formatDate } from '@/core/utils/messageUtils';
 import './DateDivider.scss';
 

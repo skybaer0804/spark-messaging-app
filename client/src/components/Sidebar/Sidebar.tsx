@@ -6,8 +6,8 @@ import { appRoutes, type AppRouteNode } from '@/routes/appRoutes';
 import { currentWorkspaceId, setCurrentWorkspaceId, totalUnreadCount, workspacesList } from '@/stores/chatRoomsStore';
 import { workspaceApi } from '@/core/api/ApiService';
 import { useAuth } from '@/core/hooks/useAuth';
-import { Badge } from '@/ui-components/Badge/Badge';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
+import { Badge } from '@/components/ui/badge';
+import { Avatar } from '@/components/ui/avatar';
 import './Sidebar.scss';
 
 // v2.4.0: 뱃지 렌더링 최적화를 위한 개별 컴포넌트 분리

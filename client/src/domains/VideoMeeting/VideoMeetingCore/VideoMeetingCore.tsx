@@ -2,19 +2,16 @@ import { memo } from 'preact/compat';
 import { useState, useEffect } from 'preact/hooks';
 import type { Room } from '../types';
 import type { VideoMeetingStore } from '../stores/VideoMeetingStore';
-import { Button } from '@/ui-components/Button/Button';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Input } from '@/ui-components/Input/Input';
-import { Box } from '@/ui-components/Layout/Box';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Grid } from '@/ui-components/Layout/Grid';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Card, CardHeader, CardBody, CardFooter } from '@/ui-components/Card/Card';
-import { StatusChip } from '@/ui-components/StatusChip/StatusChip';
-import { Drawer } from '@/ui-components/Drawer/Drawer';
-import { Switch } from '@/ui-components/Switch/Switch';
+import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
+import { TextField as Input } from '@/components/ui/text-field';
+import { Box, Stack, Flex, Grid } from '@/components/ui/layout';
+import { Paper } from '@/components/ui/paper';
+import { Typography } from '@/components/ui/typography';
+import { Card, CardHeader, CardBody, CardFooter } from '@/components/ui/card';
+import { StatusChip } from '@/components/ui/status-chip';
+import { Drawer } from '@/components/ui/drawer';
+import { Switch } from '@/components/ui/switch';
 import {
   IconArrowLeft,
   IconCalendar,

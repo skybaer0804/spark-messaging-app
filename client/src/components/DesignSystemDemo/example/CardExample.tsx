@@ -1,7 +1,7 @@
-import { Card, CardBody, CardFooter, CardHeader } from '@/ui-components/Card/Card';
-import { Button } from '@/ui-components/Button/Button';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Stack } from '@/ui-components/Layout/Stack';
+import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Typography } from '@/components/ui/typography';
+import { Stack } from '@/components/ui/layout';
 import type { DesignSystemExampleDefinition } from './types';
 
 const exampleData = {
@@ -9,7 +9,7 @@ const exampleData = {
   body: 'Card는 콘텐츠 묶음을 표현하는 기본 컨테이너입니다.',
 };
 
-const usageCode = `import { Card, CardHeader, CardBody, CardFooter } from '@/ui-components/Card/Card';
+const usageCode = `import { Card, CardHeader, CardBody, CardFooter } from '@/components/ui/card';
 
 <Card>
   <CardHeader>...</CardHeader>

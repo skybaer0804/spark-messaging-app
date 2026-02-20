@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'preact/hooks';
 import { IconX, IconCheck, IconPlus } from '@tabler/icons-preact';
 import { AutocompleteMember } from './AutocompleteMember';
-import {
-  Dialog,
-  Flex,
-  Button,
-  Input,
-  Grid,
-  SettingSwitch
-} from '@/ui-components';
+import { Dialog } from '@/components/ui/dialog';
+import { Flex, Grid } from '@/components/ui/layout';
+import { Button } from '@/components/ui/button';
+import { TextField as Input } from '@/components/ui/text-field';
+import { SettingSwitch } from '@/components/ui/setting-switch';
 import { useChat } from '../context/ChatContext';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useTheme } from '@/core/context/ThemeProvider';

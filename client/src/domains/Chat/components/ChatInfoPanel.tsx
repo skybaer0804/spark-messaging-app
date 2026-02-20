@@ -1,13 +1,11 @@
 import { useState, useEffect, useMemo } from 'preact/hooks';
-import { Box } from '@/ui-components/Layout/Box';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Button } from '@/ui-components/Button/Button';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Input } from '@/ui-components/Input/Input';
-import { Switch } from '@/ui-components/Switch/Switch';
+import { Box, Flex, Stack } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Paper } from '@/components/ui/paper';
+import { IconButton } from '@/components/ui/icon-button';
+import { Button } from '@/components/ui/button';
+import { TextField as Input } from '@/components/ui/text-field';
+import { Switch } from '@/components/ui/switch';
 import {
   IconX,
   IconInfoCircle,

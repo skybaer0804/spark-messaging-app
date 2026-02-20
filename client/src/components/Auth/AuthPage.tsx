@@ -1,12 +1,11 @@
 import { useState } from 'preact/hooks';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useRouterState } from '@/routes/RouterState';
-import { Box } from '@/ui-components/Layout/Box';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { TextField } from '@/ui-components/TextField/TextField';
-import { Button } from '@/ui-components/Button/Button';
-import { Stack } from '@/ui-components/Layout/Stack';
+import { Box, Stack } from '@/components/ui/layout';
+import { Paper } from '@/components/ui/paper';
+import { Typography } from '@/components/ui/typography';
+import { TextField } from '@/components/ui/text-field';
+import { Button } from '@/components/ui/button';
 
 export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);

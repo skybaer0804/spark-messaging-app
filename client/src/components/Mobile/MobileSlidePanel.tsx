@@ -2,8 +2,8 @@ import type { ComponentChildren } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { IconChevronLeft } from '@tabler/icons-preact';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { IconButton } from '@/components/ui/icon-button';
+import { Typography } from '@/components/ui/typography';
 import './MobileSlidePanel.scss';
 
 interface MobileSlidePanelProps {

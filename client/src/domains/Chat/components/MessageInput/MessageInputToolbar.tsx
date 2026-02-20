@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'preact/hooks';
 import { memo } from 'preact/compat';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Flex } from '@/ui-components/Layout/Flex';
+import { IconButton } from '@/components/ui/icon-button';
+import { Flex } from '@/components/ui/layout';
 import {
   IconMoodSmile,
   IconBold,

@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'preact/hooks';
 import { IconX, IconPlus } from '@tabler/icons-preact';
-import { Dialog } from '@/ui-components/Dialog/Dialog';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Button } from '@/ui-components/Button/Button';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Input } from '@/ui-components/Input/Input';
-import { Grid } from '@/ui-components/Layout/Grid';
+import { Dialog } from '@/components/ui/dialog';
+import { Flex, Grid } from '@/components/ui/layout';
+import { Button } from '@/components/ui/button';
+import { Typography } from '@/components/ui/typography';
+import { TextField as Input } from '@/components/ui/text-field';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { AutocompleteMember } from './AutocompleteMember';

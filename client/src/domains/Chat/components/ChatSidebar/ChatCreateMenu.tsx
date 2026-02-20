@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { IconButton } from '@/ui-components/Button/IconButton';
+import { IconButton } from '@/components/ui/icon-button';
 import { IconMessageCircle, IconHash, IconHierarchy, IconEdit } from '@tabler/icons-preact';
 import { DialogChatOne } from '../DialogChatOne';
 import { DialogChatGroup } from '../DialogChatGroup';

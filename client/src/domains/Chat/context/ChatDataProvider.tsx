@@ -1,8 +1,7 @@
 import { useChat } from './ChatContext';
-import { Loading } from '@/ui-components/Loading/Loading';
-import { Box } from '@/ui-components/Layout/Box';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Flex } from '@/ui-components/Layout/Flex';
+import { Loading } from '@/components/ui/loading';
+import { Box, Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
 
 export function ChatDataProvider({ children }: { children: any }) {
   const { isLoading } = useChat();

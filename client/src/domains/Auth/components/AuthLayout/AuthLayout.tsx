@@ -1,7 +1,7 @@
 import { JSX } from 'preact';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Box } from '@/ui-components/Layout/Box';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Paper } from '@/components/ui/paper';
+import { Box } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
 import './AuthLayout.scss';
 
 interface AuthLayoutProps {

@@ -1,6 +1,6 @@
 import { useMemo } from 'preact/hooks';
-import { Autocomplete, AutocompleteOption } from '@/ui-components/Autocomplete/Autocomplete';
-import { Stack } from '@/ui-components/Layout/Stack';
+import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete';
+import { Stack } from '@/components/ui/layout';
 import { ProfileItem } from './ProfileItem/ProfileItem';
 import type { ChatRoom } from '../types';
 

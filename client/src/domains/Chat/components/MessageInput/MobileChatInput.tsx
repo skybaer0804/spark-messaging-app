@@ -1,6 +1,6 @@
 import { useRef } from 'preact/hooks';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Input } from '@/ui-components/Input/Input';
+import { IconButton } from '@/components/ui/icon-button';
+import { TextField as Input } from '@/components/ui/text-field';
 import { IconPlus, IconMoodSmile, IconAt, IconSend } from '@tabler/icons-preact';
 import './MobileChatInput.scss';
 

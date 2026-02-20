@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'preact/hooks';
 import { memo } from 'preact/compat';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { List } from '@/ui-components/List/List';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Paper } from '@/components/ui/paper';
+import { List } from '@/components/ui/list';
+import { Typography } from '@/components/ui/typography';
 import { ProfileItem } from '../../ProfileItem/ProfileItem';
 import { ChatUser } from '../../../types';
 import { useMentionPicker } from './hooks/useMentionPicker';

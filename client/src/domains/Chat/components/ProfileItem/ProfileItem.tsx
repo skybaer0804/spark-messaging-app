@@ -1,6 +1,6 @@
 import { memo } from 'preact/compat';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Avatar } from '@/components/ui/avatar';
+import { Typography } from '@/components/ui/typography';
 import {
   IconHash,
   IconLock,

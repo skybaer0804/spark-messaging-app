@@ -1,10 +1,7 @@
-import { Box } from '@/ui-components/Layout/Box';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Grid } from '@/ui-components/Layout/Grid';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Button } from '@/ui-components/Button/Button';
+import { Box, Flex, Stack, Grid } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Paper } from '@/components/ui/paper';
+import { Button } from '@/components/ui/button';
 import { MobileHeader } from '@/components/Mobile/MobileHeader';
 import { IconMessageCircle, IconBell, IconVideo, IconChevronRight, IconRocket } from '@tabler/icons-preact';
 import { useRouterState } from '@/routes/RouterState';

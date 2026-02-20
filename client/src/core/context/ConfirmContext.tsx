@@ -1,6 +1,6 @@
 import { createContext } from 'preact';
 import { useContext, useState, useCallback } from 'preact/hooks';
-import { Confirm, ConfirmOptions } from '../../ui-components/Confirm/Confirm';
+import { Confirm, ConfirmOptions } from '@/components/ui/confirm';
 
 interface ConfirmContextType {
   confirm: (options: ConfirmOptions) => void;

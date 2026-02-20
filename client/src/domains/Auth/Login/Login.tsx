@@ -3,12 +3,11 @@ import { getLocalStorage, setLocalStorage, removeLocalStorage } from '@/core/uti
 import { useAuth } from '@/core/hooks/useAuth';
 import { useToast } from '@/core/context/ToastContext';
 import { useRouterState } from '@/routes/RouterState';
-import { TextField } from '@/ui-components/TextField/TextField';
-import { Button } from '@/ui-components/Button/Button';
-import { Grid } from '@/ui-components/Layout/Grid';
-import { Checkbox } from '@/ui-components/Checkbox/Checkbox';
-import { Box } from '@/ui-components/Layout/Box';
-import { CircularProgress } from '@/ui-components/CircularProgress/CircularProgress';
+import { TextField } from '@/components/ui/text-field';
+import { Button } from '@/components/ui/button';
+import { Grid, Box } from '@/components/ui/layout';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CircularProgress } from '@/components/ui/circular-progress';
 import { AuthLayout } from '../components/AuthLayout/AuthLayout';
 import { IconEye, IconEyeOff, IconMail, IconLock } from '@tabler/icons-preact';
 import './Login.scss';

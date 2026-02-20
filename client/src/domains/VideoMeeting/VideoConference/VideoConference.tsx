@@ -2,12 +2,10 @@ import { useMemo } from 'preact/hooks';
 import { memo } from 'preact/compat';
 import { useVideoConference } from './hooks/useVideoConference';
 import type { VideoConferenceAdapter } from './types';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Box } from '@/ui-components/Layout/Box';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Grid } from '@/ui-components/Layout/Grid';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Paper } from '@/ui-components/Paper/Paper';
+import { IconButton } from '@/components/ui/icon-button';
+import { Box, Flex, Grid } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Paper } from '@/components/ui/paper';
 import { IconPlayerPlay, IconVideo, IconVideoOff } from '@tabler/icons-preact';
 
 interface VideoConferenceProps {

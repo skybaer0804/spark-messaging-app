@@ -6,9 +6,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Typography } from '@/components/ui/typography';
 import { cn } from '@/lib/utils';
-import { Button } from '@/ui-components/Button/Button';
+import { Button } from '@/components/ui/button';
 
 export interface DrawerProps extends JSX.HTMLAttributes<HTMLDivElement> {
   open: boolean;

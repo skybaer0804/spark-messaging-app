@@ -10,7 +10,7 @@ import { useToast } from '@/core/context/ToastContext';
 import { PushService } from '@/core/api/PushService';
 import { Login, Signup } from '@/domains/Auth';
 import { PrivacyPolicy } from '@/components/PrivacyPolicy/PrivacyPolicy';
-import { Loading } from '@/ui-components/Loading/Loading';
+import { Loading } from '@/components/ui/loading';
 
 // 큰 컴포넌트들을 lazy loading으로 최적화
 const DesignSystemDemo = lazy(() =>
@@ -18,9 +18,9 @@ const DesignSystemDemo = lazy(() =>
     default: module.DesignSystemDemo,
   })),
 );
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Button } from '@/ui-components/Button/Button';
+import { Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Button } from '@/components/ui/button';
 import { ChatProvider } from './domains/Chat/context/ChatContext';
 import './app.scss';
 import './index.css';

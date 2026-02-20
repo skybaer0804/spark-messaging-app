@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'preact/hooks';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Box } from '@/ui-components/Layout/Box';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { List, ListItem, ListItemText } from '@/ui-components/List/List';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
-import { Divider } from '@/ui-components/Divider/Divider';
+import { IconButton } from '@/components/ui/icon-button';
+import { Box, Flex, Stack } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { List, ListItem, ListItemText } from '@/components/ui/list';
+import { Avatar } from '@/components/ui/avatar';
+import { Divider } from '@/components/ui/divider';
 import {
   IconSearch,
   IconAddressBook,

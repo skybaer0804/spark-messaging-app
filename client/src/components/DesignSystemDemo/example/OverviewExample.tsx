@@ -1,7 +1,7 @@
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Divider } from '@/ui-components/Divider/Divider';
+import { Paper } from '@/components/ui/paper';
+import { Stack } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Divider } from '@/components/ui/divider';
 import type { DesignSystemExampleDefinition } from './types';
 
 const usageCode = `// 좌측 사이드바(디자인 하위 메뉴)에서 항목을 선택하면

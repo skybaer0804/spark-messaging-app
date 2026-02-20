@@ -4,7 +4,7 @@ import { memo } from 'preact/compat';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { MobileSidebar } from '@/components/Mobile/MobileSidebar';
 import { Content } from '@/layouts/Content/Content';
-import { Grid } from '@/ui-components/Layout/Grid';
+import { Grid } from '@/components/ui/layout';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { useRouterState } from '@/routes/RouterState';
 import { appRoutes, type AppRouteNode } from '@/routes/appRoutes';

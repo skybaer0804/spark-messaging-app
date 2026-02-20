@@ -1,20 +1,15 @@
 import { useState, useEffect } from 'preact/hooks';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { MobileHeader } from '@/components/Mobile/MobileHeader';
-import {
-  Typography,
-  Card,
-  CardBody,
-  Flex,
-  Box,
-  Avatar,
-  Button,
-  Input,
-  SettingSwitch,
-  Chip,
-  Grid,
-  Dialog
-} from '@/ui-components';
+import { Typography } from '@/components/ui/typography';
+import { Card, CardBody } from '@/components/ui/card';
+import { Box, Flex, Grid } from '@/components/ui/layout';
+import { Avatar } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { TextField as Input } from '@/components/ui/text-field';
+import { SettingSwitch } from '@/components/ui/setting-switch';
+import { Chip } from '@/components/ui/chip';
+import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/core/context/ToastContext';
 import { useAuth } from '@/core/hooks/useAuth';
 import { workspaceApi, authApi } from '@/core/api/ApiService';

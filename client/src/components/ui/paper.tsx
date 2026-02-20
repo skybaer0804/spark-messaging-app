@@ -30,7 +30,7 @@ const Paper = React.forwardRef<HTMLDivElement, PaperProps>(
           "bg-card text-card-foreground",
           variant === 'elevation' ? elevationClasses[elevation] : "border border-border",
           !square && "rounded-lg",
-          padding && `p-${padding === 'sm' ? '2' : padding === 'md' ? '4' : '6'}`,
+          padding && padding !== 'none' ? `p-${padding === 'sm' ? '2' : padding === 'md' ? '4' : '6'}` : (padding === 'none' ? 'p-0' : ''),
           className
         )}
         data-theme={theme}

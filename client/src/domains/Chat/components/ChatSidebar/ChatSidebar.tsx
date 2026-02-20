@@ -1,11 +1,11 @@
 import { memo, useState } from 'preact/compat';
 import { useEffect } from 'preact/hooks';
 import { useChatSidebar } from './hooks/useChatSidebar';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Input } from '@/ui-components/Input/Input';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Paper } from '@/ui-components/Paper/Paper';
+import { IconButton } from '@/components/ui/icon-button';
+import { TextField as Input } from '@/components/ui/text-field';
+import { Flex, Box } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Paper } from '@/components/ui/paper';
 import {
   IconX,
   IconChevronDown,

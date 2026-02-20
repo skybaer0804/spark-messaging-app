@@ -35,15 +35,25 @@ export interface TypographyProps
   extends React.HTMLAttributes<HTMLElement>,
     VariantProps<typeof typographyVariants> {
   component?: React.ElementType
+  fontWeight?: "normal" | "medium" | "semibold" | "bold"
+  color?: string
 }
 
 const Typography = React.forwardRef<HTMLElement, TypographyProps>(
-  ({ className, variant, align, component, ...props }, ref) => {
+  ({ className, variant, align, component, fontWeight, color, style, ...props }, ref) => {
     const Tag = component || (variant?.startsWith("h") ? (variant as React.ElementType) : variant === "display-large" ? "h1" : "p")
+    const weightClass = fontWeight ? `font-${fontWeight}` : ""
+    
+    const computedStyle = {
+      ...(color && { color: `var(--color-${color}, inherit)` }),
+      ...style,
+    } as React.CSSProperties
+
     return (
       <Tag
         ref={ref}
-        className={cn(typographyVariants({ variant, align, className }))}
+        className={cn(typographyVariants({ variant, align, className }), weightClass)}
+        style={computedStyle}
         {...props}
       />
     )

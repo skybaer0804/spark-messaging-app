@@ -5,10 +5,9 @@ import { ChatInput } from './ChatInput';
 import { ImageModal } from './ImageModal';
 import { useChatCore } from './hooks/useChatCore';
 import { useAuth } from '@/core/hooks/useAuth';
-import { Box } from '@/ui-components/Layout/Box';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { IconButton } from '@/ui-components/Button/IconButton';
+import { Box, Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { IconButton } from '@/components/ui/icon-button';
 import { IconVideo, IconUsers, IconSettings } from '@tabler/icons-preact';
 import './Chat.scss';
 

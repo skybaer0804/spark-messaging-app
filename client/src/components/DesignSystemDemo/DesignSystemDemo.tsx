@@ -1,8 +1,7 @@
-import { Container } from '@/ui-components/Layout/Container';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Divider } from '@/ui-components/Divider/Divider';
+import { Container, Stack } from '@/components/ui/layout';
+import { Paper } from '@/components/ui/paper';
+import { Typography } from '@/components/ui/typography';
+import { Divider } from '@/components/ui/divider';
 import { getDesignSystemExampleById } from './example';
 import './DesignSystemDemo.scss';
 

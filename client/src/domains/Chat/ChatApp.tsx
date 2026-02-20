@@ -2,7 +2,7 @@ import { useChatApp } from './hooks/useChatApp';
 import { useRef, useEffect, useState, useMemo } from 'preact/hooks';
 import { useChat } from './context/ChatContext';
 import { useTheme } from '@/core/context/ThemeProvider';
-import { Box } from '@/ui-components/Layout/Box';
+import { Box } from '@/components/ui/layout';
 import { chatPendingJoinRoom, clearPendingJoinChatRoom } from '@/stores/chatRoomsStore';
 import { useAuth } from '@/core/hooks/useAuth';
 import { chatApi } from '@/core/api/ApiService';
@@ -21,7 +21,7 @@ import { ChatSettingPanel } from './components/ChatSettingPanel/ChatSettingPanel
 import { ImageModal } from './components/ImageModal';
 import { ChatThreadPanel } from './components/ChatThreadPanel';
 import { ChatInfoPanel } from './components/ChatInfoPanel';
-import { Loading } from '@/ui-components/Loading/Loading';
+import { Loading } from '@/components/ui/loading';
 import { DialogForward } from './components/DialogForward';
 import { FileAttachmentModal } from './components/MessageInput/FileAttachmentModal';
 import type { Message } from './types';

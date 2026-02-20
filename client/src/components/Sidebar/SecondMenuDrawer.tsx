@@ -1,8 +1,8 @@
 import type { ComponentChildren } from 'preact';
 import { IconPin, IconPinFilled } from '@tabler/icons-preact';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { List, ListItem, ListItemText } from '@/ui-components/List/List';
-import { IconButton } from '@/ui-components/Button/IconButton';
+import { Typography } from '@/components/ui/typography';
+import { List, ListItem, ListItemText } from '@/components/ui/list';
+import { IconButton } from '@/components/ui/icon-button';
 import { useRouterState } from '@/routes/RouterState';
 import { useSidebarLayoutOptional } from '@/layouts/SidebarLayout/SidebarLayoutContext';
 import { useTheme } from '@/core/context/ThemeProvider';

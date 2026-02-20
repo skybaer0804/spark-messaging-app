@@ -1,7 +1,6 @@
-import { Container } from '@/ui-components/Layout/Container';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Paper } from '@/ui-components/Paper/Paper';
+import { Container, Stack } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Paper } from '@/components/ui/paper';
 import './PrivacyPolicy.scss';
 
 export function PrivacyPolicy() {

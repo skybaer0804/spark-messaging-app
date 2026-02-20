@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { Box } from '@/ui-components/Layout/Box';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Box } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
 import { chatApi } from '@/core/api/ApiService';
 import { ChatMessageItem } from './ChatMessageItem';
 import { ChatInput } from './ChatInput';

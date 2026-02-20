@@ -2,10 +2,9 @@ import { memo, useState } from 'preact/compat';
 import type { Message, ChatUser } from '../types';
 import { formatTimestamp } from '@/core/utils/messageUtils';
 import { downloadFile, downloadFileFromUrl } from '@/core/utils/fileUtils';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Box } from '@/ui-components/Layout/Box';
+import { Paper } from '@/components/ui/paper';
+import { Typography } from '@/components/ui/typography';
+import { Flex, Box } from '@/components/ui/layout';
 import { chatApi } from '@/core/api/ApiService';
 
 // 메시지 타입별 서브 컴포넌트 임포트

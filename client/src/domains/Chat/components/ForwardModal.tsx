@@ -1,11 +1,10 @@
 import { useState } from 'preact/hooks';
-import { Box } from '@/ui-components/Layout/Box';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { List, ListItem, ListItemText, ListItemAvatar } from '@/ui-components/List/List';
-import { Avatar } from '@/ui-components/Avatar/Avatar';
-import { Button } from '@/ui-components/Button/Button';
-import { Flex } from '@/ui-components/Layout/Flex';
+import { Box, Flex, Stack } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Paper } from '@/components/ui/paper';
+import { List, ListItem, ListItemText, ListItemAvatar } from '@/components/ui/list';
+import { Avatar } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { chatApi } from '@/core/api/ApiService';
 import type { Message, ChatRoom } from '../types';
 import { IconHash, IconLock, IconX } from '@tabler/icons-preact';

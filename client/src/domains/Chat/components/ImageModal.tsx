@@ -1,7 +1,6 @@
 import { memo, useState, useMemo, useEffect, useCallback } from 'preact/compat';
-import { Box } from '@/ui-components/Layout/Box';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { IconButton } from '@/ui-components/Button/IconButton';
+import { Box, Flex } from '@/components/ui/layout';
+import { IconButton } from '@/components/ui/icon-button';
 import {
   IconX,
   IconDownload,
@@ -11,7 +10,7 @@ import {
   IconRefresh,
 } from '@tabler/icons-preact';
 import { downloadFileFromUrl } from '@/core/utils/fileUtils';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Typography } from '@/components/ui/typography';
 import { useChat } from '../context/ChatContext';
 import { chatApi } from '@/core/api/ApiService';
 import type { Message } from '../types';

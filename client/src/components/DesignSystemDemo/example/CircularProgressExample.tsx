@@ -1,8 +1,8 @@
-import { CircularProgress } from '@/ui-components/CircularProgress/CircularProgress';
-import { Flex } from '@/ui-components/Layout/Flex';
+import { CircularProgress } from '@/components/ui/circular-progress';
+import { Flex } from '@/components/ui/layout';
 import type { DesignSystemExampleDefinition } from './types';
 
-const usageCode = `import { CircularProgress } from '@/ui-components/CircularProgress/CircularProgress';
+const usageCode = `import { CircularProgress } from '@/components/ui/circular-progress';
 
 <CircularProgress />
 <CircularProgress variant="determinate" value={75} />

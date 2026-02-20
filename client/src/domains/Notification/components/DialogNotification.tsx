@@ -1,5 +1,11 @@
 import { useTheme } from '@/core/context/ThemeProvider';
-import { Dialog, Button, Input, Select, Grid, Flex, Typography, SettingSwitch } from '@/ui-components';
+import { Dialog } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { TextField as Input } from '@/components/ui/text-field';
+import { Select } from '@/components/ui/select';
+import { Grid, Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { SettingSwitch } from '@/components/ui/setting-switch';
 import { IconSend, IconX, IconCircleCheckFilled } from '@tabler/icons-preact';
 import type { Workspace } from '../../Chat/types/ChatRoom';
 

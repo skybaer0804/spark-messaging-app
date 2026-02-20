@@ -1,16 +1,14 @@
 import { useNotificationApp } from './hooks/useNotificationApp';
 import { useTheme } from '@/core/context/ThemeProvider';
 import { MobileHeader } from '@/components/Mobile/MobileHeader';
-import { Button } from '@/ui-components/Button/Button';
-import { Box } from '@/ui-components/Layout/Box';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Button } from '@/components/ui/button';
+import { Box, Stack, Flex } from '@/components/ui/layout';
+import { Paper } from '@/components/ui/paper';
+import { Typography } from '@/components/ui/typography';
 import { IconSend, IconPlus, IconRefresh, IconHistory, IconTrash, IconRocket, IconPencil } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
 import { DialogNotification } from './components/DialogNotification';
-import { Chip } from '@/ui-components/Chip/Chip';
+import { Chip } from '@/components/ui/chip';
 import './NotificationApp.scss';
 
 export function NotificationApp() {

@@ -1,7 +1,6 @@
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Box } from '@/ui-components/Layout/Box';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Paper } from '@/ui-components/Paper/Paper';
+import { IconButton } from '@/components/ui/icon-button';
+import { Box, Stack } from '@/components/ui/layout';
+import { Paper } from '@/components/ui/paper';
 import { IconChevronLeft, IconUsers, IconSettings, IconMessageCircle2, IconInfoCircle } from '@tabler/icons-preact';
 import { useAuth } from '@/core/hooks/useAuth';
 import { getDirectChatName } from '../utils/chatUtils';

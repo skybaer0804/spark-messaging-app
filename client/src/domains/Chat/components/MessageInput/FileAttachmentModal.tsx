@@ -1,10 +1,9 @@
 import { useState, useCallback } from 'preact/hooks';
-import { Box } from '@/ui-components/Layout/Box';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Button } from '@/ui-components/Button/Button';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Stack } from '@/ui-components/Layout/Stack';
+import { Box, Stack } from '@/components/ui/layout';
+import { Paper } from '@/components/ui/paper';
+import { Typography } from '@/components/ui/typography';
+import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { IconX, IconFile, IconUpload } from '@tabler/icons-preact';
 import { formatFileSize } from '@/core/utils/fileUtils';
 

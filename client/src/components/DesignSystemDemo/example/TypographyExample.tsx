@@ -1,6 +1,6 @@
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Divider } from '@/ui-components/Divider/Divider';
+import { Stack } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { Divider } from '@/components/ui/divider';
 import type { DesignSystemExampleDefinition } from './types';
 
 const exampleData = {
@@ -18,7 +18,7 @@ const exampleData = {
   ] as Array<{ variant: any; text: string }>,
 };
 
-const usageCode = `import { Typography } from '@/ui-components/Typography/Typography';
+const usageCode = `import { Typography } from '@/components/ui/typography';
 
 <Typography variant="h3">제목</Typography>
 <Typography variant="body-medium" color="text-secondary">

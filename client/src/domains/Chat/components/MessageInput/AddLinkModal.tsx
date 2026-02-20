@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Dialog } from '@/ui-components/Dialog/Dialog';
-import { Input } from '@/ui-components/Input/Input';
-import { Button } from '@/ui-components/Button/Button';
-import { Stack } from '@/ui-components/Layout/Stack';
-import { Box } from '@/ui-components/Layout/Box';
+import { Dialog } from '@/components/ui/dialog';
+import { TextField as Input } from '@/components/ui/text-field';
+import { Button } from '@/components/ui/button';
+import { Stack, Box } from '@/components/ui/layout';
 
 interface AddLinkModalProps {
   open: boolean;

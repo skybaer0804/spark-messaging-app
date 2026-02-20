@@ -1,11 +1,9 @@
 import { memo } from 'preact/compat';
 import { formatFileSize, getFileIcon } from '@/core/utils/fileUtils';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Box } from '@/ui-components/Layout/Box';
-import { IconButton } from '@/ui-components/Button/IconButton';
-import { Stack } from '@/ui-components/Layout/Stack';
+import { Paper } from '@/components/ui/paper';
+import { Typography } from '@/components/ui/typography';
+import { Flex, Box, Stack } from '@/components/ui/layout';
+import { IconButton } from '@/components/ui/icon-button';
 import { IconX } from '@tabler/icons-preact';
 import './Chat.scss';
 

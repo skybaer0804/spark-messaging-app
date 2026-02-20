@@ -7,7 +7,7 @@ import { PrivacyPolicy } from '@/components/PrivacyPolicy/PrivacyPolicy';
 import { Login, Signup } from '@/domains/Auth';
 import { GuestJoin } from '@/domains/VideoMeeting/components/GuestJoin/GuestJoin';
 import { useAuth } from '@/core/hooks/useAuth';
-import { Loading } from '@/ui-components/Loading/Loading';
+import { Loading } from '@/components/ui/loading';
 import { useEffect } from 'preact/hooks';
 
 // 큰 컴포넌트를 lazy loading으로 최적화

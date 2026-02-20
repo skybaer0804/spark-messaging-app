@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'preact/hooks';
 import { IconX, IconPlus, IconEdit } from '@tabler/icons-preact';
-import { Dialog, Flex, Button, Typography, Input, Grid, SettingSwitch } from '@/ui-components';
+import { Dialog } from '@/components/ui/dialog';
+import { Flex, Grid } from '@/components/ui/layout';
+import { Button } from '@/components/ui/button';
+import { Typography } from '@/components/ui/typography';
+import { TextField as Input } from '@/components/ui/text-field';
+import { SettingSwitch } from '@/components/ui/setting-switch';
 import { AutocompleteMember } from './AutocompleteMember';
 import { AutocompleteChannelAndTeam } from './AutocompleteChannelAndTeam';
 import { useChat } from '../context/ChatContext';

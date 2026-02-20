@@ -1,8 +1,7 @@
 import { memo } from 'preact/compat';
-import { Box } from '@/ui-components/Layout/Box';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { IconButton } from '@/ui-components/Button/IconButton';
+import { Box, Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { IconButton } from '@/components/ui/icon-button';
 import { IconDownload, IconPlayerPlay } from '@tabler/icons-preact';
 import { formatFileSize } from '@/core/utils/fileUtils';
 import { Message } from '../../types';

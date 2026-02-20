@@ -1,8 +1,8 @@
 import { memo, useState, useRef, useEffect } from 'preact/compat';
 import { MarkdownRenderer } from '../MarkdownRenderer/MarkdownRenderer';
 import { Message } from '../../types';
-import { Dialog } from '@/ui-components/Dialog/Dialog';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Dialog } from '@/components/ui/dialog';
+import { Typography } from '@/components/ui/typography';
 import { IconChevronRight } from '@tabler/icons-preact';
 
 interface TextMessageProps {

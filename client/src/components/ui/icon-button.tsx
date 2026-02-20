@@ -3,13 +3,14 @@ import { Button, type ButtonProps } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 export interface IconButtonProps extends Omit<ButtonProps, "size"> {
-  size?: "small" | "medium" | "large" | "icon"
+  size?: "small" | "medium" | "large" | "icon" | "sm" | "lg"
   active?: boolean
+  icon?: React.ReactNode
 }
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ className, variant = "ghost", size = "medium", active = false, ...props }, ref) => {
-    const shadcnSize = size === "small" ? "sm" : size === "large" ? "lg" : size === "icon" ? "icon" : "default"
+  ({ className, variant = "ghost", size = "medium", active = false, icon, children, ...props }, ref) => {
+    const shadcnSize = size === "small" || size === "sm" ? "sm" : size === "large" || size === "lg" ? "lg" : size === "icon" ? "icon" : "default"
     
     return (
       <Button
@@ -22,7 +23,9 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
           className
         )}
         {...props}
-      />
+      >
+        {icon || children}
+      </Button>
     )
   }
 )

@@ -1,5 +1,5 @@
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
 import { IconMessageCircle2 } from '@tabler/icons-preact';
 import { formatTimestamp } from '@/core/utils/messageUtils';
 import type { Message } from '../types';

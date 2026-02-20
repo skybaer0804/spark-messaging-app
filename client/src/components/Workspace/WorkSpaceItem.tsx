@@ -1,6 +1,6 @@
 import { memo } from 'preact/compat';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Box } from '@/ui-components/Layout/Box';
+import { Typography } from '@/components/ui/typography';
+import { Box } from '@/components/ui/layout';
 import { IconChevronRight } from '@tabler/icons-preact';
 import './WorkSpaceItem.scss';
 

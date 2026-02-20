@@ -1,9 +1,9 @@
-import { Checkbox } from '@/ui-components/Checkbox/Checkbox';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Typography } from '@/ui-components/Typography/Typography';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
 import type { DesignSystemExampleDefinition } from './types';
 
-const usageCode = `import { Checkbox } from '@/ui-components/Checkbox/Checkbox';
+const usageCode = `import { Checkbox } from '@/components/ui/checkbox';
 
 <Checkbox defaultChecked />
 <Checkbox disabled />

@@ -1,10 +1,8 @@
 import { IconX, IconMessageCircle, IconUsers, IconHash, IconLock, IconCheck } from '@tabler/icons-preact';
-import { Dialog } from '@/ui-components/Dialog/Dialog';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Button } from '@/ui-components/Button/Button';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Grid } from '@/ui-components/Layout/Grid';
-import { Box } from '@/ui-components/Layout/Box';
+import { Dialog } from '@/components/ui/dialog';
+import { Flex, Grid, Box } from '@/components/ui/layout';
+import { Button } from '@/components/ui/button';
+import { Typography } from '@/components/ui/typography';
 import { useTheme } from '@/core/context/ThemeProvider';
 import type { ChatRoom, ChatUser } from '../types';
 

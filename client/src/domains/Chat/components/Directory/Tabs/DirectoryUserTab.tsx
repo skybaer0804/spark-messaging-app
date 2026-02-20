@@ -1,9 +1,8 @@
 import { useMemo } from 'preact/hooks';
-import { Grid } from '@/ui-components/Layout/Grid';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Paper } from '@/ui-components/Paper/Paper';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Button } from '@/ui-components/Button/Button';
+import { Grid, Flex } from '@/components/ui/layout';
+import { Paper } from '@/components/ui/paper';
+import { Typography } from '@/components/ui/typography';
+import { Button } from '@/components/ui/button';
 import { IconMessageCircle } from '@tabler/icons-preact';
 import { ProfileItem } from '../../ProfileItem/ProfileItem';
 import type { ChatUser } from '../../../types';

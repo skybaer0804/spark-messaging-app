@@ -1,7 +1,6 @@
-import { Box } from '@/ui-components/Layout/Box';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { IconButton } from '@/ui-components/Button/IconButton';
+import { Box, Flex } from '@/components/ui/layout';
+import { Typography } from '@/components/ui/typography';
+import { IconButton } from '@/components/ui/icon-button';
 import { IconDownload, Icon3dCubeSphere, IconClick, IconPlayerPlay } from '@tabler/icons-preact';
 import { downloadFileFromUrl } from '@/core/utils/fileUtils';
 

@@ -10,7 +10,7 @@ import {
   IconVideo,
   IconSettings,
 } from '@tabler/icons-preact';
-import { Loading } from '@/ui-components/Loading/Loading';
+import { Loading } from '@/components/ui/loading';
 
 // 큰 컴포넌트들을 lazy loading으로 최적화
 const VideoMeeting = lazy(() =>
