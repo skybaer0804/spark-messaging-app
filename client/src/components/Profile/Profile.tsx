@@ -13,7 +13,7 @@ import { Button } from '@/ui-components/Button/Button';
 import { Input } from '@/ui-components/Input/Input';
 import { Select } from '@/ui-components/Select/Select';
 import { Tabs } from '@/ui-components/Tabs/Tabs';
-import { Switch } from '@/ui-components/Switch/Switch';
+import { SettingSwitch } from '@/ui-components';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useRouterState } from '@/routes/RouterState';
 import { useToast } from '@/core/context/ToastContext';
@@ -244,7 +244,9 @@ export function Profile() {
                   fullWidth
                   options={roleOptions}
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: (e.currentTarget as HTMLSelectElement).value as any })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, role: (e.currentTarget as HTMLSelectElement).value as any })
+                  }
                 />
               ) : (
                 <Typography variant="body-medium" className="profile__value">
@@ -278,17 +280,12 @@ export function Profile() {
                   알림 설정
                 </Typography>
               </Flex>
-              <Box style={{ padding: '12px', backgroundColor: 'var(--color-background-secondary)', borderRadius: 'var(--primitive-radius-md)' }}>
-                <Flex justify="space-between" align="center">
-                  <Box>
-                    <Typography variant="body-medium" style={{ fontWeight: 500 }}>웹 푸시 알림</Typography>
-                    <Typography variant="caption" color="text-secondary">
-                      {pushEnabled ? '활성화됨' : '비활성화됨'}
-                    </Typography>
-                  </Box>
-                  <Switch checked={pushEnabled} onChange={handleTogglePush} />
-                </Flex>
-              </Box>
+              <SettingSwitch
+                title="웹 푸시 알림"
+                description={pushEnabled ? '활성화됨' : '비활성화됨'}
+                checked={pushEnabled}
+                onChange={handleTogglePush}
+              />
             </div>
           </Stack>
         </Paper>
@@ -330,7 +327,15 @@ export function Profile() {
             />
           ))
         ) : (
-          <Box style={{ padding: '40px', textAlign: 'center', backgroundColor: 'var(--color-background-primary)', borderRadius: 'var(--primitive-radius-md)', border: '1px dashed var(--color-border-default)' }}>
+          <Box
+            style={{
+              padding: '40px',
+              textAlign: 'center',
+              backgroundColor: 'var(--color-background-primary)',
+              borderRadius: 'var(--primitive-radius-md)',
+              border: '1px dashed var(--color-border-default)',
+            }}
+          >
             <Typography variant="body-medium" color="text-secondary">
               소속된 워크스페이스가 없습니다.
             </Typography>
@@ -351,26 +356,20 @@ export function Profile() {
               <Typography variant="h4">테마 모드</Typography>
             </Flex>
             <Divider />
-            <Flex align="center" justify="space-between">
-              <Box>
-                <Typography variant="body-medium" style={{ fontWeight: 600 }}>다크 모드</Typography>
-                <Typography variant="caption" color="text-secondary">어두운 환경에서 눈의 피로를 줄여줍니다.</Typography>
-              </Box>
-              <Switch
+            <Stack spacing="sm">
+              <SettingSwitch
+                title="다크 모드"
+                description="어두운 환경에서 눈의 피로를 줄여줍니다."
                 checked={theme === 'dark'}
                 onChange={(checked) => checked !== (theme === 'dark') && toggleTheme()}
               />
-            </Flex>
-            <Flex align="center" justify="space-between">
-              <Box>
-                <Typography variant="body-medium" style={{ fontWeight: 600 }}>고대비 모드</Typography>
-                <Typography variant="caption" color="text-secondary">텍스트와 요소의 구분을 명확하게 합니다.</Typography>
-              </Box>
-              <Switch
+              <SettingSwitch
+                title="고대비 모드"
+                description="텍스트와 요소의 구분을 명확하게 합니다."
                 checked={contrast === 'high'}
                 onChange={(checked) => checked !== (contrast === 'high') && toggleContrast()}
               />
-            </Flex>
+            </Stack>
           </Stack>
         </Paper>
 
@@ -407,7 +406,9 @@ export function Profile() {
             <Divider />
             <Box>
               <Flex align="center" justify="space-between" style={{ marginBottom: '12px' }}>
-                <Typography variant="body-medium" style={{ fontWeight: 600 }}>모서리 둥글기</Typography>
+                <Typography variant="body-medium" style={{ fontWeight: 600 }}>
+                  모서리 둥글기
+                </Typography>
                 <Typography variant="body-small">{localBorderRadius}px</Typography>
               </Flex>
               <input
@@ -423,16 +424,12 @@ export function Profile() {
               </div>
             </Box>
             <Divider />
-            <Flex align="center" justify="space-between">
-              <Box>
-                <Typography variant="body-medium" style={{ fontWeight: 600 }}>미니 사이드바</Typography>
-                <Typography variant="caption" color="text-secondary">아이콘만 표시하여 더 넓은 화면을 사용합니다.</Typography>
-              </Box>
-              <Switch
-                checked={sidebarConfig.miniDrawer}
-                onChange={(checked) => setSidebarConfig({ miniDrawer: checked })}
-              />
-            </Flex>
+            {/* <SettingSwitch
+              title="미니 사이드바"
+              description="아이콘만 표시하여 더 넓은 화면을 사용합니다."
+              checked={sidebarConfig.miniDrawer}
+              onChange={(checked) => setSidebarConfig({ miniDrawer: checked })}
+            /> */}
           </Stack>
         </Paper>
 
@@ -510,7 +507,11 @@ export function Profile() {
             >
               <IconLogout size={18} style={{ marginRight: '8px' }} /> 로그아웃
             </Button>
-            <Typography variant="caption" color="text-tertiary" style={{ display: 'block', textAlign: 'center', marginTop: '16px' }}>
+            <Typography
+              variant="caption"
+              color="text-tertiary"
+              style={{ display: 'block', textAlign: 'center', marginTop: '16px' }}
+            >
               © 2026 Spark Messaging. All rights reserved.
             </Typography>
           </footer>

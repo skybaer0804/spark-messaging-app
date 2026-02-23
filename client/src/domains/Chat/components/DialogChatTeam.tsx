@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'preact/hooks';
 import { IconX, IconCheck, IconPlus } from '@tabler/icons-preact';
-import { Dialog } from '@/ui-components/Dialog/Dialog';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Button } from '@/ui-components/Button/Button';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Input } from '@/ui-components/Input/Input';
-import { Switch } from '@/ui-components/Switch/Switch';
 import { AutocompleteMember } from './AutocompleteMember';
-import { Grid } from '@/ui-components/Layout/Grid';
+import {
+  Dialog,
+  Flex,
+  Button,
+  Input,
+  Grid,
+  SettingSwitch
+} from '@/ui-components';
 import { useChat } from '../context/ChatContext';
 import { useAuth } from '@/core/hooks/useAuth';
 import { useTheme } from '@/core/context/ThemeProvider';
@@ -236,20 +237,12 @@ export const DialogChatTeam = ({ open, onClose, onTeamCreated, team }: DialogCha
         </Grid>
 
         <Grid item xs={12}>
-          <Flex justify="space-between" align="center">
-            <Flex direction="column" style={{ flex: 1 }}>
-              <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                비공개
-              </Typography>
-              <Typography variant="caption" style={{ color: 'var(--color-text-secondary)' }}>
-                초대된 사람만 가입할 수 있습니다.
-              </Typography>
-            </Flex>
-            <Switch
-              checked={teamData.isPrivate}
-              onChange={(checked) => setTeamData((prev) => ({ ...prev, isPrivate: checked }))}
-            />
-          </Flex>
+          <SettingSwitch
+            title="비공개"
+            description="초대된 사람만 가입할 수 있습니다."
+            checked={teamData.isPrivate}
+            onChange={(checked) => setTeamData((prev) => ({ ...prev, isPrivate: checked }))}
+          />
         </Grid>
       </Grid>
     </Dialog>

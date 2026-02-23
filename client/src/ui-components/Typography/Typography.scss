@@ -54,6 +54,13 @@
     line-height: var(--typo-body-small-line-height);
   }
 
+  &--caption {
+    font-size: var(--typo-caption-size);
+    font-weight: var(--typo-caption-weight);
+    line-height: var(--typo-caption-line-height);
+    letter-spacing: var(--typo-caption-letter-spacing);
+  }
+
   // Alignment
   &--align-left {
     text-align: left;

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'preact/hooks';
 import { IconX, IconCheck, IconPlus } from '@tabler/icons-preact';
-import { Dialog } from '@/ui-components/Dialog/Dialog';
-import { Flex } from '@/ui-components/Layout/Flex';
-import { Button } from '@/ui-components/Button/Button';
-import { Typography } from '@/ui-components/Typography/Typography';
-import { Input } from '@/ui-components/Input/Input';
-import { Grid } from '@/ui-components/Layout/Grid';
-import { Switch } from '@/ui-components/Switch/Switch';
+import {
+  Dialog,
+  Flex,
+  Button,
+  Input,
+  Grid,
+  SettingSwitch
+} from '@/ui-components';
 import { AutocompleteMember } from './AutocompleteMember';
 import { useChat } from '../context/ChatContext';
 import { useAuth } from '@/core/hooks/useAuth';
@@ -226,17 +227,12 @@ export const DialogChatGroup = ({ open, onClose, onGroupCreated, group }: Dialog
         </Grid>
 
         <Grid item xs={12}>
-          <Flex justify="space-between" align="center">
-            <Flex direction="column" style={{ flex: 1 }}>
-              <Typography variant="body-small" style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                비공개
-              </Typography>
-              <Typography variant="caption" style={{ color: 'var(--color-text-secondary)' }}>
-                초대된 사람만 채널에 참여할 수 있습니다.
-              </Typography>
-            </Flex>
-            <Switch checked={groupData.isPrivate} onChange={(checked) => setGroupData((prev) => ({ ...prev, isPrivate: checked }))} />
-          </Flex>
+          <SettingSwitch
+            title="비공개"
+            description="초대된 사람만 채널에 참여할 수 있습니다."
+            checked={groupData.isPrivate}
+            onChange={(checked) => setGroupData((prev) => ({ ...prev, isPrivate: checked }))}
+          />
         </Grid>
       </Grid>
     </Dialog>
